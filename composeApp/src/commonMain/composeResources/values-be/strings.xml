@@ -464,6 +464,7 @@
     <string name="label_keep_it_instead">Пакінуць яе замест гэтага</string>
     <string name="label_plan_swap">Памяняць дзве карткі</string>
     <string name="label_plan_declare">Абвясціць ранг</string>
+    <string name="label_plan_put_down">Выкласці картку</string>
     <string name="label_plan_take_discard">Узяць скід</string>
     <string name="label_plan_clear">Ачысціць</string>
     <string name="label_plan_shed">Падкінуць</string>
@@ -484,6 +485,8 @@
     <string name="ask_what_should_they_do">Што варта зрабіць %1$s са сваім ходам?</string>
     <string name="ask_which_rank_will_you_declare">Які ранг вы абвесціце Каралём?</string>
     <string name="ask_which_rank_should_they_declare">Які ранг варта абвясціць %1$s Каралём?</string>
+    <string name="ask_which_card_will_you_put_down">Якую картку вы выкладзеце, каб напарнік мог падкінуць такую ж?</string>
+    <string name="ask_which_card_should_they_put_down">Якую картку варта выкласці %1$s, каб напарнік мог падкінуць такую ж?</string>
     <string name="detail_plan_asks">План: %1$s.</string>
     <string name="detail_draw_beats_plan">%1$s лепш за план: пакіньце яе замест карты %2$d.</string>
     <string name="detail_plan_is_a_suggestion">План — толькі прапанова. Апошняе слова — за гульцом, чый ход.</string>
@@ -497,6 +500,8 @@
     <string name="board_step_swap">памяняць картку %2$d (%1$s) на картку %4$d (%3$s)</string>
     <string name="board_step_declare">абвясціць ранг %1$s Каралём</string>
     <string name="board_step_take_discard">узяць скід</string>
+    <string name="board_step_put_down">выкласці картку %2$d (%1$s)</string>
+    <string name="board_step_put_down_known">выкласці картку %2$d (%1$s), %3$s</string>
     <string name="board_shed">%1$s падкіне %2$s</string>
     <string name="board_edited_by">апошнія змены ад %1$s</string>
     <string name="board_nod_yes">%1$s пагаджаецца</string>

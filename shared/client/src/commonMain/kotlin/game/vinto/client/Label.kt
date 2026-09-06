@@ -123,6 +123,9 @@ sealed interface Label {
     /** The viewer's own lane, on their turn, when the draw has made it legal. */
     data object DoAsPlanned : Label
 
+    /** Compose a lane as putting one of the seat's own cards down for a teammate to throw in on. */
+    data object PlanAPutDown : Label
+
     /** Keep the drawn card rather than do the plan's step: the re-plan a good draw earns. */
     data object KeepItInstead : Label
 

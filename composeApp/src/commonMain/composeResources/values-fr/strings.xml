@@ -470,6 +470,7 @@
     <string name="label_keep_it_instead">Garder celle-ci</string>
     <string name="label_plan_swap">Échanger deux cartes</string>
     <string name="label_plan_declare">Déclarer une valeur</string>
+    <string name="label_plan_put_down">Poser une carte</string>
     <string name="label_plan_take_discard">Prendre la défausse</string>
     <string name="label_plan_clear">Effacer</string>
     <string name="label_plan_shed">Riposter</string>
@@ -491,6 +492,8 @@
     <string name="ask_what_should_they_do">Que devrait faire %1$s de son tour ?</string>
     <string name="ask_which_rank_will_you_declare">Quelle valeur allez-vous déclarer avec le Roi ?</string>
     <string name="ask_which_rank_should_they_declare">Quelle valeur %1$s devrait déclarer avec le Roi ?</string>
+    <string name="ask_which_card_will_you_put_down">Quelle carte allez-vous poser pour qu’un coéquipier riposte dessus ?</string>
+    <string name="ask_which_card_should_they_put_down">Quelle carte %1$s devrait poser pour qu’un coéquipier riposte dessus ?</string>
     <string name="detail_plan_asks">Le plan : %1$s.</string>
     <string name="detail_draw_beats_plan">Votre %1$s vaut mieux que le plan : gardez-la à la place de la carte %2$d.</string>
     <string name="detail_plan_is_a_suggestion">Un plan n’est qu’une suggestion. C’est à celui dont c’est le tour de décider.</string>
@@ -504,6 +507,8 @@
     <string name="board_step_swap">échanger la carte %2$d de %1$s avec la carte %4$d de %3$s</string>
     <string name="board_step_declare">déclarer %1$s avec un Roi</string>
     <string name="board_step_take_discard">prendre la défausse</string>
+    <string name="board_step_put_down">poser la carte %2$d de %1$s</string>
+    <string name="board_step_put_down_known">poser la carte %2$d de %1$s, le %3$s</string>
     <string name="board_shed">%1$s va riposter avec un %2$s</string>
     <string name="board_edited_by">dernière modification par %1$s</string>
     <string name="board_nod_yes">%1$s est d’accord</string>

@@ -93,6 +93,8 @@ sealed interface Ask {
 
     data class WhichRankShouldTheyDeclare(val who: Speaker) : Ask
 
+    /** Which of [who]'s own cards goes on the pile, for a teammate holding its rank to throw in on. */
+    data class WhichCardShouldTheyPutDown(val who: Speaker) : Ask
     data object WhichRankWillYouThrowIn : Ask
 
     // --- the end ------------------------------------------------------------------------------

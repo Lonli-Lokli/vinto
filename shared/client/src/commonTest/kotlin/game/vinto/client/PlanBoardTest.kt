@@ -386,6 +386,30 @@ class PlanBoardTest {
         )
     }
 
+    @Test
+    fun aLaneCanPutDownACardTheTableKnowsForATeammateToThrowInOn() {
+        // 3.14's other half: the proposal that sets a shed up. Nina has said her first card is a
+        // five, so that card — and only that card — can be put down from her lane.
+        val menu = tableFor(view(), question = Question.Planning(nina))
+        assertTrue(menu.choices.any { it.label == Label.PlanAPutDown }, "no way to plan a put-down")
+
+        val composer = tableFor(view(), question = Question.Planning(nina, StepKind.PUT_DOWN))
+        assertEquals(setOf(CardRef(nina, 0)), composer.taps.keys, "a card nobody could name was on offer")
+        val step = ((composer.taps[CardRef(nina, 0)] as Move.Plan).edit as PlanEdit.SetLane).step
+        assertEquals(CardAt(nina, 0), (step as Step.PutDown).card.copy(anchor = null))
+
+        val plan = CoalitionPlan(lanes = listOf(Lane(nina, step)), agreed = listOf(nina), editedBy = nina)
+        val board = assertNotNull(tableFor(view(), question = Question.ThePlan, plan = plan).board)
+        assertEquals(
+            StepLine.PutDown(Speaker.Named("Bot3"), 1, Rank.FIVE),
+            board.lanes.first { it.who == Speaker.Named("Bot3") }.step,
+        )
+
+        // Don has said nothing about his hand, so there is nothing of his to put down.
+        val dons = tableFor(view(), question = Question.Planning(don))
+        assertTrue(dons.choices.none { it.label == Label.PlanAPutDown }, "a put-down of a mystery was offered")
+    }
+
     // ------------------------------------------------------------------ the viewer's turn
 
     @Test

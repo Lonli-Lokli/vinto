@@ -543,6 +543,18 @@ tempting once the reveal is the referee, and it is the wrong game: it turns a me
 scoreboard about whether strangers lie, and it punishes exactly the forgetting D3a exists to
 model. Being caught out at a single reveal is enough.
 
+**As built (3.14).** Both halves are on the board. The intent is a `Shed(seat, rank)` — "Throw
+in" on the open board opens the rank rail and puts one in the viewer's own name; only its owner
+takes it back; the readout prices it. The proposal that sets one up is a lane step,
+`Step.PutDown(card)`: draw, and swap the draw into that card's place so it lands face up for a
+teammate to throw in on. The door lets only the lane's own seat put a card down, since the draw
+goes into their hand; the composer offers it only for a card the table knows the rank of, because
+a put-down of a mystery sets nothing up; the readout and the bots' answer both price it as the
+card leaving with every known match and an unseen draw arriving in its place; the health follower
+tracks its card through a watched swap like a swap's; the rehearsal mimes it as a swap into hand.
+Neither half is conditional: the shed says what its owner holds and will do, the put-down says
+what its owner will lay down.
+
 ## D14. Staging, because this is large
 
 1. **Talk** — the widened claim, the phrasebook, bots speaking, the leader retired, the confer

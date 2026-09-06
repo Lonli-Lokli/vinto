@@ -1,11 +1,13 @@
 package game.vinto.bot
 
+import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameState
 import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.Step
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.agreeing
+import game.vinto.shapes.getCardValue
 import game.vinto.shapes.laneOf
 
 /**
@@ -84,6 +86,11 @@ fun answerForLane(state: GameState, seat: String, step: Step?, askedBy: String):
         Step.TakeTheDiscard -> {
             before.takeIf { isTakeableAction(input.discardTop) }
         }
+
+        is Step.PutDown -> {
+            val slot = Slot(step.card.seat, step.card.position)
+            if (hands.holds(slot)) minScore(hands.puttingDown(slot).values.toList()) else null
+        }
     }
 
     return when {
@@ -92,6 +99,28 @@ fun answerForLane(state: GameState, seat: String, step: Step?, askedBy: String):
         else -> says(TableTalk.Answer.Says.THAT_LEAVES_US_WORSE)
     }
 }
+
+/**
+ * The hands once the card at [slot] is put down: it goes, so does every card whose rank is
+ * known to match it — the toss-in the step exists to set up — and the draw that takes its place
+ * is a card nobody has seen, priced at the deck's mean.
+ */
+private fun Map<String, List<PlanCard>>.puttingDown(slot: Slot): Map<String, List<PlanCard>> {
+    val put = this[slot.seat]?.getOrNull(slot.position) ?: return this
+    val rank = put.rank.takeIf { put.rankKnown }
+    return mapValues { (seat, hand) ->
+        val kept = hand.filterIndexed { position, card ->
+            val isTheCard = seat == slot.seat && position == slot.position
+            val matches = rank != null && card.rankKnown && card.rank == rank
+            !isTheCard && !matches
+        }
+        val drawn = put.copy(id = "drawn", value = UNSEEN_CARD_VALUE, rankKnown = false)
+        if (seat == slot.seat) kept + drawn else kept
+    }
+}
+
+/** The deck's mean value, which is what a card nobody has seen is worth to a plan. */
+private val UNSEEN_CARD_VALUE = ALL_RANKS.sumOf(::getCardValue) / ALL_RANKS.size
 
 /** Whether the hands have a card at [slot] at all: a step naming a card that is not there is unreadable. */
 internal fun Map<String, List<PlanCard>>.holds(slot: Slot): Boolean =

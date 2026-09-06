@@ -453,12 +453,22 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
       reset agreement in a loop; the bound on that is a decision, not a default
       — **half, with 2.5:** bots *seed* every empty lane, their own included. What is left is
       replacing a step after a person has set it, and saying why — the part that needs the bound
-- [~] 3.14 **Toss-in intents** in the plan beside the turn lanes: "I hold a 7 and will shed it",
+- [x] 3.14 **Toss-in intents** in the plan beside the turn lanes: "I hold a 7 and will shed it",
       and the proposal that sets it up — "put down a 7". No conditional language (design D13a)
       — **the intent half:** "Throw in" on the open board opens the rank rail and puts a shed in
       the viewer's own name; sheds are drawn on the board and only their owner takes one back;
       the readout prices them. The proposal that sets one up — a lane step "put down a 7" — is
       not a `Step` yet
+      — **the proposal half, done:** `Step.PutDown(card)` — draw, and swap the draw into that
+      card's place so it lands face up for a teammate to throw in on. The door lets only the
+      lane's own seat put a card down (the draw goes into their hand), the composer offers it
+      only for a card the table knows the rank of, the readout and the bots' answer price it as
+      the card leaving with every known match and an unseen draw arriving, the health follower
+      tracks its card through a watched swap, the rehearsal mimes it as a swap into hand, and
+      once the draw is in hand it is pre-armed as the same tap swapping into that place is.
+      `PlanEditTest.aCardIsPutDownOnlyByTheHandThatHoldsIt`,
+      `LaneAnswerTest.puttingDownACardIsJudgedOnTheHandItLeavesBehind`,
+      `PlanBoardTest.aLaneCanPutDownACardTheTableKnowsForATeammateToThrowInOn`
 - [x] 3.15 The toss-in risk is shown to the hand the coalition is pushing: a wrong one costs a
       card and bars that seat for the rest of the round
       — `Detail.ShedRisk(pushed)` under the shed rail: sharper for the viewer whose hand is the

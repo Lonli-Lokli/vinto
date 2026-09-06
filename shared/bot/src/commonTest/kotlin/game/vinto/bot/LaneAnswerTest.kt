@@ -95,6 +95,16 @@ class LaneAnswerTest {
     }
 
     @Test
+    fun puttingDownACardIsJudgedOnTheHandItLeavesBehind() {
+        // 3.14: the bot's ten goes to the pile and an unseen draw takes its place; the lowest
+        // hand is still the teammate's three, so yes. Putting the three itself down leaves that
+        // hand holding only a draw, which is worse for the coalition than the three was.
+        assertEquals(TableTalk.Answer.Says.YES, says(Step.PutDown(CardAt(bot, 0))))
+        assertEquals(TableTalk.Answer.Says.THAT_LEAVES_US_WORSE, says(Step.PutDown(CardAt(mate, 0))))
+        assertEquals(TableTalk.Answer.Says.NO, says(Step.PutDown(CardAt(bot, 7))))
+    }
+
+    @Test
     fun aStepNamingACardThatIsNotThereIsANo() {
         assertEquals(TableTalk.Answer.Says.NO, says(Step.Swap(CardAt(bot, 7), CardAt(mate, 0))))
     }

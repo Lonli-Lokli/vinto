@@ -129,6 +129,8 @@ private fun applied(
                 }
             }
 
+            is Step.PutDown -> working = putDown(working, step.card, view)
+
             Step.TakeTheDiscard, null -> Unit
         }
     }
@@ -149,6 +151,26 @@ private fun applied(
     }
 
     return working
+}
+
+/**
+ * The card at [card] put down: it leaves, every coalition card believed to match its rank
+ * leaves with it — the toss-in the step sets up — and the draw that takes its place is an
+ * unseen card, priced as one.
+ */
+private fun putDown(hands: Map<String, List<Int>>, card: CardAt, view: PlayerView): Map<String, List<Int>> {
+    val owner = view.players.firstOrNull { it.id == card.seat } ?: return hands
+    if (hands[card.seat]?.getOrNull(card.position) == null) return hands
+    val rank = believedOnView(owner, card.position).candidates.singleOrNull()
+    return hands.mapValues { (seat, hand) ->
+        val holder = view.players.first { it.id == seat }
+        val kept = hand.filterIndexed { position, _ ->
+            val isTheCard = seat == card.seat && position == card.position
+            val matches = rank != null && believedOnView(holder, position).candidates.singleOrNull() == rank
+            !isTheCard && !matches
+        }
+        if (seat == card.seat) kept + UNSEEN_CARD else kept
+    }
 }
 
 private fun swap(hands: Map<String, List<Int>>, from: CardAt, to: CardAt): Map<String, List<Int>> {

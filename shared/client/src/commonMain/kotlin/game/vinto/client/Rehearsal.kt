@@ -12,6 +12,7 @@ import game.vinto.shapes.GameAction
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.Step
+import game.vinto.shapes.SwapCardPayload
 import game.vinto.shapes.TargetType
 
 /**
@@ -88,6 +89,36 @@ private fun PlayerView.after(step: Step): PlayerView? = when (step) {
     // Nothing to show: what comes off the pile is a card the plan already knows about, and the
     // interesting part is what its action then does, which the next step describes.
     Step.TakeTheDiscard -> this
+
+    is Step.PutDown -> putDown(step.card)
+}
+
+/**
+ * The card goes to the pile and an unseen draw takes its place. What teammates then throw in
+ * on it is theirs to do and the readout's to price; the rehearsal shows the step itself.
+ */
+private fun PlayerView.putDown(at: CardAt): PlayerView? {
+    val here = cardAt(at) ?: return null
+    return copy(
+        players = players.map { seat ->
+            if (seat.id != at.seat) {
+                seat
+            } else {
+                seat.copy(
+                    cards = seat.cards.mapIndexed { position, card ->
+                        if (position ==
+                            at.position
+                        ) {
+                            CardView.Hidden
+                        } else {
+                            card
+                        }
+                    },
+                )
+            }
+        },
+        discardTop = (here as? CardView.Visible)?.card ?: discardTop,
+    )
 }
 
 private fun claims(seat: PlayerSeatView, position: Int, step: Step.Declare): Boolean =
@@ -122,6 +153,7 @@ private fun PlayerView.cardAt(at: CardAt): CardView? =
  * Only a swap needs it: the other two steps animate from what is already on the table.
  */
 private fun PlayerView.staging(seat: String, step: Step): PlayerView? {
+    if (step is Step.PutDown) return drawing(seat)
     if (step !is Step.Swap) return null
     val here = cardAt(step.from) ?: return null
     val there = cardAt(step.to) ?: return null
@@ -141,6 +173,17 @@ private fun PlayerView.staging(seat: String, step: Step): PlayerView? {
     )
 }
 
+/** The seat with an unseen draw in front of it, which is where a put-down starts. */
+private fun PlayerView.drawing(seat: String): PlayerView = copy(
+    pendingAction = PendingActionView(
+        playerId = seat,
+        actionPhase = ActionPhase.CHOOSING_ACTION,
+        from = PendingCardOrigin.DRAWING,
+        card = CardView.Hidden,
+        targets = emptyList(),
+    ),
+)
+
 /**
  * The action a step is *mimed* as, so the existing choreography can draw it.
  *
@@ -150,6 +193,7 @@ private fun PlayerView.staging(seat: String, step: Step): PlayerView? {
  */
 private fun miming(seat: String, step: Step): GameAction = when (step) {
     is Step.Swap -> GameAction.ExecuteJackSwap(PlayerIdPayload(seat))
+    is Step.PutDown -> GameAction.SwapCard(SwapCardPayload(seat, step.card.position))
     is Step.Declare -> GameAction.DeclareKingAction(
         game.vinto.shapes.DeclareKingActionPayload(seat, step.rank),
     )

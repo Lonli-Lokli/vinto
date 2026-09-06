@@ -449,6 +449,7 @@
     <string name="label_keep_it_instead">대신 이 카드를 쓸게요</string>
     <string name="label_plan_swap">카드 두 장 바꾸기</string>
     <string name="label_plan_declare">숫자 선언하기</string>
+    <string name="label_plan_put_down">카드 내려놓기</string>
     <string name="label_plan_take_discard">버림패 가져오기</string>
     <string name="label_plan_clear">지우기</string>
     <string name="label_plan_shed">던져 넣기</string>
@@ -469,6 +470,8 @@
     <string name="ask_what_should_they_do">%1$s는 이번 차례에 무엇을 해야 할까요?</string>
     <string name="ask_which_rank_will_you_declare">킹으로 어떤 숫자를 선언할까요?</string>
     <string name="ask_which_rank_should_they_declare">%1$s는 킹으로 어떤 숫자를 선언해야 할까요?</string>
+    <string name="ask_which_card_will_you_put_down">팀원이 던져 넣을 수 있도록 어떤 카드를 내려놓을까요?</string>
+    <string name="ask_which_card_should_they_put_down">%1$s는 팀원이 던져 넣을 수 있도록 어떤 카드를 내려놓아야 할까요?</string>
     <string name="detail_plan_asks">계획: %1$s.</string>
     <string name="detail_draw_beats_plan">%1$s 카드가 계획보다 나아요. %2$d번 카드 대신 이 카드를 쓰세요.</string>
     <string name="detail_plan_is_a_suggestion">계획은 하나의 제안일 뿐이에요. 결정은 차례인 사람이 해요.</string>
@@ -482,6 +485,8 @@
     <string name="board_step_swap">%1$s 카드 %2$d와 %3$s 카드 %4$d를 교환하기</string>
     <string name="board_step_declare">킹으로 %1$s 선언하기</string>
     <string name="board_step_take_discard">버림패 가져오기</string>
+    <string name="board_step_put_down">%1$s 카드 %2$d를 내려놓기</string>
+    <string name="board_step_put_down_known">%1$s 카드 %2$d(%3$s)를 내려놓기</string>
     <string name="board_shed">%1$s가 %2$s가 나오면 던져 넣을 거예요</string>
     <string name="board_edited_by">%1$s가 마지막으로 바꿨어요</string>
     <string name="board_nod_yes">%1$s가 동의했어요</string>

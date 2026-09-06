@@ -560,6 +560,7 @@
     <string name="label_keep_it_instead">Keep it instead</string>
     <string name="label_plan_swap">Swap two cards</string>
     <string name="label_plan_declare">Declare a rank</string>
+    <string name="label_plan_put_down">Put a card down</string>
     <string name="label_plan_take_discard">Take the discard</string>
     <string name="label_plan_clear">Clear</string>
     <string name="label_plan_shed">Throw in</string>
@@ -582,6 +583,8 @@
     <string name="ask_what_should_they_do">What should %1$s do with their turn?</string>
     <string name="ask_which_rank_will_you_declare">Which rank will you declare with the King?</string>
     <string name="ask_which_rank_should_they_declare">Which rank should %1$s declare with the King?</string>
+    <string name="ask_which_card_will_you_put_down">Which card will you put down for a teammate to throw in on?</string>
+    <string name="ask_which_card_should_they_put_down">Which card should %1$s put down for a teammate to throw in on?</string>
     <string name="detail_plan_asks">The plan: %1$s.</string>
     <!-- The drawn card does more for the coalition than the plan's step would: %1$s the card's
          name, %2$d the 1-based position of the viewer's card it should replace. -->
@@ -598,6 +601,11 @@
     <string name="board_step_swap">swap %1$s card %2$d with %3$s card %4$d</string>
     <string name="board_step_declare">declare %1$s with a King</string>
     <string name="board_step_take_discard">take the discard</string>
+    <!-- A lane step that puts one of the seat's own cards on the pile so a teammate can throw a
+         match in: %1$s the owner ("your" / "Nina’s"), %2$d the card's 1-based position, and in
+         the _known form %3$s the rank the table knows it to be. -->
+    <string name="board_step_put_down">put down %1$s card %2$d</string>
+    <string name="board_step_put_down_known">put down %1$s card %2$d, the %3$s</string>
     <string name="board_shed">%1$s will throw in a %2$s</string>
     <string name="board_edited_by">last changed by %1$s</string>
     <string name="board_nod_yes">%1$s agreed</string>

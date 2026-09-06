@@ -99,6 +99,12 @@ fun readPlan(view: PlayerView, plan: CoalitionPlan, reveals: List<PublicReveal>)
                 repaired += lane
                 health += StepHealth.LIVE
             }
+
+            is Step.PutDown -> {
+                val at = follow(view, step.card, contradicted)
+                repaired += lane.copy(step = Step.PutDown(at.first))
+                health += at.second
+            }
         }
     }
 

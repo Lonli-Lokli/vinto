@@ -469,6 +469,7 @@
     <string name="label_keep_it_instead">الاحتفاظ بها بدلًا من ذلك</string>
     <string name="label_plan_swap">مبادلة بطاقتين</string>
     <string name="label_plan_declare">إعلان رتبة</string>
+    <string name="label_plan_put_down">وضع بطاقة</string>
     <string name="label_plan_take_discard">أخذ بطاقة التخلص</string>
     <string name="label_plan_clear">مسح</string>
     <string name="label_plan_shed">رمي مطابق</string>
@@ -490,6 +491,8 @@
     <string name="ask_what_should_they_do">ماذا سيُفعل في دور %1$s؟</string>
     <string name="ask_which_rank_will_you_declare">ما الرتبة التي ستُعلَن بالملك في دورك؟</string>
     <string name="ask_which_rank_should_they_declare">ما الرتبة التي ستُعلَن بالملك في دور %1$s؟</string>
+    <string name="ask_which_card_will_you_put_down">ما البطاقة التي ستوضع في دورك ليطرح عليها زميل بطاقة مطابقة؟</string>
+    <string name="ask_which_card_should_they_put_down">ما البطاقة التي توضع في دور %1$s ليطرح عليها زميل بطاقة مطابقة؟</string>
     <string name="detail_plan_asks">الخطة: %1$s.</string>
     <string name="detail_draw_beats_plan">بطاقة %1$s التي سحبتها أفضل من الخطة: احتفظ بها بدلًا من البطاقة رقم %2$d.</string>
     <string name="detail_plan_is_a_suggestion">الخطة اقتراح لا أكثر. القرار لمن يملك الدور.</string>
@@ -503,6 +506,8 @@
     <string name="board_step_swap">مبادلة البطاقة رقم %2$d التي %1$s مع البطاقة رقم %4$d التي %3$s</string>
     <string name="board_step_declare">إعلان %1$s بالملك</string>
     <string name="board_step_take_discard">أخذ بطاقة التخلص</string>
+    <string name="board_step_put_down">وضع البطاقة رقم %2$d التي %1$s</string>
+    <string name="board_step_put_down_known">وضع البطاقة رقم %2$d التي %1$s، وهي %3$s</string>
     <string name="board_shed">سيرمي %1$s %2$s</string>
     <string name="board_edited_by">آخر تعديل: %1$s</string>
     <string name="board_nod_yes">وافق %1$s</string>

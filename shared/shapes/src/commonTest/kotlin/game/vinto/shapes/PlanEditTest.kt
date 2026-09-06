@@ -58,6 +58,23 @@ class PlanEditTest {
     }
 
     @Test
+    fun aCardIsPutDownOnlyByTheHandThatHoldsIt() {
+        // 3.14: putting a card down means drawing into its place, and only the lane's own seat
+        // draws on that turn — a plan that had Ann put Bob's card down would be a plan nobody
+        // could carry out.
+        assertEquals(
+            "you can only put down your own card",
+            refused(null, PlanEdit.SetLane(ann, Step.PutDown(CardAt(bob, 0))), by = ann),
+        )
+        val own = edited(null, PlanEdit.SetLane(ann, Step.PutDown(CardAt(ann, 0))), by = ann)
+        assertEquals(Step.PutDown(CardAt(ann, 0)), own.lanes.single().step)
+        assertEquals(
+            "a step may not touch the caller's cards",
+            refused(null, PlanEdit.SetLane(ann, Step.PutDown(CardAt(caller, 0))), by = ann),
+        )
+    }
+
+    @Test
     fun theSameLaneEditedTwiceIsLastEditStands() {
         val first = edited(null, PlanEdit.SetLane(ann, swap(ann, bob)), by = ann)
         val second = edited(first, PlanEdit.SetLane(ann, Step.TakeTheDiscard), by = bob)

@@ -485,6 +485,7 @@
     <string name="label_keep_it_instead">Quedarse con ella</string>
     <string name="label_plan_swap">Cambiar dos cartas</string>
     <string name="label_plan_declare">Declarar un rango</string>
+    <string name="label_plan_put_down">Dejar una carta</string>
     <string name="label_plan_take_discard">Tomar el descarte</string>
     <string name="label_plan_clear">Borrar</string>
     <string name="label_plan_shed">Lanzar</string>
@@ -505,6 +506,8 @@
     <string name="ask_what_should_they_do">¿Qué debería hacer %1$s en su turno?</string>
     <string name="ask_which_rank_will_you_declare">¿Qué rango declararás con el Rey?</string>
     <string name="ask_which_rank_should_they_declare">¿Qué rango debería declarar %1$s con el Rey?</string>
+    <string name="ask_which_card_will_you_put_down">¿Qué carta dejarás para que un compañero de equipo lance la suya?</string>
+    <string name="ask_which_card_should_they_put_down">¿Qué carta debería dejar %1$s para que un compañero de equipo lance la suya?</string>
     <string name="detail_plan_asks">El plan: %1$s.</string>
     <string name="detail_draw_beats_plan">Tu %1$s mejora el plan: quédate con ella en lugar de la carta %2$d.</string>
     <string name="detail_plan_is_a_suggestion">Un plan es una sugerencia. Decide quien tenga el turno.</string>
@@ -518,6 +521,8 @@
     <string name="board_step_swap">cambiar la carta %2$d %1$s por la carta %4$d %3$s</string>
     <string name="board_step_declare">declarar %1$s con un Rey</string>
     <string name="board_step_take_discard">tomar el descarte</string>
+    <string name="board_step_put_down">dejar la carta %2$d %1$s</string>
+    <string name="board_step_put_down_known">dejar la carta %2$d %1$s, la %3$s</string>
     <string name="board_shed">%1$s lanzará un %2$s</string>
     <string name="board_edited_by">último cambio de %1$s</string>
     <string name="board_nod_yes">%1$s está de acuerdo</string>

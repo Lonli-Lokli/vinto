@@ -134,6 +134,18 @@ sealed interface Step {
     @Serializable
     @SerialName("take-discard")
     data object TakeTheDiscard : Step
+
+    /**
+     * Put one of your own cards face up on the pile — draw, and swap the draw into that card's
+     * place — so that a teammate holding its rank can throw theirs in on it (task 3.14).
+     *
+     * The proposal that sets a shed up: "I hold a 7" is a [Shed], and this is the lane step
+     * that lands a 7 for it. Only the lane's own seat can put a card down, since it is their
+     * hand the draw goes into; the door holds that.
+     */
+    @Serializable
+    @SerialName("put-down")
+    data class PutDown(val card: CardAt) : Step
 }
 
 // ---------------------------------------------------------------- editing the board
@@ -230,6 +242,11 @@ fun CoalitionPlan?.edited(
             if (edit.step is Step.Swap && edit.step.from.seat == edit.step.to.seat) {
                 return PlanEditOutcome.Refused("a swap is between two hands")
             }
+            // The draw goes into the hand that puts the card down, and only the lane's own seat
+            // draws on that turn.
+            if (edit.step is Step.PutDown && edit.step.card.seat != edit.seat) {
+                return PlanEditOutcome.Refused("you can only put down your own card")
+            }
             lanes[edit.seat] = Lane(seat = edit.seat, step = edit.step, locked = false)
         }
 
@@ -276,6 +293,7 @@ private fun laneRefusal(
 /** The cards a step names, so a door can check whose they are. */
 fun Step.cardsNamed(): List<CardAt> = when (this) {
     is Step.Swap -> listOf(from, to)
+    is Step.PutDown -> listOf(card)
     is Step.Declare, Step.TakeTheDiscard -> emptyList()
 }
 

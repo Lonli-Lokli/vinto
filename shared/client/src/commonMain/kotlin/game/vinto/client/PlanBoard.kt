@@ -95,6 +95,9 @@ sealed interface StepLine {
     data class Swap(val fromWho: Speaker, val fromSlot: Int, val toWho: Speaker, val toSlot: Int) : StepLine
     data class Declare(val rank: Rank) : StepLine
     data object TakeTheDiscard : StepLine
+
+    /** Put [who]'s card [slot] on the pile; [rank] when the table knows what it is. */
+    data class PutDown(val who: Speaker, val slot: Int, val rank: Rank?) : StepLine
 }
 
 /** Somebody will throw in a rank if it lands. [move] takes it back, for the one who said it. */
@@ -104,7 +107,7 @@ data class ShedLine(val who: Speaker, val rank: Rank, val move: Move? = null)
 data class Nod(val who: Speaker, val agreed: Boolean, val away: Boolean)
 
 /** What a lane is being composed as, once the person has said which kind of step. */
-enum class StepKind { SWAP, DECLARE }
+enum class StepKind { SWAP, DECLARE, PUT_DOWN }
 
 /**
  * The board for [view]'s seat, or null when there is nothing to draw.
@@ -251,6 +254,12 @@ internal fun stepLine(view: PlayerView, step: Step): StepLine = when (step) {
 
     is Step.Declare -> StepLine.Declare(step.rank)
     Step.TakeTheDiscard -> StepLine.TakeTheDiscard
+    is Step.PutDown -> StepLine.PutDown(
+        who = speakerFor(view, step.card.seat),
+        slot = step.card.position + 1,
+        rank = view.players.firstOrNull { it.id == step.card.seat }
+            ?.let { knownRankOf(view, it, step.card.position) },
+    )
 }
 
 // ---------------------------------------------------------------------------- the composer
@@ -275,6 +284,11 @@ internal fun planningTable(view: PlayerView, question: Question.Planning, plan: 
             choices = buildList {
                 add(Choice(Label.PlanASwap, Move.Ask(question.copy(kind = StepKind.SWAP))))
                 add(Choice(Label.PlanADeclare, Move.Ask(question.copy(kind = StepKind.DECLARE))))
+                // Putting a card down needs a card the table knows the rank of, or there is
+                // nothing for a teammate to hold a match to.
+                if (seat.cards.indices.any { knownRankOf(view, seat, it) != null }) {
+                    add(Choice(Label.PlanAPutDown, Move.Ask(question.copy(kind = StepKind.PUT_DOWN))))
+                }
                 // Only while there is an unplayed action card to take — the same rule the turn
                 // itself applies. A step that could not be done is not worth a button.
                 val top = view.discardTop
@@ -295,6 +309,7 @@ internal fun planningTable(view: PlayerView, question: Question.Planning, plan: 
         )
 
         StepKind.SWAP -> swapPlanningTable(view, question)
+        StepKind.PUT_DOWN -> putDownPlanningTable(view, question, seat)
 
         // A King names a rank so that every coalition hand holding one throws it in. The ranks
         // worth naming are the ones the table knows a coalition hand to hold — the rest are on
@@ -366,6 +381,36 @@ private fun swapPlanningTable(view: PlayerView, question: Question.Planning): Ta
  * at by position and has nothing to follow.
  */
 
+/**
+ * One of the lane seat's own cards, tapped — the one that will go on the pile for a teammate to
+ * throw in on (3.14). Only cards whose rank the table knows are on offer: a put-down of a
+ * mystery sets nothing up.
+ */
+private fun putDownPlanningTable(view: PlayerView, question: Question.Planning, seat: PlayerSeatView): Table {
+    val taps = seat.cards.indices
+        .filter { knownRankOf(view, seat, it) != null }
+        .associate { position ->
+            val ref = CardRef(seat.id, position)
+            ref to Move.Plan(PlanEdit.SetLane(seat.id, Step.PutDown(cardAt(view, ref))))
+        }
+    return Table(
+        prompt = Ask.WhichCardShouldTheyPutDown(speakerFor(view, seat.id)),
+        detail = Detail.APlanIsASuggestion,
+        choices = listOf(Choice(Label.Back, Move.Ask(question.copy(kind = null, from = null)))),
+        taps = taps,
+    )
+}
+
+/**
+ * The rank of a card as this table can name it: what standing claims settle on, or what the
+ * viewer can see of their own hand. Null where nobody could say.
+ */
+internal fun knownRankOf(view: PlayerView, hand: PlayerSeatView, position: Int): Rank? {
+    believedOnView(hand, position).candidates.singleOrNull()?.let { return it }
+    if (hand.id != view.viewerId) return null
+    return (hand.cards.getOrNull(position) as? CardView.Visible)?.card?.rank
+}
+
 /** A card the plan may name: claimed by somebody, or one of the viewer's own they have read. */
 private fun spokenFor(view: PlayerView, hand: PlayerSeatView, position: Int): Boolean {
     val claimed = believedOnView(hand, position).sources.isNotEmpty()
@@ -434,6 +479,17 @@ private fun betterDraw(view: PlayerView, plan: CoalitionPlan): KeepInstead? {
 private fun Table.armedMove(view: PlayerView, step: Step): Move? = when (step) {
     Step.TakeTheDiscard -> {
         choices.firstOrNull { it.label is Label.UseFromPile }?.move
+    }
+
+    // Once the draw is in hand, putting the card down is the same tap as swapping into its
+    // place; before the draw there is nothing to arm but drawing, which needs no help.
+    is Step.PutDown -> {
+        val drawn = view.pendingAction?.takeIf { it.playerId == view.viewerId && it.canGoToHand }
+        if (drawn != null && step.card.seat == view.viewerId && view.subPhase == GameSubPhase.CHOOSING) {
+            Move.Ask(Question.CallRank(step.card.position))
+        } else {
+            null
+        }
     }
 
     is Step.Declare -> {

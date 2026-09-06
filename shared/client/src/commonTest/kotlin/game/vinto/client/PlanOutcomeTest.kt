@@ -109,6 +109,24 @@ class PlanOutcomeTest {
     }
 
     @Test
+    fun puttingACardDownTakesEveryKnownMatchWithItAndPricesTheDraw() {
+        // 3.14: my nine goes to the pile and the mate's claimed nine follows it in the toss-in,
+        // leaving them a King alone — 0. The draw that takes my nine's place is unseen and
+        // priced as one, so my hand is 2 plus the deck's mean rather than 2.
+        val nines = table(mine = listOf(Rank.TWO, Rank.NINE), theirs = listOf(Rank.NINE, Rank.KING))
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 1)))),
+            agreed = listOf(me),
+            editedBy = me,
+        )
+        assertEquals(0, read(nines, plan).ourBest)
+
+        // No match anywhere: the card leaves, the draw arrives, and nothing else moves.
+        val alone = read(table(mine = listOf(Rank.TWO, Rank.THREE)), plan)
+        assertEquals(7, alone.ourBest, "the draw that replaces a put-down card was priced as free")
+    }
+
+    @Test
     fun levelIsALossBecauseATiePaysTheCaller() {
         // Mine is 5; the caller's claimed hand is 4+1 = 5. Exactly level — which pays them.
         val outcome = read(table(callers = listOf(Rank.FOUR, Rank.ACE)))

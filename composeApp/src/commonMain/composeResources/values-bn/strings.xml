@@ -449,6 +449,7 @@
     <string name="label_keep_it_instead">বরং এটি রাখুন</string>
     <string name="label_plan_swap">দুটি তাস বদলান</string>
     <string name="label_plan_declare">একটি র‌্যাংক ঘোষণা করুন</string>
+    <string name="label_plan_put_down">একটি তাস রাখুন</string>
     <string name="label_plan_take_discard">বাতিল তাসটি নিন</string>
     <string name="label_plan_clear">মুছুন</string>
     <string name="label_plan_shed">ফেলে দিন</string>
@@ -469,6 +470,8 @@
     <string name="ask_what_should_they_do">%1$s তাঁর পালায় কী করবেন?</string>
     <string name="ask_which_rank_will_you_declare">King দিয়ে আপনি কোন র‌্যাংক ঘোষণা করবেন?</string>
     <string name="ask_which_rank_should_they_declare">King দিয়ে %1$s কোন র‌্যাংক ঘোষণা করবেন?</string>
+    <string name="ask_which_card_will_you_put_down">একজন সতীর্থ ফেলার সুযোগ পাওয়ার জন্য আপনি কোন তাসটি রাখবেন?</string>
+    <string name="ask_which_card_should_they_put_down">একজন সতীর্থ ফেলার সুযোগ পাওয়ার জন্য %1$s কোন তাসটি রাখবেন?</string>
     <string name="detail_plan_asks">পরিকল্পনা: %1$s।</string>
     <string name="detail_draw_beats_plan">আপনার %1$s পরিকল্পনার চেয়ে ভালো: %2$d নম্বর তাসের বদলে এটি রাখুন।</string>
     <string name="detail_plan_is_a_suggestion">একটি পরিকল্পনা একটি পরামর্শমাত্র। যার পালা, সিদ্ধান্ত তাঁরই।</string>
@@ -482,6 +485,8 @@
     <string name="board_step_swap">%1$s তাস %2$d, %3$s তাস %4$d-এর সাথে বদলান</string>
     <string name="board_step_declare">King দিয়ে %1$s ঘোষণা করুন</string>
     <string name="board_step_take_discard">বাতিল তাসটি নিন</string>
+    <string name="board_step_put_down">%1$s তাস %2$d রাখুন</string>
+    <string name="board_step_put_down_known">%1$s তাস %2$d, যা %3$s, রাখুন</string>
     <string name="board_shed">%1$s একটি %2$s ফেলে দেবেন</string>
     <string name="board_edited_by">সবশেষ পরিবর্তন করেছেন %1$s</string>
     <string name="board_nod_yes">%1$s সম্মত হয়েছেন</string>

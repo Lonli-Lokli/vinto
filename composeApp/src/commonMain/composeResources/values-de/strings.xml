@@ -449,6 +449,7 @@
     <string name="label_keep_it_instead">Stattdessen behalten</string>
     <string name="label_plan_swap">Zwei Karten tauschen</string>
     <string name="label_plan_declare">Einen Rang benennen</string>
+    <string name="label_plan_put_down">Eine Karte ablegen</string>
     <string name="label_plan_take_discard">Die Ablage nehmen</string>
     <string name="label_plan_clear">Löschen</string>
     <string name="label_plan_shed">Einwerfen</string>
@@ -471,6 +472,8 @@
     <string name="ask_what_should_they_do">Was soll %1$s mit dem Zug machen?</string>
     <string name="ask_which_rank_will_you_declare">Welchen Rang erklären Sie mit dem König?</string>
     <string name="ask_which_rank_should_they_declare">Welchen Rang soll %1$s mit dem König erklären?</string>
+    <string name="ask_which_card_will_you_put_down">Welche Karte legen Sie ab, damit ein Teammitglied einwerfen kann?</string>
+    <string name="ask_which_card_should_they_put_down">Welche Karte soll %1$s ablegen, damit ein Teammitglied einwerfen kann?</string>
     <string name="detail_plan_asks">Der Plan: %1$s.</string>
     <string name="detail_draw_beats_plan">Ihr %1$s ist besser als der Plan: behalten Sie es anstelle von Karte %2$d.</string>
     <string name="detail_plan_is_a_suggestion">Ein Plan ist ein Vorschlag. Wer am Zug ist, entscheidet.</string>
@@ -484,6 +487,8 @@
     <string name="board_step_swap">Karte %2$d %1$s gegen Karte %4$d %3$s tauschen</string>
     <string name="board_step_declare">%1$s mit einem König erklären</string>
     <string name="board_step_take_discard">die Ablage nehmen</string>
+    <string name="board_step_put_down">Karte %2$d %1$s ablegen</string>
+    <string name="board_step_put_down_known">Karte %2$d %1$s ablegen, den Rang %3$s</string>
     <string name="board_shed">%1$s wirft %2$s ein</string>
     <string name="board_edited_by">zuletzt geändert von %1$s</string>
     <string name="board_nod_yes">%1$s hat zugestimmt</string>

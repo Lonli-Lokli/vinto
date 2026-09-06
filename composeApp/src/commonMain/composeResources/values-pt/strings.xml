@@ -466,6 +466,7 @@
     <string name="label_keep_it_instead">Guardar em vez disso</string>
     <string name="label_plan_swap">Trocar duas cartas</string>
     <string name="label_plan_declare">Declarar um valor</string>
+    <string name="label_plan_put_down">Colocar uma carta</string>
     <string name="label_plan_take_discard">Tirar do descarte</string>
     <string name="label_plan_clear">Limpar</string>
     <string name="label_plan_shed">Descartar</string>
@@ -487,6 +488,8 @@
     <string name="ask_what_should_they_do">O que deve %1$s fazer na sua jogada?</string>
     <string name="ask_which_rank_will_you_declare">Que valor vais declarar com o Rei?</string>
     <string name="ask_which_rank_should_they_declare">Que valor deve %1$s declarar com o Rei?</string>
+    <string name="ask_which_card_will_you_put_down">Que carta vais colocar para um colega de equipa atirar em cima?</string>
+    <string name="ask_which_card_should_they_put_down">Que carta deve %1$s colocar para um colega de equipa atirar em cima?</string>
     <string name="detail_plan_asks">O plano: %1$s.</string>
     <string name="detail_draw_beats_plan">%1$s supera o plano: fica com ela em vez da carta %2$d.</string>
     <string name="detail_plan_is_a_suggestion">Um plano é uma sugestão. Decide quem estiver a jogar.</string>
@@ -500,6 +503,8 @@
     <string name="board_step_swap">trocar a carta %2$d, %1$s, pela carta %4$d, %3$s</string>
     <string name="board_step_declare">declarar %1$s com um Rei</string>
     <string name="board_step_take_discard">tirar do descarte</string>
+    <string name="board_step_put_down">colocar a carta %2$d, %1$s</string>
+    <string name="board_step_put_down_known">colocar a carta %2$d, %1$s, o %3$s</string>
     <string name="board_shed">%1$s vai atirar um %2$s</string>
     <string name="board_edited_by">última alteração de %1$s</string>
     <string name="board_nod_yes">%1$s concordou</string>

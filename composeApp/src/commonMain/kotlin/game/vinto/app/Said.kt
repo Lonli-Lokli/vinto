@@ -30,6 +30,8 @@ import game.vinto.app.art.ask_what_do_you_say
 import game.vinto.app.art.ask_what_should_they_do
 import game.vinto.app.art.ask_what_will_you_do
 import game.vinto.app.art.ask_which_card_replaced
+import game.vinto.app.art.ask_which_card_should_they_put_down
+import game.vinto.app.art.ask_which_card_will_you_put_down
 import game.vinto.app.art.ask_which_rank_should_they_declare
 import game.vinto.app.art.ask_which_rank_throw_in
 import game.vinto.app.art.ask_which_rank_will_you_declare
@@ -131,6 +133,8 @@ import game.vinto.app.art.board_outcome_wins
 import game.vinto.app.art.board_owner_named
 import game.vinto.app.art.board_owner_you
 import game.vinto.app.art.board_step_declare
+import game.vinto.app.art.board_step_put_down
+import game.vinto.app.art.board_step_put_down_known
 import game.vinto.app.art.board_step_swap
 import game.vinto.app.art.board_step_take_discard
 import game.vinto.app.art.board_title
@@ -188,6 +192,7 @@ import game.vinto.app.art.label_keep_it_instead
 import game.vinto.app.art.label_not_sure_which_way
 import game.vinto.app.art.label_plan_clear
 import game.vinto.app.art.label_plan_declare
+import game.vinto.app.art.label_plan_put_down
 import game.vinto.app.art.label_plan_shed
 import game.vinto.app.art.label_plan_swap
 import game.vinto.app.art.label_plan_take_discard
@@ -448,6 +453,7 @@ fun labelled(label: Label): String = when (label) {
     Label.Done -> stringResource(Res.string.choice_done)
     Label.Agree -> stringResource(Res.string.label_agree)
     Label.DoAsPlanned -> stringResource(Res.string.label_do_as_planned)
+    Label.PlanAPutDown -> stringResource(Res.string.label_plan_put_down)
     Label.KeepItInstead -> stringResource(Res.string.label_keep_it_instead)
     Label.PlanASwap -> stringResource(Res.string.label_plan_swap)
     Label.PlanADeclare -> stringResource(Res.string.label_plan_declare)
@@ -501,6 +507,11 @@ fun asked(ask: Ask): String = when (ask) {
         ask.who,
         Res.string.ask_which_rank_will_you_declare,
         Res.string.ask_which_rank_should_they_declare,
+    )
+    is Ask.WhichCardShouldTheyPutDown -> aboutTurn(
+        ask.who,
+        Res.string.ask_which_card_will_you_put_down,
+        Res.string.ask_which_card_should_they_put_down,
     )
     Ask.WhatDoYouSayThisCardIs -> stringResource(Res.string.ask_what_do_you_say)
     Ask.SayWhatItIsAndPlayIt -> stringResource(Res.string.ask_say_and_play)
@@ -654,6 +665,20 @@ fun stepWords(step: StepLine): String = when (step) {
 
     is StepLine.Declare -> stringResource(Res.string.board_step_declare, step.rank.serialName)
     StepLine.TakeTheDiscard -> stringResource(Res.string.board_step_take_discard)
+    is StepLine.PutDown -> {
+        // Bound locally: a smart cast on a property from another module is not allowed.
+        val rank = step.rank
+        if (rank == null) {
+            stringResource(Res.string.board_step_put_down, whose(step.who), step.slot)
+        } else {
+            stringResource(
+                Res.string.board_step_put_down_known,
+                whose(step.who),
+                step.slot,
+                rank.serialName,
+            )
+        }
+    }
 }
 
 /** "your", or "Nina's": the owner of a card, as a sentence needs it. */
