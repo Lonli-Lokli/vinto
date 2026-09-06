@@ -1,5 +1,1 @@
-La dernière manche devient un travail d'équipe. Une fois Vinto appelé, les trois autres peuvent discuter : dire ce qu'ils ont, proposer un coup, bâtir un plan commun que l'appelant ne voit pas. Regardez-le se dérouler avant de valider, et découvrez ce qu'il vaut avant que les cartes se retournent.
-
-Les robots ne jettent que les cartes qu'ils ont vraiment vues, et gardent un Joker pioché.
-
-Si le jeu en ligne demande une mise à jour, la partie a avancé ; le bouton mène au store.
+Première publication de Vinto. Cinq cartes, deux vues, trois adversaires qui déduisent les leurs. Appelez Vinto quand vous pensez avoir la main la plus basse. Solo hors ligne à trois niveaux, ou multijoueur en ligne avec six caractères à partager — pas de compte. Un tutoriel distribue une vraie manche, et vous pouvez le passer. Merci d'y jouer.

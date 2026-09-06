@@ -1,5 +1,9 @@
-La ronda final ahora es cosa de equipo. En cuanto alguien canta Vinto, los otros tres pueden hablar en la mesa: decir qué tienen, proponer una jugada y construir un plan conjunto que quien cantó no puede ver. Véalo ejecutarse antes de confirmarlo, y compruebe cuánto vale antes de descubrir las cartas.
+Primera versión de Vinto.
 
-Los bots solo tiran cartas que han visto de verdad, y conservan el Joker que roban.
+Cinco cartas, dos vistas, tres rivales deduciendo las suyas. Cante Vinto cuando crea tener la más baja.
 
-Si el juego en línea le pide actualizar, la sala ha avanzado; el botón le lleva a la tienda.
+Solitario sin conexión con tres niveles, o abra una sala y envíe seis caracteres — sin cuenta ni registro.
+
+Un tutorial reparte una ronda real; puede saltárselo.
+
+Gracias por jugar.

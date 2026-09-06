@@ -1,9 +1,9 @@
-Il round finale è ora un gioco di squadra.
+Prima versione di Vinto.
 
-Quando qualcuno dichiara Vinto, gli altri tre formano una coalizione e possono parlare al tavolo: dire cosa hanno in mano, proporre una mossa a un compagno e costruire un piano condiviso, corsia per corsia. Chiunque nella coalizione può modificare qualsiasi parte del piano; chi ha dichiarato Vinto non può vederlo. Guarda il piano svolgersi sul tavolo prima di impegnarti, e scopri quanto vale contro chi ha chiamato Vinto prima che le carte si girino.
+Cinque carte, due che hai visto, e tre avversari che stanno calcolando le loro nello stesso momento. Dichiara Vinto quando pensi di avere il punteggio più basso — se hai ragione, ci guadagni; se sbagli, lo paghi.
 
-I bot sono onesti su ciò che sanno: buttano solo le carte che hanno davvero visto, e tengono un Jolly pescato invece di metterlo sulla pila.
+Gioca in solitaria contro il computer a tre livelli di difficoltà, completamente offline. Oppure apri una stanza, invia sei caratteri, e chi li riceve è al tavolo — nessun account e nessuna registrazione, su telefono o nel browser.
 
-Se il gioco online ti chiede di aggiornare, vuol dire che la stanza è passata a una versione più recente del gioco; il pulsante ti porta all'App Store.
+C'è un tutorial che ti fa giocare un round vero invece di spiegarti le regole, e puoi saltarlo.
 
 Grazie per aver giocato.

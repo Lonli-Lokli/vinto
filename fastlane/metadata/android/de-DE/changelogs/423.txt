@@ -1,5 +1,1 @@
-Die Schlussrunde ist jetzt Teamarbeit. Sobald jemand Vinto ruft, reden die anderen drei am Tisch: was sie halten, ein Zugvorschlag, ein gemeinsamer Plan. Schauen Sie ihm vor der Bestätigung zu, und sehen Sie, was er wert ist, bevor die Karten umgedreht werden.
-
-Bots werfen nur Karten ein, die sie tatsächlich gesehen haben, und behalten einen gezogenen Joker.
-
-Verlangt das Online-Spiel ein Update, ist der Raum weitergezogen; die Schaltfläche führt Sie zum Store.
+Erste Version von Vinto: fünf Karten, zwei davon kennen Sie, drei Gegner die mitdenken. Rufen Sie Vinto, wenn Sie glauben, am niedrigsten zu liegen. Solo offline in drei Stärken, oder mit Freunden im eigenen Raum — kein Konto nötig. Mit überspringbarem Tutorial. Danke fürs Spielen.

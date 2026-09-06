@@ -1,9 +1,9 @@
-La ronda final ahora es cosa de equipo.
+Primera versión de Vinto.
 
-En cuanto alguien canta Vinto, los otros tres forman una coalición y pueden hablar en la mesa: decir qué tienen, proponer una jugada a un compañero y construir un plan conjunto, carril por carril. Cualquiera en la coalición puede modificar cualquier parte del plan; quien cantó Vinto no puede verlo. Véalo ejecutarse sobre el tapete antes de confirmarlo, y compruebe cuánto vale frente a quien cantó antes de descubrir las cartas.
+Cinco cartas, dos que ha visto, y tres rivales que están deduciendo las suyas al mismo tiempo. Cante Vinto cuando crea que tiene la más baja — si acierta, gana; si se equivoca, le cuesta.
 
-Los bots son honestos sobre lo que saben: solo tiran cartas que han visto de verdad, y conservan el Joker que roban en vez de ponerlo en la pila.
+Juegue en solitario contra la máquina con tres niveles de fuerza, totalmente sin conexión. O abra una sala, envíe seis caracteres, y quien los reciba se sienta a la mesa — sin cuenta ni registro, desde el teléfono o el navegador.
 
-Si el juego en línea le pide actualizar, la sala ha pasado a una versión más reciente del juego; el botón le lleva a la App Store.
+Hay un tutorial que reparte una ronda real en lugar de explicarle las reglas, y puede saltárselo.
 
 Gracias por jugar.

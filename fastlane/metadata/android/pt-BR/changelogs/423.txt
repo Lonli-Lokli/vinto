@@ -1,5 +1,9 @@
-A rodada final agora é um trabalho em equipe. Quando alguém chama Vinto, os outros três podem conversar na mesa: dizer o que têm, propor uma jogada e montar um plano em conjunto. Veja o plano rodar antes de confirmar, e veja o quanto ele vale antes das cartas virarem.
+Primeira versão do Vinto.
 
-Os bots só descartam cartas que realmente viram, e guardam um Coringa comprado.
+Cinco cartas, duas vistas, três oponentes desvendando as deles. Chame Vinto quando achar que tem a menor mão.
 
-Se o modo online pedir para atualizar, é porque a sala seguiu em frente; o botão te leva até a loja.
+Jogue sozinho contra o computador, totalmente offline, em três níveis. Ou abra uma sala e envie seis caracteres — sem conta, sem cadastro.
+
+Tutorial que distribui uma rodada de verdade, pode ser pulado.
+
+Obrigado por jogar.

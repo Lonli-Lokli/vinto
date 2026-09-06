@@ -1,5 +1,1 @@
-Babak final kini jadi kerja tim. Setelah seseorang menyatakan Vinto, tiga pemain lain bisa berunding: sebutkan kartu Anda, usulkan langkah, dan susun satu rencana bersama. Lihat rencana berjalan sebelum memutuskan, dan lihat nilainya sebelum kartu dibalik.
-
-Bot hanya melempar kartu yang benar-benar sudah mereka lihat, dan menyimpan Joker yang ditarik.
-
-Jika mode online meminta Anda memperbarui, artinya ruang permainan sudah berpindah versi; tombolnya membawa Anda ke sini.
+Rilis pertama Vinto!. Lima kartu, dua sudah Anda lihat, tiga lawan yang menyimpulkan kartu mereka sendiri di saat bersamaan. Klaim Vinto saat merasa nilai Anda paling rendah. Main solo offline pada tiga tingkat kekuatan, atau buka ruang permainan dan kirim enam karakter — tanpa akun, tanpa pendaftaran. Ada tutorial dengan babak sungguhan yang bisa dilewati. Terima kasih sudah bermain.

@@ -1,5 +1,7 @@
-The final round is a team effort now. Once someone calls Vinto, the other three can talk at the table: say what you hold, propose a move, and build one shared plan. Watch the plan run before you commit, and see what it is worth before the cards turn over.
+Vinto's first release.
 
-Bots throw in only cards they have actually seen, and keep a drawn Joker.
+Five cards, two you have seen, and three opponents working out theirs at the same time. Call Vinto when you think you are lowest — right pays, wrong costs.
 
-If online play asks you to update, it means the room has moved on; the button takes you here.
+Solo against the computer at three strengths, fully offline. Or open a room, send six characters, and whoever gets them is at the table. No account, no sign-up.
+
+Thank you for playing.

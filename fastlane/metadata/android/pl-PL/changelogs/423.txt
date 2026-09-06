@@ -1,5 +1,1 @@
-Ostatnia runda to teraz wspólna gra. Gdy ktoś wywoła Vinto, pozostali trzej mogą rozmawiać przy stole: powiedzieć, co się trzyma, zaproponować ruch i ułożyć jeden wspólny plan. Można go obejrzeć w działaniu, zanim się go zatwierdzi, i sprawdzić, ile jest wart, zanim karty się odkryją.
-
-Boty dorzucają tylko karty, które faktycznie widziały, i zatrzymują dobranego Jokera.
-
-Jeśli gra online prosi o aktualizację, oznacza to, że stół poszedł dalej — przycisk prowadzi tutaj.
+Pierwsze wydanie Vinto: pięć kart, dwie już poznane, trzej przeciwnicy na trzech poziomach trudności, tryb solo w pełni offline i stół dla znajomych bez konta i bez rejestracji. Samouczek rozdaje prawdziwą rundę zamiast czytać regulamin — i można go pominąć.
