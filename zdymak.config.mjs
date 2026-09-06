@@ -84,6 +84,7 @@ export default {
     { id: 'table', title: 'Draw, or take the discard.', sub: 'Then swap, or play the card’s action.', move: 'driftUp' },
     { id: 'teach', title: 'Learn by playing a round.', sub: 'Not by reading the rules.', move: 'pullBack' },
     { id: 'lobby', title: 'Or sit down with friends.', sub: 'A six-character code is the whole invitation.', move: 'pushIn' },
+    { id: 'plan', title: 'The last round is a team effort.', sub: 'Plan it together. The caller cannot see it.', move: 'driftUp' },
     { id: 'score', title: 'Call Vinto when you are lowest.', sub: '+3 if you are right. −1 if you are not.', move: 'pullBackSlow' },
   ],
 
@@ -130,7 +131,8 @@ export default {
     vignette: 0.3,
   },
 
-  sceneDur: 3.5, // 5 scenes ≈ 16.2s after the crossfades eat into them — Apple's floor is 15s,
+  // 6 scenes ≈ 19.4s after the crossfades eat into them — Apple's window is 15–30s,
+  sceneDur: 3.5,
   // and at 3.2 the finished reel came out 14.7s and was refused. Measured, not budgeted.
   xfade: 0.32,
 

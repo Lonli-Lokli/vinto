@@ -40,6 +40,7 @@ import game.vinto.app.theme.rememberSounds
 import game.vinto.client.Analytics
 import game.vinto.client.AnalyticsConsent
 import game.vinto.client.LocalGame
+import game.vinto.client.Question
 import game.vinto.client.Reachability
 import game.vinto.client.RemoteRoom
 import game.vinto.client.RoomConnector
@@ -236,6 +237,7 @@ fun App(
 
                                     is Screen.Playing -> GameScreen(
                                         game = here.game,
+                                        opening = here.opening,
                                         pace = settings.pace,
                                         onSettings = { screen = Screen.Settings(back = here) },
                                         onQuit = { screen = Screen.Home(canContinue = true) },
@@ -363,7 +365,12 @@ private sealed interface Screen {
     /** A real round with a coach over it. */
     data object Teaching : Screen
 
-    data class Playing(val game: LocalGame) : Screen
+    /**
+     * A round in progress. [opening] is the question the rail starts on, which is
+     * [Question.None] for every game a person starts and the board for the capture that
+     * photographs it (`MarketingScene.PLAN`).
+     */
+    data class Playing(val game: LocalGame, val opening: Question = Question.None) : Screen
 
     /** The front door: a name, and which of the three things you came to do. */
     data object Online : Screen, OnlineWay
@@ -556,6 +563,7 @@ private suspend fun stagedScreen(scene: MarketingScene, vault: Vault): Screen = 
     MarketingScene.TABLE -> Screen.Playing(stagedGame(vault, toTheEnd = false))
     MarketingScene.SCORE -> Screen.Playing(stagedGame(vault, toTheEnd = true))
     MarketingScene.LOBBY -> Screen.Online
+    MarketingScene.PLAN -> Screen.Playing(coalitionGame(vault), opening = Question.ThePlan)
 }
 
 /**

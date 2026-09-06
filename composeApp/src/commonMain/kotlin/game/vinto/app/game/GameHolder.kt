@@ -55,6 +55,8 @@ class GameHolder(
     private val plan: State<CoalitionPlan?> = mutableStateOf(null),
     /** What the round has turned face up so far, which is what tells a plan its claim was wrong. */
     private val reveals: State<List<PublicReveal>> = mutableStateOf(emptyList()),
+    /** What the rail opens on. [Question.None] for a person; the board for a store capture. */
+    opening: Question = Question.None,
 ) {
     /** Recent moves, oldest first, for the strip under the prompt. */
     val log get() = session.log
@@ -68,7 +70,7 @@ class GameHolder(
     private val rehearsals = MutableSharedFlow<List<Frame>>(extraBufferCapacity = 1)
     val frames: Flow<List<Frame>> = merge(session.frames, rehearsals)
 
-    var question: Question by mutableStateOf(Question.None)
+    var question: Question by mutableStateOf(opening)
         private set
 
     /** The last thing the engine refused, until the next move clears it. */
@@ -191,7 +193,7 @@ class GameHolder(
 
 /** A holder for one round, rebuilt when the round is. */
 @Composable
-fun rememberHolder(session: GameSession): GameHolder {
+fun rememberHolder(session: GameSession, opening: Question = Question.None): GameHolder {
     val view = session.view.collectAsState()
     val away = session.away.collectAsState()
     val plan = session.plan.collectAsState()
@@ -205,7 +207,7 @@ fun rememberHolder(session: GameSession): GameHolder {
     }
     Where.atTable(view.value)
 
-    val holder = remember(session) { GameHolder(session, view, away, plan, reveals) }
+    val holder = remember(session) { GameHolder(session, view, away, plan, reveals, opening) }
 
     // The one place the talk channel becomes something a player can act on. A suggestion
     // addressed to this seat becomes the one-tap move at the top of the rail; everything else

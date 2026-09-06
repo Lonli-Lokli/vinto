@@ -47,6 +47,7 @@ import game.vinto.app.theme.Sfx
 import game.vinto.app.theme.VintoDialog
 import game.vinto.client.LocalGame
 import game.vinto.client.Pace
+import game.vinto.client.Question
 import game.vinto.client.RoundResult
 import game.vinto.client.dealScenes
 import game.vinto.client.loadStats
@@ -69,14 +70,20 @@ private val Pad = 12.dp
  * keep waiting, so it belongs to the player.
  */
 @Composable
-fun GameScreen(game: LocalGame, pace: Pace, onSettings: () -> Unit, onQuit: () -> Unit) {
+fun GameScreen(
+    game: LocalGame,
+    pace: Pace,
+    onSettings: () -> Unit,
+    onQuit: () -> Unit,
+    opening: Question = Question.None,
+) {
     val countRound = rememberRoundCount(game)
 
     // Keyed on the round, so dealing the next one rebuilds the table rather than trying to
     // reconcile the old one against a fresh deal.
     val round = game.round
     val session = game.session
-    val holder = rememberHolder(session)
+    val holder = rememberHolder(session, opening)
     val act = rememberActor(holder, onEachMove = game::save)
     val log by session.log.collectAsState()
 

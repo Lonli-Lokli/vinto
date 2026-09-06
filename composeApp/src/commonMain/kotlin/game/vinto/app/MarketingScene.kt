@@ -4,6 +4,7 @@ import game.vinto.client.LocalGame
 import game.vinto.client.Vault
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 
@@ -60,6 +61,16 @@ enum class MarketingScene(val id: String) {
      * reached, and shows what online play offers.
      */
     LOBBY("lobby"),
+
+    /**
+     * The final round with the coalition's board open — the richest screen the game has, and
+     * the only one that shows three players cooperating rather than one player's hand.
+     *
+     * Staged by playing the real game forward until a **bot** calls Vinto, because the caller
+     * has no coalition and therefore no board: a round the human called would photograph the
+     * one seat this screen is not about.
+     */
+    PLAN("plan"),
     ;
 
     companion object {
@@ -134,3 +145,70 @@ internal suspend fun stagedGame(vault: Vault, toTheEnd: Boolean): LocalGame {
 
 /** Four seats and a final round: a dozen is generous, and an unbounded loop is a hang. */
 private const val MAX_NUDGES = 12
+
+/**
+ * A game played forward until a bot calls Vinto, so the human is in the coalition and the
+ * board exists.
+ *
+ * The human's turns are spent rather than played — draw, put it down — because the point of
+ * the picture is what the *coalition* is doing and a staged hand that keeps improving would
+ * take the round somewhere else. Everything here goes through the ordinary session: this is
+ * the real engine reaching a real final round, not a table arranged to look like one.
+ */
+internal suspend fun coalitionGame(vault: Vault): LocalGame {
+    val game = LocalGame.start(vault, COALITION_SEED, Difficulty.EASY, botDispatcher = null)
+    val me = game.playerId
+    game.session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+    game.session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+    game.session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+
+    var turns = 0
+    while (game.session.view.value.vintoCallerId == null && turns < MAX_TURNS) {
+        val view = game.session.view.value
+        when {
+            // The window after every discard. Nobody's turn advances until this seat says it
+            // is done with it, and a staged round that never says so is a round that stops on
+            // its second lap — which is exactly how this scene first came out blank.
+            view.subPhase == GameSubPhase.TOSS_QUEUE_ACTIVE -> {
+                game.session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(me)))
+            }
+
+            view.players.getOrNull(view.currentPlayerIndex)?.id == me -> {
+                game.session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+                game.session.dispatch(GameAction.DiscardCard(PlayerIdPayload(me)))
+            }
+        }
+        game.session.dispatch(GameAction.ProcessAiTurn(PlayerIdPayload(me)))
+        turns++
+    }
+
+    val caller = game.session.view.value.vintoCallerId
+    check(caller != null && caller != me) { "no bot called Vinto in $MAX_TURNS turns (caller=$caller)" }
+
+    // The call is not the picture: an empty board saying "no plan yet" is. What makes this
+    // screen worth photographing is the coalition having spoken — each bot declaring what it
+    // holds, and the board seeded from what they said — which is the first thing that happens
+    // after a call and takes a few passes of the bot loop to come out.
+    // The window the coalition talks in. The bots declare inside it and the board is seeded
+    // when it closes, so a scene that never says "done" photographs a table still conferring.
+    game.session.doneConferring()
+
+    var settling = 0
+    while (game.session.plan.value?.lanes?.any { it.step != null } != true && settling < SETTLING_PASSES) {
+        game.session.dispatch(GameAction.ProcessAiTurn(PlayerIdPayload(me)))
+        settling++
+    }
+    return game
+}
+
+/** The deal this scene is staged from. Fixed, so the picture is the same one every time. */
+private const val COALITION_SEED = 20_260_079L
+
+/**
+ * A bound, not a budget: this deal reaches a bot's call on its thirteenth pass, and a round
+ * that has not by twice that is a round where something else has gone wrong.
+ */
+private const val MAX_TURNS = 30
+
+/** Long enough for three declarations and the seeding that follows them; not a whole round. */
+private const val SETTLING_PASSES = 8
