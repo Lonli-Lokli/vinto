@@ -248,7 +248,11 @@ export default {
      * waits for a human to start the rollout, which is where an unpublished app's first one
      * belongs. Drop this line the day the app is live and rollouts should begin on upload.
      */
-    releaseStatus: 'draft',
+    // 'completed' rolls the build out to the track's testers as the track's one release. It was
+    // 'draft' while the app had never been published anywhere, which Play insists on; a draft
+    // beside a live release is what that setting produces once a track is live, and it is not
+    // what "a build for the testers" means.
+    releaseStatus: 'completed',
     metadataDir: 'fastlane/metadata/android',
     defaultLocale: 'en-GB',
     // The signed bundle `prerelease` uploads. A DIRECTORY, so it takes the newest build in it and
