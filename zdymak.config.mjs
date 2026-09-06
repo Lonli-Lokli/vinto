@@ -96,7 +96,9 @@ export default {
     // App Store. Marketing styling is expected here — frames, headlines, a background.
     iphone: {
       capturesDir: './marketing/captures/ios',
-      videos: [{ target: 'appstore-preview' }], // full-bleed, 15–30s, no bezel, or Apple rejects it
+      // No `videos` here on purpose. A video built from this device's *screenshots* is a camera
+      // move over stills, and the store slot it would fill wants footage from inside the app —
+      // so the only preview this config makes is the `reel` above, from recorded clips.
       screenshots: [
         { target: 'appstore-iphone-6.9', style: 'premium' },
         { target: 'appstore-iphone-6.5', style: 'premium' },
@@ -114,7 +116,7 @@ export default {
     // is for the website — because a rejection here costs a review cycle.
     android: {
       capturesDir: './marketing/captures/android',
-      videos: [{ target: 'play-promo' }], // Play takes a YouTube URL; keep it silent unless music is cleared
+      // As with the iPhone: the promo is a `reel` entry from real footage, not a pan over stills.
       screenshots: [
         { target: 'play-phone', dir: 'play-phone-plain', style: 'bleed', caption: false, theme: { anchor: 'top' } },
         { target: 'play-tablet', dir: 'play-tablet-plain', style: 'bleed', caption: false, theme: { anchor: 'top' } },
@@ -124,7 +126,57 @@ export default {
     },
   },
 
+  /**
+   * The App Store's preview slot, and the only asset here that is not a picture.
+   *
+   * Apple's slot wants **footage from inside the app**: full-bleed, no device frame, 15–30
+   * seconds. So this is built from `zdymak capture --record` clips — the app actually playing,
+   * driven through the same six scenes the screenshots use — rather than a camera move over a
+   * still, which is what the screenshot reel does and what Apple's own guidance rules out for
+   * this slot. Captions are omitted for the same reason: the store draws its own title beside
+   * the video, and a burnt-in one reads as an advert rather than the app.
+   */
+  reel: [
+    {
+      name: 'appstore-preview',
+      size: [886, 1920],
+      level: '4.0',
+      sceneDur: 3.4, // 6 clips ≈ 20s, inside Apple's 15–30s window with room either side
+      transition: 'dissolve',
+      theme: { bleed: true, frame: false },
+      segments: [
+        { clip: './marketing/clips/home.mov' },
+        { clip: './marketing/clips/teach.mov' },
+        { clip: './marketing/clips/table.mov' },
+        { clip: './marketing/clips/plan.mov' },
+        { clip: './marketing/clips/score.mov' },
+        { clip: './marketing/clips/lobby.mov' },
+      ],
+    },
+    {
+      // Play's listing video is a YouTube link rather than a file, so this one is uploaded by
+      // hand; it is the same footage cut to Play's frame and kept silent, because a ContentID
+      // claim on a music bed can take a listing's video down without warning.
+      name: 'play-promo',
+      size: [1080, 1920],
+      sceneDur: 3.4,
+      transition: 'dissolve',
+      theme: { bleed: true, frame: false },
+      segments: [
+        { clip: './marketing/clips/home.mov' },
+        { clip: './marketing/clips/teach.mov' },
+        { clip: './marketing/clips/table.mov' },
+        { clip: './marketing/clips/plan.mov' },
+        { clip: './marketing/clips/score.mov' },
+        { clip: './marketing/clips/lobby.mov' },
+      ],
+    },
+  ],
+
   theme: {
+    // The captures carry the simulator's own status bar, and 'auto' misread the dark band above
+    // it as empty and painted a second one — two clocks, two batteries, one above the other.
+    statusBar: false,
     bgTop: '#14442F', // FeltDarkTop
     bgBottom: '#0A2A1D', // FeltDarkBottom
     glowAlpha: 0.16,

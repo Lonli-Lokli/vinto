@@ -7,6 +7,7 @@ import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
+import kotlinx.coroutines.Dispatchers
 
 /**
  * The states a store capture can ask the app to be in.
@@ -156,7 +157,12 @@ private const val MAX_NUDGES = 12
  * the real engine reaching a real final round, not a table arranged to look like one.
  */
 internal suspend fun coalitionGame(vault: Vault): LocalGame {
-    val game = LocalGame.start(vault, COALITION_SEED, Difficulty.EASY, botDispatcher = null)
+    // Off the main thread, unlike the other staged scenes. This one plays thirteen real turns
+    // to reach a bot's call, which is a few hundred milliseconds on a developer's machine and
+    // tens of seconds on a software-rendered emulator — long enough for Android to put up
+    // "Vinto! isn't responding" over a capture. The dispatcher only moves where the search
+    // runs; every dispatch is still awaited, so the round is the same one every time.
+    val game = LocalGame.start(vault, COALITION_SEED, Difficulty.EASY, botDispatcher = Dispatchers.Default)
     val me = game.playerId
     game.session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
     game.session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))

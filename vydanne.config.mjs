@@ -228,7 +228,9 @@ export default {
     {
       platform: 'IOS',
       type: 'IPHONE_67', // 6.9"
-      file: 'marketing/out/appstore-preview.mp4',
+      // zdymak's own output, read where it writes it. Copying the file into another folder by
+      // hand is the step that goes stale the first time somebody re-renders and forgets.
+      file: 'store-assets/appstore-preview.mp4',
       poster: '00:00:03:00',
       locales: ['en-GB'],
     },
