@@ -1,5 +1,6 @@
 package game.vinto.room
 
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.PlayerProfile
 import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.looksMinted
@@ -25,7 +26,7 @@ class LobbyRefusalsTest {
 
     @Test
     fun nobodyJoinsAGameAlreadyDealt() {
-        val late = decodeJoin(joinRoom(dealtRoom(), "token-carol", "Carol", LATER))
+        val late = decodeJoin(joinRoom(dealtRoom(), "token-carol", "Carol", LATER, PROTOCOL_VERSION))
 
         assertEquals("the game has already started", late.error)
         assertEquals(-1, late.seat)
@@ -35,10 +36,10 @@ class LobbyRefusalsTest {
     @Test
     fun aFullTableIsFull() {
         var state = lobbyOfTwo()
-        state = encode(decodeJoin(joinRoom(state, "token-carol", "Carol", START)).state)
-        state = encode(decodeJoin(joinRoom(state, "token-dave", "Dave", START)).state)
+        state = encode(decodeJoin(joinRoom(state, "token-carol", "Carol", START, PROTOCOL_VERSION)).state)
+        state = encode(decodeJoin(joinRoom(state, "token-dave", "Dave", START, PROTOCOL_VERSION)).state)
 
-        val fifth = decodeJoin(joinRoom(state, "token-eve", "Eve", START))
+        val fifth = decodeJoin(joinRoom(state, "token-eve", "Eve", START, PROTOCOL_VERSION))
 
         assertEquals("room is full", fifth.error)
         assertEquals(-1, fifth.seat)
@@ -67,7 +68,7 @@ class LobbyRefusalsTest {
             },
         )
 
-        val carol = decodeJoin(joinRoom(encode(held), "token-carol", "Carol", START))
+        val carol = decodeJoin(joinRoom(encode(held), "token-carol", "Carol", START, PROTOCOL_VERSION))
         assertNull(carol.error)
         assertEquals(2, carol.seat, "Carol was seated somewhere other than the first filler's seat")
         val taken = carol.state.seats[2]
@@ -80,10 +81,10 @@ class LobbyRefusalsTest {
         val bob = carol.state.seats[1]
         assertTrue(bob.isBot && bob.tokenHash != null, "Bob's held seat was touched")
 
-        val dave = decodeJoin(joinRoom(encode(carol.state), "token-dave", "Dave", START))
+        val dave = decodeJoin(joinRoom(encode(carol.state), "token-dave", "Dave", START, PROTOCOL_VERSION))
         assertEquals(3, dave.seat, "the second filler goes next")
 
-        val eve = decodeJoin(joinRoom(encode(dave.state), "token-eve", "Eve", START))
+        val eve = decodeJoin(joinRoom(encode(dave.state), "token-eve", "Eve", START, PROTOCOL_VERSION))
         assertEquals("room is full", eve.error, "Bob's seat was given to a stranger")
     }
 
@@ -102,7 +103,7 @@ class LobbyRefusalsTest {
         assertEquals(RoomPhase.STARTING, counting.phase)
         val deadline = assertNotNull(counting.startsAtEpochMs)
 
-        val carol = decodeJoin(joinRoom(encode(counting), "token-carol", "Carol", START + 8_000))
+        val carol = decodeJoin(joinRoom(encode(counting), "token-carol", "Carol", START + 8_000, PROTOCOL_VERSION))
         assertNull(carol.error)
         assertEquals(RoomPhase.STARTING, carol.state.phase, "a full table stopped counting down")
         assertEquals(deadline, carol.state.startsAtEpochMs, "the start moved for somebody sitting down")
@@ -229,7 +230,9 @@ class LobbyRefusalsTest {
         assertEquals("", cleanNickname("<>"), "the registry's version has no fallback: a host may be nameless")
         assertEquals("Quiet Heron", cleanNickname("Quiet Heron"), "and it keeps a real one")
 
-        val seated = decodeJoin(joinRoom(newRoom("room-N", 1.0, "easy", START), TOKEN_A, "  <b>Ann</b>  ", START))
+        val seated = decodeJoin(
+            joinRoom(newRoom("room-N", 1.0, "easy", START), TOKEN_A, "  <b>Ann</b>  ", START, PROTOCOL_VERSION),
+        )
         assertTrue(
             looksMinted(seated.state.seats[0].profile?.nickname.orEmpty()),
             "typed text reached a seat: ${seated.state.seats[0].profile?.nickname}",
@@ -238,12 +241,12 @@ class LobbyRefusalsTest {
 
     @Test
     fun aBotIsNamedByItsSeatSoTwoNeverCollide() {
-        assertEquals(listOf("Fern", "Ember", "Sky", "Dune"), (0..3).map(::botName))
+        assertEquals(listOf("Gale", "Ember", "Tide", "Dune"), (0..3).map(::botName))
         assertEquals("Bot 8", botName(7), "a seat that does not exist still gets a name rather than a crash")
 
         var state = lobbyOfTwo()
         state = encode(decodeJoin(addBot(state, TOKEN_A, START)).state)
         state = encode(decodeJoin(addBot(state, TOKEN_A, START)).state)
-        assertEquals(listOf("Sky", "Dune"), decodeRoom(state).seats.drop(2).map { it.profile?.nickname })
+        assertEquals(listOf("Tide", "Dune"), decodeRoom(state).seats.drop(2).map { it.profile?.nickname })
     }
 }

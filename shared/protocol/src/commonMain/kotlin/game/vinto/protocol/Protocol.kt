@@ -1,7 +1,10 @@
 package game.vinto.protocol
 
 import game.vinto.engine.PlayerView
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.PlanEdit
+import game.vinto.shapes.TableTalk
 import game.vinto.shapes.VintoJson
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -25,6 +28,42 @@ import kotlinx.serialization.json.Json
  * or type, and a message type is never removed while any client sends it.
  */
 
+/**
+ * The wire's version, bumped whenever a build could send or receive something an older build
+ * cannot read: a new message type, a new game action inside an events entry, a field that
+ * changes meaning. New optional fields are not a bump — `ignoreUnknownKeys` skips them.
+ *
+ * Sent with every join. The room keeps a floor ([MIN_PROTOCOL]) and refuses a join below it
+ * at the door with [UPDATE_NEEDED_CODE], never mid-game: a client that sat down is a client
+ * the room can talk to for the whole game. Between the floor and the current number the
+ * client is seated and told, once, that a newer build is waiting ([UPDATE_AVAILABLE_CODE]).
+ * A join without a number is version 1, which is every build shipped before the number
+ * existed.
+ *
+ * History: 1 — the wire as first shipped. 2 — coalition play: `say`, `done-conferring`,
+ * `edit-plan`, `agree-plan`, `said`, `notice`, and the `DECLARE_CARDS` action.
+ */
+public const val PROTOCOL_VERSION: Int = 2
+
+/** The oldest protocol the room will seat. Below it, the join is refused with [UPDATE_NEEDED_CODE]. */
+public const val MIN_PROTOCOL: Int = 2
+
+/** The refusal code for a build below the floor: update the app, nothing else will help. */
+public const val UPDATE_NEEDED_CODE: String = "update-needed"
+
+/** The notice code for a build the room still seats but that has a newer one waiting. */
+public const val UPDATE_AVAILABLE_CODE: String = "update-available"
+
+/** How loudly a [ServerMessage.Notice] is meant: a line in the log, or a card in the way. */
+@Serializable
+enum class NoticeSeverity {
+    @SerialName("info")
+    INFO,
+
+    @SerialName("warning")
+    WARNING,
+}
+
 /** Everything a client may say to a room. One WebSocket message each, as JSON text. */
 @Serializable
 sealed interface ClientMessage {
@@ -34,11 +73,68 @@ sealed interface ClientMessage {
      * seats by token, idempotently, which is the whole reconnect story. No token means
      * "issue me one", and the answer is the one message that ever carries it raw.
      */
+    /**
+     * Table talk: one typed sentence from the phrasebook, carrying no text.
+     *
+     * Not an action, and deliberately a separate message rather than a `GameAction` — none of
+     * this is game state (design D6), so it must not reach the engine, a recording or a hash.
+     * The room checks the speaker against the socket's own seat exactly as it does an action's
+     * `actorId`, and caps how much one seat may say in a window.
+     */
+    /**
+     * "I have said what I wanted to say."
+     *
+     * Closes the coalition's confer window early, the moment every connected member has sent
+     * one — so three people who agree in five seconds are not held for twenty.
+     */
+    @Serializable
+    @SerialName("done-conferring")
+    data class DoneConferring(val token: String? = null) : ClientMessage
+
+    @Serializable
+    @SerialName("say")
+    data class Say(val talk: TableTalk) : ClientMessage
+
+    /**
+     * One part of the coalition's shared plan, changed (design D7a).
+     *
+     * A part rather than the whole draft, so two members on different lanes cannot overwrite
+     * each other. Refused for the caller, for a seat outside the coalition and for a lane whose
+     * turn has begun; merged otherwise, with agreement reset to the editor. The room answers as
+     * it answers [MoreTime] — an empty `events` per seat whose `plan` is the whole board and
+     * whose `said` carries the bots' answers for their own lanes — and there is no `planned`
+     * message. Spends the same budget [Say] does, being broadcast to every socket.
+     */
+    @Serializable
+    @SerialName("edit-plan")
+    data class EditPlan(
+        val token: String? = null,
+        val edit: PlanEdit,
+    ) : ClientMessage
+
+    /**
+     * Yes or no to the standing plan as a whole.
+     *
+     * A yes also counts as [DoneConferring]: agreeing is how you finish talking, so the last
+     * member to agree is what starts the round.
+     */
+    @Serializable
+    @SerialName("agree-plan")
+    data class AgreePlan(
+        val token: String? = null,
+        val agree: Boolean,
+    ) : ClientMessage
+
     @Serializable
     @SerialName("join")
     data class Join(
         val token: String? = null,
         val nickname: String? = null,
+        /**
+         * The protocol this client speaks — [PROTOCOL_VERSION] of the build that sent it.
+         * Absent from every build before the number existed, which the room reads as 1.
+         */
+        val protocol: Int? = null,
     ) : ClientMessage
 
     /** One game action, authorised by the token — never by the socket's memory of a seat. */
@@ -113,6 +209,23 @@ sealed interface ServerMessage {
         val nextIndex: Int,
         val lobby: LobbyView,
         @EncodeDefault(EncodeDefault.Mode.ALWAYS) val view: PlayerView? = null,
+        /** See [Sync.plan]. Here so an app restarted mid-final-round lands on the present plan. */
+        val plan: CoalitionPlan? = null,
+        /** The protocol the room speaks, so a client can say so in a report. */
+        val protocol: Int? = null,
+    ) : ServerMessage
+
+    /**
+     * Something the room wants a person told that is not a refusal and not game state: a
+     * build that still works but has a newer one waiting, for now. A screen shows it once,
+     * with a way to act and a way to carry on. A build older than this message skips it.
+     */
+    @Serializable
+    @SerialName("notice")
+    data class Notice(
+        val code: String,
+        val message: String,
+        val severity: NoticeSeverity = NoticeSeverity.WARNING,
     ) : ServerMessage
 
     /**
@@ -131,6 +244,19 @@ sealed interface ServerMessage {
         val events: List<EventEntry>,
         val nextIndex: Int,
         @EncodeDefault(EncodeDefault.Mode.ALWAYS) val view: PlayerView? = null,
+        /** See [Sync.away]. */
+        val away: List<String> = emptyList(),
+        /**
+         * What the bots said while making these moves.
+         *
+         * Carried **inside** the events message rather than as a message of its own, because
+         * a socket gets one prebuilt string per response: a separate `said` would need a list
+         * per seat and a second send. It also arrives in step with the moves it comments on,
+         * which is what a strip wants.
+         */
+        val said: List<TableTalk> = emptyList(),
+        /** See [Sync.plan]. On every batch, because a lane locks on an ordinary action. */
+        val plan: CoalitionPlan? = null,
     ) : ServerMessage
 
     /**
@@ -145,7 +271,34 @@ sealed interface ServerMessage {
         val events: List<EventEntry>,
         val nextIndex: Int,
         val view: PlayerView? = null,
+        /**
+         * The seats a bot is playing because their person has gone, by engine player id.
+         *
+         * It cannot ride on the [PlayerView]: `isHuman` and `isBot` are inside the canonical
+         * state hash, so the room deliberately never writes the takeover into the game — a
+         * round whose recording could not replay would be a worse bug than a missing label.
+         * This is the room telling the table what the state is not allowed to say.
+         *
+         * Empty by default, and omitted when empty, so a table with everybody present sends
+         * nothing extra.
+         */
+        val away: List<String> = emptyList(),
+        /**
+         * The coalition's shared plan as it stands, or absent when none does.
+         *
+         * Beside the view rather than in it, for the reason [away] is: the plan is room state
+         * and never game state (design D6), so it must not ride inside a `PlayerView` that the
+         * engine projects. The same board goes to every seat, the caller's included — it is
+         * built only from public claims. A client sets its copy from whichever message carries
+         * it, so a reconnect lands on the present plan rather than on the one it remembered.
+         */
+        val plan: CoalitionPlan? = null,
     ) : ServerMessage
+
+    /** Somebody said something. Broadcast to every seat, the Vinto caller included. */
+    @Serializable
+    @SerialName("said")
+    data class Said(val talk: TableTalk) : ServerMessage
 
     /** The lobby changed: somebody joined, left, or a bot was added or removed. Broadcast. */
     @Serializable
@@ -192,6 +345,13 @@ sealed interface ServerMessage {
     data class Error(
         val message: String,
         val retryAfterMs: Double? = null,
+        /**
+         * A machine-readable reason, for the refusals a screen has to act on rather than show.
+         * [UPDATE_NEEDED_CODE] is the one so far: the app is below the room's floor and no
+         * retry will help. The [message] is still a sentence, because a build older than this
+         * field shows it as it is.
+         */
+        val code: String? = null,
     ) : ServerMessage
 }
 

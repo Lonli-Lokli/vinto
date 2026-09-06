@@ -31,7 +31,6 @@ data class BotDecisionContext(
     val currentAction: CurrentActionContext? = null,
     /** What this bot believes about opponents: opponent id -> position -> card. */
     val opponentKnowledge: Map<String, Map<Int, Card>> = emptyMap(),
-    val coalitionLeaderId: String? = null,
     /** True when the bot is part of the coalition against the Vinto caller. */
     val isCoalitionMember: Boolean = false,
     val opponentModeler: OpponentModeler? = null,
@@ -119,6 +118,15 @@ interface BotDecisionService {
      * it so the claims are only as good as what the bot actually remembers, and can be
      * wrong.
      */
+
+    /**
+     * What this bot believes about its own hand, graded — see `BotMemory.ownBeliefs`.
+     *
+     * Separate from [believedOwnCards] because the two have different jobs: a search wants a
+     * best guess, and speech wants to be able to admit it is unsure.
+     */
+    fun gradedOwnCards(context: BotDecisionContext): Map<Int, Pair<Rank, Double>> = emptyMap()
+
     fun believedOwnCards(context: BotDecisionContext): Map<Int, Rank> =
         context.opponentKnowledge[context.botId].orEmpty().mapValues { it.value.rank }
 }

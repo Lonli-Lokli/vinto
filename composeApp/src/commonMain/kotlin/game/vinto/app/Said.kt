@@ -19,6 +19,7 @@ import game.vinto.app.art.ask_round_over
 import game.vinto.app.art.ask_round_over_lowest
 import game.vinto.app.art.ask_round_over_not_lowest
 import game.vinto.app.art.ask_say_and_play
+import game.vinto.app.art.ask_say_what_you_know
 import game.vinto.app.art.ask_somebody_playing
 import game.vinto.app.art.ask_swap_them
 import game.vinto.app.art.ask_toss_in
@@ -26,9 +27,16 @@ import game.vinto.app.art.ask_toss_in_barred
 import game.vinto.app.art.ask_waiting_for_others
 import game.vinto.app.art.ask_watching
 import game.vinto.app.art.ask_what_do_you_say
+import game.vinto.app.art.ask_what_should_they_do
+import game.vinto.app.art.ask_what_will_you_do
 import game.vinto.app.art.ask_which_card_replaced
+import game.vinto.app.art.ask_which_card_should_they_put_down
+import game.vinto.app.art.ask_which_card_will_you_put_down
+import game.vinto.app.art.ask_which_rank_should_they_declare
+import game.vinto.app.art.ask_which_rank_throw_in
+import game.vinto.app.art.ask_which_rank_will_you_declare
+import game.vinto.app.art.ask_which_way_round
 import game.vinto.app.art.ask_who_draws
-import game.vinto.app.art.ask_who_plays_for_you
 import game.vinto.app.art.ask_you_drew
 import game.vinto.app.art.ask_you_drew_unknown
 import game.vinto.app.art.ask_you_playing
@@ -56,11 +64,11 @@ import game.vinto.app.art.beat_cards_queen_title
 import game.vinto.app.art.beat_cards_theirs_body
 import game.vinto.app.art.beat_cards_theirs_title
 import game.vinto.app.art.beat_coalition_body
-import game.vinto.app.art.beat_coalition_leader_body
-import game.vinto.app.art.beat_coalition_leader_title
 import game.vinto.app.art.beat_coalition_title
 import game.vinto.app.art.beat_coalition_vs_you_body
 import game.vinto.app.art.beat_coalition_vs_you_title
+import game.vinto.app.art.beat_disagreement_body
+import game.vinto.app.art.beat_disagreement_title
 import game.vinto.app.art.beat_do_not_guess_body
 import game.vinto.app.art.beat_do_not_guess_title
 import game.vinto.app.art.beat_every_turn_starts_body
@@ -118,6 +126,21 @@ import game.vinto.app.art.beat_you_called_body
 import game.vinto.app.art.beat_you_called_title
 import game.vinto.app.art.beat_your_turn_to_call_body
 import game.vinto.app.art.beat_your_turn_to_call_title
+import game.vinto.app.art.board_outcome_level
+import game.vinto.app.art.board_outcome_loses
+import game.vinto.app.art.board_outcome_unseen
+import game.vinto.app.art.board_outcome_wins
+import game.vinto.app.art.board_owner_named
+import game.vinto.app.art.board_owner_you
+import game.vinto.app.art.board_step_declare
+import game.vinto.app.art.board_step_put_down
+import game.vinto.app.art.board_step_put_down_known
+import game.vinto.app.art.board_step_swap
+import game.vinto.app.art.board_step_take_discard
+import game.vinto.app.art.board_title
+import game.vinto.app.art.board_verdict_level
+import game.vinto.app.art.board_verdict_loses
+import game.vinto.app.art.board_verdict_wins
 import game.vinto.app.art.card_position
 import game.vinto.app.art.choice_back
 import game.vinto.app.art.choice_call_vinto
@@ -132,13 +155,20 @@ import game.vinto.app.art.choice_start_round
 import game.vinto.app.art.choice_swap_cards
 import game.vinto.app.art.choice_use_action
 import game.vinto.app.art.choice_use_from_pile
+import game.vinto.app.art.detail_ace_hurts_your_side
 import game.vinto.app.art.detail_barred
 import game.vinto.app.art.detail_barred_card
 import game.vinto.app.art.detail_card_does
+import game.vinto.app.art.detail_claim_was_wrong
 import game.vinto.app.art.detail_deck_ran_out
+import game.vinto.app.art.detail_draw_beats_plan
 import game.vinto.app.art.detail_king_declared
+import game.vinto.app.art.detail_plan_asks
+import game.vinto.app.art.detail_plan_is_a_suggestion
 import game.vinto.app.art.detail_right_plays
 import game.vinto.app.art.detail_scored_against
+import game.vinto.app.art.detail_shed_risk
+import game.vinto.app.art.detail_shed_risk_pushed
 import game.vinto.app.art.detail_table_talk
 import game.vinto.app.art.detail_tap_to_say
 import game.vinto.app.art.detail_wrong_costs
@@ -153,6 +183,24 @@ import game.vinto.app.art.gloss_badge
 import game.vinto.app.art.gloss_log
 import game.vinto.app.art.gloss_pulse
 import game.vinto.app.art.gloss_toss
+import game.vinto.app.art.label_agree
+import game.vinto.app.art.label_decline_suggestion
+import game.vinto.app.art.label_do_as_planned
+import game.vinto.app.art.label_do_as_suggested
+import game.vinto.app.art.label_done_talking
+import game.vinto.app.art.label_keep_it_instead
+import game.vinto.app.art.label_not_sure_which_way
+import game.vinto.app.art.label_plan_clear
+import game.vinto.app.art.label_plan_declare
+import game.vinto.app.art.label_plan_put_down
+import game.vinto.app.art.label_plan_shed
+import game.vinto.app.art.label_plan_swap
+import game.vinto.app.art.label_plan_take_discard
+import game.vinto.app.art.label_standing_bin
+import game.vinto.app.art.label_standing_high
+import game.vinto.app.art.label_standing_low
+import game.vinto.app.art.label_this_way_round
+import game.vinto.app.art.label_withdraw
 import game.vinto.app.art.list_join_and
 import game.vinto.app.art.log_called_vinto
 import game.vinto.app.art.log_declared
@@ -186,6 +234,32 @@ import game.vinto.app.art.log_toss_in_missed_unknown
 import game.vinto.app.art.log_tossed_in
 import game.vinto.app.art.log_tossed_in_unknown
 import game.vinto.app.art.log_you
+import game.vinto.app.art.talk_bin
+import game.vinto.app.art.talk_bin_they
+import game.vinto.app.art.talk_give_me
+import game.vinto.app.art.talk_give_me_they
+import game.vinto.app.art.talk_high
+import game.vinto.app.art.talk_high_they
+import game.vinto.app.art.talk_low
+import game.vinto.app.art.talk_low_they
+import game.vinto.app.art.talk_no
+import game.vinto.app.art.talk_no_they
+import game.vinto.app.art.talk_play_for
+import game.vinto.app.art.talk_play_for_they
+import game.vinto.app.art.talk_suggests
+import game.vinto.app.art.talk_suggests_they
+import game.vinto.app.art.talk_take_this
+import game.vinto.app.art.talk_take_this_they
+import game.vinto.app.art.talk_wait
+import game.vinto.app.art.talk_wait_they
+import game.vinto.app.art.talk_will_move
+import game.vinto.app.art.talk_will_move_they
+import game.vinto.app.art.talk_will_shed
+import game.vinto.app.art.talk_will_shed_they
+import game.vinto.app.art.talk_worse
+import game.vinto.app.art.talk_worse_they
+import game.vinto.app.art.talk_yes
+import game.vinto.app.art.talk_yes_they
 import game.vinto.app.art.teach_note
 import game.vinto.app.art.teach_note_plain
 import game.vinto.client.Ask
@@ -193,12 +267,16 @@ import game.vinto.client.Detail
 import game.vinto.client.Explains
 import game.vinto.client.Gloss
 import game.vinto.client.Label
+import game.vinto.client.PlanOutcome
 import game.vinto.client.Say
 import game.vinto.client.Speaker
+import game.vinto.client.StepLine
 import game.vinto.client.Teaches
 import game.vinto.shapes.Rank
+import game.vinto.shapes.TableTalk
 import game.vinto.shapes.getCardConfig
 import game.vinto.shapes.getCardName
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -222,6 +300,10 @@ fun said(say: Say): String {
     val you = say.who is Speaker.You
 
     return when (say) {
+        is Say.Standing, is Say.WillShed, is Say.PlayFor, is Say.GiveMe, is Say.TakeThis,
+        is Say.Answered, is Say.Suggests, is Say.WillMove,
+        -> talked(say, name, you)
+
         is Say.DrewKnown -> if (you) {
             stringResource(Res.string.log_drew_known, say.rank.serialName)
         } else {
@@ -328,12 +410,34 @@ internal fun speakerName(who: Speaker): String = when (who) {
 /**
  * What a button says, in the phone's language.
  *
- * The counterpart to [said] for [Label]. The card's *name* on "Use Queen" comes from
+ * The counterpart to [said] for [Label].
+ *
+ * Detekt reads the `when` as complex; what it measures is the size of the button vocabulary,
+ * not any difficulty in the code. Every arm is one `stringResource`, and an exhaustive `when`
+ * with no `else` is the point — a new button becomes a compile error here rather than a blank
+ * caption somebody notices in a screenshot.
+ * The card's *name* on "Use Queen" comes from
  * `CARD_CONFIGS` — the same words the help sheet uses for it — rather than from the rank's
  * symbol, because this one is read as a sentence rather than as a mark on a card.
  */
 @Composable
+@Suppress("CyclomaticComplexMethod")
 fun labelled(label: Label): String = when (label) {
+    Label.Withdraw -> stringResource(Res.string.label_withdraw)
+    Label.DoAsSuggested -> stringResource(Res.string.label_do_as_suggested)
+    Label.DoneTalking -> stringResource(Res.string.label_done_talking)
+    is Label.SayStanding -> when (label.where) {
+        TableTalk.Standing.Where.LOW -> stringResource(Res.string.label_standing_low)
+        TableTalk.Standing.Where.HIGH -> stringResource(Res.string.label_standing_high)
+        TableTalk.Standing.Where.BIN -> stringResource(Res.string.label_standing_bin)
+    }
+    Label.DeclineSuggestion -> stringResource(Res.string.label_decline_suggestion)
+    is Label.ThisWayRound -> stringResource(
+        Res.string.label_this_way_round,
+        label.firstRank.serialName,
+        label.secondRank.serialName,
+    )
+    Label.NotSureWhichWayRound -> stringResource(Res.string.label_not_sure_which_way)
     Label.Back -> stringResource(Res.string.choice_back)
     Label.StartRound -> stringResource(Res.string.choice_start_round)
     Label.DrawCard -> stringResource(Res.string.choice_draw_card)
@@ -347,6 +451,15 @@ fun labelled(label: Label): String = when (label) {
     Label.Continue -> stringResource(Res.string.choice_continue)
     Label.CallVinto -> stringResource(Res.string.choice_call_vinto)
     Label.Done -> stringResource(Res.string.choice_done)
+    Label.Agree -> stringResource(Res.string.label_agree)
+    Label.DoAsPlanned -> stringResource(Res.string.label_do_as_planned)
+    Label.PlanAPutDown -> stringResource(Res.string.label_plan_put_down)
+    Label.KeepItInstead -> stringResource(Res.string.label_keep_it_instead)
+    Label.PlanASwap -> stringResource(Res.string.label_plan_swap)
+    Label.PlanADeclare -> stringResource(Res.string.label_plan_declare)
+    Label.PlanTakeTheDiscard -> stringResource(Res.string.label_plan_take_discard)
+    Label.ClearLane -> stringResource(Res.string.label_plan_clear)
+    Label.PlanAShed -> stringResource(Res.string.label_plan_shed)
 }
 
 /**
@@ -384,6 +497,22 @@ fun asked(ask: Ask): String = when (ask) {
 
     Ask.WhichCardDoesItReplace -> stringResource(Res.string.ask_which_card_replaced)
     Ask.NameWhatYouArePuttingDown -> stringResource(Res.string.ask_name_what_you_put_down)
+    Ask.WhichWayRound -> stringResource(Res.string.ask_which_way_round)
+    Ask.SayWhatYouKnow -> stringResource(Res.string.ask_say_what_you_know)
+    Ask.ThePlan -> stringResource(Res.string.board_title)
+    Ask.WhichRankWillYouThrowIn -> stringResource(Res.string.ask_which_rank_throw_in)
+    is Ask.WhatShouldTheyDo ->
+        aboutTurn(ask.who, Res.string.ask_what_will_you_do, Res.string.ask_what_should_they_do)
+    is Ask.WhichRankShouldTheyDeclare -> aboutTurn(
+        ask.who,
+        Res.string.ask_which_rank_will_you_declare,
+        Res.string.ask_which_rank_should_they_declare,
+    )
+    is Ask.WhichCardShouldTheyPutDown -> aboutTurn(
+        ask.who,
+        Res.string.ask_which_card_will_you_put_down,
+        Res.string.ask_which_card_should_they_put_down,
+    )
     Ask.WhatDoYouSayThisCardIs -> stringResource(Res.string.ask_what_do_you_say)
     Ask.SayWhatItIsAndPlayIt -> stringResource(Res.string.ask_say_and_play)
     Ask.LookAtOneOfYourOwn -> stringResource(Res.string.ask_look_at_one_of_yours)
@@ -413,7 +542,6 @@ fun asked(ask: Ask): String = when (ask) {
     Ask.WaitingForTheOthers -> stringResource(Res.string.ask_waiting_for_others)
     Ask.Watching -> stringResource(Res.string.ask_watching)
     is Ask.SomebodyIsPlaying -> whoIsPlaying(ask.who)
-    is Ask.WhoPlaysForYou -> stringResource(Res.string.ask_who_plays_for_you, speakerName(ask.caller))
 
     is Ask.RoundOver -> when {
         ask.yours == null || ask.best == null -> stringResource(Res.string.ask_round_over)
@@ -452,6 +580,7 @@ fun detailed(detail: Detail): String = when (detail) {
     )
 
     Detail.TapACardToSayWhatItIs -> stringResource(Res.string.detail_tap_to_say)
+    Detail.AnAceOnlyHurtsYourOwnSide -> stringResource(Res.string.detail_ace_hurts_your_side)
     Detail.TableTalkIsTakenOnTrust -> stringResource(Res.string.detail_table_talk)
     Detail.RightPlaysItWrongCostsACard -> stringResource(Res.string.detail_right_plays)
     Detail.AWrongOneCostsAPenaltyCard -> stringResource(Res.string.detail_wrong_costs)
@@ -460,6 +589,104 @@ fun detailed(detail: Detail): String = when (detail) {
     is Detail.ScoredAgainstTheCaller ->
         stringResource(Res.string.detail_scored_against, speakerName(detail.caller))
     Detail.TheDeckRanOut -> stringResource(Res.string.detail_deck_ran_out)
+    is Detail.ThePlanAsksYouTo -> stringResource(Res.string.detail_plan_asks, stepWords(detail.step))
+    is Detail.YourDrawBeatsThePlan -> stringResource(
+        Res.string.detail_draw_beats_plan,
+        cardName(detail.rank),
+        detail.position + 1,
+    )
+    Detail.APlanIsASuggestion -> stringResource(Res.string.detail_plan_is_a_suggestion)
+    Detail.AClaimWasWrong -> stringResource(Res.string.detail_claim_was_wrong)
+    is Detail.ShedRisk -> if (detail.pushed) {
+        stringResource(Res.string.detail_shed_risk_pushed)
+    } else {
+        stringResource(Res.string.detail_shed_risk)
+    }
+}
+
+/**
+ * Where the plan would leave the round, as one sentence: the two totals and whether that wins.
+ *
+ * Level is said as losing, because a tie pays the caller; and how much of the caller's hand
+ * nobody has seen is said beside it, because a believed total without that is a number pretending
+ * to be information (design D8).
+ */
+@Composable
+fun outcomeWords(outcome: PlanOutcome): String {
+    val verdict = when {
+        outcome.wins -> stringResource(Res.string.board_outcome_wins, outcome.ourBest, outcome.theirBelieved)
+        outcome.level ->
+            stringResource(Res.string.board_outcome_level, outcome.ourBest, outcome.theirBelieved)
+        else -> stringResource(Res.string.board_outcome_loses, outcome.ourBest, outcome.theirBelieved)
+    }
+    return if (outcome.unseen == 0) {
+        verdict
+    } else {
+        verdict + " " + stringResource(
+            Res.string.board_outcome_unseen,
+            outcome.unseen,
+        )
+    }
+}
+
+/** The verdict alone, for the one-line summary on the felt. */
+@Composable
+fun verdictWord(outcome: PlanOutcome): String = when {
+    outcome.wins -> stringResource(Res.string.board_verdict_wins)
+    outcome.level -> stringResource(Res.string.board_verdict_level)
+    else -> stringResource(Res.string.board_verdict_loses)
+}
+
+/**
+ * A question about somebody's turn: the "you" form for the viewer's own, the named form for
+ * anybody else's. Two resources rather than one with a name in it, because "What will you do"
+ * and "What should Nina do" are different sentences in most of the nineteen languages.
+ */
+@Composable
+private fun aboutTurn(who: Speaker, yours: StringResource, theirs: StringResource): String =
+    if (who == Speaker.You) stringResource(yours) else stringResource(theirs, speakerName(who))
+
+/**
+ * One step of the plan, as a sentence fragment: what a lane asks its owner to do.
+ *
+ * The possessive is its own string per speaker rather than an apostrophe appended in code,
+ * because "your" and "Nina's" are different words in every language this renders into, and a
+ * translator handed "%1$s's" cannot fix the half they were not given.
+ */
+@Composable
+fun stepWords(step: StepLine): String = when (step) {
+    is StepLine.Swap -> stringResource(
+        Res.string.board_step_swap,
+        whose(step.fromWho),
+        step.fromSlot,
+        whose(step.toWho),
+        step.toSlot,
+    )
+
+    is StepLine.Declare -> stringResource(Res.string.board_step_declare, step.rank.serialName)
+    StepLine.TakeTheDiscard -> stringResource(Res.string.board_step_take_discard)
+    is StepLine.PutDown -> {
+        // Bound locally: a smart cast on a property from another module is not allowed.
+        val rank = step.rank
+        if (rank == null) {
+            stringResource(Res.string.board_step_put_down, whose(step.who), step.slot)
+        } else {
+            stringResource(
+                Res.string.board_step_put_down_known,
+                whose(step.who),
+                step.slot,
+                rank.serialName,
+            )
+        }
+    }
+}
+
+/** "your", or "Nina's": the owner of a card, as a sentence needs it. */
+@Composable
+internal fun whose(who: Speaker): String = when (who) {
+    Speaker.You -> stringResource(Res.string.board_owner_you)
+    is Speaker.Named -> stringResource(Res.string.board_owner_named, who.nickname)
+    Speaker.Nobody -> ""
 }
 
 /**
@@ -535,8 +762,7 @@ fun taughtTitle(teaches: Teaches): String? = when (teaches) {
     Teaches.Coalition -> stringResource(Res.string.beat_coalition_title)
     Teaches.YouCalled -> stringResource(Res.string.beat_you_called_title)
     Teaches.CoalitionAgainstYou -> stringResource(Res.string.beat_coalition_vs_you_title)
-    is Teaches.CoalitionLeader ->
-        stringResource(Res.string.beat_coalition_leader_title, speakerName(teaches.who))
+    Teaches.Disagreement -> stringResource(Res.string.beat_disagreement_title)
     is Teaches.FinalPlay -> stringResource(
         Res.string.beat_final_play_title,
         speakerName(teaches.who),
@@ -606,8 +832,7 @@ fun taughtBody(teaches: Teaches): String = when (teaches) {
     Teaches.Coalition -> stringResource(Res.string.beat_coalition_body)
     Teaches.YouCalled -> stringResource(Res.string.beat_you_called_body)
     Teaches.CoalitionAgainstYou -> stringResource(Res.string.beat_coalition_vs_you_body)
-    is Teaches.CoalitionLeader ->
-        stringResource(Res.string.beat_coalition_leader_body, speakerName(teaches.who))
+    Teaches.Disagreement -> stringResource(Res.string.beat_disagreement_body)
     is Teaches.FinalPlay -> finalPlayBody(teaches.rank)
     Teaches.SwapThem -> stringResource(Res.string.beat_swap_them_body)
     Teaches.LeaveThem -> stringResource(Res.string.beat_leave_them_body)
@@ -677,4 +902,101 @@ fun noteOn(rank: Rank): String {
     } else {
         stringResource(Res.string.teach_note, cardName(rank), value, long)
     }
+}
+
+/**
+ * The coalition's phrasebook, in the reader's own language.
+ *
+ * Split out of [said] because it is a whole vocabulary rather than a few more cases, and
+ * because every one of these is somebody *speaking* — the strip is a record of what was said,
+ * not of what is true, so "You say your hand is low" is the right sentence and a bare
+ * assertion is not.
+ *
+ * Four renderers rather than one: the two enum-bearing sentences fan out further, and folding
+ * every branch into a single `when` makes one nobody can read.
+ */
+@Composable
+private fun talked(say: Say, name: String, you: Boolean): String = when (say) {
+    is Say.Standing -> talkStanding(say, name, you)
+    is Say.Answered -> talkAnswer(say, name, you)
+    else -> talkPlainly(say, name, you)
+}
+
+/**
+ * The sentences with nothing to fan out: a name, sometimes a rank or a card, and that is all.
+ *
+ * Detekt reads the pile of two-armed `if (you)` as complexity. What it is measuring is the
+ * size of the vocabulary rather than any difficulty in the code — each arm is one
+ * `stringResource` call, and the "you" form and the "they" form of a sentence are different
+ * sentences in most of the nineteen languages this renders into, not a parameter.
+ */
+@Composable
+@Suppress("CognitiveComplexMethod")
+private fun talkPlainly(say: Say, name: String, you: Boolean): String = when (say) {
+    is Say.WillShed -> if (you) {
+        stringResource(Res.string.talk_will_shed, say.rank.serialName)
+    } else {
+        stringResource(Res.string.talk_will_shed_they, name, say.rank.serialName)
+    }
+
+    is Say.PlayFor -> if (you) {
+        stringResource(Res.string.talk_play_for, speakerName(say.seat))
+    } else {
+        stringResource(Res.string.talk_play_for_they, name, speakerName(say.seat))
+    }
+
+    is Say.TakeThis -> if (you) {
+        stringResource(Res.string.talk_take_this, say.position + 1)
+    } else {
+        stringResource(Res.string.talk_take_this_they, name, say.position + 1)
+    }
+
+    is Say.WillMove -> if (you) {
+        stringResource(Res.string.talk_will_move)
+    } else {
+        stringResource(Res.string.talk_will_move_they, name)
+    }
+
+    is Say.Suggests -> if (you) {
+        stringResource(Res.string.talk_suggests, speakerName(say.to))
+    } else {
+        stringResource(Res.string.talk_suggests_they, name)
+    }
+
+    is Say.GiveMe -> if (you) {
+        stringResource(Res.string.talk_give_me, speakerName(say.from), say.position + 1)
+    } else {
+        stringResource(Res.string.talk_give_me_they, name, speakerName(say.from), say.position + 1)
+    }
+
+    else -> ""
+}
+
+/** Where the speaker says their hand stands. */
+@Composable
+private fun talkStanding(say: Say.Standing, name: String, you: Boolean): String = when (say.where) {
+    TableTalk.Standing.Where.LOW ->
+        if (you) stringResource(Res.string.talk_low) else stringResource(Res.string.talk_low_they, name)
+
+    TableTalk.Standing.Where.HIGH ->
+        if (you) stringResource(Res.string.talk_high) else stringResource(Res.string.talk_high_they, name)
+
+    TableTalk.Standing.Where.BIN ->
+        if (you) stringResource(Res.string.talk_bin) else stringResource(Res.string.talk_bin_they, name)
+}
+
+/** An answer to something somebody asked. */
+@Composable
+private fun talkAnswer(say: Say.Answered, name: String, you: Boolean): String = when (say.says) {
+    TableTalk.Answer.Says.YES ->
+        if (you) stringResource(Res.string.talk_yes) else stringResource(Res.string.talk_yes_they, name)
+
+    TableTalk.Answer.Says.NO ->
+        if (you) stringResource(Res.string.talk_no) else stringResource(Res.string.talk_no_they, name)
+
+    TableTalk.Answer.Says.WAIT ->
+        if (you) stringResource(Res.string.talk_wait) else stringResource(Res.string.talk_wait_they, name)
+
+    TableTalk.Answer.Says.THAT_LEAVES_US_WORSE ->
+        if (you) stringResource(Res.string.talk_worse) else stringResource(Res.string.talk_worse_they, name)
 }

@@ -17,7 +17,7 @@
 <resources>
 
     <!-- The name of the game. Not translated: it is what the game is called. -->
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <!-- ================================================================ opening -->
     <string name="opening_shuffling">Shuffling…</string>
@@ -32,15 +32,20 @@
     <string name="home_online">Play online</string>
     <string name="home_teach">How to play</string>
     <string name="home_settings">Settings</string>
-    <string name="home_version">v%1$s</string>
+    <string name="home_version">%1$s (%2$s)</string>
     <!-- The credit under the wordmark, on the first screen of every client.
 
-         VINTO is not our game. This app is an unofficial way to play it, the line says so
+         Vinto! is not our game. This app is an unofficial way to play it, the line says so
          before anything else on the screen does, and tapping it opens the game it belongs to.
          The address is inside the sentence on purpose: where a platform has nothing that
          opens a link, the words are still the whole answer. -->
-    <string name="home_unofficial">An unofficial app for the card game VINTO. The original is at vinto.game</string>
+    <string name="home_unofficial">Unofficial app. The original is at vinto.game</string>
     <string name="home_unofficial_action">Open vinto.game, the official home of the card game</string>
+
+    <!-- Beside the build number, because that corner is already where the app talks about
+         itself rather than about the round. -->
+    <string name="home_other_games">See other games</string>
+    <string name="home_other_games_action">Open kupalinka.app, the other games by the same maker</string>
 
     <!-- ================================================================ online -->
     <string name="online_screen_title">Play online</string>
@@ -56,6 +61,12 @@
     <string name="trouble_closed">Online play is not open yet. Single player and the lesson work as normal.</string>
     <string name="trouble_busy">That table is full. Try another, or start one of your own.</string>
     <string name="trouble_refused">The room service would not accept that.</string>
+    <string name="trouble_update_needed">This version of the game is too old for online play. Update it from the store.</string>
+    <!-- The dialog a seated player sees once when the room would rather they updated. -->
+    <string name="notice_update_title">Update your app</string>
+    <string name="notice_update_available">A newer version of the game is available. Update it when you can; this one still plays.</string>
+    <string name="label_update">Update</string>
+    <string name="label_not_now">Not now</string>
     <string name="trouble_broken">The room service is having trouble. Try again in a moment.</string>
     <string name="online_creating">Opening a room…</string>
     <string name="online_visibility">Who can find the room</string>
@@ -152,7 +163,7 @@
     <!-- The two rows that say whose game this is. First the game, then the app: the order is
          the point, and it is the same order the home screen says it in. -->
     <string name="settings_original">The original game</string>
-    <string name="settings_original_detail">VINTO is somebody else's card game, and this is an unofficial app for it. The game, its rules and the people who made it are at vinto.game.</string>
+    <string name="settings_original_detail">Vinto! is somebody else's card game, and this is an unofficial app for it. The game, its rules and the people who made it are at vinto.game.</string>
     <string name="settings_studio">About this app</string>
     <string name="settings_studio_detail">Who made this app, what else is on the shelf, and how it is put together.</string>
     <string name="settings_rate">Rate this game</string>
@@ -223,22 +234,47 @@
     <string name="table_you">You</string>
     <string name="table_vinto_mark">Vinto</string>
     <string name="table_leads_mark">leads</string>
+    <string name="table_away_mark">away</string>
     <string name="seat_pointed_turn">%1$s is playing</string>
     <string name="seat_is_a_bot">a bot</string>
     <string name="seat_pointed_vinto">%1$s called Vinto</string>
     <string name="seat_pointed_penalty">%1$s is taking a card from the deck</string>
     <string name="seat_pointed_coalition">%1$s leads the coalition</string>
     <string name="table_final_round">Final round</string>
+    <string name="detail_ace_hurts_your_side">The caller is out of bounds, so an Ace can only make one of your own side draw.</string>
+    <string name="talk_low">You say your hand is the low one.</string>
+    <string name="talk_low_they">%1$s says theirs is the low hand.</string>
+    <string name="talk_high">You say your hand is high — send your bad cards over.</string>
+    <string name="talk_high_they">%1$s says theirs is high — send them your bad cards.</string>
+    <string name="talk_bin">You say you are out of it: use you as the bin.</string>
+    <string name="talk_bin_they">%1$s is out of it, and offers to be the bin.</string>
+    <string name="talk_will_shed">You say you will throw in a %1$s if one lands.</string>
+    <string name="talk_will_shed_they">%1$s will throw in a %2$s if one lands.</string>
+    <string name="talk_play_for">You say to play for %1$s.</string>
+    <string name="talk_play_for_they">%1$s says to play for %2$s.</string>
+    <string name="talk_give_me">You ask %1$s for their card %2$d.</string>
+    <string name="talk_give_me_they">%1$s asks %2$s for their card %3$d.</string>
+    <string name="talk_take_this">You offer your card %1$d.</string>
+    <string name="talk_take_this_they">%1$s offers their card %2$d.</string>
+    <string name="talk_suggests">You have a suggestion for %1$s.</string>
+    <string name="talk_suggests_they">%1$s has a suggestion for you.</string>
+    <string name="talk_will_move">You say what you are about to do.</string>
+    <string name="talk_will_move_they">%1$s says what they are about to do.</string>
+    <string name="talk_yes">You say yes.</string>
+    <string name="talk_yes_they">%1$s says yes.</string>
+    <string name="talk_no">You say no.</string>
+    <string name="talk_no_they">%1$s says no.</string>
+    <string name="talk_wait">You ask them to wait.</string>
+    <string name="talk_wait_they">%1$s asks you to wait.</string>
+    <string name="talk_worse">You say it would leave you worse off.</string>
+    <string name="talk_worse_they">%1$s says it would leave them worse off.</string>
     <string name="table_final_caller">Everyone else plays one hand between them, against yours.</string>
-    <string name="table_final_leader">You play the coalition’s hand against %1$s.</string>
-    <string name="table_final_ally">%1$s plays the coalition’s hand against %2$s.</string>
     <string name="table_final_turns_left">%1$d turns to the reveal</string>
     <string name="table_final_last_turn">last turn</string>
-    <string name="table_final_choosing">One hand between the three of them, against %1$s.</string>
+    <string name="table_final_coalition">One hand between the three of you, against %1$s.</string>
     <string name="table_final_side_coalition">Together</string>
     <string name="table_final_side_caller">Called it</string>
     <string name="table_final_versus">vs</string>
-    <string name="table_final_leads">%1$s leads the others</string>
     <string name="table_see_score">See the score</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -326,15 +362,13 @@
     <string name="beat_toss_in_body">The moment a card lands face up, everyone gets a chance to be rid of a match — and to use its action. Wrong rank costs you a penalty card and shuts you out of that card — the next one to land is a fresh chance. Worth doing for a card that counts against you; a King costs nothing to hold.</string>
     <string name="beat_watching_body">Watch what they take and what they put down. That, and the line-by-line under here, is everything you get to know about their hands.</string>
     <!-- Over a bot's action as it is played: who, which card, and the card's own description
-         from CardWords. "Sky plays the Nine — Peek at one card of another player". -->
+         from CardWords. "Tide plays the Nine — Peek at one card of another player". -->
     <string name="beat_watching_title">%1$s plays the %2$s — %3$s</string>
     <string name="beat_do_not_guess_title">Do not guess</string>
     <string name="beat_do_not_guess_body">You never looked at this card, so naming it is a guess, and a wrong guess costs you a penalty card. Put it down without a word.</string>
-    <string name="beat_coalition_leader_title">%1$s plays the coalition’s hand</string>
-    <string name="beat_coalition_leader_body">The coalition has chosen whose hand it plays: at the end, only %1$s’s total is set against yours. The other two spend their last turn making that hand lower — a King can take a bad card out of it, a Jack or a Queen can trade a better one in — or finding out what is in it.</string>
     <string name="beat_final_play_title">%1$s plays the %2$s</string>
     <string name="beat_final_play_ace">An Ace makes one player draw a card from the deck, face down, and one more card is one more card counting against them. It cannot be aimed at you now — a caller’s cards are out of reach — so it lands on the coalition’s own side. Watch who has to draw.</string>
-    <string name="beat_final_play_king">A King points at a card and names it, and the name has to be right. Right: the card leaves the hand it was in and its action is played. Wrong: everyone sees what it really was, and the namer draws a penalty card. A player names a card they have seen — often one of their own, to be rid of it.</string>
+    <string name="beat_final_play_king">A King points at a card and names it, and the name has to be right. Right: the card leaves the hand it was in and its action is played. Wrong: everyone sees what it really was, and the namer draws a penalty card. A player names a card they have seen — often one of their own, to be rid of it. In the final round a King is the coalition’s tool alone: the caller may not throw anything in, so whatever rank it names can only ever leave the coalition’s own hands.</string>
     <string name="beat_final_play_look">A 9 or a 10 looks at one card in somebody else’s hand. In the final round that is how the coalition finds out what it is holding, since yours is out of bounds — and what one of them learns, they may all use.</string>
     <string name="beat_final_play_other">Watch what it does: this is a card you have not held yet, and the box of recent moves under the table says what happened.</string>
     <string name="beat_swap_them_title">Trade them</string>
@@ -344,9 +378,9 @@
     <string name="beat_call_now_title">Call it</string>
     <string name="beat_call_now_body">You know every card in your hand, and together they come to nothing or less — nobody at this table can finish below you. Press Call Vinto: everybody else gets exactly one more turn, and then every hand goes face up.</string>
     <string name="beat_you_called_title">You called Vinto</string>
-    <string name="beat_you_called_body">The round ends on your terms. Ember, Sky and Dune each get one more turn, and nobody may touch your cards now. Then every hand is turned over and yours is set against the best of theirs.</string>
+    <string name="beat_you_called_body">The round ends on your terms. Ember, Tide and Dune each get one more turn, and nobody may touch your cards now. Then every hand is turned over and yours is set against the best of theirs.</string>
     <string name="beat_coalition_vs_you_title">Now they play as one</string>
-    <string name="beat_coalition_vs_you_body">The three who did not call are the coalition: one turn each, and only their single best hand is compared with yours — so it is a team against your one hand. At a real table they would talk it over and pool what they know. Watch what they do with their last turn: this is where you see the cards you have not held yet.</string>
+    <string name="beat_coalition_vs_you_body">The three who did not call are the coalition: one turn each, and only their single best hand is compared with yours — so it is a team against your one hand. You will hear them working it out, and you may talk back — nobody can check a word of it until the hands turn over. Watch what they do with their last turn: this is where you see the cards you have not held yet.</string>
     <string name="beat_aim_it_title">Aim it</string>
     <string name="beat_aim_it_body">This is the card's own action, and it is free — it costs you nothing to use, and the card goes on the pile afterwards either way.</string>
     <string name="beat_remember_it_title">Remember it</string>
@@ -387,12 +421,14 @@
     <string name="beat_cards_odd_body">An Ace is worth 1 and makes whoever you choose draw a penalty card. A Joker is worth minus one — the best card in the deck, and the one never to give away.</string>
     <string name="beat_tour_title">The deck and the pile</string>
     <string name="beat_tour_body">Cards come off the deck. What anybody throws away lands face up beside it, where the whole table can read it — including you.</string>
-    <string name="beat_seats_title">Ember, Sky and Dune</string>
+    <string name="beat_seats_title">Ember, Tide and Dune</string>
     <string name="beat_seats_body">Three bots, each with five cards they can see no better than you can. The plate that lights up green is whoever's turn it is.</string>
     <string name="beat_help_title">The ? is always there</string>
     <string name="beat_help_body">It explains the moment you are in and what every card does. The boxed game comes with reminder cards for exactly this, one per player — nobody is expected to hold fourteen ranks in their head, here or at a table.</string>
+    <string name="beat_disagreement_title">Two of them remember it differently</string>
+    <string name="beat_disagreement_body">Two claims on one card cannot both be true, so the card wears both, marked as a dispute. The game never decides who is right — the cards turn over at the end and settle it. Until then, ask yourself whose memory is fresher: the one who looked at it last is usually the one to believe.</string>
     <string name="beat_coalition_title">Everybody else plays as one</string>
-    <string name="beat_coalition_body">You, and the two who did not call, are the coalition: one turn each, and only your single best hand is compared with the caller's — so it is a team against one hand. At a real table you would talk it over and pool what you know. Nobody may touch the caller's cards, and the game will not let you try.</string>
+    <string name="beat_coalition_body">You, and the two who did not call, are the coalition: one turn each, and only your single best hand is compared with the caller's — so it is a team against one hand. Tap any card to say what you think it is, and say so even when you only remember the two ranks and not which is which. Throwing a card in costs you no turn and is the cheapest way to lower a hand. Nobody may touch the caller's cards, and the game will not let you try.</string>
     <string name="beat_your_turn_to_call_title">You can call it too</string>
     <string name="beat_your_turn_to_call_body">At the end of any turn of yours, the gold button is there: press it when you believe your hand is the lowest at the table. It was hidden while you were learning because it ends the round for everybody — from here on it is yours to press, and pressing it early is how most people lose their first game.</string>
     <string name="beat_session_title">And that is one round</string>
@@ -449,7 +485,7 @@
          nothing sent anywhere — which is what lets it be personal at all, unlike the
          anonymous counts. Shown only once there is a round to show. -->
     <string name="stats_played">%1$d played</string>
-    <string name="stats_won">%1$d%% won</string>
+    <string name="stats_won">%1$d% won</string>
     <string name="stats_best">best %1$d</string>
     <string name="stats_streak">%1$d in a row</string>
     <string name="stats_row">Your record: %1$s</string>
@@ -516,6 +552,84 @@
     <string name="ask_you_drew_unknown">You drew a card</string>
     <string name="ask_which_card_replaced">Which card does it replace?</string>
     <string name="ask_name_what_you_put_down">Name the card you are putting down?</string>
+    <string name="ask_which_way_round">Which way round are they?</string>
+    <string name="ask_say_what_you_know">Tell the others what you know.</string>
+    <!-- The three assessments a coalition member can offer in one tap. Kept to two words each:
+         they share a row with "Done talking" on a phone. -->
+    <string name="label_standing_low">I am low</string>
+    <string name="label_standing_high">I am high</string>
+    <string name="label_standing_bin">Bin me</string>
+    <string name="label_done_talking">Done talking</string>
+    <!-- The coalition's shared plan (design D7a): a board of parts agreed as a whole. -->
+    <string name="label_agree">Agree</string>
+    <string name="label_do_as_planned">Do as planned</string>
+    <string name="label_keep_it_instead">Keep it instead</string>
+    <string name="label_plan_swap">Swap two cards</string>
+    <string name="label_plan_declare">Declare a rank</string>
+    <string name="label_plan_put_down">Put a card down</string>
+    <string name="label_plan_take_discard">Take the discard</string>
+    <string name="label_plan_clear">Clear</string>
+    <string name="label_plan_shed">Throw in</string>
+    <string name="ask_which_rank_throw_in">Which rank will you throw in if one lands?</string>
+    <string name="detail_shed_risk">Only a rank you have seen in your hand: a wrong throw costs you a card and bars you for the rest of the round.</string>
+    <string name="detail_shed_risk_pushed">Yours is the hand the coalition is pushing. A wrong throw costs it a card and bars it for the rest of the round — throw in only what you have seen.</string>
+    <string name="detail_claim_was_wrong">A step here was built on a claim the cards have since proved wrong. That is the game working, not a mistake: somebody remembered a card differently from how it lies.</string>
+    <!-- Where the plan would leave the round. Level is said as losing: a tie pays the caller. -->
+    <string name="board_outcome_wins">Our best hand %1$d against their %2$d: that wins.</string>
+    <string name="board_outcome_level">Our best hand %1$d against their %2$d: level, and level pays the caller.</string>
+    <string name="board_outcome_loses">Our best hand %1$d against their %2$d: that falls short.</string>
+    <string name="board_outcome_unseen">%1$d of the caller’s cards nobody has seen.</string>
+    <string name="board_verdict_wins">wins</string>
+    <string name="board_verdict_level">level</string>
+    <string name="board_verdict_loses">falls short</string>
+    <string name="label_plan_rehearse">Watch the plan</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">Rehearsal — nothing has moved</string>
+    <string name="ask_what_will_you_do">What will you do with your turn?</string>
+    <string name="ask_what_should_they_do">What should %1$s do with their turn?</string>
+    <string name="ask_which_rank_will_you_declare">Which rank will you declare with the King?</string>
+    <string name="ask_which_rank_should_they_declare">Which rank should %1$s declare with the King?</string>
+    <string name="ask_which_card_will_you_put_down">Which card will you put down for a teammate to throw in on?</string>
+    <string name="ask_which_card_should_they_put_down">Which card should %1$s put down for a teammate to throw in on?</string>
+    <string name="detail_plan_asks">The plan: %1$s.</string>
+    <!-- The drawn card does more for the coalition than the plan's step would: %1$s the card's
+         name, %2$d the 1-based position of the viewer's card it should replace. -->
+    <string name="detail_draw_beats_plan">Your %1$s beats the plan: keep it in place of card %2$d.</string>
+    <string name="detail_plan_is_a_suggestion">A plan is a suggestion. Whoever’s turn it is decides.</string>
+    <string name="board_title">The plan</string>
+    <string name="board_summary_empty">No plan yet — tap to plan together</string>
+    <string name="board_summary">The plan: %1$d of %2$d turns set, %3$d of %4$d agreed</string>
+    <string name="board_your_call">your call</string>
+    <string name="board_in_play">in play</string>
+    <!-- The owner of a card, as a step's sentence needs it: "swap your card 2 with Nina’s card 3". -->
+    <string name="board_owner_you">your</string>
+    <string name="board_owner_named">%1$s’s</string>
+    <string name="board_step_swap">swap %1$s card %2$d with %3$s card %4$d</string>
+    <string name="board_step_declare">declare %1$s with a King</string>
+    <string name="board_step_take_discard">take the discard</string>
+    <!-- A lane step that puts one of the seat's own cards on the pile so a teammate can throw a
+         match in: %1$s the owner ("your" / "Nina’s"), %2$d the card's 1-based position, and in
+         the _known form %3$s the rank the table knows it to be. -->
+    <string name="board_step_put_down">put down %1$s card %2$d</string>
+    <string name="board_step_put_down_known">put down %1$s card %2$d, the %3$s</string>
+    <!-- A lane owner's alternative to the step somebody set for them, beside it on the board:
+         %1$s their name, %2$s a board_step_* fragment. Tapping it puts it on the board. -->
+    <string name="board_would_rather">%1$s would rather %2$s</string>
+    <string name="board_shed">%1$s will throw in a %2$s</string>
+    <string name="board_edited_by">last changed by %1$s</string>
+    <string name="board_nod_yes">%1$s agreed</string>
+    <string name="board_nod_not_yet">%1$s has not agreed yet</string>
+    <string name="board_lane">%1$s: %2$s</string>
+    <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <string name="badge_disputed">disputed</string>
+    <string name="badge_paired">one of a pair, order unknown</string>
+    <string name="badge_right">right</string>
+    <string name="badge_wrong">wrong</string>
+    <string name="label_do_as_suggested">Do that</string>
+    <string name="label_decline_suggestion">No, thanks</string>
+    <string name="label_withdraw">Take it back</string>
+    <string name="label_this_way_round">%1$s then %2$s</string>
+    <string name="label_not_sure_which_way">Not sure which</string>
     <string name="ask_what_do_you_say">What do you say this card is?</string>
     <string name="ask_say_and_play">Say what it is, and play that card's action</string>
     <string name="ask_look_at_one_of_yours">Look at one of your own cards</string>
@@ -537,7 +651,6 @@
          "are" is an English accident, and a translator handed half a sentence cannot fix
          the half they were not given. -->
     <string name="ask_you_playing">You are playing</string>
-    <string name="ask_who_plays_for_you">%1$s called Vinto. Who plays for the rest of you?</string>
     <string name="ask_round_over">Round over</string>
     <string name="ask_round_over_lowest">Round over — you finished lowest on %1$d</string>
     <string name="ask_round_over_not_lowest">Round over — you finished on %1$d, best was %2$d</string>
@@ -566,7 +679,7 @@
          translated: a 7 is a 7 in every language this app will ever ship in.
 
          The paired `_you` / `_they` entries are the reason this file exists at all. English
-         wants "You draw" and "Sky draws" — one suffix — and Belarusian or Ukrainian wants
+         wants "You draw" and "Tide draws" — one suffix — and Belarusian or Ukrainian wants
          two different sentences. A translator handed the fragment "draws" cannot fix a half
          they were never given, so every conjugated line is written out in full, twice. -->
     <string name="log_you">You</string>

@@ -51,8 +51,10 @@ class RoundScoringTest {
 
     @Test
     fun aTieGoesToTheCaller() {
-        // "If tie → Vinto +3; Coalition 0." This is what makes "beat them" mean beat them, and
-        // it is why the coalition planner searches for a strictly lower total.
+        // A tie pays the caller 2 where a win pays 3, and the coalition nothing either way.
+        // That is what makes "beat them" mean beat them — the planner still has to search for a
+        // strictly lower total to be paid at all — while not paying a draw as though it were a
+        // win. The caller keeps the advantage of having called; it is just smaller than winning.
         val players = listOf(
             hand("p1", Rank.FIVE, Rank.FIVE), // 10, the caller
             hand("p2", Rank.FOUR, Rank.SIX), // 10 — level, not lower
@@ -61,7 +63,7 @@ class RoundScoringTest {
         )
 
         assertEquals(
-            mapOf("p1" to 3, "p2" to 0, "p3" to 0, "p4" to 0),
+            mapOf("p1" to 2, "p2" to 0, "p3" to 0, "p4" to 0),
             calculateRoundPoints(players, vintoCallerId = "p1"),
         )
     }

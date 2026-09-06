@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.CountConnectionTrouble
 import game.vinto.app.CountRefusals
+import game.vinto.app.UpdateNoticeDialog
 import game.vinto.app.art.Res
 import game.vinto.app.art.invite_body
 import game.vinto.app.art.invite_copied
@@ -70,7 +71,9 @@ import game.vinto.app.art.table_see_score
 import game.vinto.app.art.toss_clock_moves_on
 import game.vinto.app.art.toss_more_time
 import game.vinto.app.link.inviteLink
+import game.vinto.app.openUrl
 import game.vinto.app.shareText
+import game.vinto.app.storeListingUrl
 import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
@@ -105,6 +108,20 @@ import org.jetbrains.compose.resources.stringResource
 fun RoomScreen(room: RemoteRoom, pace: Pace, onSettings: () -> Unit, onLeft: () -> Unit) {
     val session by room.session.collectAsState()
     val ended by room.ended.collectAsState()
+
+    // What the room asked to have said once — a newer build waiting. Over whichever screen
+    // is up, and gone when the person has answered it either way.
+    val notice by room.notice.collectAsState()
+    notice?.let { asked ->
+        UpdateNoticeDialog(
+            asked,
+            onUpdate = {
+                openUrl(storeListingUrl())
+                room.dismissNotice()
+            },
+            onNotNow = room::dismissNotice,
+        )
+    }
 
     when (val playing = session) {
         null -> LobbyScreen(room, onLeft)
@@ -558,7 +575,7 @@ private fun RemoteGameScreen(
         val layout = TableLayout.forScreen(maxWidth, maxHeight)
 
         CardStage(
-            frames = session.frames,
+            frames = holder.frames,
             live = holder.current,
             sizes = layout.sizes,
             pace = pace.scale,
@@ -575,7 +592,7 @@ private fun RemoteGameScreen(
                         round = standings.size + 1,
                     ),
                     layout = layout,
-                    onMove = act,
+                    onMove = act.unlessRehearsing(),
                     onHelp = { helpOpen = true },
                     onSettings = onSettings,
                     onReport = {},

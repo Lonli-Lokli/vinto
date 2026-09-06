@@ -1,11 +1,15 @@
 package game.vinto.worker
 
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.looksLikeRoomCode as coreLooksLikeRoomCode
 import game.vinto.room.addBot as coreAddBot
+import game.vinto.room.agreePlanEnvelopes as coreAgreePlanEnvelopes
 import game.vinto.room.alarmEnvelopes as coreAlarmEnvelopes
 import game.vinto.room.applyAction as coreApplyAction
 import game.vinto.room.applyActionEnvelopes as coreApplyActionEnvelopes
 import game.vinto.room.countdownMs as coreCountdownMs
+import game.vinto.room.doneConferringEnvelopes as coreDoneConferringEnvelopes
+import game.vinto.room.editPlanEnvelopes as coreEditPlanEnvelopes
 import game.vinto.room.eventsSince as coreEventsSince
 import game.vinto.room.forgetRoom as coreForgetRoom
 import game.vinto.room.joinRoom as coreJoinRoom
@@ -26,6 +30,7 @@ import game.vinto.room.removeBot as coreRemoveBot
 import game.vinto.room.resolveRoomCode as coreResolveRoomCode
 import game.vinto.room.resolveRoomCodeFor as coreResolveRoomCodeFor
 import game.vinto.room.roundRecording as coreRoundRecording
+import game.vinto.room.sayEnvelopes as coreSayEnvelopes
 import game.vinto.room.seatCount as coreSeatCount
 import game.vinto.room.seatForToken as coreSeatForToken
 import game.vinto.room.sessionMs as coreSessionMs
@@ -50,13 +55,22 @@ import game.vinto.room.viewForSeat as coreViewForSeat
 
 // --- the room -------------------------------------------------------------------------------
 
+/** The wire this room speaks, for the join answer and the health page. */
+@JsExport
+fun protocolVersion(): Int = PROTOCOL_VERSION
+
 @JsExport
 fun newRoom(roomId: String, seed: Double, difficulty: String, nowMs: Double): String =
     coreNewRoom(roomId, seed, difficulty, nowMs)
 
 @JsExport
-fun joinRoom(stateJson: String, token: String, nickname: String, nowMs: Double): String =
-    coreJoinRoom(stateJson, token, nickname, nowMs)
+fun joinRoom(
+    stateJson: String,
+    token: String,
+    nickname: String,
+    nowMs: Double,
+    protocol: Int = PROTOCOL_VERSION,
+): String = coreJoinRoom(stateJson, token, nickname, nowMs, protocol)
 
 @JsExport
 fun addBot(stateJson: String, token: String, nowMs: Double): String =
@@ -105,6 +119,22 @@ fun lobbyView(stateJson: String, nowMs: Double): String = coreLobbyView(stateJso
 @JsExport
 fun applyActionEnvelopes(stateJson: String, token: String, actionJson: String, nowMs: Double): String =
     coreApplyActionEnvelopes(stateJson, token, actionJson, nowMs)
+
+@JsExport
+fun sayEnvelopes(stateJson: String, token: String, talkJson: String, nowMs: Double): String =
+    coreSayEnvelopes(stateJson, token, talkJson, nowMs)
+
+@JsExport
+fun doneConferringEnvelopes(stateJson: String, token: String, nowMs: Double): String =
+    coreDoneConferringEnvelopes(stateJson, token, nowMs)
+
+@JsExport
+fun editPlanEnvelopes(stateJson: String, token: String, editJson: String, nowMs: Double): String =
+    coreEditPlanEnvelopes(stateJson, token, editJson, nowMs)
+
+@JsExport
+fun agreePlanEnvelopes(stateJson: String, token: String, agree: Boolean, nowMs: Double): String =
+    coreAgreePlanEnvelopes(stateJson, token, agree, nowMs)
 
 @JsExport
 fun readyEnvelopes(stateJson: String, token: String, nowMs: Double): String =

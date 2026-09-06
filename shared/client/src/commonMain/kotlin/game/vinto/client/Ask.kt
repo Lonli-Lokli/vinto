@@ -77,8 +77,25 @@ sealed interface Ask {
 
     data class SomebodyIsPlaying(val who: Speaker) : Ask
 
-    /** The final round: the coalition picks whose hand is compared to the caller's. */
-    data class WhoPlaysForYou(val caller: Speaker) : Ask
+    /**
+     * The only question a claimed pair leaves. One of its answers is that there is no answer.
+     */
+    data object WhichWayRound : Ask
+
+    /** The confer window: the coalition's moment before the round runs. */
+    data object SayWhatYouKnow : Ask
+
+    // --- composing the plan --------------------------------------------------------------------
+
+    data object ThePlan : Ask
+
+    data class WhatShouldTheyDo(val who: Speaker) : Ask
+
+    data class WhichRankShouldTheyDeclare(val who: Speaker) : Ask
+
+    /** Which of [who]'s own cards goes on the pile, for a teammate holding its rank to throw in on. */
+    data class WhichCardShouldTheyPutDown(val who: Speaker) : Ask
+    data object WhichRankWillYouThrowIn : Ask
 
     // --- the end ------------------------------------------------------------------------------
 

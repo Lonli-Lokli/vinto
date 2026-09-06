@@ -1,0 +1,1 @@
+{"type":"action","token":"tok","action":{"type":"SELECT_ACTION_TARGET","payload":{"rank":"Any","playerId":"p1","targetPlayerId":"p2","position":0}}}

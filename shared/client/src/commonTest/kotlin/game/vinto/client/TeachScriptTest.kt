@@ -5,6 +5,7 @@ import game.vinto.engine.PendingActionView
 import game.vinto.engine.projectView
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.Card
+import game.vinto.shapes.Claim
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PendingCardOrigin
@@ -275,11 +276,10 @@ class TeachScriptTest {
             Lesson(Chapter.VINTO, Teaches.CoalitionAgainstYou, talkId = "coalition_vs_you"),
         )
 
-        val led = base.copy(phase = GamePhase.FINAL, vintoCallerId = me, coalitionLeaderId = raph.id)
-        val leader = assertNotNull(lessonFor(led, tableFor(led), taught, emptyMap()))
-        assertEquals(Teaches.CoalitionLeader(Speaker.Named(raph.nickname)), leader.teaches)
-        assertEquals(Target.Seat(raph.id), leader.point, "and points at whose hand it is")
-        assertEquals(Teaches.CoalitionLeader.ID, leader.talkId, "read, not done")
+        // There used to be a beat here for the coalition naming whose hand it played. There
+        // is no such moment: only the lowest hand counts, whoever holds it, so the round
+        // starts the instant Vinto is called and there is nothing to nominate.
+        val led = base.copy(phase = GamePhase.FINAL, vintoCallerId = me)
 
         val king = Card(id = "K_0", rank = Rank.KING, value = 0, played = false)
         val playing = led.copy(
@@ -292,14 +292,52 @@ class TeachScriptTest {
                 targets = emptyList(),
             ),
         )
-        val afterLeader = taught.heard(leader)
-        val play = assertNotNull(lessonFor(playing, tableFor(playing), afterLeader, emptyMap()))
+        val play = assertNotNull(lessonFor(playing, tableFor(playing), taught, emptyMap()))
         assertEquals(Teaches.FinalPlay(Speaker.Named(mikey.nickname), Rank.KING), play.teaches)
         assertEquals("final_K", play.talkId, "once per rank")
         assertEquals(Target.Seat(mikey.id), play.point)
 
-        val again = lessonFor(playing, tableFor(playing), afterLeader.heard(play), emptyMap())
+        val again = lessonFor(playing, tableFor(playing), taught.heard(play), emptyMap())
         assertTrue(again?.teaches !is Teaches.FinalPlay, "a second King is not explained twice: $again")
+    }
+
+    /** The first dispute on the table is explained once, and the seat wearing it is pointed at. */
+    @Test
+    fun aDisputeIsExplainedOnceAndPointedAt() = runTest {
+        val session = teachingSession()
+        val me = session.playerId
+        val base = stateOf(session)
+        val raph = base.players[1]
+        val mikey = base.players[2]
+        val taught = talkedThrough(session).heard(
+            Lesson(Chapter.VINTO, Teaches.YouCalled, talkId = "you_called"),
+        ).heard(
+            Lesson(Chapter.VINTO, Teaches.CoalitionAgainstYou, talkId = "coalition_vs_you"),
+        )
+
+        val disputed = base.copy(
+            phase = GamePhase.FINAL,
+            vintoCallerId = me,
+            players = base.players.map { seat ->
+                if (seat.id == mikey.id) {
+                    seat.copy(
+                        claims = listOf(
+                            Claim(mikey.id, listOf(0), listOf(Rank.KING)),
+                            Claim(raph.id, listOf(0), listOf(Rank.SEVEN)),
+                        ),
+                    )
+                } else {
+                    seat
+                }
+            },
+        )
+
+        val lesson = assertNotNull(lessonFor(disputed, tableFor(disputed), taught, emptyMap()))
+        assertEquals(Teaches.Disagreement, lesson.teaches)
+        assertEquals(Target.Seat(mikey.id), lesson.point, "the disputed card's seat is not pointed at")
+
+        val again = lessonFor(disputed, tableFor(disputed), taught.heard(lesson), emptyMap())
+        assertTrue(again?.teaches !is Teaches.Disagreement, "a dispute is explained twice: $again")
     }
 
     /** A peek that has found its card says "remember it" over the Done button, not "aim it". */

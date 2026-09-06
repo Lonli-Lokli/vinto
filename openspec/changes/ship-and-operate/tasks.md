@@ -70,9 +70,24 @@ app — which is why the `vinto://` scheme is there and works today.
       would add over `setUnhandledExceptionHook`. **Needs Xcode, and a decision on the SDK**
       against its weight in a 3.7 MB wasm bundle; flagged rather than settled in
       `add-live-analytics/design.md` §A9 (was migrate 8.2)
-- [ ] 3.6 A crash report arriving in a real Sentry project. The pipe is built and gated
-      (`CrashReporterTest`, `CrashInstallTest`, `CrashReportTest`); the DSN is a build input.
-      **Needs a build carrying a real DSN, in somebody's hands**
+- [x] 3.6 A crash report arriving in a real Sentry project. **It did** — issue 7710776149 in
+      the `vinto` project, 2026-09-04 00:14:56 UTC, carrying the release (`vinto@1.0`), the
+      platform, the surface and a full Kotlin/Native stack that named the failing function. The
+      pipe is proven end to end, which is what this task asked for.
+      It arrived by accident: the crash was the iOS score-sheet bug (fixed in 24059cb) and the
+      reporter was firing from a DEBUG simulator build during a screenshot run. That is the catch
+      — see 3.7
+
+- [ ] 3.7 Stop debug and developer crashes being reported as `production`.
+      `Crashes.install` hardcodes `environment = "production"`, so a crash from a simulator, a
+      `:composeApp:run` desktop window or a CI job is indistinguishable in Sentry from a crash a
+      player had. Proven by 3.6, whose event came from a debug build on a simulator and is tagged
+      `environment: production` all the same.
+      It matters most in the next fortnight rather than in the abstract: TestFlight and the Play
+      internal track are about to put builds in other people's hands, and the first real crash
+      report wants to be findable rather than buried among the team's own. The DSN is already a
+      build input (`-Pvinto.sentryDsn=`), so the environment can be one too; the alternative is an
+      `expect fun isDebugBuild()` with four actuals, which is more honest and more code.
 
 ## 4. Reading the live service
 

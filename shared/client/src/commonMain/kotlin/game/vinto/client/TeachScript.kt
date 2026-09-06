@@ -478,7 +478,8 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
         talkId = "coalition_vs_you",
     )
 
-    view.vintoCallerId == view.viewerId -> finalRoundTalk(view, taught) ?: scoringTalk(view, taught)
+    view.vintoCallerId == view.viewerId ->
+        disagreementTalk(view, taught) ?: finalRoundTalk(view, taught) ?: scoringTalk(view, taught)
 
     view.vintoCallerId != null && "vinto" !in taught.talked -> vintoTalk(view)
 
@@ -495,33 +496,43 @@ private fun endgameTalk(view: PlayerView, taught: Taught): Lesson? = when {
         talkId = "your_turn_to_call",
     )
 
-    else -> scoringTalk(view, taught)
+    else -> disagreementTalk(view, taught) ?: scoringTalk(view, taught)
+}
+
+/**
+ * The first dispute on the table, pointed at.
+ *
+ * Whichever chair the learner is in: a coalition member's dispute is one to weigh before
+ * planning on it, and a caller watching two members disagree about a card is watching the
+ * coalition's one real weakness.
+ */
+private fun disagreementTalk(view: PlayerView, taught: Taught): Lesson? {
+    if (view.phase != GamePhase.FINAL || Teaches.Disagreement.id in taught.talked) return null
+    val disputed = view.players.firstOrNull { seat ->
+        seat.cards.indices.any { believedOnView(seat, it).disputed }
+    } ?: return null
+    return Lesson(
+        chapter = Chapter.VINTO,
+        teaches = Teaches.Disagreement,
+        point = Target.Seat(disputed.id),
+        talkId = Teaches.Disagreement.id,
+    )
 }
 
 /**
  * The coalition's play, explained as it happens.
  *
- * Held over the felt at two moments: when the coalition names whose hand it plays, and each
- * time one of them has an action card in play — the frame with the card engaged is drawn,
- * the stage holds, the rule is read, and "Go on" lets the card do its work. Once per rank,
- * so the Ace, the King and the 9 the taught round has the bots play are each explained
- * exactly once, and a learner who wandered off the line still hears about whatever their
- * bots happen to play.
+ * Held over the felt each time one of them has an action card in play — the frame with the
+ * card engaged is drawn, the stage holds, the rule is read, and "Go on" lets the card do its
+ * work. Once per rank, so the Ace, the King and the 9 the taught round has the bots play are
+ * each explained exactly once, and a learner who wandered off the line still hears about
+ * whatever their bots happen to play.
+ *
+ * There used to be a beat here for the coalition naming whose hand it played. There is no
+ * such moment now: only the lowest hand counts, whoever holds it, so the coalition has
+ * nothing to name and the round starts the instant Vinto is called.
  */
-private fun finalRoundTalk(view: PlayerView, taught: Taught): Lesson? =
-    leaderTalk(view, taught) ?: playTalk(view, taught)
-
-private fun leaderTalk(view: PlayerView, taught: Taught): Lesson? {
-    val leader = view.coalitionLeaderId ?: return null
-    if (Teaches.CoalitionLeader.ID in taught.talked) return null
-    val who = view.players.firstOrNull { it.id == leader }?.nickname ?: return null
-    return Lesson(
-        chapter = Chapter.VINTO,
-        teaches = Teaches.CoalitionLeader(Speaker.Named(who)),
-        point = Target.Seat(leader),
-        talkId = Teaches.CoalitionLeader.ID,
-    )
-}
+private fun finalRoundTalk(view: PlayerView, taught: Taught): Lesson? = playTalk(view, taught)
 
 private fun playTalk(view: PlayerView, taught: Taught): Lesson? {
     if (view.phase != GamePhase.FINAL) return null

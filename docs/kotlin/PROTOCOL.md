@@ -58,14 +58,19 @@ Client → server:
 | `remove-bot` | `token?`, `seat` | Take a filler bot back out; cancels a countdown |
 | `next-round` | `token?` | Agree to another round; the last connected human deals it |
 | `more-time` | `token?` | Ask for more time on the open toss-in window. Granted only to a seat the window is still waiting on, at most twice per window (a full window's worth each time); a refusal comes back as `error`. A grant reaches every seat as an empty `events` message whose view carries the refreshed clock |
+| `say` | `talk` | One typed sentence from the phrasebook (`TableTalk`), carrying no text. The speaker is checked against the socket's seat as an action's `actorId` is, and it spends from the same budget an action does, because it is broadcast to every socket. A proposal addressed to a seat the room plays is answered by that bot in the same response |
+| `done-conferring` | `token?` | "I have said what I wanted to say." Closes the coalition's confer window early once every connected member has sent one |
+| `edit-plan` | `token?`, `edit` | One part of the coalition's shared plan (`PlanEdit`): set a lane, clear a lane, add a shed, remove a shed. Only a coalition member may send one and a locked lane refuses it; the room merges it and resets agreement to the editor. Answered as `more-time` is: an empty `events` per seat whose `plan` carries the whole board and whose `said` carries the bots' answers for their own lanes. Spends the talk budget |
+| `agree-plan` | `token?`, `agree` | Yes or no to the standing plan as a whole. A yes also counts as `done-conferring`, so the last member to agree is what starts the round |
 
 Server → client:
 
 | type | fields | notes |
 | --- | --- | --- |
-| `joined` | `seat`, `token`, `seats`, `nextIndex`, `lobby`, `view` | To that socket alone; `view` null in a lobby |
-| `events` | `events`, `nextIndex`, `view` | Accepted actions incl. the sender's echo and bot moves; per-seat view |
-| `sync` | `events`, `nextIndex` | Answer to `resync` |
+| `joined` | `seat`, `token`, `seats`, `nextIndex`, `lobby`, `view`, `plan?` | To that socket alone; `view` null in a lobby |
+| `events` | `events`, `nextIndex`, `view`, `away?`, `said?`, `plan?` | Accepted actions incl. the sender's echo and bot moves; per-seat view. `said` is what the bots said while making them; `away` the seats a bot is covering |
+| `sync` | `events`, `nextIndex`, `view`, `away?`, `plan?` | Answer to `resync`; the catch-up entries carry no views, the seat's current `view` does |
+| `said` | `talk` | Somebody said something; broadcast to every seat, the Vinto caller included |
 | `lobby` | `lobby` | Broadcast on any seat change |
 | `started` | `view`, `nextIndex`, `standings?` | A deal; `standings` only on the next-round path |
 | `between-rounds` | `view`, `standings`, `nextIndex` | Round done, session live, awaiting agreement |
@@ -95,6 +100,17 @@ step cap and the rate limiter in front of it.
 Both additions are optional keys with absent defaults, honouring the additive rule in both
 directions.
 
+## The plan beside the view
+
+The coalition's shared plan (`CoalitionPlan`: lanes, sheds, who has agreed, who last edited) is
+**room state and never game state** — it mutates nothing, reaches no recording and touches no
+hash — so it rides beside the view rather than in it, the way `away` does. Every `events`, `sync`
+and `joined` carries `plan` whenever one stands and omits it when none does, so a client sets
+its copy from whichever arrives: a lane locking on an ordinary action, a reconnect and a
+restarted app all land on the present plan. There is no `planned` message; an edit that moves
+no card is answered as `more-time` is, with an empty `events` per seat. The plan is the same
+for every seat, the caller's included, because it is built only from public claims.
+
 ## The clocks a view carries
 
 Three durations ride on `PlayerView`, all following the same rule: the wire carries **how
@@ -107,15 +123,49 @@ re-snapped) by every message that carries a view:
 | --- | --- | --- |
 | `sessionMsRemaining` | a session is underway | the buzzer: an undeclared round is discarded |
 | `tossInMsRemaining` | a toss-in window waits on a human | the room finishes the window for the laggards (`more-time` moves it) |
-| `leaderMsRemaining` | the coalition owes a leader choice | the room appoints the first coalition seat in table order |
+| `conferMsRemaining` | the coalition is conferring before its first final-round turn | the room closes the window and plays the seats it was holding. Non-null *is* the signal the window is open |
 
 Solo play never sets any of them — `projectView`'s clock parameters are the room's to pass,
 and the engine itself reads no clock.
 
-## Compatibility rule
+## Compatibility rule, and the number
 
-**The protocol only ever grows, additively.** New message types and new optional fields are
-fine — `ignoreUnknownKeys` means an older client skips what it does not know — but a field
-never changes meaning or type, and a message type is never removed while any client sends
-it. A change that cannot be made additively is a new message type, not a new shape for an
-old one.
+**The protocol only ever grows, additively — and it carries a number.** A new *optional field*
+is free: `ignoreUnknownKeys` means an older client skips what it does not know. Everything
+else is a bump of `PROTOCOL_VERSION` (`shared/protocol`):
+
+- a new message type — an older client *skips* one it does not know, so this is safe for
+  messages it merely receives, but it is still a bump, because the vocabulary is written down
+  per version and the freeze test holds it still;
+- a new **game action**, or a changed action payload — an action rides *inside* an events
+  entry, and an older client that cannot decode one drops the whole batch, cursor and all,
+  and freezes for the rest of the round. This is the one that bit: `DECLARE_CARDS` existed in
+  every store build and its payload changed under it;
+- a field that changes meaning or type.
+
+A message type is never removed while any client sends it, and a change that cannot be made
+additively is a new message type, not a new shape for an old one.
+
+**The client sends its number with every `join`; the room keeps a floor.** Below
+`MIN_PROTOCOL` the join is refused at the door with `error` carrying
+`code: "update-needed"` — an `error` because every build ever shipped understands one, and
+a code because a build that has it renders "update the app" with the way to the store rather
+than a sentence. Between the floor and the current number the client is seated and sent a
+`notice` (`code: "update-available"`) once, which the screen shows with *Update* and *Not
+now*: a person mid-game finishes the game. A join with no number is version 1, which is every
+build shipped before the number existed. A room never refuses a client for being *ahead* of it.
+
+**Never mid-game.** A client that sat down is a client the room can talk to for the whole
+game. That is the whole reason the check is at the door.
+
+**What holds it.** `WireFreezeTest` pins the vocabulary — every message type and action tag —
+per version, and fails when it grows without a bump. `WireSamplesTest` pins the *shapes*: one
+encoded sample of every message and action under `fixtures/protocol/v<N>/`, so a payload that
+moves under an old tag fails until the version is bumped and new samples are written under the
+new number (`-Pwire=write`, by hand, only into the new directory). `ProtocolFloorTest` holds
+the door; `RemoteVersionTest` holds the client's half.
+
+| Version | What it added |
+| --- | --- |
+| 1 | The wire as first shipped: `join`, `action`, `resync`, `add-bot`, `remove-bot`, `next-round`, `more-time`; `joined`, `events`, `sync`, `lobby`, `started`, `between-rounds`, `ended`, `closed`, `error` |
+| 2 | Coalition play: `say`, `done-conferring`, `edit-plan`, `agree-plan`; `said`, `notice`; `join.protocol`, `joined.protocol`, `error.code`; the `DECLARE_CARDS` payload's new shape (`about` + a list of claims) |

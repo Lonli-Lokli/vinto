@@ -54,7 +54,15 @@ export default {
    * * Apple's codes are not the resource folder names. vydanne maps `ru` -> `ru`, `de` -> `de-DE`
    *   and so on; `localeMap` below is only for disagreements, and there are none yet.
    */
-  uiLocales: ['en', 'ru'],
+  // Every language the APP ships in, so the listing can be read by the same people the app can.
+  // It said ['en', 'ru'] while `values-*` held twenty: a German player got a German game behind an
+  // English store page, which is the half of localisation nobody sees until they are the one
+  // reading it. `vydanne locales` maps these to each store's own codes — Apple and Play disagree,
+  // and Play is the one with the surprises (`zh-CN`, `iw-IL`, `in-ID`).
+  uiLocales: [
+    'en', 'id', 'de', 'es', 'fr', 'it', 'pl', 'pt', 'tr',
+    'be', 'ru', 'uk', 'he', 'ar', 'ur', 'hi', 'bn', 'ko', 'ja', 'zh',
+  ],
 
   metadataDir: 'fastlane/metadata',
 
@@ -106,14 +114,17 @@ export default {
   // Store Review 5.2 and Play's IP policy both refuse it, and screenshots of the table would have
   // published it.
   //
-  // What replaced them is original and generated in this repository: four flat emblems — a leaf,
-  // a flame, a crescent, a ridge — drawn from the deck's own palette, with the seats renamed Fern,
-  // Ember, Sky and Dune to match. Masters in `brand/avatars/`, converted to vector drawables by
+  // What replaced them is original and generated in this repository: the four classical elements,
+  // each drawn as three engraved lines — fire standing up and wavering, water lying down and
+  // rolling, earth dead straight, air curling away — from the deck's own palette, with the seats
+  // named Ember, Tide, Dune and Gale to match. The elements are nobody's property; the drawings
+  // are this repository's own, and deliberately not a copy of any particular depiction of them.
+  // Masters in `brand/avatars/`, converted to vector drawables by
   // `tools/svg-to-drawable.mjs`, and `brand/avatars/_shared.md` records the whole reasoning.
   // Nothing in the build is anybody else's any more, so `false` is now a true statement rather
   // than a convenient one.
   //
-  // The one piece of third-party *anything* left is the name VINTO itself, which is somebody
+  // The one piece of third-party *anything* left is the name Vinto! itself, which is somebody
   // else's game — and that is a licensing question about the app's subject, not third-party
   // content shipped inside it. Every client says so on its first screen and links to
   // <https://vinto.game>, which is what `AttributionTest` holds.
@@ -217,7 +228,9 @@ export default {
     {
       platform: 'IOS',
       type: 'IPHONE_67', // 6.9"
-      file: 'marketing/out/appstore-preview.mp4',
+      // zdymak's own output, read where it writes it. Copying the file into another folder by
+      // hand is the step that goes stale the first time somebody re-renders and forgets.
+      file: 'store-assets/appstore-preview.mp4',
       poster: '00:00:03:00',
       locales: ['en-GB'],
     },
@@ -226,6 +239,22 @@ export default {
   // Google Play. Package-scoped: vydanne only ever touches this packageName.
   google: {
     packageName: 'app.kupalinka.vinto',
+
+
+    /**
+     * A draft app can only be given draft releases.
+     *
+     * This app has never been published, and Play refuses a `completed` release on any track but
+     * internal while that is true — "Only releases with status draft may be created on draft
+     * app.", which names neither the track nor the fix. So the release lands in Play Console and
+     * waits for a human to start the rollout, which is where an unpublished app's first one
+     * belongs. Drop this line the day the app is live and rollouts should begin on upload.
+     */
+    // 'completed' rolls the build out to the track's testers as the track's one release. It was
+    // 'draft' while the app had never been published anywhere, which Play insists on; a draft
+    // beside a live release is what that setting produces once a track is live, and it is not
+    // what "a build for the testers" means.
+    releaseStatus: 'completed',
     metadataDir: 'fastlane/metadata/android',
     defaultLocale: 'en-GB',
     // The signed bundle `prerelease` uploads. A DIRECTORY, so it takes the newest build in it and
@@ -241,10 +270,17 @@ export default {
     // last one on the track, and the commit count is what guarantees that.
     aab: './androidApp/build/outputs/bundle/release',
 
-    // Stays a closed track. `production` is a refusal in vydanne, not a flag, and that is the
-    // right shape: shipping to the public is a person pressing a button. Every store-mutating
-    // command is a dry run until `--apply`, so a mistake here costs a diff and not a release.
-    track: 'internal',
+    // THE CLOSED TRACK, always — `alpha` is Play's API name for it and the Console calls it
+    // "Closed testing". This line said `internal` while its comment claimed to be closed, and the
+    // two are different audiences: internal testing is capped at 100 addresses on a list and
+    // bypasses review, which makes it the track for checking that an upload works at all. Closed
+    // testing is where a build meets people who are going to play it, and it is the one this
+    // project ships to.
+    //
+    // `production` is a refusal in vydanne rather than a flag, and that is the right shape:
+    // shipping to the public is a person pressing a button. Every store-mutating command is a dry
+    // run until `--apply`, so a mistake here costs a diff and not a release.
+    track: 'alpha',
   },
 
   /**

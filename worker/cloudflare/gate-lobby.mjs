@@ -166,30 +166,38 @@ check(
 const named = (raw) => parse(joinRoom(fresh(), `tok-${raw}`, raw, T0)).state.seats[0].profile.nickname;
 
 console.log('  — profiles');
+// **Nothing anybody types reaches the table.** The client mints every name and has no text
+// field, and the room's door holds the same rule for anything else that speaks the protocol:
+// a name that is not one of the minted "Adjective Noun" pairs is replaced by one minted from
+// the seat. So a typed name never appears, whatever it contains, and a minted one passes
+// through untouched.
+const minted = (name) => /^[A-Z][a-z]+ [A-Z][a-z]+$/.test(name);
 check('a nickname is carried in a profile record', typeof named('Ada') === 'string');
-check('padding is trimmed', named('   Ada   ') === 'Ada');
-check('inner whitespace is collapsed', named('Ada    Lovelace') === 'Ada Lovelace');
-check('an empty name gets one', named('') === 'Player 1', named(''));
-check('so does a blank one', named('   ') === 'Player 1');
-check('a long one is cut to sixteen', named('A'.repeat(40)).length === 16);
-check('markup is stripped rather than escaped', named('Ada<script>') === 'Adascript');
-check('ordinary punctuation survives', named("O'Brien-1.0_x") === "O'Brien-1.0_x");
+check('a typed name is replaced by a minted one', minted(named('Ada')) && named('Ada') !== 'Ada', named('Ada'));
+check('an empty name gets one', minted(named('')), named(''));
+check('so does a blank one', minted(named('   ')), named('   '));
+check('padding does not smuggle a name through', named('   Ada   ') === named('Ada'));
+check('nor does length', minted(named('A'.repeat(40))) && !named('A'.repeat(40)).includes('AAAA'));
+check('markup never reaches a seat', !named('Ada<script>').includes('<'), named('Ada<script>'));
+check("nor does punctuation", !named("O'Brien-1.0_x").includes("'"), named("O'Brien-1.0_x"));
 check(
-  'and so do non-Latin scripts, which a naive [A-Za-z] filter would delete',
-  named('\u65e5\u672c\u8a9e') === '\u65e5\u672c\u8a9e',
+  'nor a non-Latin script, which is text like any other',
+  minted(named('\u65e5\u672c\u8a9e')),
   named('\u65e5\u672c\u8a9e'),
 );
+const own = named('');
+check('a minted name passes through untouched', named(own) === own, named(own));
 
-// Not unique, deliberately: two players may both be Bob and the view separates them by seat.
+// Not unique, deliberately: two seats may end up alike and the view separates them by seat.
 // Rejecting duplicates would be worse than the ambiguity, and would leak who is already here.
 let twoBobs = fresh();
 twoBobs = JSON.stringify(parse(joinRoom(twoBobs, 'tok-1', 'Bob', T0)).state);
 const second = parse(joinRoom(twoBobs, 'tok-2', 'Bob', T0));
-check('two players may share a nickname', second.seat === 1 && !second.error, second.error);
+check('two players may ask for the same nickname', second.seat === 1 && !second.error, second.error);
 check(
-  'and are told apart by seat, not by name',
+  'and neither gets it; each is named from its own seat',
   parse(JSON.stringify(second.state)).seats.slice(0, 2)
-    .every((s) => s.profile.nickname === 'Bob'),
+    .every((s) => s.profile.nickname !== 'Bob' && minted(s.profile.nickname)),
 );
 
 console.log(`\n${failures === 0 ? 'LOBBY GATE PASS' : `LOBBY GATE FAIL (${failures})`}\n`);

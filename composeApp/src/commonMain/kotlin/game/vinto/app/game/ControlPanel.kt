@@ -2,6 +2,7 @@ package game.vinto.app.game
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -58,11 +60,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isFinite
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
+import game.vinto.app.art.board_edited_by
+import game.vinto.app.art.board_in_play
+import game.vinto.app.art.board_lane
+import game.vinto.app.art.board_nod_not_yet
+import game.vinto.app.art.board_nod_yes
+import game.vinto.app.art.board_shed
+import game.vinto.app.art.board_title
+import game.vinto.app.art.board_would_rather
+import game.vinto.app.art.board_your_call
 import game.vinto.app.art.card_described
 import game.vinto.app.art.card_face_down
 import game.vinto.app.art.card_in_play
 import game.vinto.app.art.card_position
 import game.vinto.app.art.card_the_deck
+import game.vinto.app.art.label_plan_rehearse
 import game.vinto.app.art.rail_aim_empty
 import game.vinto.app.art.rail_aim_first
 import game.vinto.app.art.rail_aim_second
@@ -76,8 +88,10 @@ import game.vinto.app.cardName
 import game.vinto.app.detailed
 import game.vinto.app.keyOf
 import game.vinto.app.labelled
+import game.vinto.app.outcomeWords
 import game.vinto.app.said
 import game.vinto.app.speakerName
+import game.vinto.app.stepWords
 import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
@@ -85,13 +99,18 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltEdge
 import game.vinto.client.Aim
 import game.vinto.client.AimedCard
+import game.vinto.client.Board
 import game.vinto.client.Choice
 import game.vinto.client.Detail
+import game.vinto.client.LaneLine
 import game.vinto.client.Move
 import game.vinto.client.RankChoice
 import game.vinto.client.Say
 import game.vinto.client.SeatChoice
+import game.vinto.client.ShedLine
 import game.vinto.client.Speaker
+import game.vinto.client.StepHealth
+import game.vinto.client.StepLine
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
@@ -242,7 +261,7 @@ fun ControlPanel(
         // Only the *rank* grid crowds the foot: fourteen chips is four rows and there is no
         // log under them. Three seats is one row, and the space the card gave up is better
         // spent on what has been happening than left blank.
-        val crowded = table.ranks.isNotEmpty()
+        val crowded = table.ranks.isNotEmpty() || table.board != null
         // Every line, the player's own draw included. It used to be folded out whenever
         // the prompt above it said the same thing — "You drew the Joker", twice — and what
         // that left in the box was the previous seat's move, so the log read as though your
@@ -280,7 +299,7 @@ private fun RailBody(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
-            RailBlock(state, table, inPlay, recent, crowded, twoLines, modifier = Modifier.weight(1f))
+            RailBlock(state, table, inPlay, recent, crowded, twoLines, onMove, modifier = Modifier.weight(1f))
             RailFoot(table, footCap, onMove)
         }
     }
@@ -296,6 +315,7 @@ private fun RailBlock(
     recent: List<Say>,
     crowded: Boolean,
     twoLines: Dp,
+    onMove: (Move) -> Unit,
     modifier: Modifier,
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
@@ -349,6 +369,11 @@ private fun RailBlock(
                     val shown = (inPlay as? CardView.Visible)?.card
                     Heading(table = table, teaching = state.teaching, shown = shown)
                     Answer(state)
+                    // The board, while it is open. In the block rather than the foot, so the
+                    // choices stay pinned and whole (`RailFitsTest`); as a mode rather than a
+                    // fixture, so the log strip under it keeps its room on every other table.
+                    // The one-line way in sits on the felt's final-round line.
+                    PlanBoard(table.board, onMove)
                 }
                 // The log is what happened *before* now. The prompt above is now, and the
                 // two are built from the same narration, so the top line of the log was
@@ -383,6 +408,170 @@ private fun RailFoot(table: Table, footCap: Dp, onMove: (Move) -> Unit) {
         SeatGrid(table.seats, onMove)
         Choices(table, onMove)
     }
+}
+
+/**
+ * The coalition's shared plan (design D7a): one line per turn still to come, the sheds, and
+ * who has nodded — drawn in the block under the prompt, where it scrolls with the words, so the
+ * choices on the foot stay pinned and whole (`RailFitsTest`). Tapping a lane *is* answering a
+ * question — what should this turn do? — and opens the composer for that seat.
+ *
+ * A lane the door would accept is a button; one it would refuse — locked, the turn in
+ * progress, or any lane at all when the viewer is the caller — is a line of text, so nothing
+ * here can be tapped and then refused. Nods are read, not pressed: "Agree" is a choice on the
+ * foot while the board is open, beside "Back".
+ */
+@Composable
+private fun PlanBoard(board: Board?, onMove: (Move) -> Unit) {
+    if (board == null) return
+    val stage = LocalStage.current
+
+    Column(
+        modifier = Modifier.fillMaxWidth().markedAs(stage, "board"),
+        verticalArrangement = Arrangement.spacedBy(Half),
+    ) {
+        Text(
+            text = stringResource(Res.string.board_title),
+            fontSize = DetailSize,
+            fontWeight = FontWeight.Bold,
+            color = Rail.inkDim,
+        )
+        board.lanes.forEach { lane -> LaneRow(lane, stage, onMove) }
+        board.sheds.forEach { shed -> ShedRow(shed, onMove) }
+        board.outcome?.let { outcome ->
+            Text(
+                text = outcomeWords(outcome),
+                fontSize = DetailSize,
+                fontWeight = FontWeight.Bold,
+                color = if (outcome.wins) Rail.ink else WarnInk,
+            )
+        }
+        // Watching beats reading: the plan is played on the felt as ghosts, through the same
+        // choreography a real move gets, and the table snaps back after (design D8).
+        board.rehearse?.let { rehearse ->
+            GameButton(
+                label = stringResource(Res.string.label_plan_rehearse),
+                tone = ButtonTone.KEEP,
+                onClick = { onMove(rehearse) },
+                modifier = Modifier.fillMaxWidth().markedAs(stage, "choice:rehearse"),
+                compact = true,
+            )
+        }
+        Nods(board)
+        board.editedBy?.let { who ->
+            Text(
+                text = stringResource(Res.string.board_edited_by, speakerName(who)),
+                fontSize = DetailSize,
+                color = Rail.inkDim,
+            )
+        }
+    }
+}
+
+/**
+ * "Nina: swap your card 2 with Don's card 3", tappable where the plan may still change.
+ *
+ * A step whose claim a reveal has proved wrong is drawn in the warning ink with a cross, and
+ * the rail's detail says why (design D9). A step that followed its card is drawn as any other:
+ * the table watched the card go, so there is nothing to announce.
+ */
+@Composable
+private fun LaneRow(lane: LaneLine, stage: Stage, onMove: (Move) -> Unit) {
+    val words = lane.step?.let { stepWords(it) } ?: stringResource(Res.string.board_your_call)
+    val broken = lane.health == StepHealth.BROKEN
+    val mark = if (broken) "✗ " else ""
+    val line = mark + stringResource(Res.string.board_lane, speakerName(lane.who), words)
+    val shown = if (lane.locked) "$line · " + stringResource(Res.string.board_in_play) else line
+    val move = lane.move
+    if (move != null) {
+        GameButton(
+            label = shown,
+            tone = if (broken) ButtonTone.STAKES else ButtonTone.NEUTRAL,
+            onClick = { onMove(move) },
+            modifier = Modifier.fillMaxWidth().markedAs(stage, "lane:${speakerKey(lane.who)}"),
+            compact = true,
+        )
+    } else {
+        Text(
+            text = shown,
+            fontSize = DetailSize,
+            color = if (broken) WarnInk else Rail.ink,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+    lane.suggestion?.let { WouldRather(lane, it, stage, onMove) }
+}
+
+/**
+ * "Nina would rather swap …": the lane owner's alternative to the step somebody set for them
+ * (3.13). Tapping what they said puts it on the board, the way agreeing with a person at a
+ * table does — nobody's edit is written over by a bot, and there is no second control to learn.
+ */
+@Composable
+private fun WouldRather(lane: LaneLine, suggestion: StepLine, stage: Stage, onMove: (Move) -> Unit) {
+    val words = stringResource(Res.string.board_would_rather, speakerName(lane.who), stepWords(suggestion))
+    val use = lane.useSuggestion
+    if (use != null) {
+        GameButton(
+            label = words,
+            tone = ButtonTone.KEEP,
+            onClick = { onMove(use) },
+            modifier = Modifier.fillMaxWidth().markedAs(stage, "suggest:" + speakerKey(lane.who)),
+            compact = true,
+        )
+    } else {
+        Text(text = words, fontSize = DetailSize, color = Rail.ink, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+/** "Nina will throw in a 7", and a way to take it back for whoever said it. */
+@Composable
+private fun ShedRow(shed: ShedLine, onMove: (Move) -> Unit) {
+    val words = stringResource(Res.string.board_shed, speakerName(shed.who), shed.rank.serialName)
+    val move = shed.move
+    if (move != null) {
+        GameButton(
+            label = words,
+            tone = ButtonTone.NEUTRAL,
+            onClick = { onMove(move) },
+            modifier = Modifier.fillMaxWidth(),
+            compact = true,
+        )
+    } else {
+        Text(text = words, fontSize = DetailSize, color = Rail.ink)
+    }
+}
+
+/** Who has said yes. Read, not pressed: the viewer's own yes is a choice on the foot. */
+@Composable
+private fun Nods(board: Board) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Gap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        board.nods.forEach { nod ->
+            val name = speakerName(nod.who)
+            val spoken = if (nod.agreed) {
+                stringResource(Res.string.board_nod_yes, name)
+            } else {
+                stringResource(Res.string.board_nod_not_yet, name)
+            }
+            Text(
+                text = (if (nod.agreed) "✓ " else "○ ") + name,
+                fontSize = DetailSize,
+                color = if (nod.agreed) Rail.ink else Rail.inkDim,
+                modifier = Modifier.semantics { contentDescription = spoken },
+            )
+        }
+    }
+}
+
+/** A stable key for a seat's lane, for the lesson's pointer and for tests. */
+private fun speakerKey(who: Speaker): String = when (who) {
+    Speaker.You -> "you"
+    is Speaker.Named -> who.nickname
+    Speaker.Nobody -> "nobody"
 }
 
 /**
@@ -611,13 +800,30 @@ internal fun railCard(view: PlayerView, table: Table): CardView? {
     return if (top.actionIsLive()) CardView.Visible(top) else CardView.Hidden
 }
 
-/** The card a 7, 8, 9 or 10 has turned up for the viewer, while it is being looked at. */
+/**
+ * The card a 7, 8, 9 or 10 has turned up for the viewer, while it is being looked at.
+ *
+ * **Read off the hand, not off the target.** `PendingTargetView.card` looks like the obvious
+ * source and is always a back for a peek: the engine records a card on an `ActionTarget` only
+ * when it has to *move* one, so a Jack's two targets carry cards and a Seven's carry nothing.
+ * Asking the target was how this came to be dead code — the rail went on holding up the Seven
+ * while the Joker it had turned over lay on the felt unexplained, which is the thing this
+ * function exists to stop (product owner, a second time).
+ *
+ * The hand is where the projection puts a peeked card, for exactly one target and exactly one
+ * viewer (`revealedByCurrentAction`), so a face found here is one the redaction already
+ * allowed. Filling the target in instead would have been a change to `GameState` — and to
+ * every hash in the frozen corpus.
+ */
 private fun peekedCard(view: PlayerView): CardView.Visible? {
     val pending = view.pendingAction ?: return null
     if (pending.playerId != view.viewerId) return null
     val looks = pending.targetType == TargetType.OWN_CARD || pending.targetType == TargetType.OPPONENT_CARD
     if (!looks) return null
-    return pending.targets.firstNotNullOfOrNull { it.card as? CardView.Visible }
+    return pending.targets.firstNotNullOfOrNull { target ->
+        val seat = view.players.firstOrNull { it.id == target.playerId }
+        seat?.cards?.getOrNull(target.position) as? CardView.Visible
+    }
 }
 
 /**
@@ -773,9 +979,6 @@ private fun RecentActions(recent: List<Say>) {
     // lines rather than fewer, clipped.
     val lineHeight = with(LocalDensity.current) { (DetailSize * LogLineFactor).toDp() }
     val listState = rememberLazyListState()
-    LaunchedEffect(rendered.size) {
-        if (rendered.isNotEmpty()) listState.animateScrollToItem(rendered.lastIndex)
-    }
 
     // As deep as the rail can afford, and absent below one line: the rail hands this box what
     // its prompt and its buttons leave, and a log with no room for a line is a strip of well
@@ -784,6 +987,8 @@ private fun RecentActions(recent: List<Say>) {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val lines = logDepth(room = maxHeight, lineHeight = lineHeight)
         if (lines < 1) return@BoxWithConstraints
+
+        KeepTheTailInView(listState, rendered, lines)
 
         Surface(
             shape = RoundedCornerShape(LogCorner),
@@ -807,6 +1012,36 @@ private fun RecentActions(recent: List<Say>) {
                 }
             }
         }
+    }
+}
+
+/**
+ * Keeps the eye at the foot of the well. Two corrections, both of which it took a phone to see.
+ *
+ * **Keyed on what the lines say, not how many there are.** A run of moves by one actor folds
+ * into a single line that grows in place, so the newest thing that happened routinely changes
+ * no count at all — an effect watching `rendered.size` sat still through the whole of a
+ * player's own turn, which is precisely the turn they are reading the box for.
+ *
+ * **And scrolled past the last line's top, not to it.** `animateScrollToItem` lands an item's
+ * *head* at the head of the box; for a folded line deeper than the well that shows its oldest
+ * half and leaves the newest below the fold. Whatever hangs over is taken off afterwards,
+ * once the layout knows how tall the line came out — it cannot be known before, because it
+ * depends on where the words wrapped.
+ *
+ * [depth] is a key rather than an argument: the well is re-measured when the rail's other
+ * tenants change, and a box that just got shallower has to find its foot again.
+ */
+@Composable
+private fun KeepTheTailInView(state: LazyListState, rendered: List<String>, depth: Int) {
+    LaunchedEffect(rendered, depth) {
+        if (rendered.isEmpty()) return@LaunchedEffect
+        state.animateScrollToItem(rendered.lastIndex)
+        val info = state.layoutInfo
+        val overhang = info.visibleItemsInfo.lastOrNull()
+            ?.let { it.offset + it.size - info.viewportEndOffset }
+            ?: 0
+        if (overhang > 0) state.animateScrollBy(overhang.toFloat())
     }
 }
 

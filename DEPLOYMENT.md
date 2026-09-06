@@ -631,6 +631,23 @@ A stale file in a package is not something `git status` can see.
 
 ## 9. The order to do it in on release day
 
+**When the wire's number moved** (`PROTOCOL_VERSION` in `shared/protocol` is higher than
+the last release's — the pull request says so), the room and the apps are one release and
+ship together, in this order, because the new room refuses the old apps at the door:
+
+1. Build both apps from the same commit that will go to the room (VERSIONING.md), and upload
+   them to both stores first — Play's closed track, TestFlight — so that a review that takes a
+   day starts before the room moves rather than after.
+2. When both stores have accepted the builds, merge to `master`: that publishes the room and
+   the site together. From that moment an app below the floor sees "update the app" with a
+   button to its store, and an app between the floor and the current number is seated and told
+   once. Nobody already in a game is cut off.
+3. Release the store builds to their tracks the same hour. The gap between step 2 and this is
+   the only window in which somebody can be told to update to a build that is not there yet;
+   keep it short, or do step 2 the moment the tracks go live.
+
+**When the number did not move**, the old order stands:
+
 1. §4 — everything passes on your own computer
 2. §6 steps 1–3 — publish the room service, still shut, and check the rules survived
 3. §6c — publish the website, and give it its address. Then submit the phone apps

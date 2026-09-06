@@ -17,6 +17,11 @@
 
 const BASE = process.env.GATE_URL ?? 'http://localhost:8787';
 
+// The wire's number, as a real client sends it (`PROTOCOL_VERSION` in shared/protocol). A join
+// without one is a build from before the number existed, and the room refuses it at the door —
+// which is what this gate would be testing by accident if it forgot to say which wire it speaks.
+const PROTOCOL = 2;
+
 // `--verify <room>` re-checks an existing room without touching it. Used to prove the room
 // is rebuilt from storage after the object is gone: run the gate, restart `wrangler dev`
 // (which destroys every instance), then verify. State that survives a process restart is
@@ -120,9 +125,9 @@ const alice = open('alice');
 const bob = open('bob');
 await Promise.all([alice.ready, bob.ready]);
 
-alice.send({ type: 'join', nickname: 'Alice' });
+alice.send({ type: 'join', protocol: PROTOCOL, nickname: 'Alice' });
 const aliceJoined = await alice.next((m) => m.type === 'joined');
-bob.send({ type: 'join', nickname: 'Bob' });
+bob.send({ type: 'join', protocol: PROTOCOL, nickname: 'Bob' });
 const bobJoined = await bob.next((m) => m.type === 'joined');
 
 console.log('two clients through one Durable Object');
@@ -238,7 +243,7 @@ alice.close();
 const aliceAgain = open('alice-reconnected');
 await aliceAgain.ready;
 // Reconnecting means presenting the token you were issued, not asserting a name.
-aliceAgain.send({ type: 'join', token: aliceJoined.token, nickname: 'Alice' });
+aliceAgain.send({ type: 'join', protocol: PROTOCOL, token: aliceJoined.token, nickname: 'Alice' });
 const rejoined = await aliceAgain.next((m) => m.type === 'joined');
 
 const logLength = aliceEvents.length;
@@ -253,7 +258,7 @@ check('and hands back a view, not the room', typeof rejoined.view.viewerId, 'str
 // been given a different seat and their own token.
 const impostor = open('impostor');
 await impostor.ready;
-impostor.send({ type: 'join', nickname: 'Alice' });
+impostor.send({ type: 'join', protocol: PROTOCOL, nickname: 'Alice' });
 const refused = await impostor.next((m) => m.type === 'error' || m.type === 'joined');
 check('a nickname does not reclaim a seat', refused.type, 'error');
 check('and the reason is the table, not the name', refused.message, 'the game has already started');

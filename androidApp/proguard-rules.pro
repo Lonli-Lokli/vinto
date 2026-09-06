@@ -30,3 +30,8 @@
 # source file name is renamed rather than stripped, which is what makes the mapping meaningful.
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# Names are NOT kept. R8 renames everything, and Sentry restores our names from the mapping the
+# Sentry Gradle plugin uploads (see androidApp/build.gradle.kts). We shipped `-keepnames
+# game.vinto.**` first, which also worked and cost 232 KB in every install; the mapping is the
+# recommended answer and the one the rest of the portfolio uses.

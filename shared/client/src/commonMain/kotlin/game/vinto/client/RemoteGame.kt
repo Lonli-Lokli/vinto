@@ -4,11 +4,17 @@ import game.vinto.engine.PlayerView
 import game.vinto.engine.PublicReveal
 import game.vinto.protocol.ClientMessage
 import game.vinto.protocol.LobbyView
+import game.vinto.protocol.NoticeSeverity
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.RoundResult
 import game.vinto.protocol.ServerMessage
+import game.vinto.protocol.UPDATE_NEEDED_CODE
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.PlanEdit
+import game.vinto.shapes.TableTalk
 import game.vinto.shapes.actorId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -116,6 +122,15 @@ class RemoteRoom(
     val ended: StateFlow<String?> = _ended.asStateFlow()
 
     /** Refusals that belong to no dispatch — a lobby op the room said no to. */
+
+    /**
+     * What the room asked to have said once, off the game — a newer build waiting, so far.
+     * Held until the screen has shown it and called [dismissNotice], so a notice that arrives
+     * while a dialog is up, or before the screen exists, is not lost.
+     */
+    private val _notice = MutableStateFlow<RoomNotice?>(null)
+    val notice: StateFlow<RoomNotice?> = _notice.asStateFlow()
+
     private val _notices = MutableSharedFlow<String>(
         extraBufferCapacity = NOTICE_BUFFER,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
@@ -139,6 +154,11 @@ class RemoteRoom(
     val pendingSeats: StateFlow<Set<Int>> = _pendingSeats.asStateFlow()
 
     // ------------------------------------------------------------------ the lobby's verbs
+
+    /** The screen has said the notice. */
+    fun dismissNotice() {
+        _notice.value = null
+    }
 
     /** Adds a bot to the first free seat — which is the one the room will fill, so it spins. */
     fun addBot() {
@@ -248,7 +268,8 @@ class RemoteRoom(
                         val opened = answer.value
                         socket = opened
                         everConnected = true
-                        opened.send(encode(ClientMessage.Join(token(), nickname)))
+                        val join = ClientMessage.Join(token(), nickname, protocol = PROTOCOL_VERSION)
+                        opened.send(encode(join))
 
                         for (text in opened.incoming) {
                             attempt = 0
@@ -289,6 +310,7 @@ class RemoteRoom(
                 // ends every wait — whichever seat the room actually changed.
                 _pendingSeats.value = emptySet()
             }
+            is ServerMessage.Said -> _session.value?.heard(message.talk)
             is ServerMessage.Started -> started(message)
             is ServerMessage.BetweenRounds -> {
                 _standings.value = message.standings
@@ -303,7 +325,20 @@ class RemoteRoom(
                 socket?.close()
             }
 
+            is ServerMessage.Notice -> _notice.value = RoomNotice(
+                code = message.code,
+                message = message.message,
+                warning = message.severity == NoticeSeverity.WARNING,
+            )
+
             is ServerMessage.Error -> {
+                // The one refusal no retry can answer: the room's floor is above this build.
+                // Final, and said as a trouble the screen acts on rather than a line it shows.
+                if (message.code == UPDATE_NEEDED_CODE) {
+                    _connection.value = ConnectionState.Closed(message.message, RoomTrouble.UPDATE_NEEDED)
+                    socket?.close()
+                    return
+                }
                 val handled = _session.value?.refused(message.message) == true
                 if (!handled) _notices.tryEmit(message.message)
             }
@@ -324,7 +359,8 @@ class RemoteRoom(
             // Reconnected mid-game: the session survives; ask for what it missed. The sync
             // that answers jumps the cursor and lands the table on the present.
             session != null -> fire(ClientMessage.Resync(session.cursor))
-            view != null -> _session.value = newSession(view, message.nextIndex)
+            // An app restarted mid-game: a new session, landing on the plan as it stands.
+            view != null -> _session.value = newSession(view, message.nextIndex, message.plan)
             else -> Unit // a lobby; the session appears with the deal
         }
     }
@@ -337,10 +373,11 @@ class RemoteRoom(
         _session.value = newSession(view, message.nextIndex)
     }
 
-    private fun newSession(view: PlayerView, nextIndex: Int) =
+    private fun newSession(view: PlayerView, nextIndex: Int, plan: CoalitionPlan? = null) =
         RemoteGameSession(
             initialView = view,
             initialNextIndex = nextIndex,
+            initialPlan = plan,
             token = ::token,
             sendText = ::sendOrSay,
         )
@@ -453,7 +490,21 @@ class RemoteGameSession internal constructor(
     initialNextIndex: Int,
     private val token: () -> String?,
     private val sendText: suspend (String) -> SendOutcome,
+    initialPlan: CoalitionPlan? = null,
 ) : GameSession {
+
+    /**
+     * The coalition's shared plan, as the room last sent it.
+     *
+     * Set from whichever message carries it — every `events`, `sync` and `joined` does — so a
+     * lane locking on an ordinary action, a reconnect and a restarted app all land on the
+     * present board. The room is the authority; nothing here edits the copy locally.
+     */
+    private val _plan = MutableStateFlow(initialPlan)
+    override val plan: StateFlow<CoalitionPlan?> = _plan.asStateFlow()
+
+    private val _reveals = MutableStateFlow<List<PublicReveal>>(emptyList())
+    override val reveals: StateFlow<List<PublicReveal>> = _reveals.asStateFlow()
 
     private val _view = MutableStateFlow(initialView)
     override val view: StateFlow<PlayerView> = _view.asStateFlow()
@@ -476,6 +527,17 @@ class RemoteGameSession internal constructor(
 
     // Nobody narrates an online game yet: narration reads full states, and a client has
     // only views. The strip stays empty rather than wrong.
+    private val _away = MutableStateFlow<Set<String>>(emptySet())
+    override val away: StateFlow<Set<String>> = _away.asStateFlow()
+
+    /** What the table has said. Fed by the room; see [heard]. */
+    private val _talk = MutableSharedFlow<TableTalk>(
+        replay = TALK_REPLAY,
+        extraBufferCapacity = TALK_BUFFER,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+    override val talk: SharedFlow<TableTalk> = _talk.asSharedFlow()
+
     private val _log = MutableStateFlow<List<Say>>(emptyList())
     override val log: StateFlow<List<Say>> = _log.asStateFlow()
 
@@ -515,9 +577,72 @@ class RemoteGameSession internal constructor(
         }
     }
 
+    /**
+     * One sentence off the socket.
+     *
+     * Into the **log** as well as the flow, because the log is the strip a screen already
+     * draws and `Say` is already its vocabulary. A channel that only reached a flow nobody
+     * collected was a channel wired to nothing.
+     */
+    internal fun heard(said: TableTalk) {
+        _talk.tryEmit(said)
+        val nicknames = _view.value.players.associate { it.id to it.nickname }
+        _log.value = (_log.value + spoken(said, playerId, nicknames)).takeLast(LOG_LENGTH)
+    }
+
+    /**
+     * Says one thing.
+     *
+     * Fire-and-forget, unlike [dispatch]: nothing waits on a sentence, and the room's answer
+     * to talk is the broadcast itself. The seat rule is checked here as well as at the room's
+     * door, so a screen that tried to speak for somebody else is refused before it reaches the
+     * wire — the same rule in both places, which is what stops a solo game and a room being
+     * two different games.
+     */
+
+    /** Ends this seat's share of the confer window; the room closes it when all have said so. */
+    override suspend fun doneConferring(): String? =
+        when (
+            val outcome = sendText(
+                ProtocolJson.encodeToString(
+                    ClientMessage.serializer(),
+                    ClientMessage.DoneConferring(token()),
+                ),
+            )
+        ) {
+            is SendOutcome.Failed -> outcome.reason
+            SendOutcome.Sent -> null
+        }
+
+    override suspend fun say(talk: TableTalk): String? {
+        if (talk.by != playerId) return "you may only speak as $playerId"
+        return fireAndForget(ClientMessage.Say(talk))
+    }
+
+    /**
+     * One part of the plan, changed. The room merges it and the board comes back on an
+     * `events`; a refusal comes back as an `error` the session reports like any other.
+     */
+    override suspend fun editPlan(edit: PlanEdit): String? =
+        fireAndForget(ClientMessage.EditPlan(token(), edit))
+
+    override suspend fun agreePlan(agree: Boolean): String? =
+        fireAndForget(ClientMessage.AgreePlan(token(), agree))
+
+    /** Talk-shaped sends: nothing waits on them, and the room's answer is the broadcast. */
+    private suspend fun fireAndForget(message: ClientMessage): String? =
+        when (val outcome = sendText(ProtocolJson.encodeToString(ClientMessage.serializer(), message))) {
+            is SendOutcome.Failed -> outcome.reason
+            SendOutcome.Sent -> null
+        }
+
     // ------------------------------------------------------------------ fed by RemoteRoom
 
     internal fun applyEvents(message: ServerMessage.Events) {
+        _away.value = message.away.toSet()
+        _plan.value = message.plan
+        // What the bots said while making these moves, in step with the moves it comments on.
+        message.said.forEach(::heard)
         val fresh = message.events.filter { it.index >= cursor }
         val batch = mutableListOf<Frame>()
         var bots = 0
@@ -531,6 +656,7 @@ class RemoteGameSession internal constructor(
                 jumped = true
             } else {
                 val reveals = entry.revealed.map { PublicReveal(it.playerId, it.position, it.card) }
+                if (reveals.isNotEmpty()) _reveals.value = _reveals.value + reveals
                 batch += Frame(
                     entry.action,
                     scenesFor(entry.action, last, after, reveals),
@@ -557,6 +683,8 @@ class RemoteGameSession internal constructor(
     }
 
     internal fun applySync(message: ServerMessage.Sync) {
+        _away.value = message.away.toSet()
+        _plan.value = message.plan
         cursor = maxOf(cursor, message.nextIndex)
         val landing = message.view ?: return
         deliver(listOf(landingFrame(landing)), bots = 0, landing = landing)
@@ -565,6 +693,8 @@ class RemoteGameSession internal constructor(
     /** `between-rounds`: the round is scored and this is where the table now stands. */
     internal fun landOn(view: PlayerView?, nextIndex: Int) {
         cursor = maxOf(cursor, nextIndex)
+        // Between rounds there is no plan: the room threw last round's away at scoring.
+        _plan.value = null
         view?.let { deliver(listOf(landingFrame(it)), bots = 0, landing = it) }
     }
 
@@ -605,6 +735,13 @@ class RemoteGameSession internal constructor(
         Frame(GameAction.Empty(JsonNull), scenes = emptyList(), view = view)
 
     private companion object {
+        /** Enough of the conversation for a strip that subscribes mid-round to make sense. */
+        const val TALK_REPLAY = 16
+
+        /** How much of the strip a screen keeps; the same as the local session's. */
+        const val LOG_LENGTH = 24
+        const val TALK_BUFFER = 64
+
         const val BUFFER = 64
         const val DISPATCH_TIMEOUT_MS = 10_000L
     }

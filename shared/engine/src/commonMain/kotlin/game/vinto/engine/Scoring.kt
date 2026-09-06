@@ -64,7 +64,11 @@ fun calculateRoundPoints(
 
     return players.associate { player ->
         player.id to when {
-            player.id == caller.id -> if (callerWins) CALLER_WIN_POINTS else CALLER_LOSS_POINTS
+            player.id == caller.id -> when {
+                tie -> CALLER_TIE_POINTS
+                callerWins -> CALLER_WIN_POINTS
+                else -> CALLER_LOSS_POINTS
+            }
             tie -> 0
             callerWins -> COALITION_LOSS_POINTS
             else -> COALITION_WIN_POINTS
@@ -73,6 +77,16 @@ fun calculateRoundPoints(
 }
 
 private const val CALLER_WIN_POINTS = 3
+
+/**
+ * A tie pays the caller LESS than a win.
+ *
+ * Calling Vinto and merely matching the best hand is not the same achievement as beating it, and
+ * paying both the same made the call worth more than it should be at the margin. The coalition
+ * still takes nothing on a tie, so the caller keeps the advantage of having called — just a
+ * smaller one.
+ */
+private const val CALLER_TIE_POINTS = 2
 private const val CALLER_LOSS_POINTS = -1
 private const val COALITION_WIN_POINTS = 3
 private const val COALITION_LOSS_POINTS = -1
@@ -93,3 +107,13 @@ fun calculateGamePoints(cumulativePoints: Map<String, Int>): Map<String, Int> {
 }
 
 private val GAME_POINTS_BY_RANK = listOf(5, 3, 2)
+
+/**
+ * What every player has before a card is dealt.
+ *
+ * A session starts at four rather than at nothing, so the first bad round leaves somebody behind
+ * rather than underwater: −1 from zero reads as losing the game in one hand, which is not what one
+ * round of five cards means. It is the same number for everybody and so changes no ranking; what
+ * it changes is what the scoreboard feels like to read after round one.
+ */
+const val STARTING_POINTS = 4

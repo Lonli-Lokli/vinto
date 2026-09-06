@@ -1,6 +1,7 @@
 package game.vinto.client
 
 import game.vinto.shapes.Rank
+import game.vinto.shapes.TableTalk
 
 /**
  * Something the table has to say, as a *message* rather than as a sentence.
@@ -92,6 +93,72 @@ sealed interface Say {
     /** The deal is over and play starts. Nobody's move, so nobody's name. */
     data object RoundBegins : Say {
         override val who: Speaker get() = Speaker.Nobody
+    }
+
+    // ------------------------------------------------------------------ table talk
+
+    /*
+     * The coalition's phrasebook, rendered as lines like any other.
+     *
+     * Talk joins `Say` rather than growing a vocabulary beside it because it is the same kind
+     * of thing — a line in the strip with somebody's name on it — and because everything that
+     * makes `Say` work is what talk needs: a [Speaker] that decides the verb, one string per
+     * sentence, and nineteen locales already wired to render them.
+     *
+     * The wire type stays separate (`TableTalk` in shapes): that one is what crosses a socket
+     * and what a bot produces, and it carries seat ids where these carry a [Speaker].
+     */
+
+    /** Where the speaker thinks their hand stands: low, high, or out of it. */
+    data class Standing(override val who: Speaker, val where: TableTalk.Standing.Where) : Say
+
+    /** Holding that rank, and ready to throw it in if one lands. */
+    data class WillShed(override val who: Speaker, val rank: Rank) : Say
+
+    /** "Play for that hand." Advice, not an instruction — the lowest hand counts regardless. */
+    data class PlayFor(override val who: Speaker, val seat: Speaker) : Say
+
+    /** A request for one of somebody's cards. */
+    data class GiveMe(override val who: Speaker, val from: Speaker, val position: Int) : Say
+
+    /** The other half of the same trade: a card offered away. */
+    data class TakeThis(override val who: Speaker, val position: Int) : Say
+
+    /** Yes, no, wait, or "that leaves us worse off". */
+    data class Answered(override val who: Speaker, val says: TableTalk.Answer.Says) : Say
+
+    /**
+     * "I have a suggestion for you."
+     *
+     * The move itself is not spelled out here on purpose: a proposal is *acted on* rather than
+     * read, and phase 2 draws it as the recipient's own table with the move already aimed.
+     * A line in the strip only has to say that one arrived and from whom.
+     */
+    data class Suggests(override val who: Speaker, val to: Speaker) : Say
+
+    /** "I am going to move." Legibility, so three seats do not surprise each other. */
+    data class WillMove(override val who: Speaker) : Say
+}
+
+/**
+ * A sentence off the wire, as a line for the strip.
+ *
+ * Pure, and in `shared/client` rather than in the UI, so a test can read what the table would
+ * have said without composing anything.
+ */
+fun spoken(talk: TableTalk, viewerId: String, nicknames: Map<String, String>): Say {
+    fun who(id: String): Speaker =
+        if (id == viewerId) Speaker.You else nicknames[id]?.let(Speaker::Named) ?: Speaker.Nobody
+
+    return when (talk) {
+        is TableTalk.Standing -> Say.Standing(who(talk.by), talk.where)
+        is TableTalk.WillShed -> Say.WillShed(who(talk.by), talk.rank)
+        is TableTalk.PlayFor -> Say.PlayFor(who(talk.by), who(talk.seat))
+        is TableTalk.GiveMe -> Say.GiveMe(who(talk.by), who(talk.from), talk.position)
+        is TableTalk.TakeThis -> Say.TakeThis(who(talk.by), talk.position)
+        is TableTalk.Answer -> Say.Answered(who(talk.by), talk.says)
+        is TableTalk.Proposal -> Say.Suggests(who(talk.by), who(talk.to))
+        is TableTalk.IWill -> Say.WillMove(who(talk.by))
     }
 }
 

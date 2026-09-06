@@ -12,7 +12,6 @@ import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
-import game.vinto.shapes.LeaderIdPayload
 import game.vinto.shapes.ParticipateInTossInPayload
 import game.vinto.shapes.PendingAction
 import game.vinto.shapes.PendingCardOrigin
@@ -207,15 +206,6 @@ internal class TeachingDirector(private val callVintoFromTurn: Int) : BotDirecto
     private var demonstrated = false
 
     override fun nextAction(state: GameState): GameAction? {
-        // Somebody has called and the coalition needs a leader. Outside the lesson the bots
-        // hold this choice open for the human; here the script keeps moving, so the director
-        // nominates the first bot the way the runner used to.
-        if (state.vintoCallerId != null && state.coalitionLeaderId == null) {
-            state.players.firstOrNull { it.isBot && it.id != state.vintoCallerId }?.let {
-                return GameAction.SetCoalitionLeader(LeaderIdPayload(it.id))
-            }
-        }
-
         // Before anything else, and not restricted to whoever's turn it is: a toss-in belongs
         // to the whole table, which is the point being made.
         tossInDemo(state)?.let { return it }

@@ -5,6 +5,7 @@ import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
 import game.vinto.engine.Validation
 import game.vinto.shapes.Card
+import game.vinto.shapes.Claim
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
@@ -66,7 +67,7 @@ class CoalitionSolverScenarioTest {
             knownCardPositions = known,
             isVintoCaller = id == callerId,
             coalitionWith = if (id == callerId) emptyList() else listOf("p1", "p2", "p3"),
-            declaredCards = declared,
+            claims = declared?.map { Claim(id, listOf(it.key), listOf(it.value)) },
         )
 
         val p1 = seat(

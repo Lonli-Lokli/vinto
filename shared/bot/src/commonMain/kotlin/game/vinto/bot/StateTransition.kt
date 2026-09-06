@@ -136,6 +136,7 @@ object StateTransition {
 
         state.hiddenCards[key] = drawn
         player.knownCards[position] = certainMemory(drawn)
+        player.ownerKnows += position
         state.pendingCard = null
         state.pendingOrigin = null
 
@@ -215,7 +216,7 @@ object StateTransition {
         val theirs = targets.first { it != own }
         val ownValue = state.hiddenCards[state.key(own.playerId, own.position)]?.value ?: return
         val theirValue = state.hiddenCards[state.key(theirs.playerId, theirs.position)]?.value ?: return
-        if (ownValue > theirValue) state.exchange(targets)
+        if (ownValue > theirValue) state.exchange(targets, moverSaw = true)
     }
 
     /** Ace: the victim draws a card nobody has seen. */
@@ -243,6 +244,7 @@ object StateTransition {
 
         if (actual.rank != declared) {
             state.peek(mover, target)
+            owner.ownerKnows += target.position
             val penaltyPosition = mover.cardCount
             mover.cardCount++
             val penalty = state.takeFromDeck("penalty-$penaltyPosition")
@@ -285,8 +287,14 @@ private class MutableMctsPlayer(source: MctsPlayerState) {
     val id: String = source.id
     var cardCount: Int = source.cardCount
     var knownCards: MutableMap<Int, CardMemory> = source.knownCards.toMutableMap()
+    var ownerKnows: MutableSet<Int> = source.ownerKnows.toMutableSet()
 
-    fun freeze() = MctsPlayerState(id = id, cardCount = cardCount, knownCards = knownCards.toMap())
+    fun freeze() = MctsPlayerState(
+        id = id,
+        cardCount = cardCount,
+        knownCards = knownCards.toMap(),
+        ownerKnows = ownerKnows.toSet(),
+    )
 }
 
 private class MutableMctsState(private val source: MctsGameState) {
@@ -326,10 +334,13 @@ private class MutableMctsState(private val source: MctsGameState) {
 
     /**
      * Whether this player can act on the card at [position]. The searching bot only knows
-     * what it remembers; everyone else is assumed to know their own hand.
+     * what it remembers; everyone else knows what the table has watched them see — their
+     * setup peeks, the cards they swapped in, the ones they looked at with a seven or an
+     * eight. A card nobody saw them look at cannot be thrown in, declared, or traded away
+     * as the dearest in hand.
      */
     fun knows(player: MutableMctsPlayer, position: Int): Boolean {
-        if (player.id != source.botPlayerId) return true
+        if (player.id != source.botPlayerId) return position in player.ownerKnows
         val memory = player.knownCards[position] ?: return false
         return memory.confidence > TRUSTED_CONFIDENCE
     }
@@ -411,13 +422,18 @@ private class MutableMctsState(private val source: MctsGameState) {
 
     /** The bot learns a card; anybody else peeking changes nothing the bot can see. */
     fun peek(mover: MutableMctsPlayer, target: MctsActionTarget) {
+        if (target.playerId == mover.id) mover.ownerKnows += target.position
         if (mover.id != source.botPlayerId) return
         val card = hiddenCards[key(target.playerId, target.position)] ?: return
         findPlayer(target.playerId)?.knownCards?.set(target.position, StateTransition.certainMemory(card))
     }
 
-    /** Two cards change hands, and what is known about each travels with it. */
-    fun exchange(targets: List<MctsActionTarget>) {
+    /**
+     * Two cards change hands, and what is known about each travels with it. What arrives is
+     * a card its new owner has not seen — a Jack is blind — unless [moverSaw] them first, as
+     * a Queen does, in which case the mover knows what it received.
+     */
+    fun exchange(targets: List<MctsActionTarget>, moverSaw: Boolean = false) {
         if (targets.size < 2) return
         val (first, second) = targets
         val firstKey = key(first.playerId, first.position)
@@ -434,6 +450,14 @@ private class MutableMctsState(private val source: MctsGameState) {
         val secondMemory = secondOwner?.knownCards?.remove(second.position)
         secondMemory?.let { firstOwner?.knownCards?.set(first.position, it) }
         firstMemory?.let { secondOwner?.knownCards?.set(second.position, it) }
+
+        val mover = currentPlayer()?.id
+        firstOwner?.ownerKnows?.remove(first.position)
+        secondOwner?.ownerKnows?.remove(second.position)
+        if (moverSaw) {
+            if (first.playerId == mover) firstOwner?.ownerKnows?.add(first.position)
+            if (second.playerId == mover) secondOwner?.ownerKnows?.add(second.position)
+        }
     }
 
     /**
@@ -450,6 +474,7 @@ private class MutableMctsState(private val source: MctsGameState) {
 
         val survivingCards = mutableMapOf<Int, Card>()
         val survivingMemories = mutableMapOf<Int, CardMemory>()
+        val survivingSeen = mutableSetOf<Int>()
         var newPosition = 0
 
         for (oldPosition in 0 until originalCount) {
@@ -460,11 +485,13 @@ private class MutableMctsState(private val source: MctsGameState) {
             }
             card?.let { survivingCards[newPosition] = it }
             player.knownCards[oldPosition]?.let { survivingMemories[newPosition] = it }
+            if (oldPosition in player.ownerKnows) survivingSeen += newPosition
             newPosition++
         }
 
         survivingCards.forEach { (position, card) -> hiddenCards[key(player.id, position)] = card }
         player.knownCards = survivingMemories
+        player.ownerKnows = survivingSeen
         player.cardCount = originalCount - removed.count { it in 0 until originalCount }
         return taken
     }

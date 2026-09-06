@@ -37,6 +37,21 @@ plugins {
      * thing that can see the gap is an APK on a device.
      */
     alias(libs.plugins.composeMultiplatform)
+
+    /**
+     * The Sentry Gradle plugin, for the R8 mapping and nothing else.
+     *
+     * It is the portfolio's standard answer — `game-deduction`, `game-dots` and `asilak` all
+     * apply it — and it is the recommended one because it does the half a build phase cannot: as
+     * well as uploading `mapping.txt` it injects the mapping's UUID into the manifest, which is
+     * the only thing that tells Sentry WHICH mapping belongs to a given event.
+     *
+     * `autoInstallation` is off. Everywhere else in the portfolio the plugin sits under the real
+     * sentry-android SDK; here the crash reporter is hand-built (`composeApp/.../crash`, and
+     * `design.md` §A9 for why), so letting the plugin add an SDK would ship a second reporter
+     * beside ours.
+     */
+    alias(libs.plugins.sentryAndroid)
 }
 
 // No `org.jetbrains.kotlin.android`: AGP 9 has built-in Kotlin support and refuses the plugin
@@ -53,6 +68,39 @@ dependencies {
     // engine and the bots; this module adds an Activity and nothing else.
     implementation(project(":composeApp"))
     implementation(libs.androidx.activity.compose)
+}
+
+/**
+ * The build number: the git commit count, monotonic and needing no stored state, and the same
+ * number the iOS archive stamps in with `CURRENT_PROJECT_VERSION="$(Scripts/build-number.sh)"`.
+ * Play refuses an upload whose versionCode does not strictly exceed the last one on the track.
+ *
+ * `-PversionCode=` overrides it, which is what a shallow CI checkout needs: counting commits in a
+ * truncated clone is not monotonic. A tree with no git at all falls back to 1 rather than failing.
+ * `providers.exec` rather than a plain shell-out because the configuration cache is on.
+ */
+val buildNumber = (project.findProperty("versionCode") as String?)?.toIntOrNull()
+    ?: runCatching {
+        project.providers.exec { commandLine("git", "rev-list", "--count", "HEAD") }
+            .standardOutput.asText.get().trim().toInt()
+    }.getOrDefault(1)
+
+/** The human semver, bumped by hand at a release. `VersionTest` holds it to `Version.kt`. */
+val MARKETING_VERSION = "1.0"
+
+/**
+ * What the AAB is actually CALLED.
+ *
+ * AGP names the artifact after the Gradle module, and every game in this portfolio calls that
+ * module `androidApp` or `composeApp` — so Vinto, Palon and Niva all emit `androidApp-release.aab`.
+ * That is not cosmetic: send two to a tester and the second silently overwrites the first, and a
+ * file found a week later cannot be identified without installing it.
+ *
+ * `vinto-1.0-402-release.aab`: which game, which marketing version, which build, which type.
+ * The same shape `game-dots` uses, for the same reason.
+ */
+base {
+    archivesName.set("vinto-$MARKETING_VERSION-$buildNumber")
 }
 
 android {
@@ -84,17 +132,13 @@ android {
         // `providers.exec` rather than a plain `"git".execute()`: the configuration cache is ON
         // in this build (gradle.properties says why), and shelling out at configuration time any
         // other way is a cache violation that fails the build rather than degrading it.
-        versionCode = (project.findProperty("versionCode") as String?)?.toIntOrNull()
-            ?: runCatching {
-                project.providers.exec { commandLine("git", "rev-list", "--count", "HEAD") }
-                    .standardOutput.asText.get().trim().toInt()
-            }.getOrDefault(1)
+        versionCode = buildNumber
 
         // The human semver, bumped by hand at a release and deliberately NOT synced with iOS.
         // Stores gate uploads on the build number rising within a marketing version; they do not
         // care that two platforms share one, and forcing lockstep would mean burning a version on
         // one platform to match the other.
-        versionName = "1.0"
+        versionName = MARKETING_VERSION
     }
 
     compileOptions {
@@ -269,4 +313,87 @@ tasks.matching {
         it.name.contains("lint", ignoreCase = true)
 }.configureEach {
     dependsOn(composeResourceAssets)
+}
+
+/**
+ * R8 mapping upload, so a minified release stack is readable.
+ *
+ * Without this a release frame is `a.b.c` and nothing more. The alternative we shipped first was
+ * `-keepnames game.vinto.**`, which kept our names at a cost of 232 KB — it worked, and this is
+ * better: full renaming comes back, and the names are restored by Sentry from the mapping instead
+ * of being carried in every install.
+ *
+ * **Uploading is not enough on its own.** Sentry applies a mapping only to an event that names the
+ * mapping's UUID in `debug_meta`. The plugin injects that UUID into the manifest as
+ * `io.sentry.proguard-uuid`; the SDK would read it automatically, and since this app has no SDK,
+ * `Crashes` reads it (see `ProguardUuid.android.kt`) and the envelope sends it. Both halves or
+ * neither — the same trap as iOS dSYMs, where uploading symbols achieves nothing unless the event
+ * carries instruction addresses.
+ *
+ * org and project are named here rather than left to `~/.sentryclirc`. That global default was
+ * once another app in the portfolio, so anything relying on it uploaded the wrong game's symbols.
+ *
+ * **Uploads run locally as well as on CI**, which is the point of using the plugin rather than a
+ * hand-rolled step: the auth token is read from `SENTRY_AUTH_TOKEN` or `~/.sentryclirc`, whichever
+ * exists, so one mechanism covers a developer's machine and a runner. With no token the upload is
+ * skipped rather than failed, so a contributor without credentials can still build a release.
+ */
+sentry {
+    org.set("echo-xl")
+    projectName.set("vinto")
+    autoUploadProguardMapping.set(true)
+
+    // A debug build is not minified, so there is no mapping to upload and nothing to read back.
+    ignoredBuildTypes.set(setOf("debug"))
+
+    // See the plugins block: this app reports crashes itself.
+    autoInstallation { enabled.set(false) }
+
+    // The mapping is enough to read a stack, and source context would upload the source itself.
+    includeSourceContext.set(false)
+}
+
+/**
+ * A release that cannot be symbolicated does not get built.
+ *
+ * `autoUploadProguardMapping` above sounds like it guarantees this, and it does not. Measured,
+ * with the upload task run directly: an **invalid** token fails the build loudly, but **no
+ * credentials at all** makes `uploadSentryProguardMappingsRelease` succeed in silence having
+ * uploaded nothing. That is the shape that actually happens — a CI runner whose secret was never
+ * added — and it ships a minified build whose every crash reads `a.b.c`, with a green build
+ * behind it saying nothing was wrong.
+ *
+ * So the credentials are checked before the upload runs rather than after it has quietly not
+ * happened. `sentry-cli` reads its token from `SENTRY_AUTH_TOKEN` or `~/.sentryclirc`, whichever
+ * it finds, so this checks for the same two and nothing else — one mechanism for a laptop and a
+ * runner, the same rule the iOS phase and the web upload follow.
+ *
+ * `VINTO_ALLOW_UNSYMBOLICATED=1` is the way out, for a contributor with no Sentry access who
+ * wants a release build anyway. It has to be typed, which is the point: the default is to fail,
+ * and skipping symbolication becomes something somebody chose rather than something that
+ * happened to them.
+ */
+private val sentryAuthToken = providers.environmentVariable("SENTRY_AUTH_TOKEN")
+private val sentryRcPresent = providers.systemProperty("user.home")
+    .map { File(it, ".sentryclirc").isFile }
+    .orElse(false)
+private val unsymbolicatedWaiver = providers.environmentVariable("VINTO_ALLOW_UNSYMBOLICATED")
+
+tasks.matching { it.name.startsWith("uploadSentryProguardMappings") }.configureEach {
+    // Read here, at configuration time, so the task action closes over two booleans and not over
+    // this script — the configuration cache cannot serialize a reference to a build script, and
+    // capturing one turns this guard into a build failure of its own.
+    val haveCredentials = sentryAuthToken.orNull?.isNotBlank() == true || sentryRcPresent.get()
+    val waived = unsymbolicatedWaiver.orNull?.isNotBlank() == true
+
+    doFirst {
+        check(haveCredentials || waived) {
+            "No SENTRY_AUTH_TOKEN and no ~/.sentryclirc, so the R8 mapping for this release would " +
+                "not reach Sentry and every crash in it would read as `a.b.c`. Set one of them, or " +
+                "set VINTO_ALLOW_UNSYMBOLICATED=1 to build without symbolication on purpose."
+        }
+        if (!haveCredentials) {
+            logger.warn("warning: VINTO_ALLOW_UNSYMBOLICATED is set — this release will not symbolicate")
+        }
+    }
 }

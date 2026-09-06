@@ -1,5 +1,6 @@
 package game.vinto.engine
 
+import game.vinto.shapes.Claim
 import game.vinto.shapes.Rank
 import game.vinto.shapes.TargetType
 
@@ -20,19 +21,29 @@ fun getTargetTypeFromRank(rank: Rank): TargetType? = when (rank) {
 }
 
 /**
- * A declared claim describes one physical card. When the card it was about leaves the table
- * face up — a swap-in discards it, publicly — the claim is dropped; when the whole table
- * *watches* it move to another position (a Jack or Queen swap), the claim travels with it,
- * because table talk about a card everyone tracked moving is still about that card.
+ * A claim describes one physical card. Where the card goes, what was said about it goes.
  *
- * All helpers no-op on hands that never declared anything (`declaredCards == null`), which
- * is every hand in every parity recording: the field is never materialised there, so the
- * corpus hashes cannot move. An emptied map is normalised back to null for the same reason.
+ * The three rules, and each is a rule about *watching*:
+ *
+ *  - when the card leaves the table face up — a swap-in discards it, publicly — the claim is
+ *    dropped, because it now points at nothing;
+ *  - when the whole table watches it move to another position (a Jack or a Queen swap), the
+ *    claim travels with it, **keeping its speaker**: table talk about a card everybody tracked
+ *    moving is still that person's statement about that card;
+ *  - when a removal renumbers the positions above it, claims are renumbered with their cards.
+ *
+ * All of them no-op on a hand nobody has spoken about (`claims == null`), which is every hand
+ * in every parity recording: the field is never materialised there, so the corpus hashes
+ * cannot move. An emptied list is normalised back to null for the same reason.
+ *
+ * A claim naming **two** positions — a pair whose order its speaker has lost — is dropped
+ * when either of its cards moves. Half of "these two are a King and an Ace" is not a
+ * statement anybody made.
  */
 fun MutablePlayerState.clearDeclarationAt(position: Int) {
-    val declared = declaredCards ?: return
-    declared.remove(position)
-    if (declared.isEmpty()) declaredCards = null
+    val standing = claims ?: return
+    standing.removeAll { position in it.positions }
+    if (standing.isEmpty()) claims = null
 }
 
 /** A watched swap: whatever was claimed about each card follows it to its new hand. */
@@ -42,34 +53,45 @@ fun swapDeclarationsBetween(
     playerB: MutablePlayerState,
     positionB: Int,
 ) {
-    val claimA = playerA.declaredCards?.get(positionA)
-    val claimB = playerB.declaredCards?.get(positionB)
-    if (claimA == null && claimB == null) return
-
-    playerA.setDeclarationAt(positionA, claimB)
-    playerB.setDeclarationAt(positionB, claimA)
-}
-
-private fun MutablePlayerState.setDeclarationAt(position: Int, claim: game.vinto.shapes.Rank?) {
-    if (claim == null) {
-        clearDeclarationAt(position)
+    val movingA = playerA.claims.orEmpty().filter { it.positions == listOf(positionA) }
+    val movingB = playerB.claims.orEmpty().filter { it.positions == listOf(positionB) }
+    if (movingA.isEmpty() && movingB.isEmpty()) {
+        // Still clear any *pair* claim either card was half of: the pair is broken either way.
+        playerA.dropPairsAt(positionA)
+        playerB.dropPairsAt(positionB)
         return
     }
-    val declared = declaredCards ?: mutableMapOf<Int, game.vinto.shapes.Rank>()
-        .also { declaredCards = it }
-    declared[position] = claim
+
+    playerA.clearDeclarationAt(positionA)
+    playerB.clearDeclarationAt(positionB)
+    movingB.forEach { playerA.addClaim(it.copy(positions = listOf(positionA))) }
+    movingA.forEach { playerB.addClaim(it.copy(positions = listOf(positionB))) }
 }
 
 /** A removal renumbers the positions above it, and the claims move with their cards. */
 fun MutablePlayerState.shiftDeclarationsAfterRemoval(position: Int) {
-    val declared = declaredCards ?: return
-    val shifted = declared
-        .filterKeys { it != position }
-        .mapKeys { (claimed, _) -> if (claimed > position) claimed - 1 else claimed }
+    val standing = claims ?: return
+    val shifted = standing
+        .filterNot { position in it.positions }
+        .map { claim ->
+            claim.copy(positions = claim.positions.map { if (it > position) it - 1 else it })
+        }
     if (shifted.isEmpty()) {
-        declaredCards = null
+        claims = null
     } else {
-        declared.clear()
-        declared.putAll(shifted)
+        standing.clear()
+        standing.addAll(shifted)
     }
+}
+
+/** A pair claim is about two cards together; moving either one ends it. */
+private fun MutablePlayerState.dropPairsAt(position: Int) {
+    val standing = claims ?: return
+    standing.removeAll { it.positions.size > 1 && position in it.positions }
+    if (standing.isEmpty()) claims = null
+}
+
+private fun MutablePlayerState.addClaim(claim: Claim) {
+    val standing = claims ?: mutableListOf<Claim>().also { claims = it }
+    standing += claim
 }

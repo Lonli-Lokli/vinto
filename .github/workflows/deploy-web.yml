@@ -117,6 +117,16 @@ jobs:
       - name: Build the Compose/Wasm client
         run: ./gradlew --stacktrace :composeApp:wasmJsBrowserDistribution
 
+      # The half of web symbolication that has no upload to fail.
+      #
+      # A wasm crash frame gets its Kotlin name from the module's own name section, which ships
+      # rather than being uploaded — so if it is ever dropped, nothing refuses anything. The build
+      # is 432 KB smaller, the site works, and every crash reads `wasm-function[15659]` forever.
+      # Checked in the artefact rather than in the build script, because what matters is what was
+      # published and not what was configured.
+      - name: 'Gate: the wasm still carries its Kotlin names'
+        run: node tools/check-wasm-names.mjs "$DIST"
+
       # Content-addressing, and this is the step the whole workflow exists around.
       #
       # The `kupalinka.app` zone's Browser Cache TTL *overrides* a weaker origin
@@ -131,9 +141,9 @@ jobs:
           cd "$DIST"
           hash=$(sha256sum composeApp.js | cut -c1-16)
           mv composeApp.js "composeApp.$hash.js"
-          # The source map travels with it, so a stale map cannot be served against a fresh
-          # script either. The `sourceMappingURL` comment inside the bundle is rewritten to
-          # match, or DevTools quietly fetches a map that is no longer there.
+          # The map is renamed alongside it, and the `sourceMappingURL` comment rewritten to
+          # match, so that sentry-cli can still pair the two a step below. The map itself is
+          # NOT published — the strip step deletes it, and this comment with it.
           mv composeApp.js.map "composeApp.$hash.js.map"
           sed -i "s|sourceMappingURL=composeApp.js.map|sourceMappingURL=composeApp.$hash.js.map|" "composeApp.$hash.js"
           # And the page. `WebShellTest` holds the `src` to a single plain attribute on one
@@ -142,6 +152,47 @@ jobs:
           grep -q "composeApp.$hash.js" index.html || { echo "::error::the script tag was not rewritten"; exit 1; }
           echo "script=composeApp.$hash.js" >> "$GITHUB_OUTPUT"
           echo "Script is now composeApp.$hash.js"
+
+      # The JavaScript half of a web stack trace, made readable.
+      #
+      # **After the content-addressing above, and that ordering is the point.** Sentry matches an
+      # uploaded artifact to a frame by file name, and what a browser will report is
+      # `composeApp.<hash>.js` — so a map uploaded under the plain name matches nothing and the
+      # upload is wasted. It is the same failure as sending dSYMs for events that carry no
+      # addresses: symbols keyed on something no event contains.
+      #
+      # The wasm frames — the ones holding our own Kotlin — need nothing here. They carry their
+      # names inside the module, because the build keeps the wasm name section.
+      #
+      # **A missing token fails the deploy.** It used to warn and carry on, and what that buys is
+      # a live site whose every crash report is unreadable, behind a green pipeline. Publishing
+      # something nobody can debug is worse than not publishing, so this stops.
+      - name: Upload the JavaScript source map to Sentry
+        if: ${{ !inputs.dryRun }}
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "::error::No SENTRY_AUTH_TOKEN on this environment, so web crashes could not be read."
+            echo "::error::Add the secret (DEPLOYMENT.md), or run with dryRun to build without publishing."
+            exit 1
+          fi
+          npm install -g @sentry/cli@3
+          node tools/upload-web-sourcemaps.mjs "$DIST"
+
+      # And then the map does not ship.
+      #
+      # A source map is the original source. Serving one publishes every Kotlin file the web
+      # client was built from to anyone who opens the network tab, and this repository may not
+      # stay public. Sentry has it by now; the internet does not need it, which is Sentry's own
+      # advice as well.
+      #
+      # **Unconditional, and deliberately not gated on the token or on `dryRun`.** The upload
+      # above is allowed to be skipped when there are no credentials; this is not, because the
+      # failure mode of skipping it is publishing the source. It also runs before the measuring
+      # step below, so what that reports is what actually gets published.
+      - name: Keep the source maps out of what gets published
+        run: node tools/strip-web-sourcemaps.mjs "$DIST"
 
       # The address comes out of the committed configuration, so the verification below checks
       # the hostname this deploy is actually claiming rather than one assembled from a name.

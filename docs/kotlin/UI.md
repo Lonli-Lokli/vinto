@@ -615,10 +615,10 @@ card already wears the ring that says so. Aiming at a seat plate alone was a sma
 carrying a gold ring that also means "it is their turn".
 
 The portrait needs a mapping that can say **no**. `portraitFor` cannot: it falls back to
-Fern, which is right for the round hole in a felt plate and wrong here, because a stranger
+Gale, which is right for the round hole in a felt plate and wrong here, because a stranger
 wearing another seat's emblem is worse than a stranger wearing none — and online a seat is
 whoever typed their name in, with no portrait to carry. So `portraitOrNull` is the honest half
-(the four the offline game deals, plus the "You" seat the felt already draws Fern on) and
+(the four the offline game deals, plus the "You" seat the felt already draws Gale on) and
 `portraitFor` is the same thing with the fallback, for the felt.
 
 **And the card asking gives its column up**, as it does for an aim. The player drew the Ace,
@@ -784,3 +784,24 @@ has to carry a loss, and a player who has just lost a round does not need it cel
 tested by `RoundOutcomeTest`; the words are tested by `ScoreSheetTest` in composeApp. Same split
 as `CardHelpTest` and `LessonCopyTest` — the model says *which* verdict, the resources say it in
 a language.
+
+## The coalition's plan board (design D7a)
+
+The final round has a **shared plan**: one board of parts, edited by any coalition member and
+agreed as a whole. On the felt, the final-round banner carries one extra line — "No plan yet —
+tap to plan together", or how many turns are set and how many have nodded — and tapping it
+opens the board on the rail the way a claim opens the rank picker. The board lists one lane per
+coalition turn in turn order with its step in words and who last changed it, the sheds, and the
+nods; "Agree" sits beside "Back" on the foot while it is open. A lane is a button where the door
+would accept an edit and plain text where it would not (locked, the turn in progress, or any lane
+when the viewer is the caller), so nothing can be tapped and then refused. Tapping a lane opens
+the composer: a swap is two taps on two hands with the caller's cards never offered and the first
+card shown in the aim column, a declare is one rank off the rail, taking the discard is a button
+only while an action card is there. On the viewer's own turn their lane is written under the
+prompt and, when the table's own controls already offer the move, put first as "Do as planned".
+
+Two placements were tried before this one and each failed an existing test: beside the prompt
+the board starved the log strip (`everySentenceTheCoalitionCanSpeakIsDrawnInTheLog`), and on the
+foot it pushed the four confer buttons under the edge of the screen (`RailFitsTest`). The mode
+and the felt line are what survived. Held by `PlanBoardTest`, `CoalitionScreenTest` and
+`RailFitsTest`.

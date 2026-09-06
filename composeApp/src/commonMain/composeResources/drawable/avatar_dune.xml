@@ -12,6 +12,18 @@
         android:strokeColor="#C9A227"
         android:strokeWidth="8"/>
     <path
-        android:pathData="M512 286 L760 730 L264 730 Z"
-        android:fillColor="#F7F5EF"/>
+        android:pathData="M300 392 L724 392"
+        android:strokeColor="#F7F5EF"
+        android:strokeWidth="56"
+        android:strokeLineCap="round"/>
+    <path
+        android:pathData="M276 512 L748 512"
+        android:strokeColor="#F7F5EF"
+        android:strokeWidth="56"
+        android:strokeLineCap="round"/>
+    <path
+        android:pathData="M300 632 L724 632"
+        android:strokeColor="#F7F5EF"
+        android:strokeWidth="56"
+        android:strokeLineCap="round"/>
 </vector>

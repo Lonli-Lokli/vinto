@@ -219,6 +219,13 @@ object ActionValidator {
                     }
                 }
 
+        // Retired from live play, but still legal *here*, and it has to be: `reduce` validates
+        // before it dispatches (`GameEngine.kt`), so a refusal at this layer is a refusal on
+        // the replay path too — and 42 recordings carry a `SET_COALITION_LEADER`. Refusing it
+        // here rejects the corpus, which is how that was found out.
+        //
+        // Where it *is* refused is the two live doors, `RoomCore.applyAction` and
+        // `LocalGameSession.dispatch`, both reading `GameAction.retired`. See the note there.
         is GameAction.SetCoalitionLeader -> {
             val leader = state.playerById(action.payload.leaderId)
             when {
@@ -237,23 +244,37 @@ object ActionValidator {
         }
 
         is GameAction.DeclareCards -> {
-            // Table talk from a coalition member: legal in any sub-phase of the final round,
-            // never on the caller's behalf, and — deliberately — never compared against the
-            // real cards. A claim can be wrong; being wrong is a memory problem, not a rules
-            // problem.
-            val player = state.playerById(action.payload.playerId)
+            // Table talk, legal in any sub-phase of the final round, and — deliberately —
+            // never compared against the real cards. Being wrong is a memory problem, not a
+            // rules problem, and the reveal settles it.
+            //
+            // What *is* checked is who may speak about whom. The speaker is the actor, so the
+            // seat boundary above already refuses one seat talking as another; the rule here
+            // is that the Vinto caller has no coalition to inform and may only describe their
+            // own hand.
+            val speaker = state.playerById(action.payload.playerId)
+            val owner = state.playerById(action.payload.about)
             when {
                 state.phase != GamePhase.FINAL ->
                     Validation.Invalid("Cards can only be declared in the final round")
 
-                player == null -> Validation.Invalid("Player not found")
-                player.id == state.vintoCallerId ->
+                speaker == null || owner == null -> Validation.Invalid("Player not found")
+
+                speaker.id == state.vintoCallerId && owner.id != speaker.id ->
                     Validation.Invalid("The Vinto caller has no coalition to talk to")
 
-                action.payload.claims.isEmpty() -> Validation.Invalid("No claims provided")
-                else -> action.payload.claims.keys.firstOrNull { it !in player.cards.indices }
-                    ?.let { Validation.Invalid("Invalid card position $it") }
-                    ?: Validation.Valid
+                else -> action.payload.claims.firstNotNullOfOrNull { claim ->
+                    when {
+                        claim.ranks.isEmpty() -> "A claim with no ranks says nothing"
+                        claim.positions.any { it !in owner.cards.indices } ->
+                            "Invalid card position"
+
+                        claim.covering && claim.positions.size != claim.ranks.size ->
+                            "A covering claim needs one rank per position"
+
+                        else -> null
+                    }
+                }?.let { Validation.Invalid(it) } ?: Validation.Valid
             }
         }
 

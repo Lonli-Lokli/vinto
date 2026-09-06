@@ -122,6 +122,14 @@ data class CrashReport(
     val message: String,
     val frames: List<String> = emptyList(),
     val place: CrashPlace = CrashPlace(),
+    /**
+     * The id of the R8 mapping this build was minified with, on Android and nowhere else.
+     *
+     * Sentry applies a mapping only to an event that names it, so without this the uploaded
+     * `mapping.txt` is never used and a release stack stays `a.b.c`. Null everywhere else, and
+     * on a debug build, where nothing is minified.
+     */
+    val proguardUuid: String? = null,
 )
 
 fun crashEnvelope(report: CrashReport): String = with(report) {
@@ -151,20 +159,84 @@ fun crashEnvelope(report: CrashReport): String = with(report) {
             // Sentry wants the newest frame last; a Kotlin stack trace is newest first.
             frames.asReversed().forEachIndexed { index, frame ->
                 if (index > 0) append(',')
-                append("""{"filename":""").append(json(frame)).append('}')
+                appendFrame(parseFrame(frame))
             }
             append("""]}""")
         }
         append("""}]}}""")
+        // Which mapping to read this stack through. Sentry ignores an uploaded mapping unless the
+        // event names its uuid here, which is why the plugin injects one into the manifest.
+        proguardUuid?.let {
+            append(""","debug_meta":{"images":[{"type":"proguard","uuid":""")
+            append(json(it)).append("""}]}""")
+        }
     }
 
     val header = """{"event_id":"$eventId","sent_at":"$sentAtIso"}"""
     header + "\n" + """{"type":"event"}""" + "\n" + scrubReport(body)
 }
 
+/**
+ * One frame, in the fields Sentry reads for the shape it turned out to be.
+ *
+ * `in_app` is set on every frame rather than only on ours, because Sentry treats an ABSENT
+ * `in_app` as unknown and a `false` as "library" — and it is the false ones that let it fold
+ * Kotlin's and Compose's internals away and name the issue after our own topmost frame. The first
+ * real report was titled after `kotlin.Throwable#<init>`, which is where every crash begins and
+ * therefore tells nobody anything.
+ *
+ * A native frame carries `instruction_addr` and `package`, which is the pair a dSYM lookup needs;
+ * without them an uploaded dSYM has nothing to match against. A JVM frame carries the file and
+ * line, which is all Sentry needs when the build is not minified — and, once R8 is on, what a
+ * mapping file is applied to.
+ */
+private fun StringBuilder.appendFrame(frame: CrashFrame) {
+    append('{')
+    when (frame) {
+        is CrashFrame.Jvm -> {
+            append(FUNCTION_KEY).append(json(frame.function))
+            append(""","filename":""").append(json(frame.file))
+            frame.line?.let { append(""","lineno":""").append(it) }
+        }
+
+        is CrashFrame.Native -> {
+            append(FUNCTION_KEY).append(json(frame.function))
+            append(""","package":""").append(json(frame.image))
+            append(""","instruction_addr":""").append(json(frame.address))
+        }
+
+        // The name is the whole value here: with the wasm name section kept, this frame reads
+        // `game.vinto.app.main`, and without it there is nothing to name an issue after. The
+        // address is carried for completeness rather than for lookup — no wasm debug files are
+        // uploaded, because the names travel in the module itself.
+        is CrashFrame.Wasm -> {
+            append(FUNCTION_KEY).append(json(frame.function))
+            append(""","package":""").append(json(frame.module))
+            append(""","instruction_addr":""").append(json(frame.address))
+        }
+
+        // Line AND column, because that is the pair a JavaScript source map is keyed on.
+        is CrashFrame.Script -> {
+            frame.function?.let { append(FUNCTION_KEY).append(json(it)).append(',') }
+            append(""""filename":""").append(json(frame.file))
+            frame.line?.let { append(""","lineno":""").append(it) }
+            frame.column?.let { append(""","colno":""").append(it) }
+        }
+
+        // Nothing was understood, so the whole line goes where it always went. Sentry shows it
+        // verbatim, which is worse than a parsed frame and much better than a dropped one.
+        is CrashFrame.Unparsed -> append(""""filename":""").append(json(frame.raw))
+    }
+    append(""","in_app":""").append(frame.isOurs())
+    append('}')
+}
+
 /** The auth header Sentry's ingest wants. The key is write-only; see [parseDsn]. */
 fun sentryAuth(key: String): String =
     "Sentry sentry_version=7, sentry_key=$key, sentry_client=vinto-app/1"
+
+/** Written by every frame shape that has a name to give, which is all of them but a bare URL. */
+private const val FUNCTION_KEY = """"function":"""
 
 /** The shortest Unicode escape JSON accepts, so a control character is padded to it. */
 private const val UNICODE_ESCAPE_DIGITS = 4

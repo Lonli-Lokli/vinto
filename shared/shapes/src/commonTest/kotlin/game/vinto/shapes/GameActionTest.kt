@@ -122,7 +122,16 @@ class GameActionTest {
             GameAction.FinishTossInPeriod(InitiatorIdPayload("p")),
             GameAction.CallVinto(PlayerIdPayload("p")),
             GameAction.SetCoalitionLeader(LeaderIdPayload("p")),
-            GameAction.DeclareCards(DeclareCardsPayload("p", mapOf(0 to Rank.QUEEN, 2 to Rank.JOKER))),
+            GameAction.DeclareCards(
+                DeclareCardsPayload(
+                    "p",
+                    "q",
+                    listOf(
+                        Claim("p", listOf(0), listOf(Rank.QUEEN)),
+                        Claim("p", listOf(2, 3), listOf(Rank.KING, Rank.ACE)),
+                    ),
+                ),
+            ),
             GameAction.ProcessAiTurn(PlayerIdPayload("p")),
             GameAction.PeekSetupCard(PositionPayload("p", 4)),
             GameAction.FinishSetup(PlayerIdPayload("p")),
@@ -146,11 +155,12 @@ class GameActionTest {
         // Kotlin-only action — nothing on the TypeScript side ever reads this — but the
         // shape is part of the recording format all the same.
         val action = GameAction.DeclareCards(
-            DeclareCardsPayload("p", mapOf(0 to Rank.QUEEN, 2 to Rank.JOKER)),
+            DeclareCardsPayload("p", "q", listOf(Claim("p", listOf(0), listOf(Rank.QUEEN)))),
         )
         val json = VintoJson.encodeToJsonElement(GameActionSerializer, action).toString()
         assertEquals(
-            """{"type":"DECLARE_CARDS","payload":{"playerId":"p","claims":{"0":"Q","2":"Joker"}}}""",
+            """{"type":"DECLARE_CARDS","payload":{"playerId":"p","about":"q",""" +
+                """"claims":[{"by":"p","positions":[0],"ranks":["Q"]}]}}""",
             json,
         )
     }

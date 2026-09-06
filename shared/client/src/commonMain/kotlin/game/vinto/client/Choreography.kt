@@ -196,6 +196,13 @@ data class Frame(
      * rather than one line, because merged toss-in frames carry every thrower's.
      */
     val said: List<Say> = emptyList(),
+    /**
+     * A move that has not happened (design D8): the rehearsal plays the plan through the same
+     * choreography a real move uses, and the stage marks the felt as not real while it does.
+     * The stage snaps back to the live table the moment the ghosts have played, so nothing a
+     * ghost frame shows outlives it.
+     */
+    val ghost: Boolean = false,
 ) {
     /** Whoever made the move, or null for the engine's own bookkeeping. */
     val actorId: String? get() = action.actorId
@@ -504,9 +511,6 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
             Beat.Attend(action.payload.playerId, Attention.VINTO),
             Beat.Say(action.payload.playerId, "Vinto!"),
         )
-
-        is GameAction.SetCoalitionLeader ->
-            listOf(Beat.Attend(action.payload.leaderId, Attention.COALITION))
 
         else -> emptyList()
     }

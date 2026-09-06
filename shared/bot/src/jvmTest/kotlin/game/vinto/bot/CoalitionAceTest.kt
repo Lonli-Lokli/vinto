@@ -4,6 +4,7 @@ import game.vinto.engine.ActionValidator
 import game.vinto.engine.Validation
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.ActiveTossIn
+import game.vinto.shapes.Claim
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -39,7 +40,7 @@ class CoalitionAceTest {
             val cards = listOf(testCard(Rank.FIVE, "$id-0"), testCard(Rank.SIX, "$id-1"))
             testPlayer(id, id, isHuman = false, cards = cards).copy(
                 coalitionWith = bots,
-                declaredCards = cards.indices.associateWith { cards[it].rank },
+                claims = cards.indices.map { Claim(id, listOf(it), listOf(cards[it].rank)) },
             )
         }
         val state = testState(

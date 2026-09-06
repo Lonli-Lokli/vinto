@@ -4,6 +4,7 @@ import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.ActionTarget
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
+import game.vinto.shapes.Claim
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.FailedTossInAttempt
 import game.vinto.shapes.GameActionHistory
@@ -121,7 +122,7 @@ class MutablePlayerState(source: PlayerState) {
     var botMemory: JsonElement? = source.botMemory
     var opponentKnowledge: MutableMap<String, SerializedOpponentKnowledge>? =
         source.opponentKnowledge?.toMutableMap()
-    var declaredCards: MutableMap<Int, Rank>? = source.declaredCards?.toMutableMap()
+    var claims: MutableList<Claim>? = source.claims?.toMutableList()
 
     fun freeze() = PlayerState(
         id = id,
@@ -135,9 +136,9 @@ class MutablePlayerState(source: PlayerState) {
         coalitionWith = coalitionWith.toList(),
         botMemory = botMemory,
         opponentKnowledge = opponentKnowledge?.toMap(),
-        // An emptied map goes back to null so the field re-omits from serialisation — that
+        // An emptied list goes back to null so the field re-omits from serialisation — that
         // is what keeps a state that never declared anything hashing exactly as before.
-        declaredCards = declaredCards?.takeIf { it.isNotEmpty() }?.toMap(),
+        claims = claims?.takeIf { it.isNotEmpty() }?.toList(),
     )
 }
 

@@ -3,6 +3,7 @@ package game.vinto.engine
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
+import game.vinto.shapes.Claim
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
@@ -11,6 +12,7 @@ import game.vinto.shapes.PendingAction
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.Rank
 import game.vinto.shapes.TargetType
+import game.vinto.shapes.standingClaims
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -59,7 +61,14 @@ data class PlayerSeatView(
      * talk: public to every viewer, the caller included, and only as reliable as the
      * claimant's memory. The real card stays hidden.
      */
-    val declaredCards: Map<Int, Rank> = emptyMap(),
+    /**
+     * Everything the table has said about this seat's cards, each carrying its speaker.
+     *
+     * A view rather than a summary on purpose: a screen has to be able to show *who* said
+     * something and where two seats disagree, and a rank-per-position map can express
+     * neither. `believedAt` combines them.
+     */
+    val claims: List<Claim> = emptyList(),
 )
 
 /** Pending-action metadata without the card, unless the viewer is entitled to it. */
@@ -146,8 +155,14 @@ data class PlayerView(
      * right number of seconds.
      */
     val tossInMsRemaining: Long? = null,
-    /** The same clock for the coalition's leader choice, which the room also paces. */
-    val leaderMsRemaining: Long? = null,
+    /**
+     * How long the coalition still has to confer, or null when nobody is conferring.
+     *
+     * Non-null **is** the signal that the window is open — a screen needs to know that before
+     * it can offer a way out of it, and without this the window was a twenty-second stall
+     * with no button and nothing saying why.
+     */
+    val conferMsRemaining: Long? = null,
 )
 
 /**
@@ -188,7 +203,7 @@ val PlayerView.mySeat: PlayerSeatView?
  * online the other seats are people, and it would hand the caller their cards. And an earlier
  * Kotlin rule showed the coalition *leader* every member's real hand — replaced by
  * `DECLARE_CARDS`: coalition members say what they believe they hold, the claims ride on
- * every seat's view as [PlayerSeatView.declaredCards], and nobody's actual cards turn over.
+ * every seat's view as [PlayerSeatView.claims], and nobody's actual cards turn over.
  * A claim is only as good as the claimant's memory, which is the game staying the game.
  *
  * Never included at all: the draw pile's contents, other seats' `opponentKnowledge`, and
@@ -199,7 +214,7 @@ fun projectView(
     playerId: String,
     sessionMsRemaining: Long? = null,
     tossInMsRemaining: Long? = null,
-    leaderMsRemaining: Long? = null,
+    conferMsRemaining: Long? = null,
 ): PlayerView {
     val revealedToViewer = revealedByCurrentAction(state, playerId)
     // Every hand is turned over once the game is scored.
@@ -241,7 +256,7 @@ fun projectView(
             knownCardPositions = seat.knownCardPositions,
             isVintoCaller = seat.isVintoCaller,
             coalitionWith = seat.coalitionWith,
-            declaredCards = seat.declaredCards ?: emptyMap(),
+            claims = standingClaims(seat),
         )
     }
 
@@ -313,7 +328,7 @@ fun projectView(
         },
         sessionMsRemaining = sessionMsRemaining,
         tossInMsRemaining = tossInMsRemaining,
-        leaderMsRemaining = leaderMsRemaining,
+        conferMsRemaining = conferMsRemaining,
     )
 }
 

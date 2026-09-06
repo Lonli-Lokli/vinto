@@ -34,14 +34,32 @@ private fun vintoDecision(state: MctsGameState, moves: List<MctsMove>, player: M
     val call = moves.firstOrNull { it.type == MctsMoveType.CALL_VINTO } ?: return moves.first()
     val pass = moves.firstOrNull { it.type == MctsMoveType.PASS } ?: call
 
-    if (player.id == state.botPlayerId && MoveGenerator.unknownPositions(player).isNotEmpty()) return pass
-
-    val mine = StateTransition.handTotal(state, player.id)
+    val mine = perceivedTotal(state, player)
     val lowestOther = state.players
         .filter { it.id != player.id }
         .minOfOrNull { StateTransition.handTotal(state, it.id) }
         ?: return pass
     return if (mine <= lowestOther) call else pass
+}
+
+/**
+ * A hand as its owner can price it: the cards they have seen at face value, the rest at the
+ * deck's mean. The searching bot's is its memory; anyone else's is what the table has watched
+ * them see. Nobody calls on unseen cards as though they had looked, and nobody is barred from
+ * calling by one card they have not — the real call was freed of that gate in §6 of the
+ * review, and a rollout in which nobody can call gives the tree nothing to tell moves apart
+ * by (`MctsDiscriminationTest` caught the gated version).
+ */
+private fun perceivedTotal(state: MctsGameState, player: MctsPlayerState): Int {
+    if (player.id == state.botPlayerId) return StateTransition.handTotal(state, player.id)
+    var total = 0
+    var unread = 0
+    for (position in 0 until player.cardCount) {
+        val dealt = state.hiddenCards[state.hiddenCardKey(player.id, position)]
+        if (position in player.ownerKnows && dealt != null) total += dealt.value else unread++
+    }
+    if (unread > 0) total += (unread * averageRemainingCardValue(state.botMemory)).toInt()
+    return total
 }
 
 /**
@@ -55,14 +73,14 @@ private fun pendingCardPolicy(
     player: MctsPlayerState,
 ): MctsMove {
     val pending = state.pendingCard ?: return moves.first()
-    val isBot = player.id == state.botPlayerId
+    val seen = seenPositions(state, player)
 
-    val values = (0 until player.cardCount).mapNotNull { position ->
-        val known = isBot && MoveGenerator.knownCards(player).containsKey(position)
-        val dealt = state.hiddenCards[state.hiddenCardKey(player.id, position)]
-        if (dealt != null && (!isBot || known)) position to dealt.value else null
-    }
-    val dearest = values.maxByOrNull { it.second }
+    val dearest = seen
+        .mapNotNull { position ->
+            val key = state.hiddenCardKey(player.id, position)
+            state.hiddenCards[key]?.let { position to it.value }
+        }
+        .maxByOrNull { it.second }
     if (dearest != null && dearest.second > pending.value) {
         moves.firstOrNull { it.type == MctsMoveType.SWAP && it.swapPosition == dearest.first }
             ?.let { return it }
@@ -70,13 +88,20 @@ private fun pendingCardPolicy(
 
     moves.firstOrNull { it.type == MctsMoveType.USE_ACTION && worthUsing(state, it) }?.let { return it }
 
-    if (isBot && pending.value < averageRemainingCardValue(state.botMemory)) {
-        val blind = MoveGenerator.unknownPositions(player).firstOrNull()
+    if (pending.value < averageRemainingCardValue(state.botMemory)) {
+        val blind = (0 until player.cardCount).firstOrNull { it !in seen }
         moves.firstOrNull { it.type == MctsMoveType.SWAP && it.swapPosition == blind }?.let { return it }
     }
 
     return moves.firstOrNull { it.type == MctsMoveType.DISCARD } ?: moves.first()
 }
+
+/**
+ * The positions a mover can name: the searching bot's are what it remembers, anyone else's
+ * are what the table watched them see.
+ */
+private fun seenPositions(state: MctsGameState, player: MctsPlayerState): Set<Int> =
+    if (player.id == state.botPlayerId) MoveGenerator.knownCards(player).keys else player.ownerKnows
 
 /** A Jack is worth playing when the trade it names sheds the mover's points; anything else, always. */
 private fun worthUsing(state: MctsGameState, move: MctsMove): Boolean {

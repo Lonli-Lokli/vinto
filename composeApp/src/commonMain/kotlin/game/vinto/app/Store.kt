@@ -14,3 +14,6 @@ package game.vinto.app
  * report waiting to be filed.
  */
 expect fun storeReviewUrl(): String
+
+/** Where an update comes from: the store listing this build was installed from, or the app's own page. */
+expect fun storeListingUrl(): String

@@ -1,5 +1,6 @@
 package game.vinto.room
 
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.RoomPhase
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.PlayerIdPayload
@@ -182,7 +183,7 @@ class RoomCoreTest {
 
         // Ann returns with the same token: same seat, the bot steps aside, and the one-time
         // "a bot played while you were away" flag is delivered and cleared.
-        val back = decodeJoin(joinRoom(encode(expired.state), TOKEN_A, "Ann", LATER + 60_000))
+        val back = decodeJoin(joinRoom(encode(expired.state), TOKEN_A, "Ann", LATER + 60_000, PROTOCOL_VERSION))
         assertEquals(0, back.seat)
         assertTrue(back.botPlayedWhileAway, "the return is told what happened")
         val reclaimed = back.state.seats[0]
@@ -202,7 +203,7 @@ class RoomCoreTest {
     }
 
     private fun join(state: String, token: String, name: String): JoinResult {
-        val result = decodeJoin(joinRoom(state, token, name, NOW))
+        val result = decodeJoin(joinRoom(state, token, name, NOW, PROTOCOL_VERSION))
         assertNull(result.error, "join refused: ${result.error}")
         return result
     }

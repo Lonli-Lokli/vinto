@@ -50,6 +50,7 @@ import game.vinto.client.RoundOutcome
 import game.vinto.client.RoundResult
 import game.vinto.client.bestCoalitionHands
 import game.vinto.client.outcomeOf
+import game.vinto.client.totals
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -178,19 +179,18 @@ private fun Verdict(round: Int, outcome: RoundOutcome) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier.semantics { heading() },
         )
+        // `totals()` rather than a `when` here, and the reason is a real crash rather than taste:
+        // an exhaustive `when` over [RoundOutcome] whose branches read `caller`/`best` off the
+        // smart cast matches NOTHING on Kotlin/Native from this module, so the sheet threw
+        // `NoWhenBranchMatchedException` at the end of every round on iOS. The heading above is the
+        // same subject with the same four branches and matches fine — it just never touches the
+        // cast. `totals()` lives beside the type where the same `when` works and is tested on the
+        // simulator.
+        val versus = outcome.totals()
         Text(
-            text = when (outcome) {
-                is RoundOutcome.CallerWon ->
-                    stringResource(Res.string.score_versus, outcome.caller, outcome.best)
-
-                is RoundOutcome.Level ->
-                    stringResource(Res.string.score_versus, outcome.caller, outcome.best)
-
-                is RoundOutcome.CoalitionWon ->
-                    stringResource(Res.string.score_versus, outcome.caller, outcome.best)
-
-                RoundOutcome.DeckRanOut -> stringResource(Res.string.score_versus_none)
-            },
+            text = versus
+                ?.let { (caller, best) -> stringResource(Res.string.score_versus, caller, best) }
+                ?: stringResource(Res.string.score_versus_none),
             fontSize = BodySize,
             color = Rail.inkDim,
         )

@@ -1,5 +1,6 @@
 package game.vinto.engine
 
+import game.vinto.shapes.Claim
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameRecording
 import game.vinto.shapes.GameState
@@ -214,7 +215,7 @@ class ViewRedactionTest {
         val declared = base.copy(
             players = base.players.map { seat ->
                 if (seat.id == member.id) {
-                    seat.copy(declaredCards = mapOf(0 to Rank.QUEEN))
+                    seat.copy(claims = listOf(Claim(by = member.id, positions = listOf(0), ranks = listOf(Rank.QUEEN))))
                 } else {
                     seat
                 }
@@ -224,7 +225,8 @@ class ViewRedactionTest {
         for (viewer in declared.players) {
             val view = projectView(declared, viewer.id)
             val seat = view.players.first { it.id == member.id }
-            assertEquals(mapOf(0 to Rank.QUEEN), seat.declaredCards, "claim missing for ${viewer.id}")
+            assertEquals(listOf(Rank.QUEEN), seat.claims.single().ranks, "claim missing for ${viewer.id}")
+            assertEquals(member.id, seat.claims.single().by, "and it lost whose claim it was")
             assertTrue(seat.cards[0] is CardView.Hidden, "a claim must not turn the card over")
         }
     }

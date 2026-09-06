@@ -10,6 +10,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -59,6 +60,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
+import game.vinto.app.art.badge_disputed
+import game.vinto.app.art.badge_paired
+import game.vinto.app.art.badge_right
+import game.vinto.app.art.badge_wrong
+import game.vinto.app.art.board_summary
+import game.vinto.app.art.board_summary_empty
+import game.vinto.app.art.board_title
 import game.vinto.app.art.card_discarded
 import game.vinto.app.art.card_discarded_live
 import game.vinto.app.art.card_in_hand
@@ -68,26 +76,25 @@ import game.vinto.app.art.header_deck_badge
 import game.vinto.app.art.header_deck_left
 import game.vinto.app.art.header_report
 import game.vinto.app.art.header_settings
+import game.vinto.app.art.table_away_mark
 import game.vinto.app.art.table_discard
 import game.vinto.app.art.table_draw
-import game.vinto.app.art.table_final_ally
 import game.vinto.app.art.table_final_caller
-import game.vinto.app.art.table_final_choosing
+import game.vinto.app.art.table_final_coalition
 import game.vinto.app.art.table_final_last_turn
-import game.vinto.app.art.table_final_leader
-import game.vinto.app.art.table_final_leads
 import game.vinto.app.art.table_final_round
 import game.vinto.app.art.table_final_side_caller
 import game.vinto.app.art.table_final_side_coalition
 import game.vinto.app.art.table_final_turns_left
 import game.vinto.app.art.table_final_versus
-import game.vinto.app.art.table_leads_mark
+import game.vinto.app.art.table_rehearsal
 import game.vinto.app.art.table_round_turn
 import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_toss_in_summary
 import game.vinto.app.art.table_toss_in_timed
 import game.vinto.app.art.table_tossed
 import game.vinto.app.art.table_vinto_mark
+import game.vinto.app.speakerName
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Slate
 import game.vinto.app.theme.Wordmark
@@ -98,12 +105,17 @@ import game.vinto.app.theme.feltLamp
 import game.vinto.app.theme.feltShade
 import game.vinto.app.theme.onFelt
 import game.vinto.app.theme.rememberFeltWeave
+import game.vinto.app.verdictWord
 import game.vinto.client.Anchor
+import game.vinto.client.Badge
 import game.vinto.client.CardRef
 import game.vinto.client.Move
+import game.vinto.client.PlanSummary
 import game.vinto.client.Say
+import game.vinto.client.Speaker
 import game.vinto.client.Table
 import game.vinto.client.Target
+import game.vinto.client.Verdict
 import game.vinto.client.finalRoundTurnsLeft
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerSeatView
@@ -196,7 +208,8 @@ fun TableScreen(
             // landscape the felt has no height to spare for a banner, and "who plays for
             // whom" is read next to the controls that ask what to do about it anyway.
             Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
-                FinalRoundLine(state.view)
+                RehearsalLine()
+                FinalRoundLine(state.view, state.table.planSummary, onMove)
                 ControlPanel(
                     state = state,
                     onMove = onMove,
@@ -209,7 +222,8 @@ fun TableScreen(
         Column(modifier = modifier.fillMaxSize()) {
             TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck)
 
-            FinalRoundLine(state.view)
+            RehearsalLine()
+            FinalRoundLine(state.view, state.table.planSummary, onMove)
 
             FeltTable(
                 state = state,
@@ -515,24 +529,23 @@ private fun TableHeader(
  *
  * Nothing is drawn before the coalition has picked who plays its hand, because until then the
  * sentence has no subject — and the panel is asking that very question.
+ *
+ * The coalition's plan lives here too, in one line with a tap (design D7a): this is where the
+ * coalition is already named, and the rail has no line to spare — beside the prompt the plan
+ * starved the log strip, and on the foot it pushed the buttons under the edge of the screen.
  */
 @Composable
-private fun FinalRoundLine(view: PlayerView) {
+private fun FinalRoundLine(view: PlayerView, plan: PlanSummary?, onMove: (Move) -> Unit) {
     if (view.phase == GamePhase.SCORING) return
     val caller = view.players.firstOrNull { it.id == view.vintoCallerId } ?: return
-    val leader = view.players.firstOrNull { it.id == view.coalitionLeaderId }
 
-    // Drawn from the call onwards, including the window before a leader is chosen — which is
-    // where this used to `return` and show nothing at all. The rules change the moment Vinto
-    // is called, not the moment the coalition picks somebody, so a table that says nothing
-    // for the first part of the final round is silent exactly when it is most surprising.
-    val said = when {
-        caller.id == view.viewerId -> stringResource(Res.string.table_final_caller)
-        leader == null -> stringResource(Res.string.table_final_choosing, caller.nickname)
-        leader.id == view.viewerId ->
-            stringResource(Res.string.table_final_leader, caller.nickname)
-
-        else -> stringResource(Res.string.table_final_ally, leader.nickname, caller.nickname)
+    // Two lines, because there are two chairs to be in. There used to be four, keyed on who
+    // the coalition had nominated to play its hand — but only the lowest hand counts, whoever
+    // holds it, so there is nobody to nominate and nothing to say about it.
+    val said = if (caller.id == view.viewerId) {
+        stringResource(Res.string.table_final_caller)
+    } else {
+        stringResource(Res.string.table_final_coalition, caller.nickname)
     }
 
     Column(modifier = Modifier.fillMaxWidth().background(Rail.fill)) {
@@ -573,7 +586,70 @@ private fun FinalRoundLine(view: PlayerView) {
             }
         }
 
-        Sides(view, caller, leader?.id)
+        plan?.let { PlanLine(it, onMove) }
+        Sides(view, caller)
+    }
+}
+
+/**
+ * Over the felt while the plan is being played back (design D8): the cards moving are ghosts,
+ * and the one thing this line has to do is stop a player believing a plan has happened. Gold
+ * on the rail's fill, the final-round line's own dress, so it clears the same contrast bar.
+ */
+@Composable
+private fun RehearsalLine() {
+    if (!LocalStage.current.rehearsing) return
+    Row(
+        modifier = Modifier.fillMaxWidth().background(Rail.fill).padding(horizontal = 14.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            stringResource(Res.string.table_rehearsal).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp,
+            color = Rail.gold,
+            modifier = Modifier.semantics { heading() },
+        )
+    }
+}
+
+/** The plan in one line: how much of the board is set, how many have nodded, and the way in. */
+@Composable
+private fun PlanLine(summary: PlanSummary, onMove: (Move) -> Unit) {
+    val words = if (summary.lanesSet == 0) {
+        stringResource(Res.string.board_summary_empty)
+    } else {
+        stringResource(
+            Res.string.board_summary,
+            summary.lanesSet,
+            summary.lanes,
+            summary.agreed,
+            summary.lanes,
+        ) + (summary.outcome?.let { " · " + verdictWord(it) } ?: "")
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = { onMove(summary.open) })
+            .markedAs(LocalStage.current, "choice:plan")
+            .padding(horizontal = 14.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Gap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            stringResource(Res.string.board_title).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp,
+            color = Rail.gold,
+        )
+        Text(
+            words,
+            style = MaterialTheme.typography.labelMedium,
+            color = Rail.ink,
+            modifier = Modifier.weight(1f, fill = true),
+        )
     }
 }
 
@@ -587,19 +663,20 @@ private fun FinalRoundLine(view: PlayerView) {
  *
  * So it is one line of portraits, which is the same information in a tenth of the room and
  * reads faster besides: three of the four players are bots the person has been watching for
- * ten minutes and knows by face before they know by name. The leader wears a gold ring,
- * because "who plays the hand" is the one thing about the coalition that is not obvious.
+ * ten minutes and knows by face before they know by name.
+ *
+ * One of the three used to wear a gold ring for leading the coalition. Nobody leads it: only
+ * the lowest hand counts, whoever holds it, so a ring would be marking a distinction the
+ * rules do not make.
  */
 @Composable
-private fun Sides(view: PlayerView, caller: PlayerSeatView, leaderId: String?) {
+private fun Sides(view: PlayerView, caller: PlayerSeatView) {
     // The caller arrives as a *seat* rather than an id, so there is nothing to look up and
     // nothing to be missing. Looking it up here worked — the only call site found it with a
     // `firstOrNull` first — and "it happens to be safe two frames up" is exactly the reasoning
     // that put a `first {}` on the felt in the first place. `PartialFunctionTest` refuses it.
     val coalition = view.players.filter { it.id != caller.id }
-    val leads = leaderId?.let { id -> view.players.firstOrNull { it.id == id }?.nickname }
-    val spoken = leads?.let { stringResource(Res.string.table_final_leads, it) }
-        ?: stringResource(Res.string.table_final_choosing, caller.nickname)
+    val spoken = stringResource(Res.string.table_final_coalition, caller.nickname)
 
     Row(
         modifier = Modifier
@@ -615,9 +692,7 @@ private fun Sides(view: PlayerView, caller: PlayerSeatView, leaderId: String?) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SideLabel(stringResource(Res.string.table_final_side_coalition), Rail.brand)
-        coalition.forEach { seat ->
-            Face(seat.nickname, ringed = seat.id == leaderId)
-        }
+        coalition.forEach { seat -> Face(seat.nickname, ringed = false) }
 
         Text(
             stringResource(Res.string.table_final_versus),
@@ -1016,7 +1091,7 @@ private fun Plate(
     val active = view.turnHolderId == seat.id
     val marks = buildList {
         if (seat.isVintoCaller) add(stringResource(Res.string.table_vinto_mark))
-        if (seat.id == view.coalitionLeaderId) add(stringResource(Res.string.table_leads_mark))
+        if (seat.id in table.away) add(stringResource(Res.string.table_away_mark))
         view.scores?.get(seat.id)?.let { add("$it") }
     }
     val tap = table.seats.firstOrNull { it.id == seat.id }?.move
@@ -1106,25 +1181,83 @@ private fun SeatCard(
             onClick = move?.let { { onMove(it) } },
         )
 
-        // A declared claim, worn on the card's corner: what its owner *says* it is, readable
-        // by every seat and exactly as trustworthy as the memory it came from. A label on
-        // the back — never the card itself, which stays hidden.
-        table.badges[ref]?.let { claim ->
-            Surface(
-                modifier = Modifier.align(Alignment.TopEnd).padding(2.dp),
-                shape = RoundedCornerShape(TableSizes.Corner),
-                color = MaterialTheme.colorScheme.secondaryContainer,
-            ) {
-                Text(
-                    text = claim,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
-                )
+        // A declared claim, worn on the card's corner: what somebody *says* it is, readable by
+        // every seat and exactly as trustworthy as the memory it came from. A label on the
+        // back — never the card itself, which stays hidden.
+        table.badges[ref]?.let { badge -> ClaimBadge(badge, Modifier.align(Alignment.TopEnd)) }
+    }
+}
+
+/**
+ * A claim on a card's back, and everything the table knows about it without a tap.
+ *
+ * The speakers' faces sit before the words, so a claim can be weighed at a glance — a badge
+ * from somebody who never read the card is visibly a guess. A **dispute** is drawn in the
+ * warning colours with both faces, because two people remembering a card differently is
+ * information and the app never decides between them. Half of a **pair** wears a link mark,
+ * and so does the other half, which is what says they are one statement. At **scoring** the
+ * reveal has refereed the claim, and the badge says so: a tick, or a cross in the warning
+ * colours — the caller's bluffs on exactly the same terms (design D12).
+ */
+@Composable
+private fun ClaimBadge(badge: Badge, modifier: Modifier = Modifier) {
+    val warn = badge.disputed || badge.verdict == Verdict.WRONG
+    val scheme = MaterialTheme.colorScheme
+    val fill = if (warn) scheme.errorContainer else scheme.secondaryContainer
+    val ink = if (warn) scheme.onErrorContainer else scheme.onSecondaryContainer
+    val mark = when (badge.verdict) {
+        Verdict.RIGHT -> "✓ "
+        Verdict.WRONG -> "✗ "
+        null -> if (badge.paired) "↔ " else ""
+    }
+    val standing = when {
+        badge.verdict == Verdict.RIGHT -> stringResource(Res.string.badge_right)
+        badge.verdict == Verdict.WRONG -> stringResource(Res.string.badge_wrong)
+        badge.disputed -> stringResource(Res.string.badge_disputed)
+        badge.paired -> stringResource(Res.string.badge_paired)
+        else -> null
+    }
+    // `map` is inline and `joinToString`'s transform is not, and only the first may call a
+    // composable — the names are resolved first and joined after.
+    val names = badge.speakers.map { speakerName(it) }.joinToString(", ")
+    val spoken = listOfNotNull(names.takeIf { it.isNotBlank() }, badge.text, standing).joinToString(": ")
+
+    Surface(
+        modifier = modifier.padding(2.dp).semantics(mergeDescendants = true) { contentDescription = spoken },
+        shape = RoundedCornerShape(TableSizes.Corner),
+        color = fill,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            badge.speakers.forEach { who ->
+                val name = when (who) {
+                    is Speaker.Named -> who.nickname
+                    Speaker.You, Speaker.Nobody -> null
+                }
+                // Your own face is on your plate already; a claim of yours wears no portrait.
+                portraitOrNull(name ?: "")?.let { portrait ->
+                    Image(
+                        painter = painterResource(portrait),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(BadgeFace).clip(CircleShape),
+                    )
+                }
             }
+            Text(
+                text = mark + badge.text,
+                style = MaterialTheme.typography.labelSmall,
+                color = ink,
+            )
         }
     }
 }
+
+/** A speaker's face on a claim badge: large enough to recognise, small enough for a card's corner. */
+private val BadgeFace = 10.dp
 
 /** The deck and the discard, labelled as on the web table, with the toss-in rank beneath. */
 @Composable

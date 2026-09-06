@@ -2,7 +2,7 @@
 <resources>
 
     <!-- The name of the game. Not translated: it is what the game is called. -->
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <!-- ================================================================ opening -->
     <string name="opening_shuffling">Barajando…</string>
@@ -17,10 +17,12 @@
     <string name="home_online">Jugar en línea</string>
     <string name="home_teach">Cómo se juega</string>
     <string name="home_settings">Ajustes</string>
-    <string name="home_version">v%1$s</string>
+    <string name="home_version">%1$s (%2$s)</string>
     <!-- The credit under the wordmark, on the first screen of every client. -->
-    <string name="home_unofficial">Una app no oficial del juego de cartas VINTO. El original está en vinto.game</string>
+    <string name="home_unofficial">App no oficial. El original está en vinto.game</string>
     <string name="home_unofficial_action">Abrir vinto.game, la casa oficial del juego de cartas</string>
+    <string name="home_other_games">Ver otros juegos</string>
+    <string name="home_other_games_action">Abrir kupalinka.app, los otros juegos del mismo autor</string>
 
     <!-- ================================================================ online -->
     <string name="online_screen_title">Jugar en línea</string>
@@ -36,6 +38,12 @@
     <string name="trouble_closed">El juego en línea aún no está abierto. El modo un jugador y la lección funcionan igual.</string>
     <string name="trouble_busy">Esa mesa está completa. Prueba con otra, o abre una tuya.</string>
     <string name="trouble_refused">El servicio de salas no aceptó eso.</string>
+    <string name="trouble_update_needed">Esta versión del juego es demasiado antigua para jugar en línea. Actualízala desde la tienda.</string>
+    <!-- The dialog a seated player sees once when the room would rather they updated. -->
+    <string name="notice_update_title">Actualiza la app</string>
+    <string name="notice_update_available">Hay una versión más reciente del juego disponible. Actualízala cuando puedas; esta todavía funciona.</string>
+    <string name="label_update">Actualizar</string>
+    <string name="label_not_now">Ahora no</string>
     <string name="trouble_broken">El servicio de salas está teniendo problemas. Inténtalo de nuevo en un momento.</string>
     <string name="online_creating">Abriendo una sala…</string>
     <string name="online_visibility">Quién puede encontrar la sala</string>
@@ -126,7 +134,7 @@
     <string name="settings_contact_detail">Un fallo, una idea, o una partida que salió mal.</string>
     <!-- The two rows that say whose game this is. -->
     <string name="settings_original">El juego original</string>
-    <string name="settings_original_detail">VINTO es el juego de cartas de otra persona, y esta es una app no oficial para jugarlo. El juego, sus reglas y quienes lo crearon están en vinto.game.</string>
+    <string name="settings_original_detail">Vinto! es el juego de cartas de otra persona, y esta es una app no oficial para jugarlo. El juego, sus reglas y quienes lo crearon están en vinto.game.</string>
     <string name="settings_studio">Acerca de esta app</string>
     <string name="settings_studio_detail">Quién hizo esta app, qué más hay en el catálogo, y cómo está construida.</string>
     <string name="settings_rate">Valora este juego</string>
@@ -196,22 +204,47 @@
     <string name="table_you">Tú</string>
     <string name="table_vinto_mark">Vinto</string>
     <string name="table_leads_mark">va primero</string>
+    <string name="table_away_mark">ausente</string>
     <string name="seat_pointed_turn">%1$s está jugando</string>
     <string name="seat_is_a_bot">un bot</string>
     <string name="seat_pointed_vinto">%1$s cantó Vinto</string>
     <string name="seat_pointed_penalty">%1$s está tomando una carta del mazo</string>
     <string name="seat_pointed_coalition">%1$s lidera la coalición</string>
     <string name="table_final_round">Ronda final</string>
+    <string name="detail_ace_hurts_your_side">Las cartas de quien canta quedan fuera de alcance, así que un As solo puede hacer robar a alguien de tu propio bando.</string>
+    <string name="talk_low">Dices que tu mano es la baja.</string>
+    <string name="talk_low_they">%1$s dice que su mano es la baja.</string>
+    <string name="talk_high">Dices que tu mano es la alta — manda tus cartas malas para acá.</string>
+    <string name="talk_high_they">%1$s dice que su mano es la alta — manda tus cartas malas para allá.</string>
+    <string name="talk_bin">Dices que estás fuera, y te ofreces como papelera.</string>
+    <string name="talk_bin_they">%1$s está fuera, y se ofrece como papelera.</string>
+    <string name="talk_will_shed">Dices que lanzarás un %1$s si aparece.</string>
+    <string name="talk_will_shed_they">%1$s dice que lanzará un %2$s si aparece.</string>
+    <string name="talk_play_for">Dices que se juegue por %1$s.</string>
+    <string name="talk_play_for_they">%1$s dice que se juegue por %2$s.</string>
+    <string name="talk_give_me">Le pides a %1$s su carta %2$d.</string>
+    <string name="talk_give_me_they">%1$s le pide a %2$s su carta %3$d.</string>
+    <string name="talk_take_this">Ofreces tu carta %1$d.</string>
+    <string name="talk_take_this_they">%1$s ofrece su carta %2$d.</string>
+    <string name="talk_suggests">Tienes una sugerencia para %1$s.</string>
+    <string name="talk_suggests_they">%1$s tiene una sugerencia para ti.</string>
+    <string name="talk_will_move">Dices qué vas a hacer.</string>
+    <string name="talk_will_move_they">%1$s dice qué va a hacer.</string>
+    <string name="talk_yes">Dices que sí.</string>
+    <string name="talk_yes_they">%1$s dice que sí.</string>
+    <string name="talk_no">Dices que no.</string>
+    <string name="talk_no_they">%1$s dice que no.</string>
+    <string name="talk_wait">Pides que esperen un momento.</string>
+    <string name="talk_wait_they">%1$s te pide un momento de espera.</string>
+    <string name="talk_worse">Dices que te dejaría peor.</string>
+    <string name="talk_worse_they">%1$s dice que le dejaría peor.</string>
     <string name="table_final_caller">Los demás juegan una sola mano entre todos, contra la tuya.</string>
-    <string name="table_final_leader">Juegas la mano de la coalición contra %1$s.</string>
-    <string name="table_final_ally">%1$s juega la mano de la coalición contra %2$s.</string>
     <string name="table_final_turns_left">%1$d turnos hasta el desenlace</string>
     <string name="table_final_last_turn">último turno</string>
-    <string name="table_final_choosing">Una mano entre los tres, contra %1$s.</string>
+    <string name="table_final_coalition">Entre los tres, una sola mano contra %1$s.</string>
     <string name="table_final_side_coalition">Juntos</string>
     <string name="table_final_side_caller">Cantó Vinto</string>
     <string name="table_final_versus">contra</string>
-    <string name="table_final_leads">%1$s lidera a los demás</string>
     <string name="table_see_score">Ver el marcador</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -285,11 +318,9 @@
     <string name="beat_watching_title">%1$s juega el %2$s — %3$s</string>
     <string name="beat_do_not_guess_title">No adivines</string>
     <string name="beat_do_not_guess_body">Nunca has visto esta carta, así que nombrarla es una apuesta, y una apuesta fallida te cuesta una carta de penalización. Suéltala sin decir nada.</string>
-    <string name="beat_coalition_leader_title">%1$s juega la mano de la coalición</string>
-    <string name="beat_coalition_leader_body">La coalición ha elegido qué mano juega: al final, solo el total de %1$s se compara con el tuyo. Los otros dos usan su último turno para bajar ese total — un Rey puede sacar una carta mala de ella, una Jota o una Dama pueden meter una mejor — o para averiguar qué hay en ella.</string>
     <string name="beat_final_play_title">%1$s juega el %2$s</string>
     <string name="beat_final_play_ace">Un As hace que alguien robe una carta del mazo, boca abajo, y una carta más es una carta más en su contra. Ahora no puede apuntar hacia ti — las cartas de quien canta quedan fuera de alcance — así que cae del lado de la propia coalición. Fíjate en quién tiene que robar.</string>
-    <string name="beat_final_play_king">Un Rey apunta a una carta y la nombra, y el nombre tiene que ser correcto. Correcto: esa carta sale de la mano en la que estaba y se juega su acción. Incorrecto: todos ven qué era en realidad, y quien la nombró se lleva una carta de penalización. Se nombra una carta que se ha visto — a menudo una propia, para deshacerse de ella.</string>
+    <string name="beat_final_play_king">Un Rey apunta a una carta y la nombra, y el nombre tiene que ser correcto. Correcto: esa carta sale de la mano en la que estaba y se juega su acción. Incorrecto: todos ven qué era en realidad, y quien la nombró se lleva una carta de penalización. Se nombra una carta que se ha visto — a menudo una propia, para deshacerse de ella. En la ronda final el Rey es una herramienta solo de la coalición: quien cantó no puede lanzar nada, así que el rango que nombre solo puede salir de las manos de la propia coalición.</string>
     <string name="beat_final_play_look">Un 9 o un 10 mira una carta en la mano de otro. En la ronda final así es como la coalición descubre qué tiene, ya que la tuya está fuera de su alcance — y lo que uno aprende, todos pueden usarlo.</string>
     <string name="beat_final_play_other">Observa qué hace: esta es una carta que aún no has tenido, y el cuadro de jugadas recientes bajo la mesa dice qué pasó.</string>
     <string name="beat_swap_them_title">Cámbialas</string>
@@ -299,10 +330,10 @@
     <string name="beat_call_now_title">Cántalo</string>
     <string name="beat_call_now_body">Conoces cada carta de tu mano, y juntas suman cero o menos — nadie en esta mesa puede acabar por debajo de ti. Pulsa Cantar Vinto: todos los demás juegan exactamente un turno más, y luego todas las manos quedan boca arriba.</string>
     <string name="beat_you_called_title">Cantaste Vinto</string>
-    <string name="beat_you_called_body">La ronda termina en tus condiciones. Ember, Sky y Dune juegan un turno más cada uno, y nadie puede tocar tus cartas ahora. Luego todas las manos se voltean y la tuya se pone contra la mejor de las suyas.</string>
+    <string name="beat_you_called_body">La ronda termina en tus condiciones. Ember, Tide y Dune juegan un turno más cada uno, y nadie puede tocar tus cartas ahora. Luego todas las manos se voltean y la tuya se pone contra la mejor de las suyas.</string>
     <string name="beat_coalition_vs_you_title">Ahora juegan como uno solo</string>
-    <string name="beat_coalition_vs_you_body">Los tres que no cantaron son la coalición: un turno cada uno, y solo se compara con la tuya su mejor mano — así que es un equipo contra tu única mano. En una mesa real hablarían entre ellos y compartirían lo que saben. Fíjate en qué hacen con su último turno: aquí es donde ves las cartas que aún no has tenido.</string>
     <string name="beat_aim_it_title">Apúntala</string>
+    <string name="beat_coalition_vs_you_body">Los tres que no cantaron son la coalición: un turno cada uno, y solo se compara su mejor mano con la tuya — así que es un equipo contra tu única mano. Los oirás decidiendo qué hacer, y puedes responder — nadie puede comprobar una palabra hasta que las manos se volteen. Fíjate en qué hacen en su último turno: ahí es donde ves las cartas que aún no has tenido.</string>
     <string name="beat_aim_it_body">Esta es la acción propia de la carta, y es gratis — no te cuesta nada usarla, y la carta va a la pila después de todos modos.</string>
     <string name="beat_remember_it_title">Recuérdala</string>
     <string name="beat_remember_it_body">Eso es lo que te compró la mirada. Fija dónde está y qué es, y vuelve a colocarla — de aquí en adelante es una carta que conoces, y el juego se juega con esas.</string>
@@ -342,13 +373,15 @@
     <string name="beat_cards_odd_body">Un As vale 1 y hace que quien elijas robe una carta de penalización. Un Comodín vale menos uno — la mejor carta del mazo, y la que nunca hay que regalar.</string>
     <string name="beat_tour_title">El mazo y la pila</string>
     <string name="beat_tour_body">Las cartas salen del mazo. Lo que alguien tira cae boca arriba junto a él, donde toda la mesa puede leerlo — tú también.</string>
-    <string name="beat_seats_title">Ember, Sky y Dune</string>
+    <string name="beat_seats_title">Ember, Tide y Dune</string>
     <string name="beat_seats_body">Tres bots, cada uno con cinco cartas que ven no mejor que tú. La placa que se ilumina en verde es de quien juega.</string>
     <string name="beat_help_title">El ? siempre está ahí</string>
     <string name="beat_help_body">Explica el momento en que estás y qué hace cada carta. El juego de mesa trae cartas de recordatorio para justo esto, una por jugador — a nadie se le pide recordar catorce cartas de memoria, ni aquí ni en una mesa real.</string>
+    <string name="beat_disagreement_title">Dos lo recuerdan de forma distinta</string>
+    <string name="beat_disagreement_body">Dos versiones sobre una misma carta no pueden ser ambas ciertas, así que la carta lleva las dos, marcada como disputa. El juego nunca decide quién tiene razón — las cartas se voltean al final y lo resuelven. Hasta entonces, pregúntate cuál es el recuerdo más reciente: quien la miró en último lugar suele ser quien hay que creer.</string>
     <string name="beat_coalition_title">Los demás juegan como uno solo</string>
-    <string name="beat_coalition_body">Tú, y los dos que no cantaron, sois la coalición: un turno cada uno, y solo se compara vuestra mejor mano con la de quien cantó — así que es un equipo contra una sola mano. En una mesa real lo hablaríais y compartiríais lo que sabéis. Nadie puede tocar las cartas de quien cantó, y el juego no te dejará intentarlo.</string>
     <string name="beat_your_turn_to_call_title">Tú también puedes cantarlo</string>
+    <string name="beat_coalition_body">Tú, junto con los dos que no cantaron, sois la coalición: un turno cada uno, y solo se compara vuestra mejor mano con la de quien cantó — así que es un equipo contra una mano. Toca cualquier carta para decir qué crees que es, y dilo incluso cuando solo recuerdes los dos palos pero no cuál es cuál. Lanzar una carta no te cuesta el turno y es la forma más barata de bajar una mano. Nadie puede tocar las cartas de quien cantó, y el juego no te dejará intentarlo.</string>
     <string name="beat_your_turn_to_call_body">Al final de cualquier turno tuyo, el botón dorado está ahí: púlsalo cuando creas que tu mano es la más baja de la mesa. Estuvo oculto mientras aprendías porque termina la ronda para todos — de aquí en adelante es tuyo para pulsar, y pulsarlo demasiado pronto es como la mayoría pierde su primera partida.</string>
     <string name="beat_session_title">Y eso es una ronda</string>
     <string name="beat_session_body">Una partida son rondas, una tras otra, con esos puntos acumulándose entre ellas, jugadas contra un reloj acordado de antemano — media hora es lo habitual. Cuando se acaba el tiempo, la ronda en curso termina, y quien tenga más puntos queda primero por 5 puntos de partida, segundo por 3, tercero por 2. Una ronda ganada por tres cuenta igual que si se ganó por uno o por veinte.</string>
@@ -395,7 +428,7 @@
     <string name="help_card_worth">%1$s — vale %2$d</string>
     <string name="help_closing">Cada carta en una mano suma en tu contra, así que gana el total más bajo. Canta Vinto cuando creas que la tuya es la más baja — todos los demás juegan entonces un turno más juntos, y solo se compara su mejor mano con la tuya.</string>
     <string name="stats_played">%1$d jugadas</string>
-    <string name="stats_won">%1$d%% ganadas</string>
+    <string name="stats_won">%1$d% ganadas</string>
     <string name="stats_best">mejor %1$d</string>
     <string name="stats_streak">%1$d seguidas</string>
     <string name="stats_row">Tu historial: %1$s</string>
@@ -447,6 +480,70 @@
     <string name="ask_you_drew_unknown">Robaste una carta</string>
     <string name="ask_which_card_replaced">¿Qué carta reemplaza?</string>
     <string name="ask_name_what_you_put_down">¿Cómo se llama la carta que sueltas?</string>
+    <string name="ask_which_way_round">¿En qué orden van?</string>
+    <string name="ask_say_what_you_know">Diles a los demás lo que sabes.</string>
+    <string name="label_standing_low">Mano baja</string>
+    <string name="label_standing_high">Mano alta</string>
+    <string name="label_standing_bin">Soy papelera</string>
+    <string name="label_done_talking">Terminé de hablar</string>
+    <string name="label_agree">De acuerdo</string>
+    <string name="label_do_as_planned">Hacer lo planeado</string>
+    <string name="label_keep_it_instead">Quedarse con ella</string>
+    <string name="label_plan_swap">Cambiar dos cartas</string>
+    <string name="label_plan_declare">Declarar un rango</string>
+    <string name="label_plan_put_down">Dejar una carta</string>
+    <string name="label_plan_take_discard">Tomar el descarte</string>
+    <string name="label_plan_clear">Borrar</string>
+    <string name="label_plan_shed">Lanzar</string>
+    <string name="ask_which_rank_throw_in">¿Qué rango lanzarás si cae uno?</string>
+    <string name="detail_shed_risk">Solo un rango que hayas visto en tu mano: lanzar el equivocado te cuesta una carta y te cierra el resto de la ronda.</string>
+    <string name="detail_shed_risk_pushed">Tu mano es la que la coalición está jugando. Lanzar el rango equivocado le cuesta una carta y la deja fuera el resto de la ronda — lanza solo lo que hayas visto.</string>
+    <string name="detail_claim_was_wrong">Un paso aquí se basó en una afirmación que las cartas ya han demostrado errónea. Así funciona el juego, no es un fallo: alguien recordaba una carta de forma distinta a como está.</string>
+    <string name="board_outcome_wins">Nuestra mejor mano, %1$d, contra la suya, %2$d: eso gana.</string>
+    <string name="board_outcome_level">Nuestra mejor mano, %1$d, contra la suya, %2$d: empate, y el empate paga a quien cantó.</string>
+    <string name="board_outcome_loses">Nuestra mejor mano, %1$d, contra la suya, %2$d: eso se queda corto.</string>
+    <string name="board_outcome_unseen">%1$d cartas de quien cantó que nadie ha visto.</string>
+    <string name="board_verdict_wins">gana</string>
+    <string name="board_verdict_level">empate</string>
+    <string name="board_verdict_loses">se queda corto</string>
+    <string name="label_plan_rehearse">Ver el plan</string>
+    <string name="table_rehearsal">ENSAYO — NADA SE HA MOVIDO</string>
+    <string name="ask_what_will_you_do">¿Qué harás en tu turno?</string>
+    <string name="ask_what_should_they_do">¿Qué debería hacer %1$s en su turno?</string>
+    <string name="ask_which_rank_will_you_declare">¿Qué rango declararás con el Rey?</string>
+    <string name="ask_which_rank_should_they_declare">¿Qué rango debería declarar %1$s con el Rey?</string>
+    <string name="ask_which_card_will_you_put_down">¿Qué carta dejarás para que un compañero de equipo lance la suya?</string>
+    <string name="ask_which_card_should_they_put_down">¿Qué carta debería dejar %1$s para que un compañero de equipo lance la suya?</string>
+    <string name="detail_plan_asks">El plan: %1$s.</string>
+    <string name="detail_draw_beats_plan">Tu %1$s mejora el plan: quédate con ella en lugar de la carta %2$d.</string>
+    <string name="detail_plan_is_a_suggestion">Un plan es una sugerencia. Decide quien tenga el turno.</string>
+    <string name="board_title">El plan</string>
+    <string name="board_summary_empty">Aún no hay plan — toca para planear juntos</string>
+    <string name="board_summary">El plan: %1$d de %2$d turnos definidos, %3$d de %4$d de acuerdo</string>
+    <string name="board_your_call">tu decisión</string>
+    <string name="board_in_play">en juego</string>
+    <string name="board_owner_you">tuya</string>
+    <string name="board_owner_named">de %1$s</string>
+    <string name="board_step_swap">cambiar la carta %2$d %1$s por la carta %4$d %3$s</string>
+    <string name="board_step_declare">declarar %1$s con un Rey</string>
+    <string name="board_step_take_discard">tomar el descarte</string>
+    <string name="board_step_put_down">dejar la carta %2$d %1$s</string>
+    <string name="board_step_put_down_known">dejar la carta %2$d %1$s, la %3$s</string>
+    <string name="board_would_rather">%1$s preferiría %2$s</string>
+    <string name="board_shed">%1$s lanzará un %2$s</string>
+    <string name="board_edited_by">último cambio de %1$s</string>
+    <string name="board_nod_yes">%1$s está de acuerdo</string>
+    <string name="board_nod_not_yet">%1$s aún no está de acuerdo</string>
+    <string name="board_lane">%1$s: %2$s</string>
+    <string name="badge_disputed">en disputa</string>
+    <string name="badge_paired">una de un par, orden desconocido</string>
+    <string name="badge_right">acertada</string>
+    <string name="badge_wrong">equivocada</string>
+    <string name="label_do_as_suggested">Hazlo</string>
+    <string name="label_decline_suggestion">No, gracias</string>
+    <string name="label_withdraw">Retirarlo</string>
+    <string name="label_this_way_round">%1$s, luego %2$s</string>
+    <string name="label_not_sure_which_way">No se distinguen</string>
     <string name="ask_what_do_you_say">¿Qué dices que es esta carta?</string>
     <string name="ask_say_and_play">Di qué es, y juega la acción de esa carta</string>
     <string name="ask_look_at_one_of_yours">Mira una de tus propias cartas</string>
@@ -465,7 +562,6 @@
     <string name="ask_watching">Observando</string>
     <string name="ask_somebody_playing">%1$s está jugando</string>
     <string name="ask_you_playing">Estás jugando</string>
-    <string name="ask_who_plays_for_you">%1$s cantó Vinto. ¿Quién juega por el resto de vosotros?</string>
     <string name="ask_round_over">Ronda terminada</string>
     <string name="ask_round_over_lowest">Ronda terminada — quedaste el más bajo con %1$d</string>
     <string name="ask_round_over_not_lowest">Ronda terminada — quedaste con %1$d, el mejor fue %2$d</string>

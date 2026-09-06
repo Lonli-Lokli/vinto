@@ -5,3 +5,5 @@ package game.vinto.app
  * Its page names both stores, which is what somebody pressing "rate" on the web actually wants.
  */
 actual fun storeReviewUrl(): String = Pages.THIS_APP
+
+actual fun storeListingUrl(): String = Pages.THIS_APP

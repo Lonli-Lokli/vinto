@@ -1,0 +1,1 @@
+kartenspiel,bluff,deduktion,mehrspieler,online,strategie,brettspiel,offline,solo,ki,bot,party,rang

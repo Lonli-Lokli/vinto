@@ -4,7 +4,7 @@
 
     Три решения, принятые один раз и выдержанные по всему файлу:
 
-    * `app_name` здесь нет. «VINTO» — это имя игры, оно набрано шрифтом Cinzel, в котором
+    * `app_name` здесь нет. «Vinto!» — это имя игры, оно набрано шрифтом Cinzel, в котором
       только латиница, и `FontCoverageTest` это проверяет. Ключ отсутствует и подставляется
       из английского файла — так и задумано.
     * Достоинства карт (7, J, Q, K, туз, джокер) — это знаки на картах, а не слова: они
@@ -15,7 +15,7 @@
       и читается как обычная надпись в интерфейсе, а не как обрубленная фраза.
 -->
 <resources>
-    <string name="app_name">VINTO</string>
+    <string name="app_name">Vinto!</string>
 
     <string name="opening_shuffling">Тасуем…</string>
 
@@ -27,9 +27,11 @@
     <string name="home_online">Игра по сети</string>
     <string name="home_teach">Как играть</string>
     <string name="home_settings">Настройки</string>
-    <string name="home_version">v%1$s</string>
-    <string name="home_unofficial">Неофициальное приложение для карточной игры VINTO. Оригинал — на vinto.game</string>
+    <string name="home_version">%1$s (%2$s)</string>
+    <string name="home_unofficial">Неофициальное приложение. Оригинал — на vinto.game</string>
     <string name="home_unofficial_action">Открыть vinto.game — официальный сайт игры</string>
+    <string name="home_other_games">Другие игры</string>
+    <string name="home_other_games_action">Открыть kupalinka.app — другие игры того же автора</string>
 
     <string name="online_screen_title">Игра по сети</string>
     <string name="online_nickname">Ваше имя за столом</string>
@@ -44,6 +46,11 @@
     <string name="trouble_closed">Игра по сети ещё не открыта. Одиночная игра и урок работают как обычно.</string>
     <string name="trouble_busy">За этим столом мест нет. Попробуйте другой или откройте свой.</string>
     <string name="trouble_refused">Сервис комнат это не принял.</string>
+    <string name="trouble_update_needed">Эта версия игры слишком старая для игры по сети. Обновите её в магазине приложений.</string>
+    <string name="notice_update_title">Обновите приложение</string>
+    <string name="notice_update_available">Вышла более новая версия игры. Обновите её при случае — эта тоже пока работает.</string>
+    <string name="label_update">Обновить</string>
+    <string name="label_not_now">Не сейчас</string>
     <string name="trouble_broken">У сервиса комнат неполадки. Попробуйте через минуту.</string>
     <string name="online_creating">Открываем комнату…</string>
     <string name="online_visibility">Кто найдёт комнату</string>
@@ -126,7 +133,7 @@
     <string name="settings_contact">Написать нам</string>
     <string name="settings_contact_detail">Ошибка, идея или партия, которая пошла не так.</string>
     <string name="settings_original">Оригинальная игра</string>
-    <string name="settings_original_detail">VINTO — не наша игра. Это неофициальное приложение для неё, а сама игра, её правила и те, кто её придумал, — на vinto.game.</string>
+    <string name="settings_original_detail">Vinto! — не наша игра. Это неофициальное приложение для неё, а сама игра, её правила и те, кто её придумал, — на vinto.game.</string>
     <string name="settings_studio">Об этом приложении</string>
     <string name="settings_studio_detail">Кто сделал это приложение, что ещё есть на полке и как оно устроено.</string>
     <string name="settings_rate">Оценить игру</string>
@@ -194,22 +201,47 @@
     <string name="table_you">Вы</string>
     <string name="table_vinto_mark">Винто</string>
     <string name="table_leads_mark">ведёт</string>
+    <string name="table_away_mark">отсутствует</string>
     <string name="seat_pointed_turn">Ходит %1$s</string>
     <string name="seat_is_a_bot">бот</string>
     <string name="seat_pointed_vinto">%1$s объявил(а) Винто</string>
     <string name="seat_pointed_penalty">%1$s берёт карту из колоды</string>
     <string name="seat_pointed_coalition">%1$s ведёт коалицию</string>
     <string name="table_final_round">Последний круг</string>
+    <string name="detail_ace_hurts_your_side">Карты объявившего неприкосновенны, поэтому Туз заставит взять карту только кого-то из вашей стороны.</string>
+    <string name="talk_low">Вы говорите: у вас — низкая рука.</string>
+    <string name="talk_low_they">%1$s говорит, что своя рука — низкая.</string>
+    <string name="talk_high">Вы говорите: ваша рука — высокая, присылайте плохие карты сюда.</string>
+    <string name="talk_high_they">%1$s говорит, что своя рука — высокая: плохие карты — сюда.</string>
+    <string name="talk_bin">Вы говорите, что выбыли из борьбы, и предлагаете себя как сброс.</string>
+    <string name="talk_bin_they">%1$s не в игре и предлагает себя как сброс.</string>
+    <string name="talk_will_shed">Вы обещаете подкинуть %1$s, как только представится случай.</string>
+    <string name="talk_will_shed_they">%1$s обещает подкинуть %2$s, как только представится случай.</string>
+    <string name="talk_play_for">Вы предлагаете играть на руку %1$s.</string>
+    <string name="talk_play_for_they">%1$s предлагает играть на руку %2$s.</string>
+    <string name="talk_give_me">Вы просите у %1$s карту %2$d.</string>
+    <string name="talk_give_me_they">%1$s просит у %2$s карту %3$d.</string>
+    <string name="talk_take_this">Вы предлагаете свою карту %1$d.</string>
+    <string name="talk_take_this_they">%1$s предлагает свою карту %2$d.</string>
+    <string name="talk_suggests">У вас есть предложение для %1$s.</string>
+    <string name="talk_suggests_they">У %1$s есть предложение для вас.</string>
+    <string name="talk_will_move">Вы говорите, что собираетесь сделать.</string>
+    <string name="talk_will_move_they">%1$s говорит, что собирается сделать.</string>
+    <string name="talk_yes">Вы говорите «да».</string>
+    <string name="talk_yes_they">%1$s говорит «да».</string>
+    <string name="talk_no">Вы говорите «нет».</string>
+    <string name="talk_no_they">%1$s говорит «нет».</string>
+    <string name="talk_wait">Вы просите немного подождать.</string>
+    <string name="talk_wait_they">%1$s просит вас немного подождать.</string>
+    <string name="talk_worse">Вы говорите, что это ухудшит ваше положение.</string>
+    <string name="talk_worse_they">%1$s говорит, что это ухудшит положение.</string>
     <string name="table_final_caller">Все остальные выставляют одну руку на всех — против вашей.</string>
-    <string name="table_final_leader">Вы играете рукой коалиции против %1$s.</string>
-    <string name="table_final_ally">%1$s играет рукой коалиции против %2$s.</string>
     <string name="table_final_turns_left">Ходов до вскрытия: %1$d</string>
     <string name="table_final_last_turn">последний ход</string>
-    <string name="table_final_choosing">Одна рука на троих — против %1$s.</string>
+    <string name="table_final_coalition">У вас троих одна рука — против %1$s.</string>
     <string name="table_final_side_coalition">Вместе</string>
     <string name="table_final_side_caller">Объявил</string>
     <string name="table_final_versus">против</string>
-    <string name="table_final_leads">%1$s ведёт остальных</string>
     <string name="table_see_score">Посмотреть счёт</string>
 
     <string name="header_report">Сообщить о проблеме</string>
@@ -273,11 +305,9 @@
     <string name="beat_watching_title">%1$s разыгрывает %2$s — %3$s</string>
     <string name="beat_do_not_guess_title">Не гадайте</string>
     <string name="beat_do_not_guess_body">Эту карту вы не смотрели, так что назвать её — значит гадать, а ошибка стоит штрафной карты. Положите её молча.</string>
-    <string name="beat_coalition_leader_title">За коалицию играет %1$s</string>
-    <string name="beat_coalition_leader_body">Коалиция выбрала, чья рука будет её рукой: в конце с вашей сравнят только сумму у игрока %1$s. Двое других тратят последний ход на то, чтобы эта рука стала младше — король может убрать из неё плохую карту, валет или дама поменять на лучшую, — или на то, чтобы узнать, что в ней лежит.</string>
     <string name="beat_final_play_title">%1$s разыгрывает: %2$s</string>
     <string name="beat_final_play_ace">Туз заставляет одного игрока взять карту из колоды рубашкой вверх, а лишняя карта — лишние очки против него. В вас его сейчас навести нельзя — карты объявившего неприкосновенны, — так что он ляжет на сторону самой коалиции. Смотрите, кому придётся брать.</string>
-    <string name="beat_final_play_king">Король указывает на карту и называет её, и назвать нужно верно. Верно — карта уходит из той руки, где лежала, а её действие разыгрывается. Неверно — все видят, чем она была, а назвавший берёт штрафную. Называют карту, которую видели, — часто свою, чтобы от неё избавиться.</string>
+    <string name="beat_final_play_king">Король указывает на карту и называет её, и назвать нужно верно. Верно — карта уходит из той руки, где лежала, а её действие разыгрывается. Неверно — все видят, чем она была, а назвавший берёт штрафную. Называют карту, которую видели, — часто свою, чтобы от неё избавиться. В последнем круге Король — инструмент только коалиции: объявивший не может подкидывать, так что названное им достоинство способно покинуть только руки самой коалиции.</string>
     <string name="beat_final_play_look">Девятка или десятка смотрит одну карту в чужой руке. В последнем круге так коалиция узнаёт, что у неё на руках, — ваши карты под запретом, — а что узнал один, могут использовать все.</string>
     <string name="beat_final_play_other">Смотрите, что она делает: эту карту вы ещё не держали, а окошко последних ходов под столом расскажет, что произошло.</string>
     <string name="beat_swap_them_title">Меняйте</string>
@@ -289,8 +319,8 @@
     <string name="beat_you_called_title">Вы объявили Винто</string>
     <string name="beat_you_called_body">Раунд заканчивается на ваших условиях. У Эмбер, Скай и Дюны по одному ходу, и теперь никто не может трогать ваши карты. Потом все руки вскрывают, и вашу сравнивают с лучшей из их рук.</string>
     <string name="beat_coalition_vs_you_title">Теперь они играют как один</string>
-    <string name="beat_coalition_vs_you_body">Трое, кто не объявлял, — коалиция: по ходу каждому, а с вашей рукой сравнят только их единственную лучшую руку — то есть команда против вашей одной руки. За настоящим столом они бы всё обсудили и сложили то, что знают. Смотрите, что они делают своим последним ходом: здесь вы увидите карты, которых ещё не держали.</string>
     <string name="beat_aim_it_title">Наведите</string>
+    <string name="beat_coalition_vs_you_body">Трое, кто не объявлял, — это коалиция: по одному ходу у каждого, и с вашей рукой сравнивается только их единственная лучшая рука — то есть команда против вашей одной руки. Вы услышите, как они это обсуждают, и можете отвечать — никто не может проверить ни слова, пока руки не вскрыты. Смотрите, что они делают в свой последний ход: именно тут вы видите карты, которых у вас ещё не было.</string>
     <string name="beat_aim_it_body">Это собственное действие карты, и оно бесплатное — вам оно ничего не стоит, а карта в любом случае уходит в сброс.</string>
     <string name="beat_remember_it_title">Запомните её</string>
     <string name="beat_remember_it_body">Вот что купил вам этот взгляд. Запомните, где она лежит и что это, и положите обратно — с этого момента это известная вам карта, а на таких и строится игра.</string>
@@ -334,9 +364,11 @@
     <string name="beat_seats_body">Три бота, у каждого пять карт, и видят они их не лучше вашего. Табличка, которая загорается зелёным, — чей сейчас ход.</string>
     <string name="beat_help_title">Знак ? всегда на месте</string>
     <string name="beat_help_body">Он объясняет, что происходит сейчас, и что делает каждая карта. В коробочной игре для этого есть карточки-подсказки, по одной на игрока: никто и не должен держать четырнадцать достоинств в голове — ни здесь, ни за настоящим столом.</string>
+    <string name="beat_disagreement_title">Двое запомнили её по-разному</string>
+    <string name="beat_disagreement_body">Два заявления об одной карте не могут быть верны оба сразу, поэтому карта носит оба, помеченные как спор. Игра никогда не решает, кто прав, — карты переворачивают в конце, и это решает дело. А до тех пор спросите себя, чья память свежее: обычно верить стоит тому, кто смотрел последним.</string>
     <string name="beat_coalition_title">Все остальные играют как один</string>
-    <string name="beat_coalition_body">Вы и те двое, кто не объявлял, — коалиция: по ходу каждому, а с рукой объявившего сравнят только вашу единственную лучшую руку. То есть команда против одной руки. За настоящим столом вы бы всё обсудили и сложили то, что знаете. Карты объявившего трогать нельзя, и игра просто не даст этого сделать.</string>
     <string name="beat_your_turn_to_call_title">Вы тоже можете объявить</string>
+    <string name="beat_coalition_body">Вы и двое, кто не объявлял, — это коалиция: по одному ходу у каждого, и с рукой объявившего сравнивается только ваша единственная лучшая рука — то есть команда против одной руки. Коснитесь любой карты, чтобы сказать, что это по-вашему, и говорите это, даже если помните только два достоинства, но не знаете, какое где. Подкинуть карту — не значит потратить ход, и это самый дешёвый способ облегчить руку. Никто не может трогать карты объявившего, и игра не даст даже попытаться.</string>
     <string name="beat_your_turn_to_call_body">В конце любого своего хода есть золотая кнопка: нажмите её, когда поверите, что ваша рука за столом самая младшая. Пока вы учились, её прятали — она заканчивает раунд для всех. Дальше она ваша, и именно ранним нажатием большинство проигрывает первую партию.</string>
     <string name="beat_session_title">Вот и весь раунд</string>
     <string name="beat_session_body">Игра — это раунды один за другим, очки переходят между ними, а играют до времени, о котором договорились заранее: обычно полчаса. Когда время вышло, начатый раунд доигрывают, и у кого больше всего очков — тот первый и берёт 5 игровых очков, второй 3, третий 2. Выигранный раунд считается одинаково, выиграли вы его в одно очко или в двадцать.</string>
@@ -376,7 +408,7 @@
     <string name="help_card_worth">%1$s — стоит %2$d</string>
     <string name="help_closing">Каждая карта в руке идёт вам в минус, так что побеждает самая младшая сумма. Объявляйте Винто, когда решите, что ваша младше всех: остальные сыграют ещё по одному ходу вместе, и с вашей сравнят только их лучшую руку.</string>
     <string name="stats_played">Сыграно: %1$d</string>
-    <string name="stats_won">Побед: %1$d%%</string>
+    <string name="stats_won">Побед: %1$d%</string>
     <string name="stats_best">лучшая: %1$d</string>
     <string name="stats_streak">Подряд: %1$d</string>
     <string name="stats_row">Ваша статистика: %1$s</string>
@@ -424,6 +456,72 @@
     <string name="ask_you_drew_unknown">Вы взяли карту</string>
     <string name="ask_which_card_replaced">Какую карту она заменит?</string>
     <string name="ask_name_what_you_put_down">Назвать карту, которую кладёте?</string>
+    <string name="ask_which_way_round">В каком они порядке?</string>
+    <string name="ask_say_what_you_know">Расскажите остальным, что вы знаете.</string>
+    <string name="label_standing_low">Счёт низкий</string>
+    <string name="label_standing_high">Счёт высокий</string>
+    <string name="label_standing_bin">Спишите меня</string>
+    <string name="label_done_talking">Всё сказано</string>
+    <string name="label_agree">Согласиться</string>
+    <string name="label_do_as_planned">Сделать по плану</string>
+    <string name="label_keep_it_instead">Оставить эту карту</string>
+    <string name="label_plan_swap">Поменять две карты</string>
+    <string name="label_plan_declare">Назвать достоинство</string>
+    <string name="label_plan_put_down">Выложить карту</string>
+    <string name="label_plan_take_discard">Взять сброс</string>
+    <string name="label_plan_clear">Очистить</string>
+    <string name="label_plan_shed">Подкинуть</string>
+    <string name="ask_which_rank_throw_in">Какое достоинство вы подкинете, если оно ляжет в сброс?</string>
+    <string name="detail_shed_risk">Только то достоинство, которое вы видели у себя в руке: ошибка в подкидывании стоит вам карты и лишает права подкидывать до конца раунда.</string>
+    <string name="detail_shed_risk_pushed">Ваша рука — та, что коалиция выдвигает вперёд. Ошибка в подкидывании стоит команде карты и лишает её права подкидывать до конца раунда — подкидывайте только то, что видели.</string>
+    <string name="detail_claim_was_wrong">Этот шаг был построен на утверждении, которое карты с тех пор опровергли. Это не ошибка, а игра как она есть: кто-то запомнил карту не так, как она лежит на самом деле.</string>
+    <string name="board_outcome_wins">Наша лучшая рука — %1$d против их %2$d: это победа.</string>
+    <string name="board_outcome_level">Наша лучшая рука — %1$d против их %2$d: поровну, а поровну засчитывается объявившему.</string>
+    <string name="board_outcome_loses">Наша лучшая рука — %1$d против их %2$d: этого не хватает.</string>
+    <string name="board_outcome_unseen">%1$d карт объявившего никто не видел.</string>
+    <string name="board_verdict_wins">победа</string>
+    <string name="board_verdict_level">поровну</string>
+    <string name="board_verdict_loses">не хватает</string>
+    <string name="label_plan_rehearse">Посмотреть план</string>
+    <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
+    <string name="table_rehearsal">РЕПЕТИЦИЯ — ничего не сдвинулось</string>
+    <string name="ask_what_will_you_do">Что вы сделаете в свой ход?</string>
+    <string name="ask_what_should_they_do">Что %1$s сделает в свой ход?</string>
+    <string name="ask_which_rank_will_you_declare">Какое достоинство вы назовёте королём?</string>
+    <string name="ask_which_rank_should_they_declare">Какое достоинство %1$s назовёт королём?</string>
+    <string name="ask_which_card_will_you_put_down">Какую карту вы выложите для напарника, который сможет её подкинуть?</string>
+    <string name="ask_which_card_should_they_put_down">Какую карту %1$s выложит для напарника, который сможет её подкинуть?</string>
+    <string name="detail_plan_asks">План: %1$s.</string>
+    <string name="detail_draw_beats_plan">Ваш %1$s лучше плана: оставьте его вместо карты %2$d.</string>
+    <string name="detail_plan_is_a_suggestion">План — это только предложение. Решает тот, чей сейчас ход.</string>
+    <string name="board_title">План</string>
+    <string name="board_summary_empty">Плана пока нет — нажмите, чтобы спланировать вместе</string>
+    <string name="board_summary">План: %1$d из %2$d ходов заданы, %3$d из %4$d согласны</string>
+    <string name="board_your_call">решайте сами</string>
+    <string name="board_in_play">в игре</string>
+    <string name="board_owner_you">у вас</string>
+    <string name="board_owner_named">у %1$s</string>
+    <string name="board_step_swap">поменять местами: карта %2$d (%1$s) и карта %4$d (%3$s)</string>
+    <string name="board_step_declare">назвать %1$s королём</string>
+    <string name="board_step_take_discard">взять сброс</string>
+    <string name="board_step_put_down">выложить карту %2$d (%1$s)</string>
+    <string name="board_step_put_down_known">выложить карту %2$d (%1$s), %3$s</string>
+    <string name="board_would_rather">%1$s предпочитает %2$s</string>
+    <string name="board_shed">%1$s подкинет %2$s</string>
+    <string name="board_edited_by">последнее изменение: %1$s</string>
+    <string name="board_nod_yes">%1$s: план поддержан</string>
+    <string name="board_nod_not_yet">%1$s: план ещё не поддержан</string>
+    <string name="board_lane">%1$s: %2$s</string>
+    <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <string name="badge_disputed">спорно</string>
+    <string name="badge_paired">одна из пары, порядок неизвестен</string>
+    <string name="badge_right">верно</string>
+    <string name="badge_wrong">неверно</string>
+    <string name="label_do_as_suggested">Сделать так</string>
+    <string name="label_decline_suggestion">Нет, спасибо</string>
+    <string name="label_withdraw">Забрать слова</string>
+    <string name="label_this_way_round">%1$s, потом %2$s</string>
+    <string name="label_not_sure_which_way">Порядок неизвестен</string>
     <string name="ask_what_do_you_say">Что это за карта, по-вашему?</string>
     <string name="ask_say_and_play">Назовите её и сыграйте её действие</string>
     <string name="ask_look_at_one_of_yours">Посмотрите одну свою карту</string>
@@ -442,7 +540,6 @@
     <string name="ask_watching">Наблюдение</string>
     <string name="ask_somebody_playing">Ходит %1$s</string>
     <string name="ask_you_playing">Ходите вы</string>
-    <string name="ask_who_plays_for_you">%1$s объявил(а) Винто. Кто сыграет за остальных?</string>
     <string name="ask_round_over">Раунд окончен</string>
     <string name="ask_round_over_lowest">Раунд окончен — у вас самая младшая рука, %1$d</string>
     <string name="ask_round_over_not_lowest">Раунд окончен — у вас %1$d, лучшая была %2$d</string>

@@ -123,7 +123,9 @@ check(
   listing.rooms.every((r) => r.sourceId === undefined && r.roomId === undefined),
 );
 
-// The endpoint takes whatever a client sends; what it stores and shows is its own decision.
+// The endpoint takes whatever a client sends; what it stores and shows is its own decision —
+// and the decision is that a typed name is not shown at all. Names are minted, so a row a
+// stranger reads carries one of those or no host, never somebody's text.
 const shouty = await (await fetch(`${BASE}/rooms`, {
   method: 'POST',
   body: JSON.stringify({ isPublic: true, hostNickname: `${'B'.repeat(300)}\u0000<script>` }),
@@ -131,8 +133,8 @@ const shouty = await (await fetch(`${BASE}/rooms`, {
 const shoutyRow = (await (await fetch(`${BASE}/rooms`)).json())
   .rooms.find((r) => r.code === shouty.code);
 check(
-  'a host nickname posted straight to the endpoint is cleaned before strangers read it',
-  shoutyRow.hostNickname === 'B'.repeat(16),
+  'a host nickname posted straight to the endpoint never reaches a stranger',
+  shoutyRow.hostNickname == null,
   shoutyRow.hostNickname,
 );
 

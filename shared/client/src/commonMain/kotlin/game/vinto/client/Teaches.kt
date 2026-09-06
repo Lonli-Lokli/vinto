@@ -138,16 +138,13 @@ sealed interface Teaches {
     }
 
     /**
-     * The coalition has chosen whose hand it plays. Said once the leader is named, over the
-     * final round, so the learner watches the other two work for that hand rather than
-     * three bots taking three unrelated turns.
+     * Two claims on one card that cannot both be true. Said once, the first time the table
+     * shows a dispute, because a badge in the warning colours with two faces on it is the one
+     * thing on the felt that nothing else has explained — and the rule it carries is the
+     * design's: the app never decides who is right, the reveal does.
      */
-    data class CoalitionLeader(val who: Speaker) : Teaches {
-        override val id = ID
-
-        companion object {
-            const val ID = "coalition_leader"
-        }
+    data object Disagreement : Teaches {
+        override val id = "disagreement"
     }
 
     /**

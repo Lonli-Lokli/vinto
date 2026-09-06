@@ -1,6 +1,7 @@
 package game.vinto.room
 
 import game.vinto.engine.CardView
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.ServerMessage
 import game.vinto.shapes.GameAction
@@ -130,8 +131,8 @@ class EnvelopeTest {
     @Test
     fun theCountdownAlarmDealsWithPrebuiltStarts() {
         var state = newRoom("room-TEST", seed = 42.0, difficulty = "easy", nowMs = NOW)
-        state = encode(decodeJoin(joinRoom(state, TOKEN_A, "Ann", NOW)).state)
-        state = encode(decodeJoin(joinRoom(state, TOKEN_B, "Bob", NOW)).state)
+        state = encode(decodeJoin(joinRoom(state, TOKEN_A, "Ann", NOW, PROTOCOL_VERSION)).state)
+        state = encode(decodeJoin(joinRoom(state, TOKEN_B, "Bob", NOW, PROTOCOL_VERSION)).state)
         state = encode(decodeJoin(addBot(state, TOKEN_A, NOW)).state)
         state = encode(decodeJoin(addBot(state, TOKEN_A, NOW)).state)
 
@@ -157,8 +158,8 @@ class EnvelopeTest {
 
     private fun dealtRoom(): String {
         var state = newRoom("room-TEST", seed = 42.0, difficulty = "easy", nowMs = NOW)
-        state = encode(decodeJoin(joinRoom(state, TOKEN_A, "Ann", NOW)).state)
-        state = encode(decodeJoin(joinRoom(state, TOKEN_B, "Bob", NOW)).state)
+        state = encode(decodeJoin(joinRoom(state, TOKEN_A, "Ann", NOW, PROTOCOL_VERSION)).state)
+        state = encode(decodeJoin(joinRoom(state, TOKEN_B, "Bob", NOW, PROTOCOL_VERSION)).state)
         state = encode(decodeJoin(addBot(state, TOKEN_A, NOW)).state)
         state = encode(decodeJoin(addBot(state, TOKEN_A, NOW)).state)
         return encode(

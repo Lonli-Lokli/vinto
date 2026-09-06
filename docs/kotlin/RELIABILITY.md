@@ -96,6 +96,78 @@ Held by `RoomTroubleTest` (in `commonTest`, so the mapping is identical on all f
 `UnreachableRoomTest`, which drives the real `RemoteRoom` against a refusing connector on virtual
 time.
 
+### A stack trace is only as useful as its frames
+
+A crash report is a list of frames, and Sentry does two things with them: it names the issue
+after the topmost `in_app` frame, and it folds the rest away. Send it one opaque string per
+line and it can do neither — the first real report was titled after `kotlin.Throwable#<init>`,
+which is where every crash in this app begins, so two unrelated bugs would have arrived looking
+like one issue. `CrashFrame` takes each line apart instead; `CrashFramesTest` pins every shape
+against lines copied from real reports rather than invented.
+
+Getting a *name* into those frames is a different job on each target, and the mechanism is not
+the same one three times:
+
+| Target | What makes the frames readable | Where |
+| --- | --- | --- |
+| Android | R8 `mapping.txt`, uploaded by the Sentry Gradle plugin. The event must **name the mapping's uuid** or the upload is ignored — read from `assets/sentry-debug-meta.properties`, not the manifest, since plugin 6.x | `ProguardUuid.android.kt`, `androidApp/build.gradle.kts` |
+| iOS | dSYMs, uploaded by a Release-only build phase. Sentry looks up the frame's `instruction_addr`, so **without addresses in the event an uploaded dSYM changes nothing** | `iosApp/project.yml` |
+| Web — wasm | The **WebAssembly name section**, kept in the module itself. `wasm-opt` strips it by default; `binaryenArguments.add("-g")` keeps it, at +432 KB gzipped. Nothing is uploaded and nothing has to match | `composeApp/build.gradle.kts` |
+| Web — JS glue | `composeApp.js.map`, uploaded to Sentry and then **deleted before the deploy** | `tools/upload-web-sourcemaps.mjs`, `tools/strip-web-sourcemaps.mjs` |
+
+The web row is two rows on purpose. A browser stack has both kinds of frame, and **the wasm ones
+are the ones holding our code** — those read correctly with no upload at all, because the names
+travel inside the `.wasm`. There is no upload that could replace them: Sentry symbolicates
+WebAssembly from DWARF keyed by a `build_id` custom section, which Kotlin/Wasm does not emit,
+and it does not read wasm source maps. `vinto-kmp-composeApp.wasm.map` exists in the build and
+is of no use to Sentry.
+
+**A source map is the source, so it is uploaded and then removed.** It used to be published
+along with everything else in the dist, which handed every Kotlin file the web client was built
+from to anyone who opened the network tab. Sentry's own advice is to upload it and not serve it,
+and that is what happens now: the upload runs after the deploy has content-addressed the script,
+and `strip-web-sourcemaps.mjs` then deletes the `.map` and the `sourceMappingURL` comment
+that names it. That step is **unconditional** — never gated on the token or on a dry run —
+because the upload is allowed to be skipped when there are no credentials and this is not: losing
+symbolication is a bad day, and publishing what you meant to keep is not undoable. It checks its
+own work and fails the deploy if anything is left.
+
+What the browser still receives is the wasm **name section**: fully-qualified Kotlin function
+names, though no file, line, or source text. That is the price of a readable web crash, and it is
+the same bargain a symbol table makes in any shipped binary — but it is worth knowing about
+rather than discovering, if this ever stops being a public repository.
+
+Two things worth keeping in mind before touching any of it.
+
+**Every one of these fails silently when it is wrong.** An upload that does not match is not an
+error anywhere; it is a report that still arrives and still reads badly. The three ways to get it
+wrong are all the same shape — symbols keyed on something the event does not carry. The mapping
+uuid, the instruction address, and the source map's *file name* are each that key, which is why
+the web upload runs **after** the deploy renames the script to `composeApp.<hash>.js`.
+
+**A build that cannot be symbolicated is not built.** All three paths used to warn and carry
+on when credentials were missing, so that somebody without Sentry access could still build. What
+that actually buys is a shipped release whose every crash is unreadable, behind a green pipeline
+saying nothing went wrong — which is worse than the release not existing. So each of them now
+fails instead, and `VINTO_ALLOW_UNSYMBOLICATED=1` is the single waiver across all three; it has
+to be typed, which makes skipping symbols a choice rather than an accident.
+
+Android is worth a note. `autoUploadProguardMapping` sounds like it guarantees the upload and
+does not: measured by running the task directly, an *invalid* token fails the build loudly, but
+*no credentials at all* makes it succeed in silence having uploaded nothing — and no credentials
+is exactly the case that happens, on a runner whose secret was never added. The check therefore
+runs before the upload rather than trusting it.
+
+The wasm name section is the one with no upload to refuse it, so `tools/check-wasm-names.mjs`
+reads the shipped binary's section table and fails the deploy if our names are gone. It is a
+single flag away from being off — and taking that flag out looks like a 432 KB saving rather than
+like turning off crash reports, which is why the check is on the artefact and not on the config.
+
+**Measure the frames, don't reason about them.** The web shapes were settled by throwing on
+purpose in the real production bundle, serving it, and reading Chrome's console. That reading
+found the bug: V8 puts a space before the paren, the JVM pattern does not allow one, and every
+web frame had been falling through unparsed.
+
 ## 6o. Errors as values, after a crash nobody could look at
 
 An online game was opened and the app died. There was no report, because reporting had never

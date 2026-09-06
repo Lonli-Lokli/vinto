@@ -177,6 +177,11 @@ class MctsBotDecisionService(
      * exactly as wrong as the bot's play already was. Deterministic under the seeded
      * [Random].
      */
+    override fun gradedOwnCards(context: BotDecisionContext): Map<Int, Pair<Rank, Double>> {
+        initializeIfNeeded(context)
+        return botMemory.ownBeliefs().mapValues { (_, memory) -> memory.card.rank to memory.confidence }
+    }
+
     override fun believedOwnCards(context: BotDecisionContext): Map<Int, Rank> {
         initializeIfNeeded(context)
         return botMemory.believedOwnCards()
@@ -403,6 +408,7 @@ class MctsBotDecisionService(
                 id = player.id,
                 cardCount = player.cards.size,
                 knownCards = botMemory.getPlayerMemory(player.id),
+                ownerKnows = player.knownCardPositions.toSet(),
             )
         }
 
@@ -430,7 +436,6 @@ class MctsBotDecisionService(
             turnCount = context.gameState.turnNumber,
             finalTurnTriggered = context.gameState.finalTurnTriggered,
             vintoCallerId = context.gameState.vintoCallerId,
-            coalitionLeaderId = context.coalitionLeaderId,
             opponentModeler = context.opponentModeler,
             isTerminal = false,
         )

@@ -67,6 +67,15 @@ git tag ios-1.0
 git tag android-1.0
 ```
 
+## The third number: the wire
+
+Beside the marketing version and the build number there is `PROTOCOL_VERSION` in
+`shared/protocol`, which is neither. It says what a build can *say and read* on the wire, and
+it moves only when that changes (`docs/kotlin/PROTOCOL.md`, "Compatibility rule"). Two builds
+with different build numbers usually speak the same protocol; when they do not, the room's
+floor (`MIN_PROTOCOL`) decides who is seated and who is sent to the store — which is why a
+protocol bump is a coupled release of the room and both apps (DEPLOYMENT.md §9).
+
 ## Invariants (don't break)
 
 - **The build number strictly increases** per marketing version, per store.

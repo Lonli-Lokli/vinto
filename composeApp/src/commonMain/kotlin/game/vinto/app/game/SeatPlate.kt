@@ -44,8 +44,8 @@ import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
 import game.vinto.app.art.avatar_dune
 import game.vinto.app.art.avatar_ember
-import game.vinto.app.art.avatar_fern
-import game.vinto.app.art.avatar_sky
+import game.vinto.app.art.avatar_gale
+import game.vinto.app.art.avatar_tide
 import game.vinto.app.art.seat_is_a_bot
 import game.vinto.app.art.seat_pointed_coalition
 import game.vinto.app.art.seat_pointed_penalty
@@ -290,7 +290,7 @@ fun SeatPlate(
  * The portrait for a seat, where the seat has one.
  *
  * Keyed on the name the engine deals, which is fixed: `initializeGame` always seats You, Ember,
- * Sky and Dune in that order, and a room fills its seats from the same list starting at Fern
+ * Tide and Dune in that order, and a room fills its seats from the same list starting at Gale
  * (`RoomCore.botName`). Online the seats are people who typed their own nicknames and **have no
  * portrait at all** — not yet; nothing carries one over the wire — which is what this returns
  * null for.
@@ -306,27 +306,27 @@ fun SeatPlate(
  * names are the only forms there are, so the looser match buys nothing.
  */
 internal fun portraitOrNull(name: String): DrawableResource? = when (name) {
-    "Fern" -> Res.drawable.avatar_fern
+    "Gale" -> Res.drawable.avatar_gale
     "Ember" -> Res.drawable.avatar_ember
-    "Sky" -> Res.drawable.avatar_sky
+    "Tide" -> Res.drawable.avatar_tide
     "Dune" -> Res.drawable.avatar_dune
-    // The offline game's human seat is dealt as "You" and the felt draws Fern's leaf on it, so
+    // The offline game's human seat is dealt as "You" and the felt draws Gale's leaf on it, so
     // this says the same rather than leaving the one seat in a solo game faceless.
-    "You" -> Res.drawable.avatar_fern
+    "You" -> Res.drawable.avatar_gale
     else -> null
 }
 
 /**
  * The portrait for a seat, whoever they are.
  *
- * Fern is the fallback, because the seat it marks is the one the offline game gives the human:
+ * Gale is the fallback, because the seat it marks is the one the offline game gives the human:
  * the emblem was filed as `avatar_you` in an earlier life and read as "a picture of the
  * viewer", which is true of exactly one game mode. Online the viewer is whoever typed their
- * name in, and seat zero can be Fern itself when the room fills it with a bot. The file is
+ * name in, and seat zero can be Gale itself when the room fills it with a bot. The file is
  * named for the seat now; the fallback is a separate decision that happens to land on it.
  */
 internal fun portraitFor(name: String): DrawableResource =
-    portraitOrNull(name) ?: Res.drawable.avatar_fern
+    portraitOrNull(name) ?: Res.drawable.avatar_gale
 
 private val PlateTap = 44.dp
 

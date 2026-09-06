@@ -83,6 +83,15 @@ private const val NEUTRAL_AVERAGE_CARD_VALUE = 6.0
  */
 internal const val TRUSTED_CONFIDENCE = 0.5
 
+/**
+ * The floor of "I half remember this".
+ *
+ * Between here and [TRUSTED_CONFIDENCE] a bot knows a card well enough to name its rank and
+ * not well enough to swear to where it is — which is exactly the pair claim the coalition's
+ * vocabulary exists to carry. Below it, silence.
+ */
+internal const val HAZY_CONFIDENCE = 0.25
+
 class BotMemory(
     private val botId: String,
     difficulty: Difficulty,
@@ -154,6 +163,16 @@ class BotMemory(
     fun believedOwnCards(): Map<Int, Rank> = ownCards
         .filterValues { it.confidence > TRUSTED_CONFIDENCE }
         .mapValues { (_, memory) -> memory.card.rank }
+
+    /**
+     * What this bot believes about each of its own cards, **with the grade kept**.
+     *
+     * [believedOwnCards] answers the same question and throws the confidence away, which is
+     * fine for a search that wants a best guess and wrong for speech: a bot that is half sure
+     * of two cards should be able to say so — "these two are a King and an Ace, and I have
+     * lost which is which" — rather than pick one arrangement and assert it.
+     */
+    fun ownBeliefs(): Map<Int, CardMemory> = ownCards.toMap()
 
     fun getConfidence(playerId: String, position: Int): Double =
         getCardMemory(playerId, position)?.confidence ?: 0.0

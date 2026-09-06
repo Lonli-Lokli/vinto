@@ -13,6 +13,7 @@
 //      survives hibernation; a Map keyed by socket would not.
 
 import {
+  protocolVersion,
   botTookOverPoint,
   clientEventPoint,
   reconnectedPoint,
@@ -24,7 +25,8 @@ import {
   sessionEndedPoint,
   newRoom, joinRoom, viewForSeat, seatForToken, replayRecordingJson,
   addBot, removeBot, lobbyView, updatePresence, nextAlarmAt,
-  applyActionEnvelopes, readyEnvelopes, moreTimeEnvelopes, alarmEnvelopes, syncEnvelope, roundRecording,
+  applyActionEnvelopes, sayEnvelopes, doneConferringEnvelopes, editPlanEnvelopes, agreePlanEnvelopes, readyEnvelopes, moreTimeEnvelopes, alarmEnvelopes, syncEnvelope,
+  roundRecording,
   newRegistry, mintRoomCode, resolveRoomCode, resolveRoomCodeFor, looksLikeRoomCode,
   listPublicRooms, forgetRoom,
   registrySize, touchRoom,
@@ -671,10 +673,24 @@ export class Room {
         // A token in the message means "I already have a seat here"; no token means "give
         // me one". Either way the seat comes back from the room, never from the client.
         const token = msg.token ?? mintToken();
-        const result = JSON.parse(joinRoom(stateJson, token, msg.nickname ?? '', Date.now()));
+        // A join without a number is a build from before the number existed: protocol 1.
+        const protocol = Number.isInteger(msg.protocol) ? msg.protocol : 1;
+        const result = JSON.parse(joinRoom(stateJson, token, msg.nickname ?? '', Date.now(), protocol));
         if (result.error) {
-          return ws.send(JSON.stringify({ type: 'error', message: result.error }));
+          const refusal = { type: 'error', message: result.error };
+          if (result.code) refusal.code = result.code;
+          return ws.send(JSON.stringify(refusal));
         }
+        // A seated build the room would rather see updated is told so once, after it is in.
+        // Sent after the joined envelope below, so the screen exists to show it.
+        const advice = result.advice
+          ? JSON.stringify({
+            type: 'notice',
+            code: result.advice,
+            severity: 'warning',
+            message: 'A newer version of the game is available. Update it from the store when you can.',
+          })
+          : null;
         await this.#save(JSON.stringify(result.state));
         const savedJson = JSON.stringify(result.state);
         ws.serializeAttachment({ seat: result.seat, token });
@@ -706,7 +722,13 @@ export class Room {
           nextIndex: result.state.log.length,
           lobby: JSON.parse(lobbyView(savedJson, Date.now())),
           view: this.#viewFor(savedJson, result.seat),
+          // The coalition's shared plan, so an app restarted mid-final-round lands on the
+          // present board. Room state serialised by the same Kotlin the client decodes with,
+          // so it is passed through untouched; absent when none stands.
+          plan: result.state.plan ?? undefined,
+          protocol: protocolVersion(),
         }));
+        if (advice) ws.send(advice);
         // A socket arriving cancels a grace and may cancel the lonely clock, so presence is
         // recomputed here rather than only on disconnect.
         const withPresence = await this.#refreshPresence(savedJson);
@@ -805,6 +827,91 @@ export class Room {
         // message. The messages arrive prebuilt from Kotlin, one per seat, already redacted;
         // this layer looks up the socket's seat and sends the string as-is.
         return this.#sendPrebuilt(result.messages);
+      }
+
+      case 'done-conferring': {
+        // The coalition's window closes the moment every connected member has said so. It
+        // touches no game state of its own, but closing it releases the seats it was holding,
+        // so the answer carries whatever the bots then played.
+        const token = msg.token ?? (ws.deserializeAttachment() ?? {}).token;
+        if (!token) {
+          return ws.send(JSON.stringify({ type: 'error', message: 'join before conferring' }));
+        }
+        const done = JSON.parse(doneConferringEnvelopes(stateJson, token, Date.now()));
+        if (done.error) {
+          return ws.send(JSON.stringify({ type: 'error', message: done.error }));
+        }
+        await this.#save(JSON.stringify(done.state));
+        await this.#fileRecording(stateJson, done.state);
+        this.#observe(stateJson, done.state);
+        return this.#sendPrebuilt(done.messages);
+      }
+
+      case 'say': {
+        // Table talk. Checked like an action — the token names the seat, and the seat may
+        // only speak as itself — and charged to the same budget, because a sentence is
+        // broadcast to every socket and an uncapped one is a flood with extra steps. It
+        // touches no game state, so there is nothing to record and nothing to observe.
+        const token = msg.token ?? (ws.deserializeAttachment() ?? {}).token;
+        if (!token) {
+          return ws.send(JSON.stringify({ type: 'error', message: 'join before talking' }));
+        }
+        const spoken = JSON.parse(
+          sayEnvelopes(stateJson, token, JSON.stringify(msg.talk ?? {}), Date.now()),
+        );
+        if (spoken.error) {
+          if (spoken.retryAfterMs) await this.#save(JSON.stringify(spoken.state));
+          return ws.send(JSON.stringify({
+            type: 'error',
+            message: spoken.error,
+            retryAfterMs: spoken.retryAfterMs ?? undefined,
+          }));
+        }
+        // The budget it spent has to be remembered, so this saves even though no game moved.
+        await this.#save(JSON.stringify(spoken.state));
+        return this.#sendPrebuilt(spoken.messages);
+      }
+
+      case 'edit-plan': {
+        // One part of the coalition's shared plan. Checked like talk — the token names the
+        // seat, the caller and a locked lane are refused — and charged to the same budget,
+        // because the board goes back to every socket. It touches no game state, so there is
+        // nothing to record; the state is saved for the plan and the budget it spent.
+        const token = msg.token ?? (ws.deserializeAttachment() ?? {}).token;
+        if (!token) {
+          return ws.send(JSON.stringify({ type: 'error', message: 'join before planning' }));
+        }
+        const planned = JSON.parse(
+          editPlanEnvelopes(stateJson, token, JSON.stringify(msg.edit ?? {}), Date.now()),
+        );
+        if (planned.error) {
+          if (planned.retryAfterMs) await this.#save(JSON.stringify(planned.state));
+          return ws.send(JSON.stringify({
+            type: 'error',
+            message: planned.error,
+            retryAfterMs: planned.retryAfterMs ?? undefined,
+          }));
+        }
+        await this.#save(JSON.stringify(planned.state));
+        return this.#sendPrebuilt(planned.messages);
+      }
+
+      case 'agree-plan': {
+        // Yes or no to the plan as a whole. A yes is also "done conferring", so the last one
+        // may close the window and release the seats it was holding — which is why the answer
+        // can carry moves, and why it is filed and observed like a closing.
+        const token = msg.token ?? (ws.deserializeAttachment() ?? {}).token;
+        if (!token) {
+          return ws.send(JSON.stringify({ type: 'error', message: 'join before agreeing' }));
+        }
+        const agreed = JSON.parse(agreePlanEnvelopes(stateJson, token, msg.agree === true, Date.now()));
+        if (agreed.error) {
+          return ws.send(JSON.stringify({ type: 'error', message: agreed.error }));
+        }
+        await this.#save(JSON.stringify(agreed.state));
+        await this.#fileRecording(stateJson, agreed.state);
+        this.#observe(stateJson, agreed.state);
+        return this.#sendPrebuilt(agreed.messages);
       }
 
       case 'resync': {

@@ -23,11 +23,48 @@ export default {
     ink: '#0A2A1D', // FeltDarkBottom — the scrim and letterbox fill
     title: '#F2F5F0', // FeltInk
     sub: '#F2DFA6', // LeafGold
-    name: 'Vinto',
+    // The mark IS the V, so the word carries on from it: the lockup reads "V into!" as one
+    // wordmark rather than showing a V and then spelling Vinto beside it, which said the letter
+    // twice. `graphic.mjs` sets the name 26px right of the logo, which is the join.
+    name: 'into!',
     tagline: 'Hold less. Know more.', // the app's own tagline, not a new one invented for a store
     endline: 'Call it, and hold the lowest hand.',
     endsub: 'Free · no ads · no account',
     logo: './tools/brand/vinto-mark.png',
+
+    // The mark is the V of the word, so the type has to sit against it rather than beside it.
+    // zdymak's default 26 is spacing for a logo that is a separate app icon; here it left a gap
+    // wide enough to read "V into!" as two things.
+    // A RATIO of the icon, so the join holds at 92px on the feature graphic and at 200px in the
+    // reel bookend. Negative because the mark has its own padding and the word has to sit inside
+    // it: at zdymak.s default the two read as "V into!" rather than as one word.
+    lockupGap: -0.2,
+
+    // The deck itself, fanned along the bottom. A feature graphic made of a logo, a tagline and
+    // a phone is the same graphic every game on the shelf has; these five cards are the one
+    // thing on it that could not belong to another game. They are the app's own art — the same
+    // faces `card_*.xml` draws — rather than something drawn for a store.
+    // Four, not the whole deck, and placed in the gap between the words and the phone: the
+    // tagline owns the left of this graphic and must not be drawn over. The hero is drawn after
+    // the fan, so the phone overlaps the right-hand card and the two read as one arrangement
+    // rather than as two things that happen to be on the same picture.
+    fan: [
+      './tools/brand/card-renders/card_7.png',
+      './tools/brand/card-renders/card_joker.png',
+      './tools/brand/card-renders/card_q.png',
+    ],
+    // Raised and enlarged: at 240 tall and sitting on the baseline they left the whole middle of
+    // the graphic empty green, with the tops of the cards below the wordmark. Now they rise to
+    // the wordmark.s own line and run off the bottom edge, which is what makes them read as a
+    // hand on a table rather than as four stickers.
+    fanX: 622,
+    fanY: 400,
+    fanHeight: 250,
+    fanSpread: 0.09,
+
+    // The block hangs from the top by default, which left the bottom third of the left column
+    // empty while the cards filled the middle. Down 40 centres it against them.
+    textOffsetY: 40,
   },
 
   // Where captures land. One folder per platform, because a Play screenshot may not wear an
@@ -47,6 +84,7 @@ export default {
     { id: 'table', title: 'Draw, or take the discard.', sub: 'Then swap, or play the card’s action.', move: 'driftUp' },
     { id: 'teach', title: 'Learn by playing a round.', sub: 'Not by reading the rules.', move: 'pullBack' },
     { id: 'lobby', title: 'Or sit down with friends.', sub: 'A six-character code is the whole invitation.', move: 'pushIn' },
+    { id: 'plan', title: 'The last round is a team effort.', sub: 'Plan it together. The caller cannot see it.', move: 'driftUp' },
     { id: 'score', title: 'Call Vinto when you are lowest.', sub: '+3 if you are right. −1 if you are not.', move: 'pullBackSlow' },
   ],
 
@@ -58,7 +96,9 @@ export default {
     // App Store. Marketing styling is expected here — frames, headlines, a background.
     iphone: {
       capturesDir: './marketing/captures/ios',
-      videos: [{ target: 'appstore-preview' }], // full-bleed, 15–30s, no bezel, or Apple rejects it
+      // No `videos` here on purpose. A video built from this device's *screenshots* is a camera
+      // move over stills, and the store slot it would fill wants footage from inside the app —
+      // so the only preview this config makes is the `reel` above, from recorded clips.
       screenshots: [
         { target: 'appstore-iphone-6.9', style: 'premium' },
         { target: 'appstore-iphone-6.5', style: 'premium' },
@@ -76,7 +116,7 @@ export default {
     // is for the website — because a rejection here costs a review cycle.
     android: {
       capturesDir: './marketing/captures/android',
-      videos: [{ target: 'play-promo' }], // Play takes a YouTube URL; keep it silent unless music is cleared
+      // As with the iPhone: the promo is a `reel` entry from real footage, not a pan over stills.
       screenshots: [
         { target: 'play-phone', dir: 'play-phone-plain', style: 'bleed', caption: false, theme: { anchor: 'top' } },
         { target: 'play-tablet', dir: 'play-tablet-plain', style: 'bleed', caption: false, theme: { anchor: 'top' } },
@@ -86,14 +126,66 @@ export default {
     },
   },
 
+  /**
+   * The App Store's preview slot, and the only asset here that is not a picture.
+   *
+   * Apple's slot wants **footage from inside the app**: full-bleed, no device frame, 15–30
+   * seconds. So this is built from `zdymak capture --record` clips — the app actually playing,
+   * driven through the same six scenes the screenshots use — rather than a camera move over a
+   * still, which is what the screenshot reel does and what Apple's own guidance rules out for
+   * this slot. Captions are omitted for the same reason: the store draws its own title beside
+   * the video, and a burnt-in one reads as an advert rather than the app.
+   */
+  reel: [
+    {
+      name: 'appstore-preview',
+      size: [886, 1920],
+      level: '4.0',
+      sceneDur: 3.4, // 6 clips ≈ 20s, inside Apple's 15–30s window with room either side
+      transition: 'dissolve',
+      theme: { bleed: true, frame: false },
+      segments: [
+        { clip: './marketing/clips/home.mov' },
+        { clip: './marketing/clips/teach.mov' },
+        { clip: './marketing/clips/table.mov' },
+        { clip: './marketing/clips/plan.mov' },
+        { clip: './marketing/clips/score.mov' },
+        { clip: './marketing/clips/lobby.mov' },
+      ],
+    },
+    {
+      // Play's listing video is a YouTube link rather than a file, so this one is uploaded by
+      // hand; it is the same footage cut to Play's frame and kept silent, because a ContentID
+      // claim on a music bed can take a listing's video down without warning.
+      name: 'play-promo',
+      size: [1080, 1920],
+      sceneDur: 3.4,
+      transition: 'dissolve',
+      theme: { bleed: true, frame: false },
+      segments: [
+        { clip: './marketing/clips/home.mov' },
+        { clip: './marketing/clips/teach.mov' },
+        { clip: './marketing/clips/table.mov' },
+        { clip: './marketing/clips/plan.mov' },
+        { clip: './marketing/clips/score.mov' },
+        { clip: './marketing/clips/lobby.mov' },
+      ],
+    },
+  ],
+
   theme: {
+    // The captures carry the simulator's own status bar, and 'auto' misread the dark band above
+    // it as empty and painted a second one — two clocks, two batteries, one above the other.
+    statusBar: false,
     bgTop: '#14442F', // FeltDarkTop
     bgBottom: '#0A2A1D', // FeltDarkBottom
     glowAlpha: 0.16,
     vignette: 0.3,
   },
 
-  sceneDur: 3.2, // 5 scenes ≈ 16s, inside Apple's 15–30s window with the crossfades
+  // 6 scenes ≈ 19.4s after the crossfades eat into them — Apple's window is 15–30s,
+  sceneDur: 3.5,
+  // and at 3.2 the finished reel came out 14.7s and was refused. Measured, not budgeted.
   xfade: 0.32,
 
   // `store-assets/<locale>/<target>/…` since zdymak 0.15. vydanne reads different roots, so

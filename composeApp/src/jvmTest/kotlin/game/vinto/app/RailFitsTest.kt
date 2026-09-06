@@ -22,13 +22,20 @@ import game.vinto.app.game.TableLayout
 import game.vinto.app.game.TableScreen
 import game.vinto.app.game.TableState
 import game.vinto.app.theme.VintoTheme
+import game.vinto.client.Question
 import game.vinto.client.Say
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.GamePhase
+import game.vinto.shapes.Lane
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
+import game.vinto.shapes.Rank
+import game.vinto.shapes.Shed
+import game.vinto.shapes.Step
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -149,15 +156,99 @@ class RailFitsTest {
         return setup to turn
     }
 
-    private fun everyChoiceIsWhole(width: Dp, height: Dp, fontScale: Float = 1f) = runComposeUiTest {
+    /**
+     * The confer window's four, whole, at the doubled system font.
+     *
+     * Four is one more than the rail has ever had to fit — three assessments and the way out —
+     * and the two of them that grow are the ones a player most needs: a button that says where
+     * your hand stands is no use half under the edge of the screen. This is the same measurement
+     * the two-button turn gets, on the row that is one button wider.
+     */
+    @Test
+    fun theConferWindowsFourChoicesAreWhollyOnScreenAtADoubledFont() {
+        val view = conferring()
+        eachChoiceWhole(view, emptyList(), CONFER_CHOICES, PHONE_W, PHONE_H, fontScale = 2f)
+    }
+
+    @Test
+    fun theConferWindowsFourChoicesAreWhollyOnATallPhone() {
+        val view = conferring()
+        eachChoiceWhole(view, emptyList(), CONFER_CHOICES, PHONE_W, TALL_H, fontScale = 1f)
+    }
+
+    @Test
+    fun theFourChoicesStayWholeWithABoardStandingAboveThem() {
+        // The board joins the foot: three lanes, the nods and "Agree". The buttons under it
+        // are still the way out of the window and must not be pushed under the screen's edge.
+        val view = conferring()
+        eachChoiceWhole(view, emptyList(), CONFER_CHOICES, PHONE_W, PHONE_H, fontScale = 1f, plan = standingPlan(view))
+    }
+
+    @Test
+    fun theFourChoicesStayWholeWithABoardAtADoubledFont() {
+        val view = conferring()
+        eachChoiceWhole(view, emptyList(), CONFER_CHOICES, PHONE_W, PHONE_H, fontScale = 2f, plan = standingPlan(view))
+    }
+
+    @Test
+    fun theOpenBoardsThreeChoicesAreWholeAtADoubledFont() {
+        val view = conferring()
+        eachChoiceWhole(
+            view,
+            emptyList(),
+            setOf("Agree", "Throw in", "Back"),
+            PHONE_W,
+            PHONE_H,
+            fontScale = 2f,
+            plan = standingPlan(view),
+            question = Question.ThePlan,
+        )
+    }
+
+    /** A plan with every lane filled and one nod short of agreed: the fullest the board gets. */
+    private fun standingPlan(view: PlayerView): CoalitionPlan {
+        val coalition = view.players.filter { it.id != view.vintoCallerId }.map { it.id }
+        return CoalitionPlan(
+            lanes = coalition.map { Lane(it, Step.Declare(Rank.KING)) },
+            sheds = listOf(Shed(coalition.first(), Rank.SEVEN)),
+            agreed = coalition.drop(1),
+            editedBy = coalition.first(),
+        )
+    }
+
+    /** A final round somebody else called, with this seat's confer window open. */
+    private fun conferring(): PlayerView {
+        val whole = teachingSession().view.value
+        return whole.copy(
+            phase = GamePhase.FINAL,
+            vintoCallerId = whole.players.first { it.id != whole.viewerId }.id,
+            conferMsRemaining = 20_000L,
+        )
+    }
+
+    private fun everyChoiceIsWhole(width: Dp, height: Dp, fontScale: Float = 1f) {
         val (view, said) = drawn()
+        eachChoiceWhole(view, said, CHOICES, width, height, fontScale)
+    }
+
+    @Suppress("LongParameterList")
+    private fun eachChoiceWhole(
+        view: PlayerView,
+        said: List<Say>,
+        expected: Set<String>,
+        width: Dp,
+        height: Dp,
+        fontScale: Float,
+        plan: CoalitionPlan? = null,
+        question: Question = Question.None,
+    ) = runComposeUiTest {
         setContent {
             val density = LocalDensity.current.density
             CompositionLocalProvider(LocalDensity provides Density(density, fontScale)) {
                 VintoTheme {
                     Box(modifier = Modifier.size(width, height)) {
                         TableScreen(
-                            state = TableState(view, tableFor(view), null, said, 1),
+                            state = TableState(view, tableFor(view, question = question, plan = plan), null, said, 1),
                             layout = TableLayout.forScreen(height),
                             onMove = {},
                             onHelp = {},
@@ -173,10 +264,10 @@ class RailFitsTest {
 
         val tappable = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick))
             .fetchSemanticsNodes()
-        val choices = tappable.filter { it.name() in CHOICES }
+        val choices = tappable.filter { it.name() in expected }
         assertTrue(
-            choices.size == CHOICES.size,
-            "the two choices are drawn: ${choices.map { it.name() }} among ${tappable.map { it.name() }}",
+            choices.size == expected.size,
+            "every choice is drawn: ${choices.map { it.name() }} among ${tappable.map { it.name() }}",
         )
 
         choices.forEach { node ->
@@ -212,6 +303,9 @@ class RailFitsTest {
 
     private companion object {
         val CHOICES = setOf("Swap Cards", "Discard")
+
+        /** The three assessments and the way out. */
+        val CONFER_CHOICES = setOf("I am low", "I am high", "Bin me", "Done talking")
         val PHONE_W = 411.dp
         val PHONE_H = 740.dp
 

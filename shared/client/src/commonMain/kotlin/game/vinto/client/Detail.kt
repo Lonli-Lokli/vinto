@@ -30,6 +30,12 @@ sealed interface Detail {
     /** Setting up a King's declaration. */
     data object TapACardToSayWhatItIs : Detail
 
+    /**
+     * An Ace in the final round, where the caller is out of bounds and every legal target is
+     * therefore a teammate — including, possibly, the one hand still able to win the round.
+     */
+    data object AnAceOnlyHurtsYourOwnSide : Detail
+
     /** Declaring your hand to the coalition, who have no way to check. */
     data object TableTalkIsTakenOnTrust : Detail
 
@@ -50,6 +56,26 @@ sealed interface Detail {
 
     /** Nobody called; the deck simply ran out. */
     data object TheDeckRanOut : Detail
+
+    /** The viewer's own lane, under the prompt on their turn. */
+    data class ThePlanAsksYouTo(val step: StepLine) : Detail
+
+    /**
+     * The card just drawn does more for the coalition than the plan's step for this turn would
+     * (task 3.11): kept in place of the viewer's card at [position], it leaves the coalition's
+     * lowest hand lower than the step does. The plan is a suggestion, and this is the one
+     * moment the table says so before the player finds out.
+     */
+    data class YourDrawBeatsThePlan(val rank: Rank, val position: Int) : Detail
+
+    /** Propose, never command: the person on play decides. */
+    data object APlanIsASuggestion : Detail
+
+    /** A step on the board was built on a claim the reveal has proved wrong (design D9). */
+    data object AClaimWasWrong : Detail
+
+    /** What a wrong throw costs; sharper when the viewer's hand is the one the coalition is pushing. */
+    data class ShedRisk(val pushed: Boolean) : Detail
 }
 
 /**

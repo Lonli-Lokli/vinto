@@ -2,6 +2,7 @@ package game.vinto.bot
 
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.Card
+import game.vinto.shapes.Claim
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
@@ -10,7 +11,6 @@ import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.Pile
 import game.vinto.shapes.PlayerState
 import game.vinto.shapes.Rank
-import game.vinto.shapes.SerializedOpponentKnowledge
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -76,23 +76,21 @@ class CoalitionPlannerTest {
                 coalitionWith = botIds,
                 // The scenarios assume a fully shared coalition picture, which now means
                 // fully *declared*: every bot has said out loud what it holds, truthfully.
-                declaredCards = cards.mapIndexed { position, c -> position to c.rank }
-                    .filter { (position, _) -> position !in blind }
-                    .toMap(),
+                claims = cards.indices
+                    .filter { it !in blind }
+                    .map { Claim(botIds[index], listOf(it), listOf(cards[it].rank)) },
             )
         }
 
+        // What the coalition has seen of the caller, **said out loud**. It used to ride on
+        // bot1's private `opponentKnowledge`, which the plan pooled — the one thing the bots
+        // shared that a person had no way to say. A bot declares it now, like anyone else.
         val knownIndices = knownHumanCards ?: caller.cards.indices.toList()
-        val withKnowledge = bots.toMutableList()
-        withKnowledge[0] = bots[0].copy(
-            opponentKnowledge = mapOf(
-                HUMAN to SerializedOpponentKnowledge(
-                    knownCards = knownIndices.associateWith { caller.cards[it] },
-                ),
-            ),
+        val told = caller.copy(
+            claims = knownIndices.map { Claim(BOT1, listOf(it), listOf(caller.cards[it].rank)) },
         )
 
-        val players: List<PlayerState> = listOf(caller) + withKnowledge
+        val players: List<PlayerState> = listOf(told) + bots
 
         return testState(
             players = players,
@@ -396,7 +394,7 @@ class CoalitionPlannerTest {
             unread = mapOf(BOT2 to listOf(0)),
         )
         val input = assertNotNull(buildCoalitionPlanInput(state, BOT2))
-        assertTrue(!input.members.first { it.id == BOT2 }.cards[0].known, "the fixture read the card")
+        assertTrue(!input.members.first { it.id == BOT2 }.cards[0].rankKnown, "the fixture read the card")
 
         assertTrue(shouldCoalitionUseAction(input, card(Rank.SEVEN)), "the peek was not worth playing")
         assertEquals(

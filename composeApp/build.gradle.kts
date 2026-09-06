@@ -298,6 +298,9 @@ abstract class GenerateBuildInfo : DefaultTask() {
     @get:Input
     abstract val sentryDsn: Property<String>
 
+    @get:Input
+    abstract val buildNumber: Property<String>
+
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
@@ -318,6 +321,13 @@ abstract class GenerateBuildInfo : DefaultTask() {
             | */
             |internal const val SENTRY_DSN: String = "${sentryDsn.get().replace("\"", "\\\"")}"
             |
+            |/**
+            | * The build number this was built from — the same commit count `androidApp` uses for
+            | * `versionCode` and `Scripts/build-number.sh` prints for the stores, so the number a
+            | * player reads back off the home screen is the one a crash report can be matched to.
+            | */
+            |internal const val BUILD_NUMBER: String = "${buildNumber.get()}"
+            |
             """.trimMargin(),
         )
     }
@@ -326,6 +336,15 @@ abstract class GenerateBuildInfo : DefaultTask() {
 val generateBuildInfo =
     tasks.register<GenerateBuildInfo>("generateBuildInfo") {
         description = "Writes the build-time constants a common source set cannot get from BuildConfig."
+        // The same source as androidApp's versionCode, deliberately: a build number that a
+        // player can read but nothing can be matched to is worse than none. `providers.exec`
+        // because the configuration cache is on and shelling out any other way fails the build.
+        buildNumber.set(
+            providers.gradleProperty("versionCode").orElse(
+                providers.exec { commandLine("git", "rev-list", "--count", "HEAD") }
+                    .standardOutput.asText.map { it.trim() },
+            ).orElse("1"),
+        )
         sentryDsn.set(
             providers.gradleProperty("vinto.sentryDsn")
                 .orElse(providers.environmentVariable("VINTO_SENTRY_DSN"))
@@ -350,22 +369,39 @@ kotlin.sourceSets.commonMain.get().kotlin.srcDir(generateBuildInfo)
  * of types that Compose cannot prove stable across a module boundary.
  *
  *     ./gradlew :composeApp:assembleDebug -PcomposeMetrics
- *     # then read build/compose/reports/*-composables.txt
+ *     # then read the *-composables.txt files under build/compose/reports/
  *
  * Deliberately measurement only: no stability configuration file yet. Declaring a type stable
  * is a promise the compiler then trusts without checking, and making that promise about the
  * engine's state classes before reading a report would be guessing with the recomposition
  * correctness of the whole table as the stake.
  */
-// NOTHING MAY FOLLOW THIS BLOCK. Statements after `composeCompiler { }` in this script are
-// never executed — silently: the build succeeds, a `logger.lifecycle` after it prints
-// nothing, and a `tasks.register` after it leaves a task Gradle then reports as "not found in
-// project ':composeApp'". Bisected with probes on a run with the configuration cache off;
-// every block before it runs, and every statement after it does not. Half an hour went into
-// finding that out, so put new configuration **above** here.
+// Kotlin block comments NEST, and that once cost this file its tail. The KDoc above wrote a
+// glob as `reports/` + `*-composables.txt` with no space between them; that `/*` opened a
+// second comment, the `*/` below closed only the inner one, and everything after it —
+// `composeCompiler { }` included — was comment. Silently: the build succeeded, a
+// `logger.lifecycle` here printed nothing, and a `tasks.register` here left a task Gradle
+// reported as "not found in project ':composeApp'". It was first blamed on `composeCompiler`
+// itself, which is why that wrong explanation stood here for a while. `BuildScriptCommentsTest`
+// fails on it now rather than leaving it to be bisected a second time.
 composeCompiler {
     if (providers.gradleProperty("composeMetrics").isPresent) {
         reportsDestination.set(layout.buildDirectory.dir("compose/reports"))
         metricsDestination.set(layout.buildDirectory.dir("compose/metrics"))
     }
+}
+
+/**
+ * Keep the WebAssembly name section, so a web crash names the function it happened in.
+ *
+ * The Kotlin compiler emits a name section; `wasm-opt` strips it by default, and that is where
+ * every Kotlin name in the web build was being lost. Without it a V8 stack frame can only say
+ * `wasm-function[12345]`, which is the same failure iOS had before `CrashFrame`: Sentry titles
+ * every crash after whichever frame they all share and two unrelated bugs arrive as one issue.
+ *
+ * `-g` is binaryen's "keep debug info". It adds no code — the section is pure names — so it
+ * cannot change behaviour, only size.
+ */
+tasks.withType<org.jetbrains.kotlin.gradle.targets.wasm.binaryen.BinaryenExec>().configureEach {
+    binaryenArguments.add("-g")
 }

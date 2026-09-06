@@ -85,7 +85,13 @@ check(
   'but the private one is still joinable by code',
   parse(resolveRoomCode(registryJson, privateCode)).known === true,
 );
-check('the listing carries the host nickname', listed.rooms[0].hostNickname === 'Bo');
+// Names are minted, never typed. A name posted here that is not one of the minted pairs is
+// dropped, and the row shows no host: better than inventing one for a line strangers read.
+check(
+  'a typed host nickname is not listed at all: the row shows no host rather than a stranger\u2019s text',
+  listed.rooms[0].hostNickname == null,
+  listed.rooms[0].hostNickname,
+);
 
 // The listing is an allow-list, so this is the whole of it — not "the room minus the fields
 // we remembered to strip". A field added to the registry must fail this until somebody has
@@ -114,10 +120,16 @@ const shouty = parse(mintRoomCode(
 const cleaned = parse(listPublicRooms(JSON.stringify(shouty.state), NOW))
   .rooms.find((r) => r.code === shouty.room.code);
 check(
-  'a host nickname is cleaned and cut to length before anybody else reads it',
-  cleaned.hostNickname === 'A'.repeat(16),
+  'a typed host nickname never reaches the listing, whatever it contains',
+  cleaned.hostNickname == null,
   cleaned.hostNickname,
 );
+
+// A minted name — the only kind a real client ever sends — is carried as it is.
+const mintedHost = parse(mintRoomCode(registryJson, bytes(21, 22, 23, 24, 25, 26), true, 'Amber Otter', 'gate-source', NOW));
+const carried = parse(listPublicRooms(JSON.stringify(mintedHost.state), NOW))
+  .rooms.find((r) => r.code === mintedHost.room.code);
+check('a minted host nickname is listed as it is', carried.hostNickname === 'Amber Otter', carried.hostNickname);
 
 // --- what a lobby browser needs -----------------------------------------------------------
 const touched = touchRoom(registryJson, publicCode, 3, 4, 1_234_567, NOW);

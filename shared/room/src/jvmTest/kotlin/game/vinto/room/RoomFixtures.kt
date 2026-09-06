@@ -3,6 +3,7 @@ package game.vinto.room
 import game.vinto.bot.BotRunner
 import game.vinto.engine.calculateFinalScores
 import game.vinto.engine.calculateRoundPoints
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.RoundResult
 import game.vinto.shapes.Difficulty
@@ -66,8 +67,8 @@ internal fun actionJson(action: GameAction): String =
 /** Ann and Bob seated, both sockets open, two seats nobody has filled. */
 internal fun lobbyOfTwo(now: Double = START, seed: Double = 42.0): String {
     var state = newRoom("room-TEST", seed = seed, difficulty = "easy", nowMs = now)
-    state = encode(decodeJoin(joinRoom(state, TOKEN_A, "Ann", now)).state)
-    state = encode(decodeJoin(joinRoom(state, TOKEN_B, "Bob", now)).state)
+    state = encode(decodeJoin(joinRoom(state, TOKEN_A, "Ann", now, PROTOCOL_VERSION)).state)
+    state = encode(decodeJoin(joinRoom(state, TOKEN_B, "Bob", now, PROTOCOL_VERSION)).state)
     return encode(decodeLifecycle(updatePresence(state, "0,1", now)).state)
 }
 
@@ -118,6 +119,22 @@ internal fun playRoundOut(dealtJson: String, seed: Long, from: Double): String {
         if (room.phase != RoomPhase.PLAYING) return state
         val game = room.game ?: return state
 
+        // The final round now opens with a window for the coalition to confer, and the bots
+        // hold while it is open. A driver standing in for people has to do what people do:
+        // say it is done talking. Left out, the round stops dead at the Vinto call.
+        // The final round opens with a window for the coalition to confer, and the bots hold
+        // while it is open. A driver standing in for people has to do what people do. A window
+        // nobody is left to close does not hold the bots either, so a refusal is not a stop.
+        if (conferring(room)) {
+            val closed = closeConferAsEverybody(room)
+            if (closed.conferredRound != null) {
+                // Closing the window is not a move; an alarm is what plays the seats it was
+                // holding.
+                state = encode(decodeLifecycle(onAlarm(encode(closed), now)).state)
+                return@repeat
+            }
+        }
+
         val everySeat = game.copy(players = game.players.map { it.copy(isHuman = false, isBot = true) })
         val action = person.nextAction(everySeat) ?: return state
         // Whose token authorises it: the actor's seat when the action names one, and any
@@ -141,3 +158,21 @@ internal fun playRoundOut(dealtJson: String, seed: Long, from: Double): String {
 
 private const val MOVE_LIMIT = 600
 private const val MS_BETWEEN_MOVES = 2_000.0
+
+/**
+ * Every seated person says they have finished conferring.
+ *
+ * The harness equivalent of three players tapping "ready" — used by any driver that plays a
+ * round out, since the window holds the bots until the people in the coalition are done.
+ */
+internal fun closeConferAsEverybody(
+    room: RoomState,
+    tokens: List<String> = listOf(TOKEN_A, TOKEN_B),
+): RoomState {
+    var working = room
+    for (token in tokens) {
+        val said = doneConferring(working, token)
+        if (said.error == null) working = said.state
+    }
+    return working
+}

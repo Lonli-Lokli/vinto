@@ -1,6 +1,7 @@
 package game.vinto.room
 
 import game.vinto.protocol.LobbyView
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.RoomPhase
 import game.vinto.shapes.VintoJson
 import kotlin.test.Test
@@ -142,7 +143,7 @@ class LobbyNudgeTest {
     @Test
     fun oneManWaitingIsNotHandedThreeBots() {
         var state = newRoom("room-ALONE", seed = 7.0, difficulty = "easy", nowMs = NOW)
-        state = encode(decodeJoin(joinRoom(state, TOKEN_A, "Ann", NOW)).state)
+        state = encode(decodeJoin(joinRoom(state, TOKEN_A, "Ann", NOW, PROTOCOL_VERSION)).state)
         state = encode(present(state, "0").state)
 
         val after = alarm(state, NOW + 5 * MINUTE)
@@ -170,8 +171,8 @@ class LobbyNudgeTest {
     /** Two humans seated and both connected, with two seats nobody is coming to fill. */
     private fun lobbyOfTwo(): String {
         var state = newRoom("room-WAIT", seed = 42.0, difficulty = "easy", nowMs = NOW)
-        state = encode(decodeJoin(joinRoom(state, TOKEN_A, "Ann", NOW)).state)
-        state = encode(decodeJoin(joinRoom(state, TOKEN_B, "Bob", NOW)).state)
+        state = encode(decodeJoin(joinRoom(state, TOKEN_A, "Ann", NOW, PROTOCOL_VERSION)).state)
+        state = encode(decodeJoin(joinRoom(state, TOKEN_B, "Bob", NOW, PROTOCOL_VERSION)).state)
         return encode(present(state, "0,1").state)
     }
 

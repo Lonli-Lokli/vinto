@@ -1,0 +1,9 @@
+Primera versión de Vinto.
+
+Cinco cartas, dos que ha visto, y tres rivales que están deduciendo las suyas al mismo tiempo. Cante Vinto cuando crea que tiene la más baja — si acierta, gana; si se equivoca, le cuesta.
+
+Juegue en solitario contra la máquina con tres niveles de fuerza, totalmente sin conexión. O abra una sala, envíe seis caracteres, y quien los reciba se sienta a la mesa — sin cuenta ni registro, desde el teléfono o el navegador.
+
+Hay un tutorial que reparte una ronda real en lugar de explicarle las reglas, y puede saltárselo.
+
+Gracias por jugar.

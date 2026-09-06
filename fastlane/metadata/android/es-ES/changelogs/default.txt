@@ -1,0 +1,9 @@
+Primera versión de Vinto.
+
+Cinco cartas, dos vistas, tres rivales deduciendo las suyas. Cante Vinto cuando crea tener la más baja.
+
+Solitario sin conexión con tres niveles, o abra una sala y envíe seis caracteres — sin cuenta ni registro.
+
+Un tutorial reparte una ronda real; puede saltárselo.
+
+Gracias por jugar.

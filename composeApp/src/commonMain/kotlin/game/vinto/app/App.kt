@@ -2,6 +2,7 @@ package game.vinto.app
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawing
@@ -18,6 +19,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import game.vinto.app.crash.CrashSurface
 import game.vinto.app.crash.Crashes
 import game.vinto.app.game.GameScreen
@@ -35,6 +40,7 @@ import game.vinto.app.theme.rememberSounds
 import game.vinto.client.Analytics
 import game.vinto.client.AnalyticsConsent
 import game.vinto.client.LocalGame
+import game.vinto.client.Question
 import game.vinto.client.Reachability
 import game.vinto.client.RemoteRoom
 import game.vinto.client.RoomConnector
@@ -61,6 +67,51 @@ import kotlinx.coroutines.Dispatchers
  * back. A link that points at a room (`?room=CODE` on the web) is the one thing that would
  * justify a navigator; it can land in `Screen.Online` pre-filled when somebody asks for it.
  */
+/**
+ * The whole app, with its type sized for the screen it is on.
+ *
+ * Type does not grow with the screen on its own. `sp` tracks the reader's font setting, not the
+ * size of the thing they are reading on, so a 15sp label is the same physical size on a 13" iPad
+ * as on a phone — right for a phone held at reading distance, too small on a tablet held at arm's
+ * length, where the cards have already stepped up ([TableLayout]) and the words around them have
+ * not.
+ *
+ * Applied to the FONT scale and not to density, deliberately: density would grow the layout too,
+ * and the layout already has its own answer for a big screen that this would then be fighting.
+ * Multiplied into the reader's own setting rather than replacing it, so somebody who has asked
+ * for large text still gets large text.
+ *
+ * Measured from the constraints rather than from a window, so it is one rule for every client —
+ * a phone, a tablet either way up, a desktop window, a browser at any size.
+ */
+@Composable
+private fun ScaledForScreen(content: @Composable () -> Unit) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val base = LocalDensity.current
+        val scaled = Density(base.density, base.fontScale * typeScaleFor(minOf(maxWidth, maxHeight)))
+        CompositionLocalProvider(LocalDensity provides scaled, content = content)
+    }
+}
+
+/**
+ * How much larger the words are on a screen this size.
+ *
+ * Measured on the SHORT side, because that is what says "tablet" for either orientation — a
+ * rotated phone is wide and still a phone. Below 600 dp nothing changes at all, so every phone
+ * and every existing golden is untouched; above it the scale ramps to a quarter again by 1000 dp
+ * and stops there. A cap rather than a ratio: past a point, more type is not more readable, it is
+ * a menu made of headlines.
+ */
+internal fun typeScaleFor(shortest: Dp): Float = when {
+    shortest < TabletFrom -> 1f
+    shortest >= TabletFull -> MaxTypeScale
+    else -> 1f + (MaxTypeScale - 1f) * ((shortest - TabletFrom) / (TabletFull - TabletFrom))
+}
+
+private val TabletFrom = 600.dp
+private val TabletFull = 1000.dp
+private const val MaxTypeScale = 1.25f
+
 @Composable
 fun App(
     seeds: () -> Long = ::freshSeed,
@@ -131,79 +182,84 @@ fun App(
     // every string — and the theme is cheaper to rebuild than to reason about half-rebuilt.
     InLanguage(settings.language) {
         VintoTheme(dark = dark) {
-            CompositionLocalProvider(
-                LocalFeedback provides rememberFeedback(settings.haptics),
-                LocalReducedMotion provides settings.motion.reduced(systemPrefersReducedMotion()),
-                LocalSounds provides rememberSounds(settings.sound),
-                LocalReachability provides reachability,
-            ) {
-                // Every phone has something drawn over its edges — a status bar, a gesture handle, a
-                // camera cut-out. The table is a fixed arrangement of cards rather than a scrolling
-                // list, so anything under those is simply lost rather than reachable, and the content
-                // is inset out of their way. What is *behind* them is the rail rather than a page
-                // colour, so the bars read as the edge of the table instead of a border around it
-                // — and since the rail now has a light half, `SystemBars` above turns the icons
-                // in them the right way round to be seen against it.
-                Surface(modifier = Modifier.fillMaxSize(), color = Rail.fill) {
-                    Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-                        // Where the app is, for the events that are about that rather than about
-                        // what happened. Provided once here rather than by each screen: the thing
-                        // that reads it is `CardStage`, which is the same code under all three
-                        // tables and cannot tell them apart on its own.
-                        CompositionLocalProvider(
-                            LocalSurface provides surfaceOf(screen),
-                            LocalVault provides vault,
-                        ) {
-                            when (val here = screen) {
-                                Screen.Opening -> OpeningScreen()
+            ScaledForScreen {
+                CompositionLocalProvider(
+                    LocalFeedback provides rememberFeedback(settings.haptics),
+                    LocalReducedMotion provides settings.motion.reduced(systemPrefersReducedMotion()),
+                    LocalSounds provides rememberSounds(settings.sound),
+                    LocalReachability provides reachability,
+                ) {
+                    // Every phone has something drawn over its edges — a status bar, a gesture handle, a
+                    // camera cut-out. The table is a fixed arrangement of cards rather than a scrolling
+                    // list, so anything under those is simply lost rather than reachable, and the content
+                    // is inset out of their way. What is *behind* them is the rail rather than a page
+                    // colour, so the bars read as the edge of the table instead of a border around it
+                    // — and since the rail now has a light half, `SystemBars` above turns the icons
+                    // in them the right way round to be seen against it.
+                    Surface(modifier = Modifier.fillMaxSize(), color = Rail.fill) {
+                        Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+                            // Where the app is, for the events that are about that rather than about
+                            // what happened. Provided once here rather than by each screen: the thing
+                            // that reads it is `CardStage`, which is the same code under all three
+                            // tables and cannot tell them apart on its own.
+                            CompositionLocalProvider(
+                                LocalSurface provides surfaceOf(screen),
+                                LocalVault provides vault,
+                            ) {
+                                when (val here = screen) {
+                                    Screen.Opening -> OpeningScreen()
 
-                                is Screen.Home -> HomeScreen(
-                                    settings = settings,
-                                    canContinue = here.canContinue,
-                                    go = homeActions(vault, seeds, settings, count) { screen = it },
-                                )
+                                    is Screen.Home -> HomeScreen(
+                                        settings = settings,
+                                        canContinue = here.canContinue,
+                                        go = homeActions(vault, seeds, settings, count) { screen = it },
+                                    )
 
-                                is Screen.Settings -> SettingsScreen(
-                                    settings = settings,
-                                    canForget = vault.loadGame() != null,
-                                    onChange = ::change,
-                                    onForget = {
-                                        vault.forgetGame()
-                                        screen = Screen.Home(canContinue = false)
-                                    },
-                                    onBack = { screen = here.back },
-                                )
+                                    is Screen.Settings -> SettingsScreen(
+                                        settings = settings,
+                                        canForget = vault.loadGame() != null,
+                                        onChange = ::change,
+                                        onForget = {
+                                            vault.forgetGame()
+                                            screen = Screen.Home(canContinue = false)
+                                        },
+                                        onBack = { screen = here.back },
+                                    )
 
-                                Screen.Teaching -> TeachScreen(
-                                    botDispatcher = Dispatchers.Default,
-                                    pace = settings.pace,
-                                    onSettings = { screen = Screen.Settings(back = here) },
-                                    onDone = { screen = Screen.Home(canContinue = vault.loadGame() != null) },
-                                )
+                                    Screen.Teaching -> TeachScreen(
+                                        botDispatcher = Dispatchers.Default,
+                                        pace = settings.pace,
+                                        onSettings = { screen = Screen.Settings(back = here) },
+                                        onDone = {
+                                            screen = Screen.Home(canContinue = vault.loadGame() != null)
+                                        },
+                                    )
 
-                                is Screen.Playing -> GameScreen(
-                                    game = here.game,
-                                    pace = settings.pace,
-                                    onSettings = { screen = Screen.Settings(back = here) },
-                                    onQuit = { screen = Screen.Home(canContinue = true) },
-                                )
+                                    is Screen.Playing -> GameScreen(
+                                        game = here.game,
+                                        opening = here.opening,
+                                        pace = settings.pace,
+                                        onSettings = { screen = Screen.Settings(back = here) },
+                                        onQuit = { screen = Screen.Home(canContinue = true) },
+                                    )
 
-                                is OnlineWay -> OnlineFlow(
-                                    where = here,
-                                    connector = connector,
-                                    vault = vault,
-                                    enterRoom = ::enterRoom,
-                                    go = { screen = it },
-                                )
+                                    is OnlineWay -> OnlineFlow(
+                                        where = here,
+                                        connector = connector,
+                                        vault = vault,
+                                        enterRoom = ::enterRoom,
+                                        go = { screen = it },
+                                    )
 
-                                is Screen.InRoom -> RoomScreen(
-                                    room = here.room,
-                                    pace = settings.pace,
-                                    onSettings = { screen = Screen.Settings(back = here) },
-                                    onLeft = {
-                                        screen = Screen.Home(canContinue = vault.loadGame() != null)
-                                    },
-                                )
+                                    is Screen.InRoom -> RoomScreen(
+                                        room = here.room,
+                                        pace = settings.pace,
+                                        onSettings = { screen = Screen.Settings(back = here) },
+                                        onLeft = {
+                                            screen = Screen.Home(canContinue = vault.loadGame() != null)
+                                        },
+                                    )
+                                }
                             }
                         }
                     }
@@ -309,7 +365,12 @@ private sealed interface Screen {
     /** A real round with a coach over it. */
     data object Teaching : Screen
 
-    data class Playing(val game: LocalGame) : Screen
+    /**
+     * A round in progress. [opening] is the question the rail starts on, which is
+     * [Question.None] for every game a person starts and the board for the capture that
+     * photographs it (`MarketingScene.PLAN`).
+     */
+    data class Playing(val game: LocalGame, val opening: Question = Question.None) : Screen
 
     /** The front door: a name, and which of the three things you came to do. */
     data object Online : Screen, OnlineWay
@@ -502,6 +563,7 @@ private suspend fun stagedScreen(scene: MarketingScene, vault: Vault): Screen = 
     MarketingScene.TABLE -> Screen.Playing(stagedGame(vault, toTheEnd = false))
     MarketingScene.SCORE -> Screen.Playing(stagedGame(vault, toTheEnd = true))
     MarketingScene.LOBBY -> Screen.Online
+    MarketingScene.PLAN -> Screen.Playing(coalitionGame(vault), opening = Question.ThePlan)
 }
 
 /**

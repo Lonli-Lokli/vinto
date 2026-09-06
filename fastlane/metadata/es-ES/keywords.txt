@@ -1,0 +1,1 @@
+cartas,farol,deducción,multijugador,online,fiesta,mesa,estrategia,offline,solo,bot,mazo,rango,mano

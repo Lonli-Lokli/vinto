@@ -1,5 +1,9 @@
 # The seat portraits
 
+The four classical elements, one per seat, each engraved as three lines — the way the elements
+are marked on stone rather than the way a triangle diagrams them. Fire is Ember, water is Tide,
+earth is Dune, air is Gale.
+
 Four masters, one per seat, and `tools/svg-to-drawable.mjs` turns each into the Android vector
 drawable the app actually loads (`composeResources/drawable/avatar_*.xml`). SVG is the source;
 the XML is generated and committed, exactly as `card_*.xml` are.
@@ -21,8 +25,10 @@ in the build, and that one field blocks submission.
   which was true of the turtles too, and is why they were mostly a green smudge in play.
 * **Not be told apart by colour alone.** `vydanne.config.mjs` claims
   `differentiateWithoutColorAlone` to Apple, and that claim has to hold here as much as in the
-  deck. The four emblems are deliberately different *shapes* — leaf, flame, crescent, dune —
-  rather than four hues of one disc, and each seat's name says which shape is its own.
+  deck. Each emblem is three engraved lines, and what differs is how the lines *run*: fire stands
+  them up and wavers them, water lies them down and rolls them, earth lays them dead straight, air
+  curls them away at the end. Direction first, then waver, then curl — none of it colour. Each
+  seat's name says which element is its own.
 * **Not sit on the felt in the felt's own colour.** `FELT` is #1B5E43, so the green seat is teal
   instead: near enough to belong to the deck's green family, far enough to hold an edge against
   the table it is drawn on.

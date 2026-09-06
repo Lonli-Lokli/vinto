@@ -54,6 +54,7 @@ import game.vinto.client.Attention
 import game.vinto.client.Beat
 import game.vinto.client.CardRef
 import game.vinto.client.Frame
+import game.vinto.client.Move
 import game.vinto.client.Pacing
 import game.vinto.client.Say
 import game.vinto.client.Scene
@@ -204,6 +205,13 @@ class Stage {
 
     /** A rank a King is borrowing, shown in the middle while it does that card's job. */
     internal var borrowed: Rank? by mutableStateOf(null)
+
+    /**
+     * Whether the frame on the felt is a ghost — a rehearsal of the plan, not a move that has
+     * happened (design D8). The screen reads it to say so over the felt and to take the taps
+     * away: a player who thinks a plan happened is worse off than one who never planned.
+     */
+    internal var rehearsing: Boolean by mutableStateOf(false)
 
     /** How many cards the deck has just taken back, while that is being drawn. */
     internal var refilling: Int by mutableStateOf(0)
@@ -590,6 +598,18 @@ fun Anchor.key(): String = when (this) {
 val LocalStage = compositionLocalOf { Stage() }
 
 /**
+ * The taps, unless the felt is showing ghosts. A rehearsal plays moves that have not happened,
+ * and a tap on one would be a move on a table that does not exist — so while the stage is
+ * rehearsing every move is dropped, and the taps come back with the live table.
+ */
+@Composable
+fun ((Move) -> Unit).unlessRehearsing(): (Move) -> Unit =
+    if (LocalStage.current.rehearsing) ::noMove else this
+
+@Suppress("UnusedParameter")
+private fun noMove(move: Move) = Unit
+
+/**
  * The table, with a layer above it for everything in motion.
  *
  * Scenes are played one after another and the beats inside a scene together, which is what
@@ -719,6 +739,7 @@ fun CardStage(
                 // What this move is about to move and to reveal, marked before the table
                 // steps to it — see [prepareFor].
                 stage.prepareFor(frame)
+                stage.rehearsing = frame.ghost
 
                 // The table steps to this move before its cards fly, because the overlay
                 // draws a gap where a card is landing: the seat has to be showing the card
@@ -770,6 +791,7 @@ fun CardStage(
             // The lifts land on the present too: whatever the current view holds up is up,
             // and nothing else is.
             behind = null
+            stage.rehearsing = false
             stage.holdUp(current)
             stage.tellAll(liveLog.value)
         }

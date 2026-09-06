@@ -41,6 +41,9 @@ class ScreenshotTest {
             settings = Settings(),
             canContinue = true,
             go = HomeActions({}, {}, {}, {}, {}),
+            // Pinned, because the real one is `git rev-list --count HEAD`: left to itself this
+            // golden gained a wrong digit with every commit and could never be green twice.
+            build = PINNED_BUILD,
         )
     }
 
@@ -116,6 +119,9 @@ class ScreenshotTest {
     }
 
     private companion object {
+        /** Three digits, like a real one, so the footer is laid out at its true width. */
+        const val PINNED_BUILD = "000"
+
         const val PHONE_W = 411
         const val PHONE_H = 740
 

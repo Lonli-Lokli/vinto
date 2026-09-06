@@ -187,11 +187,19 @@ flowchart TD
   Coalition player **−1**.
 - **If the Coalition wins** (lowest Coalition total < Vinto's) → Vinto **−1**; each Coalition
   player **+3**.
-- **If they are level** (lowest Coalition total = Vinto's) → Vinto **+3**; each Coalition player
+- **If they are level** (lowest Coalition total = Vinto's) → Vinto **+2**; each Coalition player
   **0**.
 
 The second and third bullets settle the first: "≤" includes a tie, and a tie is the case where
-the Coalition takes nothing rather than losing a point.
+the Coalition takes nothing rather than losing a point — but it is **not** a win, and does not pay
+like one. A caller who merely matches the best hand takes **2**, not the 3 a caller who beats it
+takes. Held by `RoundScoringTest.aTieGoesToTheCaller`, and by `OnlineScoreTest`, which exists
+because the client derives the same numbers for its scoreboard and had drifted from the engine.
+
+**Every player starts a session on 4 points.** Not zero: −1 from nothing reads as having lost the
+whole game in one hand, which is not what one round of five cards means. It is the same number for
+everybody, so it moves no ranking; what it changes is what the scoreboard feels like to read after
+a bad first round.
 
 ---
 

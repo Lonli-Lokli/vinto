@@ -2,6 +2,7 @@ package game.vinto.app.game
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -11,12 +12,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import game.vinto.app.crash.Where
 import game.vinto.app.theme.LocalFeedback
+import game.vinto.client.Frame
 import game.vinto.client.GameSession
 import game.vinto.client.Move
 import game.vinto.client.Question
 import game.vinto.client.Table
+import game.vinto.client.rehearse
 import game.vinto.client.tableFor
 import game.vinto.engine.PlayerView
+import game.vinto.engine.PublicReveal
+import game.vinto.shapes.CoalitionPlan
+import game.vinto.shapes.TableTalk
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 
 /**
@@ -35,18 +44,48 @@ class GameHolder(
     // typing it here is what makes an online game the same screens over a different session.
     private val session: GameSession,
     private val view: State<PlayerView>,
+    /**
+     * Seats a bot is covering, collected by the screen so a change repaints.
+     *
+     * A `State` for the same reason [view] is one: the session publishes a flow, and a table
+     * that read `.value` would label the seat correctly once and then never again.
+     */
+    private val away: State<Set<String>> = mutableStateOf(emptySet()),
+    /** The coalition's shared plan, as the session last had it; the board is drawn from it. */
+    private val plan: State<CoalitionPlan?> = mutableStateOf(null),
+    /** What the round has turned face up so far, which is what tells a plan its claim was wrong. */
+    private val reveals: State<List<PublicReveal>> = mutableStateOf(emptyList()),
+    /** What the rail opens on. [Question.None] for a person; the board for a store capture. */
+    opening: Question = Question.None,
 ) {
     /** Recent moves, oldest first, for the strip under the prompt. */
     val log get() = session.log
 
-    /** What there is to see, for the stage to play. */
-    val frames get() = session.frames
+    /**
+     * What there is to see, for the stage to play: the session's frames, and the rehearsals
+     * this screen asks for — ghosts of moves that have not happened, played through the same
+     * choreography (design D8). Merged here so the stage has one flow, and so a solo game and
+     * an online one rehearse the same way.
+     */
+    private val rehearsals = MutableSharedFlow<List<Frame>>(extraBufferCapacity = 1)
+    val frames: Flow<List<Frame>> = merge(session.frames, rehearsals)
 
-    var question: Question by mutableStateOf(Question.None)
+    var question: Question by mutableStateOf(opening)
         private set
 
     /** The last thing the engine refused, until the next move clears it. */
     var refusal: String? by mutableStateOf(null)
+        private set
+
+    /**
+     * The suggestion standing for this seat, if one is.
+     *
+     * Newest wins and there is only ever one: a rail offering three people's suggestions at
+     * once is a rail nobody reads, and the freshest is the one that knows most about the
+     * position. Cleared when it is acted on, declined, or a move lands — a suggestion about a
+     * table that has since moved is not a suggestion any more.
+     */
+    var offered: TableTalk.Proposal? by mutableStateOf(null)
         private set
 
     /**
@@ -61,7 +100,7 @@ class GameHolder(
 
     val playerId: String get() = session.playerId
     val current: PlayerView get() = view.value
-    val table: Table get() = tableFor(view.value, question)
+    val table: Table get() = tableFor(view.value, question, away.value, offered, plan.value, reveals.value)
     val isOver: Boolean get() = session.isOver
 
     /**
@@ -72,7 +111,13 @@ class GameHolder(
      * offering the buttons of a position the player cannot see yet is how a game gets played
      * by accident.
      */
-    fun tableFor(view: PlayerView): Table = tableFor(view, question)
+    fun tableFor(view: PlayerView): Table =
+        tableFor(view, question, away.value, offered, plan.value, reveals.value)
+
+    /** One sentence off the channel, for the holder to keep if it is addressed here. */
+    fun heard(talk: TableTalk) {
+        if (talk is TableTalk.Proposal && talk.to == session.playerId) offered = talk
+    }
 
     /**
      * Acts on whatever the player touched.
@@ -92,12 +137,52 @@ class GameHolder(
             // holds a *single* waiter for the answer it is expecting, so a second move sent
             // while the first is in flight replaces that waiter and the first hangs until it
             // times out. The player sees their own first move stall because they hurried it.
+            // Talk is not held behind `sending`. Nothing waits on a sentence — the room's
+            // answer to one is the broadcast — so making it queue behind a move in flight
+            // would mean a player who wanted to say "wait" had to wait first.
+            // Not held behind `sending` either: ending your share of a window is not a move,
+            // and a player who has finished talking should not wait on one.
+            is Move.Done -> {
+                refusal = session.doneConferring()
+                if (refusal == null) question = Question.None
+            }
+
+            is Move.Say -> {
+                refusal = session.say(move.talk)
+                if (refusal == null) {
+                    question = Question.None
+                    offered = null
+                }
+            }
+
+            // Planning is talk-shaped: nothing waits on it and the answer is the board coming
+            // back, so neither is held behind `sending` either.
+            is Move.Plan -> {
+                refusal = session.editPlan(move.edit)
+                if (refusal == null) question = Question.None
+            }
+
+            is Move.Agree -> {
+                refusal = session.agreePlan(move.agree)
+                if (refusal == null) question = Question.None
+            }
+
+            // Nothing leaves the phone: the plan is played back on this felt as ghosts, off the
+            // view this seat holds, and the stage snaps back to the live table after.
+            is Move.Rehearse -> {
+                val standing = plan.value ?: return
+                rehearsals.emit(rehearse(view.value, standing))
+            }
+
             is Move.Send -> {
                 if (sending) return
                 sending = true
                 try {
                     refusal = session.dispatch(move.action)
-                    if (refusal == null) question = Question.None
+                    if (refusal == null) {
+                        question = Question.None
+                        offered = null
+                    }
                 } finally {
                     sending = false
                 }
@@ -108,8 +193,11 @@ class GameHolder(
 
 /** A holder for one round, rebuilt when the round is. */
 @Composable
-fun rememberHolder(session: GameSession): GameHolder {
+fun rememberHolder(session: GameSession, opening: Question = Question.None): GameHolder {
     val view = session.view.collectAsState()
+    val away = session.away.collectAsState()
+    val plan = session.plan.collectAsState()
+    val reveals = session.reveals.collectAsState()
 
     // The one place a local game and an online one both pass through, which is why the crash
     // reporter's address is written here rather than in each table screen. Cleared on the way
@@ -119,7 +207,16 @@ fun rememberHolder(session: GameSession): GameHolder {
     }
     Where.atTable(view.value)
 
-    return remember(session) { GameHolder(session, view) }
+    val holder = remember(session) { GameHolder(session, view, away, plan, reveals, opening) }
+
+    // The one place the talk channel becomes something a player can act on. A suggestion
+    // addressed to this seat becomes the one-tap move at the top of the rail; everything else
+    // is already in the strip, because the session puts it there.
+    LaunchedEffect(session) {
+        session.talk.collect { holder.heard(it) }
+    }
+
+    return holder
 }
 
 /**
