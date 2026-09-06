@@ -28,6 +28,42 @@ import kotlinx.serialization.json.Json
  * or type, and a message type is never removed while any client sends it.
  */
 
+/**
+ * The wire's version, bumped whenever a build could send or receive something an older build
+ * cannot read: a new message type, a new game action inside an events entry, a field that
+ * changes meaning. New optional fields are not a bump — `ignoreUnknownKeys` skips them.
+ *
+ * Sent with every join. The room keeps a floor ([MIN_PROTOCOL]) and refuses a join below it
+ * at the door with [UPDATE_NEEDED_CODE], never mid-game: a client that sat down is a client
+ * the room can talk to for the whole game. Between the floor and the current number the
+ * client is seated and told, once, that a newer build is waiting ([UPDATE_AVAILABLE_CODE]).
+ * A join without a number is version 1, which is every build shipped before the number
+ * existed.
+ *
+ * History: 1 — the wire as first shipped. 2 — coalition play: `say`, `done-conferring`,
+ * `edit-plan`, `agree-plan`, `said`, `notice`, and the `DECLARE_CARDS` action.
+ */
+public const val PROTOCOL_VERSION: Int = 2
+
+/** The oldest protocol the room will seat. Below it, the join is refused with [UPDATE_NEEDED_CODE]. */
+public const val MIN_PROTOCOL: Int = 2
+
+/** The refusal code for a build below the floor: update the app, nothing else will help. */
+public const val UPDATE_NEEDED_CODE: String = "update-needed"
+
+/** The notice code for a build the room still seats but that has a newer one waiting. */
+public const val UPDATE_AVAILABLE_CODE: String = "update-available"
+
+/** How loudly a [ServerMessage.Notice] is meant: a line in the log, or a card in the way. */
+@Serializable
+enum class NoticeSeverity {
+    @SerialName("info")
+    INFO,
+
+    @SerialName("warning")
+    WARNING,
+}
+
 /** Everything a client may say to a room. One WebSocket message each, as JSON text. */
 @Serializable
 sealed interface ClientMessage {
@@ -94,6 +130,11 @@ sealed interface ClientMessage {
     data class Join(
         val token: String? = null,
         val nickname: String? = null,
+        /**
+         * The protocol this client speaks — [PROTOCOL_VERSION] of the build that sent it.
+         * Absent from every build before the number existed, which the room reads as 1.
+         */
+        val protocol: Int? = null,
     ) : ClientMessage
 
     /** One game action, authorised by the token — never by the socket's memory of a seat. */
@@ -170,6 +211,21 @@ sealed interface ServerMessage {
         @EncodeDefault(EncodeDefault.Mode.ALWAYS) val view: PlayerView? = null,
         /** See [Sync.plan]. Here so an app restarted mid-final-round lands on the present plan. */
         val plan: CoalitionPlan? = null,
+        /** The protocol the room speaks, so a client can say so in a report. */
+        val protocol: Int? = null,
+    ) : ServerMessage
+
+    /**
+     * Something the room wants a person told that is not a refusal and not game state: a
+     * build that still works but has a newer one waiting, for now. A screen shows it once,
+     * with a way to act and a way to carry on. A build older than this message skips it.
+     */
+    @Serializable
+    @SerialName("notice")
+    data class Notice(
+        val code: String,
+        val message: String,
+        val severity: NoticeSeverity = NoticeSeverity.WARNING,
     ) : ServerMessage
 
     /**
@@ -289,6 +345,13 @@ sealed interface ServerMessage {
     data class Error(
         val message: String,
         val retryAfterMs: Double? = null,
+        /**
+         * A machine-readable reason, for the refusals a screen has to act on rather than show.
+         * [UPDATE_NEEDED_CODE] is the one so far: the app is below the room's floor and no
+         * retry will help. The [message] is still a sentence, because a build older than this
+         * field shows it as it is.
+         */
+        val code: String? = null,
     ) : ServerMessage
 }
 

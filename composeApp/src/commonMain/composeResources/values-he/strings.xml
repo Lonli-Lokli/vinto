@@ -32,6 +32,11 @@
     <string name="trouble_closed">המשחק המקוון עדיין לא פתוח. משחק יחיד והשיעור פועלים כרגיל.</string>
     <string name="trouble_busy">השולחן הזה מלא. נסו שולחן אחר, או פתחו אחד משלכם.</string>
     <string name="trouble_refused">שירות החדרים לא קיבל את זה.</string>
+    <string name="trouble_update_needed">גרסת המשחק הזו ישנה מדי למשחק מקוון. יש לעדכן אותה מהחנות.</string>
+    <string name="notice_update_title">עדכון האפליקציה</string>
+    <string name="notice_update_available">גרסה חדשה יותר של המשחק זמינה. אפשר לעדכן בהמשך; זו עדיין פועלת.</string>
+    <string name="label_update">עדכון</string>
+    <string name="label_not_now">לא כרגע</string>
     <string name="trouble_broken">לשירות החדרים יש תקלה. נסו שוב בעוד רגע.</string>
     <string name="online_creating">פותחים חדר…</string>
     <string name="online_visibility">מי יכול למצוא את החדר</string>

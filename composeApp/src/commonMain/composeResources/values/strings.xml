@@ -61,6 +61,12 @@
     <string name="trouble_closed">Online play is not open yet. Single player and the lesson work as normal.</string>
     <string name="trouble_busy">That table is full. Try another, or start one of your own.</string>
     <string name="trouble_refused">The room service would not accept that.</string>
+    <string name="trouble_update_needed">This version of the game is too old for online play. Update it from the store.</string>
+    <!-- The dialog a seated player sees once when the room would rather they updated. -->
+    <string name="notice_update_title">Update your app</string>
+    <string name="notice_update_available">A newer version of the game is available. Update it when you can; this one still plays.</string>
+    <string name="label_update">Update</string>
+    <string name="label_not_now">Not now</string>
     <string name="trouble_broken">The room service is having trouble. Try again in a moment.</string>
     <string name="online_creating">Opening a room…</string>
     <string name="online_visibility">Who can find the room</string>

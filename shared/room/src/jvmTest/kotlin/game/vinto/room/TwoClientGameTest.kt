@@ -12,6 +12,7 @@ import game.vinto.client.RoomSocket
 import game.vinto.engine.replayRecording
 import game.vinto.protocol.ClientMessage
 import game.vinto.protocol.LobbyView
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.PublicRoom
 import game.vinto.protocol.PublicSeat
@@ -344,7 +345,7 @@ class TwoClientGameTest {
             val token = message.token ?: "tok-${minted++}"
             val result = VintoJson.decodeFromString(
                 JoinResult.serializer(),
-                joinRoom(stateJson, token, message.nickname.orEmpty(), now),
+                joinRoom(stateJson, token, message.nickname.orEmpty(), now, PROTOCOL_VERSION),
             )
             if (result.error != null) {
                 return deliver(socket, encodeServer(ServerMessage.Error(result.error)))

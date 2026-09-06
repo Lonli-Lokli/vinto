@@ -15,9 +15,13 @@ import game.vinto.engine.projectView
 import game.vinto.protocol.LobbySeat
 import game.vinto.protocol.LobbyView
 import game.vinto.protocol.LoggedAction
+import game.vinto.protocol.MIN_PROTOCOL
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.PlayerProfile
 import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.RoundResult
+import game.vinto.protocol.UPDATE_AVAILABLE_CODE
+import game.vinto.protocol.UPDATE_NEEDED_CODE
 import game.vinto.protocol.looksMinted
 import game.vinto.protocol.mintNickname
 import game.vinto.shapes.CoalitionPlan
@@ -590,6 +594,10 @@ internal data class JoinResult(
     val state: RoomState,
     val seat: Int,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val error: String? = null,
+    /** Beside [error] when a screen must act on the refusal rather than show it; see `Error.code`. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val code: String? = null,
+    /** A seated client that should be told something once — a `ServerMessage.Notice` code. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val advice: String? = null,
     /** Set on a reconnect where a bot took a turn in the meantime; see [Seat.botPlayedWhileAway]. */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val botPlayedWhileAway: Boolean = false,
 )
@@ -676,9 +684,37 @@ private fun withCountdown(state: RoomState, nowMs: Double): RoomState = when {
  * played by a bot in the meantime without losing it.
  */
 @Suppress("ReturnCount")
-fun joinRoom(stateJson: String, token: String, nickname: String, nowMs: Double): String {
+fun joinRoom(
+    stateJson: String,
+    token: String,
+    nickname: String,
+    nowMs: Double,
+    protocol: Int,
+    floor: Int = MIN_PROTOCOL,
+    current: Int = PROTOCOL_VERSION,
+): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
     val hash = Sha256.hex(token)
+
+    // The floor, before anything else — before the token is even looked at. A build that
+    // cannot read the game is refused at the door whether it is new or coming back: seating
+    // it would let the first message it cannot read freeze its table, which is worse than
+    // a refusal with the way to the store on it. The sentence is for builds older than the
+    // code that rides beside it, which show the message as it is.
+    if (protocol < floor) {
+        return VintoJson.encodeToString(
+            JoinResult(
+                state,
+                -1,
+                error = "This version of the app is too old for online play. " +
+                    "Please update it from the store.",
+                code = UPDATE_NEEDED_CODE,
+            ),
+        )
+    }
+    // Still seated, but told once: there is a newer build, and this one will stop being
+    // seated some day.
+    val advice = UPDATE_AVAILABLE_CODE.takeIf { protocol < current }
 
     // A token that already holds a seat returns to it. This is the reconnect story, and it is
     // safe in a way the old `clientId` was not: knowing somebody's *name* proves nothing, and
@@ -693,7 +729,7 @@ fun joinRoom(stateJson: String, token: String, nickname: String, nowMs: Double):
             seatGrace = state.seatGrace - seat.index,
         )
         return VintoJson.encodeToString(
-            JoinResult(resumed, seat.index, botPlayedWhileAway = seat.botPlayedWhileAway),
+            JoinResult(resumed, seat.index, botPlayedWhileAway = seat.botPlayedWhileAway, advice = advice),
         )
     }
 
@@ -722,7 +758,7 @@ fun joinRoom(stateJson: String, token: String, nickname: String, nowMs: Double):
     }
 
     val next = withCountdown(state.copy(seats = seated), nowMs)
-    return VintoJson.encodeToString(JoinResult(next, target.index))
+    return VintoJson.encodeToString(JoinResult(next, target.index, advice = advice))
 }
 
 /**

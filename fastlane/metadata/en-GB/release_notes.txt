@@ -1,9 +1,9 @@
-Vinto's first release.
+The final round is a team effort now.
 
-Five cards, two you have seen, and three opponents who are working out theirs at the same time. Call Vinto when you think you are lowest — be right and it pays, be wrong and it costs you.
+Once someone calls Vinto, the other three are a coalition, and they can talk at the table: say what you hold, propose a move to a teammate, and build one shared plan, lane by lane. Anyone in the coalition can edit any part of it; the caller cannot see it. Watch the plan run on the felt before you commit, and read what it is worth against the caller before the cards turn over.
 
-Play solo against the computer at three strengths, fully offline. Or open a room, send six characters, and whoever gets them is at the table — no account and no sign-up, on a phone or in a browser.
+Bots are honest about what they know: they throw in only cards they have actually seen, and they keep a drawn Joker rather than putting it on the pile.
 
-There is a tutorial that deals you a real round rather than reading you the rules, and you can skip it.
+If online play asks you to update, the room has moved on to a newer version of the game; the button takes you to the App Store.
 
 Thank you for playing.

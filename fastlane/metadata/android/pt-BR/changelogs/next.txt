@@ -1,0 +1,5 @@
+A rodada final agora é um trabalho em equipe. Quando alguém chama Vinto, os outros três podem conversar na mesa: dizer o que têm, propor uma jogada e montar um plano em conjunto. Veja o plano rodar antes de confirmar, e veja o quanto ele vale antes das cartas virarem.
+
+Os bots só descartam cartas que realmente viram, e guardam um Coringa comprado.
+
+Se o modo online pedir para atualizar, é porque a sala seguiu em frente; o botão te leva até a loja.

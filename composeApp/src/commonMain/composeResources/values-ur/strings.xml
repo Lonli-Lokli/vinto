@@ -35,6 +35,11 @@
     <string name="trouble_closed">آن لائن کھیل ابھی کھلا نہیں ہے۔ سنگل پلیئر اور سبق معمول کے مطابق کام کرتے ہیں۔</string>
     <string name="trouble_busy">وہ میز بھر چکی ہے۔ کوئی اور آزمائیں، یا اپنی میز بنائیں۔</string>
     <string name="trouble_refused">روم سروس نے اسے قبول نہیں کیا۔</string>
+    <string name="trouble_update_needed">کھیل کا یہ ورژن آن لائن کھیلنے کے لیے پرانا ہو چکا ہے۔ اسے اسٹور سے اپ ڈیٹ کریں۔</string>
+    <string name="notice_update_title">اپنی ایپ اپ ڈیٹ کریں</string>
+    <string name="notice_update_available">کھیل کا نیا ورژن دستیاب ہے۔ جب موقع ملے اپ ڈیٹ کر لیں؛ یہ ورژن ابھی بھی چلتا ہے۔</string>
+    <string name="label_update">اپ ڈیٹ کریں</string>
+    <string name="label_not_now">ابھی نہیں</string>
     <string name="trouble_broken">روم سروس میں مسئلہ ہے۔ تھوڑی دیر بعد دوبارہ کوشش کریں۔</string>
     <string name="online_creating">روم کھولا جا رہا ہے…</string>
     <string name="online_visibility">روم کسے نظر آئے</string>

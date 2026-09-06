@@ -35,6 +35,11 @@
     <string name="trouble_closed">اللعب عبر الإنترنت غير متاح بعد. اللعب الفردي والدرس يعملان كالمعتاد.</string>
     <string name="trouble_busy">تلك الطاولة ممتلئة. جرّب طاولة أخرى، أو افتح واحدة خاصة بك.</string>
     <string name="trouble_refused">لم تقبل خدمة الغرف هذا الطلب.</string>
+    <string name="trouble_update_needed">هذا الإصدار من اللعبة قديم جدًا على اللعب عبر الإنترنت. حدّثها من المتجر.</string>
+    <string name="notice_update_title">حدّث التطبيق</string>
+    <string name="notice_update_available">يتوفر إصدار أحدث من اللعبة. حدّثها عندما تستطيع؛ هذا الإصدار ما زال يعمل.</string>
+    <string name="label_update">تحديث</string>
+    <string name="label_not_now">ليس الآن</string>
     <string name="trouble_broken">خدمة الغرف تواجه مشكلة. حاول مرة أخرى بعد قليل.</string>
     <string name="online_creating">جارٍ فتح غرفة…</string>
     <string name="online_visibility">من يمكنه إيجاد الغرفة</string>

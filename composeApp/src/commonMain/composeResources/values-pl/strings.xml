@@ -32,6 +32,11 @@
     <string name="trouble_closed">Gra online nie jest jeszcze dostępna. Gra solo i lekcja działają normalnie.</string>
     <string name="trouble_busy">Ten stół jest pełny. Spróbuj innego albo załóż własny.</string>
     <string name="trouble_refused">Usługa pokoi tego nie zaakceptowała.</string>
+    <string name="trouble_update_needed">Ta wersja gry jest zbyt stara do gry online. Zaktualizuj ją ze sklepu.</string>
+    <string name="notice_update_title">Zaktualizuj aplikację</string>
+    <string name="notice_update_available">Dostępna jest nowsza wersja gry. Zaktualizuj ją, gdy będziesz mieć okazję; ta wersja nadal działa.</string>
+    <string name="label_update">Aktualizuj</string>
+    <string name="label_not_now">Nie teraz</string>
     <string name="trouble_broken">Usługa pokoi ma problemy. Spróbuj ponownie za chwilę.</string>
     <string name="online_creating">Otwieranie pokoju…</string>
     <string name="online_visibility">Kto może znaleźć pokój</string>

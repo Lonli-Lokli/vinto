@@ -1,0 +1,5 @@
+The final round is a team effort now. Once someone calls Vinto, the other three can talk at the table: say what you hold, propose a move, and build one shared plan. Watch the plan run before you commit, and see what it is worth before the cards turn over.
+
+Bots throw in only cards they have actually seen, and keep a drawn Joker.
+
+If online play asks you to update, it means the room has moved on; the button takes you here.

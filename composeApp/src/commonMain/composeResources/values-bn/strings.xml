@@ -32,6 +32,11 @@
     <string name="trouble_closed">অনলাইনে খেলা এখনও শুরু হয়নি। একক খেলোয়াড় ও পাঠ যথারীতি কাজ করবে।</string>
     <string name="trouble_busy">ওই টেবিল পূর্ণ। অন্য একটি চেষ্টা করুন, অথবা নিজের একটি শুরু করুন।</string>
     <string name="trouble_refused">রুম পরিষেবা এটি গ্রহণ করেনি।</string>
+    <string name="trouble_update_needed">গেমের এই সংস্করণটি অনলাইনে খেলার জন্য অনেক পুরনো। স্টোর থেকে আপডেট করুন।</string>
+    <string name="notice_update_title">অ্যাপ আপডেট করুন</string>
+    <string name="notice_update_available">গেমের একটি নতুন সংস্করণ পাওয়া যাচ্ছে। যখন সুযোগ হবে আপডেট করে নিন; এটি দিয়েও খেলা যাবে।</string>
+    <string name="label_update">আপডেট</string>
+    <string name="label_not_now">এখন না</string>
     <string name="trouble_broken">রুম পরিষেবায় সমস্যা হচ্ছে। একটু পরে আবার চেষ্টা করুন।</string>
     <string name="online_creating">রুম খোলা হচ্ছে…</string>
     <string name="online_visibility">রুমটি কে খুঁজে পেতে পারে</string>

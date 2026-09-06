@@ -38,6 +38,11 @@
     <string name="trouble_closed">Çevrimiçi oyun henüz açık değil. Tek kişilik oyun ve ders her zamanki gibi çalışır.</string>
     <string name="trouble_busy">O masa dolu. Başka bir masa dene, ya da kendi masanı aç.</string>
     <string name="trouble_refused">Oda hizmeti bunu kabul etmedi.</string>
+    <string name="trouble_update_needed">Oyunun bu sürümü çevrimiçi oyun için çok eski. Mağazadan güncelle.</string>
+    <string name="notice_update_title">Uygulamanı güncelle</string>
+    <string name="notice_update_available">Oyunun daha yeni bir sürümü var. Fırsat bulduğunda güncelle; bu sürüm hâlâ oynanıyor.</string>
+    <string name="label_update">Güncelle</string>
+    <string name="label_not_now">Şimdi değil</string>
     <string name="trouble_broken">Oda hizmetinde sorun var. Biraz sonra yeniden dene.</string>
     <string name="online_creating">Oda açılıyor…</string>
     <string name="online_visibility">Odayı kim bulabilir</string>

@@ -1,9 +1,9 @@
-Première publication de Vinto.
+La dernière manche devient un travail d'équipe.
 
-Cinq cartes, deux que vous avez vues, et trois adversaires qui déduisent les leurs en même temps. Appelez Vinto quand vous pensez avoir la main la plus basse — si vous avez raison, ça paie ; si vous avez tort, ça coûte.
+Une fois Vinto appelé, les trois autres joueurs forment une coalition, et ils peuvent discuter à la table : dire ce qu'ils ont, proposer un coup à un coéquipier, et bâtir un plan commun, ligne par ligne. N'importe quel membre de la coalition peut modifier n'importe quelle partie du plan ; l'appelant ne le voit pas. Regardez-le se dérouler sur le tapis avant de valider, et découvrez ce qu'il vaut face à l'appelant avant que les cartes ne se retournent.
 
-Jouez en solo contre l'ordinateur à trois niveaux de difficulté, entièrement hors ligne. Ou ouvrez une table, envoyez six caractères, et quiconque les reçoit rejoint la partie — pas de compte, pas d'inscription, sur téléphone ou dans un navigateur.
+Les robots sont honnêtes sur ce qu'ils savent : ils ne jettent que les cartes qu'ils ont vraiment vues, et gardent un Joker pioché plutôt que de le poser sur la pile.
 
-Un tutoriel distribue une vraie manche au lieu de réciter les règles, et vous pouvez le passer.
+Si le jeu en ligne vous demande une mise à jour, c'est que la partie a évolué vers une version plus récente du jeu ; le bouton vous mène vers l'App Store.
 
 Merci d'y jouer.

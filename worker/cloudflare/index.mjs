@@ -13,6 +13,7 @@
 //      survives hibernation; a Map keyed by socket would not.
 
 import {
+  protocolVersion,
   botTookOverPoint,
   clientEventPoint,
   reconnectedPoint,
@@ -672,10 +673,24 @@ export class Room {
         // A token in the message means "I already have a seat here"; no token means "give
         // me one". Either way the seat comes back from the room, never from the client.
         const token = msg.token ?? mintToken();
-        const result = JSON.parse(joinRoom(stateJson, token, msg.nickname ?? '', Date.now()));
+        // A join without a number is a build from before the number existed: protocol 1.
+        const protocol = Number.isInteger(msg.protocol) ? msg.protocol : 1;
+        const result = JSON.parse(joinRoom(stateJson, token, msg.nickname ?? '', Date.now(), protocol));
         if (result.error) {
-          return ws.send(JSON.stringify({ type: 'error', message: result.error }));
+          const refusal = { type: 'error', message: result.error };
+          if (result.code) refusal.code = result.code;
+          return ws.send(JSON.stringify(refusal));
         }
+        // A seated build the room would rather see updated is told so once, after it is in.
+        // Sent after the joined envelope below, so the screen exists to show it.
+        const advice = result.advice
+          ? JSON.stringify({
+            type: 'notice',
+            code: result.advice,
+            severity: 'warning',
+            message: 'A newer version of the game is available. Update it from the store when you can.',
+          })
+          : null;
         await this.#save(JSON.stringify(result.state));
         const savedJson = JSON.stringify(result.state);
         ws.serializeAttachment({ seat: result.seat, token });
@@ -711,7 +726,9 @@ export class Room {
           // present board. Room state serialised by the same Kotlin the client decodes with,
           // so it is passed through untouched; absent when none stands.
           plan: result.state.plan ?? undefined,
+          protocol: protocolVersion(),
         }));
+        if (advice) ws.send(advice);
         // A socket arriving cancels a grace and may cancel the lonely clock, so presence is
         // recomputed here rather than only on disconnect.
         const withPresence = await this.#refreshPresence(savedJson);

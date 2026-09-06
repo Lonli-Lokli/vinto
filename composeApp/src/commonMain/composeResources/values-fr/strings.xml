@@ -35,6 +35,12 @@
     <string name="trouble_closed">Le jeu en ligne n’est pas encore ouvert. Le mode solo et la leçon fonctionnent normalement.</string>
     <string name="trouble_busy">Cette table est complète. Essayez-en une autre, ou ouvrez la vôtre.</string>
     <string name="trouble_refused">Le service des salles a refusé cette action.</string>
+    <string name="trouble_update_needed">Cette version du jeu est trop ancienne pour jouer en ligne. Mettez-la à jour depuis le store.</string>
+    <!-- The dialog a seated player sees once when the room would rather they updated. -->
+    <string name="notice_update_title">Mettez à jour l’application</string>
+    <string name="notice_update_available">Une nouvelle version du jeu est disponible. Mettez-la à jour quand vous pourrez ; celle-ci fonctionne toujours.</string>
+    <string name="label_update">Mettre à jour</string>
+    <string name="label_not_now">Plus tard</string>
     <string name="trouble_broken">Le service des salles rencontre un problème. Réessayez dans un instant.</string>
     <string name="online_creating">Ouverture d’une salle…</string>
     <string name="online_visibility">Qui peut trouver la salle</string>

@@ -1,0 +1,1 @@
+Final tur artık takım işi. Biri Vinto dediğinde diğer üçü masada konuşabilir: ne tuttuğunuzu söyleyin, bir hamle önerin, çağıranın göremediği tek bir ortak plan kurun. Plan uygulanırken izleyin, değerini görün. Botlar yalnızca gördükleri kartları atar, çektikleri Jokeri saklar. Çevrimiçi oyun güncelleme isterse oda ilerlemiştir; düğme sizi mağazaya götürür.

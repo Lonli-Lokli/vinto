@@ -66,6 +66,7 @@ named here so that the claim can be checked rather than believed.
 | A card's `actionText` is *data*, not copy — it is in the hash, so it cannot be translated | `CardCopyIsDataTest` |
 | Nothing a player **types** reaches another player's screen — there is no text input in the app | `NicknameTest`, and `looksMinted` applied at the room's door (`LobbyRefusalsTest`, `RegistryCapsTest`) |
 | A card's *name, description and help* ARE copy and do translate — only `actionText` is data | `CardWords` reads them from `strings.xml`; `CardCopyIsDataTest` guards the one that must not move |
+| An old build is refused at the door, never frozen mid-game — the wire carries a number and a floor | `ProtocolFloorTest`, `RemoteVersionTest`; `WireFreezeTest` and `WireSamplesTest` hold the vocabulary and the shapes still per version |
 
 **The engine's purity is not a style preference.** It is what lets the same code be the
 authority in a Durable Object and the simulator inside MCTS, and it is what makes a recording

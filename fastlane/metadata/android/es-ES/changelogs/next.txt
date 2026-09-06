@@ -1,0 +1,5 @@
+La ronda final ahora es cosa de equipo. En cuanto alguien canta Vinto, los otros tres pueden hablar en la mesa: decir qué tienen, proponer una jugada y construir un plan conjunto que quien cantó no puede ver. Véalo ejecutarse antes de confirmarlo, y compruebe cuánto vale antes de descubrir las cartas.
+
+Los bots solo tiran cartas que han visto de verdad, y conservan el Joker que roban.
+
+Si el juego en línea le pide actualizar, la sala ha avanzado; el botón le lleva a la tienda.

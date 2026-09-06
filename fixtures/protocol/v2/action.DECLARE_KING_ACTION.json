@@ -1,0 +1,1 @@
+{"type":"action","token":"tok","action":{"type":"DECLARE_KING_ACTION","payload":{"playerId":"p1","declaredRank":"K"}}}

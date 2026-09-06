@@ -46,6 +46,11 @@
     <string name="trouble_closed">Игра по сети ещё не открыта. Одиночная игра и урок работают как обычно.</string>
     <string name="trouble_busy">За этим столом мест нет. Попробуйте другой или откройте свой.</string>
     <string name="trouble_refused">Сервис комнат это не принял.</string>
+    <string name="trouble_update_needed">Эта версия игры слишком старая для игры по сети. Обновите её в магазине приложений.</string>
+    <string name="notice_update_title">Обновите приложение</string>
+    <string name="notice_update_available">Вышла более новая версия игры. Обновите её при случае — эта тоже пока работает.</string>
+    <string name="label_update">Обновить</string>
+    <string name="label_not_now">Не сейчас</string>
     <string name="trouble_broken">У сервиса комнат неполадки. Попробуйте через минуту.</string>
     <string name="online_creating">Открываем комнату…</string>
     <string name="online_visibility">Кто найдёт комнату</string>

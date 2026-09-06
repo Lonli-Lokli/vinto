@@ -1,9 +1,9 @@
-Erste Version von Vinto.
+Die Schlussrunde ist jetzt Teamarbeit.
 
-Fünf Karten, zwei davon kennen Sie, und drei Gegner, die zur gleichen Zeit ihre eigenen einschätzen. Rufen Sie Vinto, wenn Sie glauben, die niedrigste Hand zu haben — liegen Sie richtig, zahlt es sich aus, liegen Sie falsch, kostet es Sie.
+Ruft jemand Vinto, bilden die anderen drei eine Koalition und können am Tisch reden: sagen, was sie halten, einem Mitspieler einen Zug vorschlagen und Bahn für Bahn einen gemeinsamen Plan aufbauen. Jeder in der Koalition darf jeden Teil davon bearbeiten; nur wer Vinto gerufen hat, sieht ihn nicht. Schauen Sie sich den Plan auf dem Tisch an, bevor Sie ihn bestätigen, und lesen Sie, was er gegen den Rufer wert ist, bevor die Karten umgedreht werden.
 
-Spielen Sie solo gegen den Computer in drei Stärken, vollständig offline. Oder öffnen Sie einen Raum, schicken Sie sechs Zeichen los, und wer sie erhält, sitzt mit am Tisch — kein Konto und keine Anmeldung, auf dem Smartphone oder im Browser.
+Bots sind ehrlich mit dem, was sie wissen: sie werfen nur Karten ein, die sie tatsächlich gesehen haben, und behalten einen gezogenen Joker, statt ihn auf den Stapel zu legen.
 
-Es gibt ein Tutorial, das Ihnen eine echte Runde austeilt, statt Ihnen die Regeln vorzulesen, und Sie können es überspringen.
+Verlangt das Online-Spiel ein Update, hat sich der Raum eine neuere Version des Spiels geholt; die Schaltfläche bringt Sie zum App Store.
 
 Danke fürs Spielen.

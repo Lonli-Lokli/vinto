@@ -1,0 +1,5 @@
+Babak final kini jadi kerja tim. Setelah seseorang menyatakan Vinto, tiga pemain lain bisa berunding: sebutkan kartu Anda, usulkan langkah, dan susun satu rencana bersama. Lihat rencana berjalan sebelum memutuskan, dan lihat nilainya sebelum kartu dibalik.
+
+Bot hanya melempar kartu yang benar-benar sudah mereka lihat, dan menyimpan Joker yang ditarik.
+
+Jika mode online meminta Anda memperbarui, artinya ruang permainan sudah berpindah versi; tombolnya membawa Anda ke sini.

@@ -1,5 +1,6 @@
 package game.vinto.worker
 
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.looksLikeRoomCode as coreLooksLikeRoomCode
 import game.vinto.room.addBot as coreAddBot
 import game.vinto.room.agreePlanEnvelopes as coreAgreePlanEnvelopes
@@ -54,13 +55,22 @@ import game.vinto.room.viewForSeat as coreViewForSeat
 
 // --- the room -------------------------------------------------------------------------------
 
+/** The wire this room speaks, for the join answer and the health page. */
+@JsExport
+fun protocolVersion(): Int = PROTOCOL_VERSION
+
 @JsExport
 fun newRoom(roomId: String, seed: Double, difficulty: String, nowMs: Double): String =
     coreNewRoom(roomId, seed, difficulty, nowMs)
 
 @JsExport
-fun joinRoom(stateJson: String, token: String, nickname: String, nowMs: Double): String =
-    coreJoinRoom(stateJson, token, nickname, nowMs)
+fun joinRoom(
+    stateJson: String,
+    token: String,
+    nickname: String,
+    nowMs: Double,
+    protocol: Int = PROTOCOL_VERSION,
+): String = coreJoinRoom(stateJson, token, nickname, nowMs, protocol)
 
 @JsExport
 fun addBot(stateJson: String, token: String, nowMs: Double): String =

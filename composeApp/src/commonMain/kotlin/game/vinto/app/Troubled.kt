@@ -8,6 +8,7 @@ import game.vinto.app.art.trouble_closed
 import game.vinto.app.art.trouble_no_such_room
 import game.vinto.app.art.trouble_offline
 import game.vinto.app.art.trouble_refused
+import game.vinto.app.art.trouble_update_needed
 import game.vinto.client.RoomTrouble
 import org.jetbrains.compose.resources.stringResource
 
@@ -33,5 +34,6 @@ fun troubled(trouble: RoomTrouble): String = stringResource(
         RoomTrouble.BUSY -> Res.string.trouble_busy
         RoomTrouble.REFUSED -> Res.string.trouble_refused
         RoomTrouble.BROKEN -> Res.string.trouble_broken
+        RoomTrouble.UPDATE_NEEDED -> Res.string.trouble_update_needed
     },
 )

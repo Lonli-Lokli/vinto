@@ -315,6 +315,7 @@ private fun Trouble(failure: RoomAnswer.Failed?) {
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
     )
+    UpdateTheApp(failure.trouble, onUpdate = { openUrl(storeListingUrl()) })
 }
 
 /**

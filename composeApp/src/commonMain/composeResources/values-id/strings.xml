@@ -35,6 +35,11 @@
     <string name="trouble_closed">Main online belum dibuka. Satu pemain dan pelajaran tetap berjalan seperti biasa.</string>
     <string name="trouble_busy">Meja itu sudah penuh. Coba yang lain, atau buat sendiri.</string>
     <string name="trouble_refused">Layanan ruangan menolak permintaan itu.</string>
+    <string name="trouble_update_needed">Versi game ini terlalu lama untuk main online. Perbarui dari toko aplikasi.</string>
+    <string name="notice_update_title">Perbarui aplikasi Anda</string>
+    <string name="notice_update_available">Versi game yang lebih baru sudah tersedia. Perbarui kapan Anda sempat; versi ini masih bisa dimainkan.</string>
+    <string name="label_update">Perbarui</string>
+    <string name="label_not_now">Nanti saja</string>
     <string name="trouble_broken">Layanan ruangan sedang bermasalah. Coba lagi sesaat lagi.</string>
     <string name="online_creating">Membuka ruangan…</string>
     <string name="online_visibility">Siapa yang bisa menemukan ruangan</string>

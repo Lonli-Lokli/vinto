@@ -47,6 +47,12 @@
     <string name="trouble_closed">Гульня анлайн яшчэ не адкрытая. Адзіночная гульня і ўрок працуюць як звычайна.</string>
     <string name="trouble_busy">За гэтым сталом месцаў няма. Паспрабуйце іншы, або адкрыйце свой.</string>
     <string name="trouble_refused">Сэрвіс пакояў гэта не прыняў.</string>
+    <string name="trouble_update_needed">Гэтая версія гульні застарая для анлайн-гульні. Абнавіце яе праз краму прыкладанняў.</string>
+    <!-- The dialog a seated player sees once when the room would rather they updated. -->
+    <string name="notice_update_title">Абнавіце прыкладанне</string>
+    <string name="notice_update_available">Ёсць навейшая версія гульні. Абнавіце, калі будзе зручна; гэтая версія пакуль працуе.</string>
+    <string name="label_update">Абнавіць</string>
+    <string name="label_not_now">Не зараз</string>
     <string name="trouble_broken">У сэрвіса пакояў непаладкі. Паспрабуйце праз хвіліну.</string>
     <string name="online_creating">Адкрываем пакой…</string>
     <string name="online_visibility">Хто можа знайсці пакой</string>

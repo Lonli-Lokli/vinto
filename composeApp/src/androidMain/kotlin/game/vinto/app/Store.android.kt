@@ -9,3 +9,5 @@ package game.vinto.app
  * where it does not, which is the same destination and never a dead end.
  */
 actual fun storeReviewUrl(): String = Pages.PLAY_REVIEW
+
+actual fun storeListingUrl(): String = Pages.PLAY_LISTING

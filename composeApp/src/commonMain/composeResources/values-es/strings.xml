@@ -38,6 +38,12 @@
     <string name="trouble_closed">El juego en línea aún no está abierto. El modo un jugador y la lección funcionan igual.</string>
     <string name="trouble_busy">Esa mesa está completa. Prueba con otra, o abre una tuya.</string>
     <string name="trouble_refused">El servicio de salas no aceptó eso.</string>
+    <string name="trouble_update_needed">Esta versión del juego es demasiado antigua para jugar en línea. Actualízala desde la tienda.</string>
+    <!-- The dialog a seated player sees once when the room would rather they updated. -->
+    <string name="notice_update_title">Actualiza la app</string>
+    <string name="notice_update_available">Hay una versión más reciente del juego disponible. Actualízala cuando puedas; esta todavía funciona.</string>
+    <string name="label_update">Actualizar</string>
+    <string name="label_not_now">Ahora no</string>
     <string name="trouble_broken">El servicio de salas está teniendo problemas. Inténtalo de nuevo en un momento.</string>
     <string name="online_creating">Abriendo una sala…</string>
     <string name="online_visibility">Quién puede encontrar la sala</string>

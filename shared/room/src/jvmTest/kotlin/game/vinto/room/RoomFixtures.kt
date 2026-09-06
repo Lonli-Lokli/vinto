@@ -3,6 +3,7 @@ package game.vinto.room
 import game.vinto.bot.BotRunner
 import game.vinto.engine.calculateFinalScores
 import game.vinto.engine.calculateRoundPoints
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.RoundResult
 import game.vinto.shapes.Difficulty
@@ -66,8 +67,8 @@ internal fun actionJson(action: GameAction): String =
 /** Ann and Bob seated, both sockets open, two seats nobody has filled. */
 internal fun lobbyOfTwo(now: Double = START, seed: Double = 42.0): String {
     var state = newRoom("room-TEST", seed = seed, difficulty = "easy", nowMs = now)
-    state = encode(decodeJoin(joinRoom(state, TOKEN_A, "Ann", now)).state)
-    state = encode(decodeJoin(joinRoom(state, TOKEN_B, "Bob", now)).state)
+    state = encode(decodeJoin(joinRoom(state, TOKEN_A, "Ann", now, PROTOCOL_VERSION)).state)
+    state = encode(decodeJoin(joinRoom(state, TOKEN_B, "Bob", now, PROTOCOL_VERSION)).state)
     return encode(decodeLifecycle(updatePresence(state, "0,1", now)).state)
 }
 

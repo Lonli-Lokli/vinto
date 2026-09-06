@@ -32,6 +32,11 @@
     <string name="trouble_closed">联机对战暂未开放。单人模式和教学不受影响。</string>
     <string name="trouble_busy">这张桌子已满。换一张试试，或者自己开一桌。</string>
     <string name="trouble_refused">房间服务拒绝了这个请求。</string>
+    <string name="trouble_update_needed">此版本过旧，无法进行联机对战。请从应用商店更新。</string>
+    <string name="notice_update_title">更新应用</string>
+    <string name="notice_update_available">有新版本可用。方便时请更新——当前版本仍可正常游玩。</string>
+    <string name="label_update">更新</string>
+    <string name="label_not_now">暂不更新</string>
     <string name="trouble_broken">房间服务出了点问题。请稍后再试。</string>
     <string name="online_creating">正在开房…</string>
     <string name="online_visibility">谁能找到这个房间</string>

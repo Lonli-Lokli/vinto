@@ -33,7 +33,19 @@ enum class RoomTrouble {
 
     /** The service broke, or answered something that is not the protocol. */
     BROKEN,
+
+    /**
+     * This build is older than the room's floor. Nothing but an update will help, so the
+     * screen shows the way to the store rather than a retry.
+     */
+    UPDATE_NEEDED,
 }
+
+/**
+ * Something the room asked to have said once, off the game: a newer build waiting is the one
+ * so far. A screen shows it with a way to act and a way to carry on, then [RemoteRoom.dismissNotice].
+ */
+data class RoomNotice(val code: String, val message: String, val warning: Boolean)
 
 /**
  * A failure a screen can act on.
@@ -61,7 +73,7 @@ class RoomServiceException(
  * trouble cannot be added without somebody deciding which of the two it is.
  */
 fun permanent(trouble: RoomTrouble): Boolean = when (trouble) {
-    RoomTrouble.NO_SUCH_ROOM, RoomTrouble.CLOSED, RoomTrouble.REFUSED -> true
+    RoomTrouble.NO_SUCH_ROOM, RoomTrouble.CLOSED, RoomTrouble.REFUSED, RoomTrouble.UPDATE_NEEDED -> true
     RoomTrouble.OFFLINE, RoomTrouble.BUSY, RoomTrouble.BROKEN -> false
 }
 

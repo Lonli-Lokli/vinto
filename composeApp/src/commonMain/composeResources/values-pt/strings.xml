@@ -35,6 +35,11 @@
     <string name="trouble_closed">O modo online ainda não está aberto. O modo a solo e a lição funcionam normalmente.</string>
     <string name="trouble_busy">Essa mesa está cheia. Tenta outra, ou abre a tua própria sala.</string>
     <string name="trouble_refused">O serviço de salas não aceitou o pedido.</string>
+    <string name="trouble_update_needed">Esta versão do jogo é demasiado antiga para o modo online. Atualiza-a a partir da loja.</string>
+    <string name="notice_update_title">Atualiza a tua aplicação</string>
+    <string name="notice_update_available">Está disponível uma versão mais recente do jogo. Atualiza quando puderes; esta ainda funciona.</string>
+    <string name="label_update">Atualizar</string>
+    <string name="label_not_now">Agora não</string>
     <string name="trouble_broken">O serviço de salas está com problemas. Tenta novamente daqui a pouco.</string>
     <string name="online_creating">A abrir uma sala…</string>
     <string name="online_visibility">Quem pode encontrar a sala</string>

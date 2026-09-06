@@ -128,10 +128,44 @@ re-snapped) by every message that carries a view:
 Solo play never sets any of them — `projectView`'s clock parameters are the room's to pass,
 and the engine itself reads no clock.
 
-## Compatibility rule
+## Compatibility rule, and the number
 
-**The protocol only ever grows, additively.** New message types and new optional fields are
-fine — `ignoreUnknownKeys` means an older client skips what it does not know — but a field
-never changes meaning or type, and a message type is never removed while any client sends
-it. A change that cannot be made additively is a new message type, not a new shape for an
-old one.
+**The protocol only ever grows, additively — and it carries a number.** A new *optional field*
+is free: `ignoreUnknownKeys` means an older client skips what it does not know. Everything
+else is a bump of `PROTOCOL_VERSION` (`shared/protocol`):
+
+- a new message type — an older client *skips* one it does not know, so this is safe for
+  messages it merely receives, but it is still a bump, because the vocabulary is written down
+  per version and the freeze test holds it still;
+- a new **game action**, or a changed action payload — an action rides *inside* an events
+  entry, and an older client that cannot decode one drops the whole batch, cursor and all,
+  and freezes for the rest of the round. This is the one that bit: `DECLARE_CARDS` existed in
+  every store build and its payload changed under it;
+- a field that changes meaning or type.
+
+A message type is never removed while any client sends it, and a change that cannot be made
+additively is a new message type, not a new shape for an old one.
+
+**The client sends its number with every `join`; the room keeps a floor.** Below
+`MIN_PROTOCOL` the join is refused at the door with `error` carrying
+`code: "update-needed"` — an `error` because every build ever shipped understands one, and
+a code because a build that has it renders "update the app" with the way to the store rather
+than a sentence. Between the floor and the current number the client is seated and sent a
+`notice` (`code: "update-available"`) once, which the screen shows with *Update* and *Not
+now*: a person mid-game finishes the game. A join with no number is version 1, which is every
+build shipped before the number existed. A room never refuses a client for being *ahead* of it.
+
+**Never mid-game.** A client that sat down is a client the room can talk to for the whole
+game. That is the whole reason the check is at the door.
+
+**What holds it.** `WireFreezeTest` pins the vocabulary — every message type and action tag —
+per version, and fails when it grows without a bump. `WireSamplesTest` pins the *shapes*: one
+encoded sample of every message and action under `fixtures/protocol/v<N>/`, so a payload that
+moves under an old tag fails until the version is bumped and new samples are written under the
+new number (`-Pwire=write`, by hand, only into the new directory). `ProtocolFloorTest` holds
+the door; `RemoteVersionTest` holds the client's half.
+
+| Version | What it added |
+| --- | --- |
+| 1 | The wire as first shipped: `join`, `action`, `resync`, `add-bot`, `remove-bot`, `next-round`, `more-time`; `joined`, `events`, `sync`, `lobby`, `started`, `between-rounds`, `ended`, `closed`, `error` |
+| 2 | Coalition play: `say`, `done-conferring`, `edit-plan`, `agree-plan`; `said`, `notice`; `join.protocol`, `joined.protocol`, `error.code`; the `DECLARE_CARDS` payload's new shape (`about` + a list of claims) |

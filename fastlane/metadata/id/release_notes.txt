@@ -1,9 +1,9 @@
-Rilis pertama Vinto!.
+Babak final kini menjadi kerja tim.
 
-Lima kartu, dua di antaranya sudah Anda lihat, dan tiga lawan yang sedang menyimpulkan kartu mereka sendiri di saat yang sama. Klaim Vinto saat Anda merasa nilai Anda paling rendah — jika benar, itu menguntungkan; jika salah, itu merugikan.
+Setelah seseorang menyatakan Vinto, tiga pemain lain menjadi koalisi dan bisa berunding di meja: sebutkan kartu yang Anda pegang, usulkan langkah kepada rekan, dan susun satu rencana bersama, jalur demi jalur. Siapa pun di koalisi bisa mengubah bagian mana pun dari rencana itu; pemanggil Vinto tidak bisa melihatnya. Lihat rencana itu berjalan di atas meja sebelum Anda memutuskan, dan baca nilainya dibandingkan dengan pemanggil sebelum kartu dibalik.
 
-Bermain solo melawan komputer pada tiga tingkat kekuatan, sepenuhnya offline. Atau buka ruang permainan, kirim enam karakter, dan siapa pun yang menerimanya bergabung di meja — tanpa akun dan tanpa pendaftaran, di ponsel maupun lewat peramban.
+Bot bersikap jujur soal apa yang mereka ketahui: mereka hanya melempar kartu yang benar-benar sudah mereka lihat, dan menyimpan Joker yang ditarik alih-alih meletakkannya di tumpukan buangan.
 
-Ada tutorial yang menyajikan satu babak sungguhan alih-alih membacakan aturan, dan Anda bisa melewatkannya.
+Jika mode online meminta Anda memperbarui, artinya ruang permainan sudah berpindah ke versi yang lebih baru; tombolnya membawa Anda ke App Store.
 
 Terima kasih sudah bermain.

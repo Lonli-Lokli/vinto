@@ -35,6 +35,11 @@
     <string name="trouble_closed">ऑनलाइन खेल अभी शुरू नहीं हुआ है। एकल खिलाड़ी और पाठ हमेशा की तरह काम करते हैं।</string>
     <string name="trouble_busy">वह मेज़ भरी हुई है। कोई और आज़माएं, या अपनी खुद बनाएं।</string>
     <string name="trouble_refused">रूम सेवा ने इसे स्वीकार नहीं किया।</string>
+    <string name="trouble_update_needed">खेल का यह संस्करण ऑनलाइन खेलने के लिए बहुत पुराना है। इसे स्टोर से अपडेट करें।</string>
+    <string name="notice_update_title">अपना ऐप अपडेट करें</string>
+    <string name="notice_update_available">खेल का एक नया संस्करण उपलब्ध है। जब सुविधा हो तब अपडेट करें; यह संस्करण अभी भी चलता रहेगा।</string>
+    <string name="label_update">अपडेट करें</string>
+    <string name="label_not_now">अभी नहीं</string>
     <string name="trouble_broken">रूम सेवा में गड़बड़ी है। थोड़ी देर में फिर कोशिश करें।</string>
     <string name="online_creating">रूम खोला जा रहा है…</string>
     <string name="online_visibility">रूम किसे दिखेगा</string>

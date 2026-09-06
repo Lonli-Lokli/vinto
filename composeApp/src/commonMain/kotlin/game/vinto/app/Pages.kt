@@ -67,5 +67,9 @@ object Pages {
      * equivalent parameter that works from outside the store app, so it gets the listing.
      */
     const val APPLE_REVIEW: String = "https://apps.apple.com/app/id6803030533?action=write-review"
+
+    /** The listings themselves, for "update the app": the review sheet is the wrong door for that. */
+    const val APPLE_LISTING: String = "https://apps.apple.com/app/id6803030533"
+    const val PLAY_LISTING: String = "https://play.google.com/store/apps/details?id=app.kupalinka.vinto"
     const val PLAY_REVIEW: String = "https://play.google.com/store/apps/details?id=app.kupalinka.vinto"
 }

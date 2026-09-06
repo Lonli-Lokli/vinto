@@ -4,9 +4,12 @@ import game.vinto.engine.PlayerView
 import game.vinto.engine.PublicReveal
 import game.vinto.protocol.ClientMessage
 import game.vinto.protocol.LobbyView
+import game.vinto.protocol.NoticeSeverity
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.RoundResult
 import game.vinto.protocol.ServerMessage
+import game.vinto.protocol.UPDATE_NEEDED_CODE
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -119,6 +122,15 @@ class RemoteRoom(
     val ended: StateFlow<String?> = _ended.asStateFlow()
 
     /** Refusals that belong to no dispatch — a lobby op the room said no to. */
+
+    /**
+     * What the room asked to have said once, off the game — a newer build waiting, so far.
+     * Held until the screen has shown it and called [dismissNotice], so a notice that arrives
+     * while a dialog is up, or before the screen exists, is not lost.
+     */
+    private val _notice = MutableStateFlow<RoomNotice?>(null)
+    val notice: StateFlow<RoomNotice?> = _notice.asStateFlow()
+
     private val _notices = MutableSharedFlow<String>(
         extraBufferCapacity = NOTICE_BUFFER,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
@@ -142,6 +154,11 @@ class RemoteRoom(
     val pendingSeats: StateFlow<Set<Int>> = _pendingSeats.asStateFlow()
 
     // ------------------------------------------------------------------ the lobby's verbs
+
+    /** The screen has said the notice. */
+    fun dismissNotice() {
+        _notice.value = null
+    }
 
     /** Adds a bot to the first free seat — which is the one the room will fill, so it spins. */
     fun addBot() {
@@ -251,7 +268,8 @@ class RemoteRoom(
                         val opened = answer.value
                         socket = opened
                         everConnected = true
-                        opened.send(encode(ClientMessage.Join(token(), nickname)))
+                        val join = ClientMessage.Join(token(), nickname, protocol = PROTOCOL_VERSION)
+                        opened.send(encode(join))
 
                         for (text in opened.incoming) {
                             attempt = 0
@@ -307,7 +325,20 @@ class RemoteRoom(
                 socket?.close()
             }
 
+            is ServerMessage.Notice -> _notice.value = RoomNotice(
+                code = message.code,
+                message = message.message,
+                warning = message.severity == NoticeSeverity.WARNING,
+            )
+
             is ServerMessage.Error -> {
+                // The one refusal no retry can answer: the room's floor is above this build.
+                // Final, and said as a trouble the screen acts on rather than a line it shows.
+                if (message.code == UPDATE_NEEDED_CODE) {
+                    _connection.value = ConnectionState.Closed(message.message, RoomTrouble.UPDATE_NEEDED)
+                    socket?.close()
+                    return
+                }
                 val handled = _session.value?.refused(message.message) == true
                 if (!handled) _notices.tryEmit(message.message)
             }

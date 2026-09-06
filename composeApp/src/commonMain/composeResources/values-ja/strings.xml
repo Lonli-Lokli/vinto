@@ -36,6 +36,12 @@
     <string name="trouble_closed">オンラインプレイはまだ開始されていません。一人プレイとレッスンは通常どおり利用できます。</string>
     <string name="trouble_busy">そのテーブルは満席です。別のテーブルを試すか、自分で新しく開いてください。</string>
     <string name="trouble_refused">ルームサービスに拒否されました。</string>
+    <string name="trouble_update_needed">このバージョンのゲームは古く、オンラインプレイには対応していません。ストアから更新してください。</string>
+    <!-- The dialog a seated player sees once when the room would rather they updated. -->
+    <string name="notice_update_title">アプリを更新してください</string>
+    <string name="notice_update_available">新しいバージョンのゲームが利用できます。都合のよいときに更新してください。今のバージョンでも引き続きプレイできます。</string>
+    <string name="label_update">更新</string>
+    <string name="label_not_now">今はしない</string>
     <string name="trouble_broken">ルームサービスに問題が発生しています。少し待ってからもう一度お試しください。</string>
     <string name="online_creating">ルームを開いています…</string>
     <string name="online_visibility">ルームを見つけられる人</string>

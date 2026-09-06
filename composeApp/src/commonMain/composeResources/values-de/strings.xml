@@ -32,6 +32,11 @@
     <string name="trouble_closed">Online-Spiel ist noch nicht geöffnet. Einzelspieler und die Anleitung funktionieren normal.</string>
     <string name="trouble_busy">Dieser Tisch ist voll. Einen anderen versuchen, oder selbst einen eröffnen.</string>
     <string name="trouble_refused">Der Raumdienst hat das nicht akzeptiert.</string>
+    <string name="trouble_update_needed">Diese Version des Spiels ist für Online-Spiele zu alt. Im Store aktualisieren.</string>
+    <string name="notice_update_title">App aktualisieren</string>
+    <string name="notice_update_available">Eine neuere Version des Spiels ist verfügbar. Bei Gelegenheit aktualisieren; diese Version funktioniert weiterhin.</string>
+    <string name="label_update">Aktualisieren</string>
+    <string name="label_not_now">Später</string>
     <string name="trouble_broken">Der Raumdienst hat gerade Probleme. Gleich noch einmal versuchen.</string>
     <string name="online_creating">Raum wird eröffnet…</string>
     <string name="online_visibility">Wer den Raum finden kann</string>

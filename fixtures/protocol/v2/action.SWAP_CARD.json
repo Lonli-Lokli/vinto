@@ -1,0 +1,1 @@
+{"type":"action","token":"tok","action":{"type":"SWAP_CARD","payload":{"playerId":"p1","position":0,"declaredRank":"K"}}}

@@ -2,6 +2,7 @@ package game.vinto.room
 
 import game.vinto.bot.BotRunner
 import game.vinto.engine.replayRecording
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.RoomPhase
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
@@ -115,8 +116,8 @@ class RoomRecordingTest {
 
     private fun dealtRoom(): String {
         var state = newRoom("room-TEST", seed = 42.0, difficulty = "easy", nowMs = START)
-        state = encode(decodeJoin(joinRoom(state, TOKENS[0]!!, "Ann", START)).state)
-        state = encode(decodeJoin(joinRoom(state, TOKENS[1]!!, "Bob", START)).state)
+        state = encode(decodeJoin(joinRoom(state, TOKENS[0]!!, "Ann", START, PROTOCOL_VERSION)).state)
+        state = encode(decodeJoin(joinRoom(state, TOKENS[1]!!, "Bob", START, PROTOCOL_VERSION)).state)
         state = encode(decodeJoin(addBot(state, TOKENS[0]!!, START)).state)
         state = encode(decodeJoin(addBot(state, TOKENS[0]!!, START)).state)
         return encode(

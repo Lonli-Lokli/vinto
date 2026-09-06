@@ -2,6 +2,7 @@ package game.vinto.room
 
 import game.vinto.bot.BotRunner
 import game.vinto.engine.initializeGame
+import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.ServerMessage
@@ -295,8 +296,8 @@ class PacingTimeoutTest {
 
     private fun dealtRoom(seed: Long): String {
         var state = newRoom("room-TEST", seed = seed.toDouble(), difficulty = "easy", nowMs = START)
-        state = encode(decodeJoin(joinRoom(state, TOKENS[0]!!, "Ann", START)).state)
-        state = encode(decodeJoin(joinRoom(state, TOKENS[1]!!, "Bob", START)).state)
+        state = encode(decodeJoin(joinRoom(state, TOKENS[0]!!, "Ann", START, PROTOCOL_VERSION)).state)
+        state = encode(decodeJoin(joinRoom(state, TOKENS[1]!!, "Bob", START, PROTOCOL_VERSION)).state)
         state = encode(decodeJoin(addBot(state, TOKENS[0]!!, START)).state)
         state = encode(decodeJoin(addBot(state, TOKENS[0]!!, START)).state)
         return encode(

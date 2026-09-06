@@ -35,6 +35,12 @@
     <string name="trouble_closed">Il gioco online non è ancora aperto. Il giocatore singolo e la lezione funzionano normalmente.</string>
     <string name="trouble_busy">Quel tavolo è al completo. Provane un altro, o aprine uno tuo.</string>
     <string name="trouble_refused">Il servizio stanze non ha accettato la richiesta.</string>
+    <string name="trouble_update_needed">Questa versione del gioco è troppo vecchia per giocare online. Aggiornala dallo store.</string>
+    <!-- The dialog a seated player sees once when the room would rather they updated. -->
+    <string name="notice_update_title">Aggiorna l’app</string>
+    <string name="notice_update_available">È disponibile una versione più recente del gioco. Aggiornala quando puoi; questa funziona ancora.</string>
+    <string name="label_update">Aggiorna</string>
+    <string name="label_not_now">Non ora</string>
     <string name="trouble_broken">Il servizio stanze sta avendo problemi. Riprova tra poco.</string>
     <string name="online_creating">Apertura della stanza…</string>
     <string name="online_visibility">Chi può trovare la stanza</string>

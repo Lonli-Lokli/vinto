@@ -49,6 +49,12 @@
     <string name="trouble_closed">Гра онлайн ще не відкрита. Одиночна гра та урок працюють як завжди.</string>
     <string name="trouble_busy">За цим столом немає місць. Спробуйте інший стіл або відкрийте свій.</string>
     <string name="trouble_refused">Служба кімнат це не прийняла.</string>
+    <string name="trouble_update_needed">Ця версія гри застаріла для гри онлайн. Оновіть застосунок у магазині.</string>
+    <!-- The dialog a seated player sees once when the room would rather they updated. -->
+    <string name="notice_update_title">Оновіть застосунок</string>
+    <string name="notice_update_available">Доступна новіша версія гри. Оновіть застосунок, коли зручно; ця версія й досі грає.</string>
+    <string name="label_update">Оновити</string>
+    <string name="label_not_now">Не зараз</string>
     <string name="trouble_broken">У служби кімнат негаразди. Спробуйте за хвилину.</string>
     <string name="online_creating">Відкриваємо кімнату…</string>
     <string name="online_visibility">Хто зможе знайти кімнату</string>

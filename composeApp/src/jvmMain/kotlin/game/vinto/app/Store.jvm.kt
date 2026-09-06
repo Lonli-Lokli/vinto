@@ -5,3 +5,5 @@ package game.vinto.app
  * from a store, so there is nothing here to review. The app's own page is the honest answer.
  */
 actual fun storeReviewUrl(): String = Pages.THIS_APP
+
+actual fun storeListingUrl(): String = Pages.THIS_APP

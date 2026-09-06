@@ -1,9 +1,9 @@
-Primeira versão do Vinto.
+A rodada final agora é um trabalho em equipe.
 
-Cinco cartas, duas que você já viu, e três oponentes descobrindo as deles ao mesmo tempo. Chame Vinto quando achar que está com a menor mão — acertar compensa, errar custa caro.
+Quando alguém chama Vinto, os outros três formam uma coalizão e podem conversar na mesa: dizer o que têm, propor uma jogada para um parceiro e montar um plano único, peça por peça. Qualquer um da coalizão pode editar qualquer parte dele; quem chamou Vinto não o vê. Veja o plano rodar na mesa antes de confirmar, e leia o quanto ele vale contra quem chamou Vinto antes das cartas virarem.
 
-Jogue sozinho contra o computador em três níveis de dificuldade, totalmente offline. Ou abra uma sala, envie seis caracteres, e quem os receber está na mesa — sem conta e sem cadastro, no celular ou no navegador.
+Os bots são honestos sobre o que sabem: só descartam cartas que realmente viram, e guardam um Coringa comprado em vez de colocá-lo no monte.
 
-Há um tutorial que distribui uma rodada de verdade em vez de só explicar as regras, e você pode pular.
+Se o modo online pedir para atualizar, é porque a sala avançou para uma versão mais nova do jogo; o botão te leva até a loja.
 
 Obrigado por jogar.
