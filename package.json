@@ -39,7 +39,7 @@
     "capture-headless": "./gradlew :composeApp:jvmTest --tests \"*StoreShotsTest*\" -PstoreShots --rerun"
   },
   "devDependencies": {
-    "vydanne": "^0.9.0",
+    "vydanne": "^0.12.0",
     "zdymak": "^0.22.0"
   }
 }
