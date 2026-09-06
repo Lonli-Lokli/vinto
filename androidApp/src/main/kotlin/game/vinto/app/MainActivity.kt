@@ -54,5 +54,12 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         offerOpenedLink(intent.dataString)
+
+        // A capture asking for a different screen. The process survives between states — one
+        // `am start` per screen brings this instance forward rather than making a new one — so
+        // without this every shot after the first is whatever was already on screen, which is
+        // how a run once produced six pictures of the same board. `captureScene` returns null
+        // from the release source set, so the shipped binary never reaches `recreate`.
+        if (captureScene(intent) != null) recreate()
     }
 }

@@ -46,6 +46,7 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Sfx
 import game.vinto.app.theme.VintoDialog
 import game.vinto.client.LocalGame
+import game.vinto.client.Move
 import game.vinto.client.Pace
 import game.vinto.client.Question
 import game.vinto.client.RoundResult
@@ -57,6 +58,7 @@ import game.vinto.client.toJson
 import game.vinto.protocol.AnalyticsEvent
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 12.dp
@@ -85,6 +87,8 @@ fun GameScreen(
     val session = game.session
     val holder = rememberHolder(session, opening)
     val act = rememberActor(holder, onEachMove = game::save)
+
+    RehearseForACapture(opening, act)
     val log by session.log.collectAsState()
 
     // A refused move is a defect wherever it happens; the surface says which table it was.
@@ -454,3 +458,21 @@ private class HelpState {
         open = false
     }
 }
+
+/**
+ * A capture that opens on the board plays the plan through once, so a recording of this screen
+ * has the app's own cards moving on it rather than a still with a caption. Only a store capture
+ * ever passes an opening question, so nothing a player does reaches this.
+ */
+@Composable
+private fun RehearseForACapture(opening: Question, act: (Move) -> Unit) {
+    LaunchedEffect(opening) {
+        if (opening == Question.ThePlan) {
+            delay(REHEARSE_AFTER_MS)
+            act(Move.Rehearse)
+        }
+    }
+}
+
+/** Long enough for the board to have drawn itself before the ghosts start moving over it. */
+private const val REHEARSE_AFTER_MS = 1_500L
