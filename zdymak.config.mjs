@@ -141,16 +141,20 @@ export default {
       name: 'appstore-preview',
       size: [886, 1920],
       level: '4.0',
-      sceneDur: 3.4, // 6 clips ≈ 20s, inside Apple's 15–30s window with room either side
+      sceneDur: 6.8, // 4 clips ≈ 26s: past Apple's floor with room, and under its ceiling
       transition: 'dissolve',
       theme: { bleed: true, frame: false },
+      music: { path: './marketing/music/bed.mp3', volume: 0.75, fadeIn: 0.8, fadeOut: 1.5 },
+      // The four screens that MOVE, and nothing else. The menu and the lobby are handsome and
+      // they sit perfectly still: a segment of either is a screenshot with a soundtrack, which
+      // is what this preview was the first time and why it was dull. Each of these carries the
+      // app's own animation — a turn being played, the lesson dealing, the coalition's plan
+      // rehearsed across the felt, the hands turning over at the end.
       segments: [
-        { clip: './marketing/clips/home.mov' },
-        { clip: './marketing/clips/teach.mov' },
         { clip: './marketing/clips/table.mov' },
+        { clip: './marketing/clips/teach.mov' },
         { clip: './marketing/clips/plan.mov' },
         { clip: './marketing/clips/score.mov' },
-        { clip: './marketing/clips/lobby.mov' },
       ],
     },
     {
@@ -159,16 +163,14 @@ export default {
       // claim on a music bed can take a listing's video down without warning.
       name: 'play-promo',
       size: [1080, 1920],
-      sceneDur: 3.4,
+      sceneDur: 6.8,
       transition: 'dissolve',
       theme: { bleed: true, frame: false },
       segments: [
-        { clip: './marketing/clips/home.mov' },
-        { clip: './marketing/clips/teach.mov' },
         { clip: './marketing/clips/table.mov' },
+        { clip: './marketing/clips/teach.mov' },
         { clip: './marketing/clips/plan.mov' },
         { clip: './marketing/clips/score.mov' },
-        { clip: './marketing/clips/lobby.mov' },
       ],
     },
   ],

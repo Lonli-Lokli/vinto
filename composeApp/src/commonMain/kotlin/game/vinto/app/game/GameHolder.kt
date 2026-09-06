@@ -23,6 +23,7 @@ import game.vinto.engine.PlayerView
 import game.vinto.engine.PublicReveal
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.TableTalk
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.merge
@@ -227,9 +228,26 @@ fun rememberHolder(session: GameSession, opening: Question = Question.None): Gam
  *   you do not open again, and a round is a few kilobytes.
  */
 @Composable
-fun rememberActor(holder: GameHolder, onEachMove: () -> Unit = {}): (Move) -> Unit {
+fun rememberActor(
+    holder: GameHolder,
+    onEachMove: () -> Unit = {},
+    /**
+     * A capture that opens on the board plays the plan through once, so a recording of that
+     * screen has the app's own cards moving on it rather than a still. Only a store capture
+     * passes an opening question, so nothing a player does reaches this.
+     */
+    rehearseFor: Question = Question.None,
+): (Move) -> Unit {
     val scope = rememberCoroutineScope()
     val feedback = LocalFeedback.current
+
+    LaunchedEffect(rehearseFor) {
+        if (rehearseFor == Question.ThePlan) {
+            delay(REHEARSE_AFTER_MS)
+            holder.act(Move.Rehearse)
+        }
+    }
+
     return remember(holder, scope, feedback) {
         {
                 move ->
@@ -275,3 +293,6 @@ internal fun PlayerView.showsTheSameHandAs(live: PlayerView): Boolean {
     val theirs = live.players.firstOrNull { it.id == viewerId }?.cards
     return mine == theirs
 }
+
+/** Long enough for the board to have drawn itself before the ghosts start moving over it. */
+private const val REHEARSE_AFTER_MS = 1_500L
