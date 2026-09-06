@@ -49,6 +49,15 @@ data class MctsPlayerState(
     val id: String,
     val cardCount: Int,
     val knownCards: Map<Int, CardMemory> = emptyMap(),
+    /**
+     * Which of its own cards this seat has seen — public at a real table, since everybody
+     * watches everybody peek. The searching bot's own knowledge is its memory; for everyone
+     * else this is what decides whether they can throw a card in, declare it, or name it as
+     * the dearest to trade away. It used to be "everyone knows their whole hand", which made
+     * any discard of a common rank look like a gift to the table and taught the bot to hold
+     * on to a drawn Joker rather than put a five down.
+     */
+    val ownerKnows: Set<Int> = emptySet(),
 )
 
 /** How the card in play got there, which decides what may still be done with it. */

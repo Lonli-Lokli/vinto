@@ -32,8 +32,12 @@ class StateTransitionTest {
     private fun hunch(card: Card) =
         CardMemory(card, confidence = 0.3, lastSeen = 0, observations = 1)
 
-    private fun seat(id: String, cards: Int = 4, knownCards: Map<Int, CardMemory> = emptyMap()) =
-        MctsPlayerState(id, cardCount = cards, knownCards = knownCards)
+    private fun seat(
+        id: String,
+        cards: Int = 4,
+        knownCards: Map<Int, CardMemory> = emptyMap(),
+        seen: Set<Int> = emptySet(),
+    ) = MctsPlayerState(id, cardCount = cards, knownCards = knownCards, ownerKnows = seen)
 
     // Mirrors MctsGameState's own breadth, as in MoveGeneratorTest.
     @Suppress("LongParameterList")
@@ -69,6 +73,38 @@ class StateTransitionTest {
     private fun MctsGameState.seatNamed(id: String) = players.first { it.id == id }
 
     private fun MctsGameState.total(id: String) = StateTransition.handTotal(this, id)
+
+    // --- what an opponent can do with a card it has not seen -------------------------------
+
+    @Test
+    fun anOpponentThrowsInOnlyACardItHasSeen() {
+        // Reported 2026-09-06 as a Joker thrown away: every opponent shed every matching card
+        // the moment a rank was discarded, so putting a five down read as a gift to the table.
+        // A player who has not looked at a card cannot throw it in.
+        val five = testCard(Rank.FIVE, "5_0")
+        val theirFive = testCard(Rank.FIVE, "5_1")
+        val theirSix = testCard(Rank.SIX, "6_0")
+        fun table(seen: Set<Int>) = state(
+            players = listOf(
+                MctsPlayerState("bot-1", cardCount = 2, knownCards = mapOf(0 to known(testCard(Rank.TWO, "2_0")))),
+                MctsPlayerState("bot-2", cardCount = 2, ownerKnows = seen),
+            ),
+            hiddenCards = mapOf(
+                "bot-1-0" to testCard(Rank.TWO, "2_0"),
+                "bot-1-1" to testCard(Rank.NINE, "9_0"),
+                "bot-2-0" to theirFive,
+                "bot-2-1" to theirSix,
+            ),
+            pendingCard = five,
+        )
+        val discard = MctsMove(MctsMoveType.DISCARD, "bot-1", cardInPlay = Rank.FIVE)
+
+        val unseen = StateTransition.applyMove(table(seen = emptySet()), discard)
+        assertEquals(2, unseen.seatNamed("bot-2").cardCount, "a card its owner never saw was thrown in")
+
+        val seen = StateTransition.applyMove(table(seen = setOf(0)), discard)
+        assertEquals(1, seen.seatNamed("bot-2").cardCount, "a five its owner had seen stayed in hand")
+    }
 
     // --- the alignment property ------------------------------------------------------------
 
@@ -185,7 +221,7 @@ class StateTransitionTest {
         val before = state(
             listOf(
                 seat("bot-1", cards = 2, knownCards = mapOf(0 to known(botSeven))),
-                seat("p2", cards = 2),
+                seat("p2", cards = 2, seen = setOf(0)),
             ),
             hiddenCards = mapOf(
                 "bot-1-0" to botSeven,
@@ -206,11 +242,11 @@ class StateTransitionTest {
     }
 
     @Test
-    fun theBotOnlyTossesWhatItRemembersButARivalKnowsItsOwnHand() {
-        // The bot's second card is a 7 it has never read: it stays. The rival's unread 7 is
-        // one the rival knows about, and goes.
+    fun theBotOnlyTossesWhatItRemembersButARivalTossesWhatItHasSeen() {
+        // The bot's second card is a 7 it has never read: it stays. The rival's 7 is one the
+        // table watched the rival look at, and goes.
         val before = state(
-            listOf(seat("bot-1", cards = 2), seat("p2", cards = 2)),
+            listOf(seat("bot-1", cards = 2), seat("p2", cards = 2, seen = setOf(0))),
             hiddenCards = mapOf(
                 "bot-1-0" to testCard(Rank.THREE, "3_bot"),
                 "bot-1-1" to testCard(Rank.SEVEN, "7_bot"),

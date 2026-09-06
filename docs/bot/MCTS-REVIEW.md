@@ -387,9 +387,10 @@ play as committed. The turn ends with the Vinto question, a two-way node. Delete
 
 **Rollouts play by card values** (`RolloutPolicy`): trade the card in play for the dearest card
 the mover can name when that sheds points, otherwise play an action worth playing, otherwise
-put a cheap card into a blind slot or discard; call Vinto when the hand is lowest at the table
-and its owner knows it. Opponents are assumed to know their own hands; the bot acts only on
-what it remembers, which is where a peek's value comes from.
+put a cheap card into a blind slot or discard; call Vinto when the hand, as its owner can price
+it, is lowest at the table. ~~Opponents are assumed to know their own hands~~ — since §7, every
+seat knows what the table has watched it see; the bot acts only on what it remembers, which is
+where a peek's value comes from.
 
 **The reward is the round's points** (`Outcome.kt`): once somebody has called, +3 / 0 / −1
 per seat mapped onto 0–1 with the tie to the caller; before a call, where the hand stands
@@ -578,9 +579,47 @@ is the only certain win.
 - **Rollout policy is a policy.** It plays by card values and has no weights, but it is still
   hand-written; a search that reached terminal states without it would need none, and that is
   the next thing to try if the budget allows.
-- **Opponents are assumed to know their own hands** in the sampled world. Modelling what an
-  opponent has actually seen — the engine records it — would sharpen the coalition's play in
-  particular.
 - **Difficulty budgets** (iterations 500 / 2,000 / 5,000, exploration 0.7, rollout depth
   15 / 20 / 30 plies) are the constants that remain, and they are search budgets rather than
   judgement. The mixed table is the tool for setting them.
+
+## 7. Two reports from the table — 2026-09-06
+
+Both came from one solo game on moderate, reported from the table with the recording attached;
+both recordings are test fixtures now (`shared/bot/src/jvmTest/resources/reports/`, replayed by
+`ReportedGamesTest` with the runner watching every action, so the bot's memory is what it was).
+
+**Ember drew the Joker and put it on the pile**, holding two fives it had read. Reproduced: one
+seed in five discarded it. The root statistics said why. Every root move's *immediate* reward was
+right — keeping the Joker in place of a known five scored 0.8–1.0 against 0.2–0.7 for the discard
+on every sampled world — and the rollouts threw it away. Two causes, both in the rollout policy:
+
+1. **Opponents knew their whole hands.** The moment a rank was discarded, every opponent in the
+   sampled world shed every matching card at no cost, so putting a five down read as a gift to
+   the table and the search preferred keeping the fives. That was the leftover the previous
+   section listed. Every seat now carries what the table has watched it see — setup peeks, cards
+   swapped in, a seven's or eight's own look, a King's wrong call — and only those cards can be
+   thrown in, declared, or named as the dearest to trade away. A Jack's blind arrival is unseen;
+   a Queen's is seen by its mover.
+2. **Opponents called Vinto on hands they had not seen, and the bot never could.** With every
+   opponent's hand "known", one of them called in 85% of rollouts within five turns, after which
+   the reward was the team's, in which the bot's own hand only matters when it is the coalition's
+   best — so an eleven-point improvement to it barely registered. And the bot itself still kept
+   the full-hand gate §6 had deleted from the real call, so its hand could never turn into a won
+   round inside the search at all. The rollout's call rule is now the same for every seat: call
+   when the hand *as its owner can price it* — seen cards at face value, the rest at the deck's
+   mean — is lowest at the table. (Gating every seat on a fully seen hand was tried instead; it
+   fixed the report too, but rollouts in which nobody can call give the tree nothing to tell
+   moves apart by, and `MctsDiscriminationTest` failed two of its probes.)
+
+The self-play callers now win about one round in two rather than three in four. That is not a
+regression of the call: a caller takes three for a win and loses one, so calling at even odds is
+worth a point a round, and the old rate was the omniscient opponents making the bot too timid.
+
+**Dune played two Jacks in one turn against the same card.** Legal: the second Jack was thrown in
+on the first's toss-in window, which the decided rules allow on one's own turn. The first swap
+gave a read five for a ten the whole table had seen go in; replayed sixty times it never recurred,
+so it is priced as search noise on moderate's budget rather than a fault with a cause, and the
+test that would catch it (`aJackNeverTradesAKnownCardForOneKnownToBeDearer`) stays as a tripwire.
+
+The self-play baseline was regenerated after the change: games a tenth to a fifth shorter, mean hands within two points of where they were, and the difficulty ranking by lowest finishes in the mixed table unchanged at 1 / 5 / 7.

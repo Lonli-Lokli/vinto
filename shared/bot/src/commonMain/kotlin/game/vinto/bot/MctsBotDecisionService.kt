@@ -408,6 +408,7 @@ class MctsBotDecisionService(
                 id = player.id,
                 cardCount = player.cards.size,
                 knownCards = botMemory.getPlayerMemory(player.id),
+                ownerKnows = player.knownCardPositions.toSet(),
             )
         }
 
