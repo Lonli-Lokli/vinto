@@ -606,6 +606,9 @@
          the _known form %3$s the rank the table knows it to be. -->
     <string name="board_step_put_down">put down %1$s card %2$d</string>
     <string name="board_step_put_down_known">put down %1$s card %2$d, the %3$s</string>
+    <!-- A lane owner's alternative to the step somebody set for them, beside it on the board:
+         %1$s their name, %2$s a board_step_* fragment. Tapping it puts it on the board. -->
+    <string name="board_would_rather">%1$s would rather %2$s</string>
     <string name="board_shed">%1$s will throw in a %2$s</string>
     <string name="board_edited_by">last changed by %1$s</string>
     <string name="board_nod_yes">%1$s agreed</string>

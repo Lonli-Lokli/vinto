@@ -75,6 +75,20 @@ class PlanEditTest {
     }
 
     @Test
+    fun editingALaneClearsWhatItsOwnerWouldRatherHaveDone() {
+        // 3.13: a suggestion is about the step it sat beside. Once that step changes — to the
+        // suggestion itself, or to anything else — it has been answered.
+        val standing = CoalitionPlan(
+            lanes = listOf(Lane(ann, swap(ann, bob), suggestion = Step.TakeTheDiscard)),
+            agreed = listOf(bob),
+            editedBy = bob,
+        )
+        val applied = edited(standing, PlanEdit.SetLane(ann, Step.TakeTheDiscard), by = ann)
+        assertEquals(Step.TakeTheDiscard, applied.lanes.single().step)
+        assertNull(applied.lanes.single().suggestion)
+    }
+
+    @Test
     fun theSameLaneEditedTwiceIsLastEditStands() {
         val first = edited(null, PlanEdit.SetLane(ann, swap(ann, bob)), by = ann)
         val second = edited(first, PlanEdit.SetLane(ann, Step.TakeTheDiscard), by = bob)

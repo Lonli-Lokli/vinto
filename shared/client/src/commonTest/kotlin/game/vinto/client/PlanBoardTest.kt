@@ -410,6 +410,29 @@ class PlanBoardTest {
         assertTrue(dons.choices.none { it.label == Label.PlanAPutDown }, "a put-down of a mystery was offered")
     }
 
+    @Test
+    fun whatALaneOwnerWouldRatherDoSitsBesideTheStepAndOneTapPutsItOnTheBoard() {
+        // 3.13, as a person would: the alternative is read out beside the step, and tapping it
+        // is an ordinary edit by whoever taps — not a bot writing over anybody.
+        val set = swap(nina, 0, don, 0)
+        val rather = swap(nina, 1, don, 0)
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(nina, set, suggestion = rather)),
+            agreed = listOf(nina),
+            editedBy = me,
+        )
+
+        val board = assertNotNull(tableFor(view(), question = Question.ThePlan, plan = plan).board)
+        val lane = board.lanes.first { it.who == Speaker.Named("Bot3") }
+        assertEquals(StepLine.Swap(Speaker.Named("Bot3"), 2, Speaker.Named("Bot4"), 1), lane.suggestion)
+        assertEquals(Move.Plan(PlanEdit.SetLane(nina, rather)), lane.useSuggestion)
+
+        // Once that turn has started the lane is closed, suggestion included.
+        val locked = plan.copy(lanes = listOf(Lane(nina, set, locked = true, suggestion = rather)))
+        val closed = assertNotNull(tableFor(view(), question = Question.ThePlan, plan = locked).board)
+        assertNull(closed.lanes.first { it.who == Speaker.Named("Bot3") }.useSuggestion)
+    }
+
     // ------------------------------------------------------------------ the viewer's turn
 
     @Test

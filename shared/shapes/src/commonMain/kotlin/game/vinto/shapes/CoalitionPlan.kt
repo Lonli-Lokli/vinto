@@ -74,6 +74,14 @@ data class Lane(
      * editable, because the round is still going and better information keeps arriving.
      */
     val locked: Boolean = false,
+    /**
+     * What the lane's own seat would rather do (task 3.13): a bot's alternative to a step a
+     * person set for it, offered beside the step rather than written over it. A person puts it
+     * on the board with one tap, which is an ordinary edit; nothing a bot says undoes an edit,
+     * and every edit to this lane clears it. Bots only ever suggest for their own lane, since
+     * that is the only turn they can honestly judge (design D3).
+     */
+    val suggestion: Step? = null,
 )
 
 /** Somebody holds that rank and will throw it in if one lands. */
@@ -300,6 +308,10 @@ fun Step.cardsNamed(): List<CardAt> = when (this) {
 /** One seat's yes or no to the plan as it stands. */
 fun CoalitionPlan.agreeing(seat: String, agree: Boolean): CoalitionPlan =
     copy(agreed = if (agree) (agreed + seat).distinct() else agreed - seat)
+
+/** [seat]'s lane carrying what its owner would rather do, or nothing; no lane, no change. */
+fun CoalitionPlan.suggesting(seat: String, step: Step?): CoalitionPlan =
+    copy(lanes = lanes.map { lane -> if (lane.seat == seat) lane.copy(suggestion = step) else lane })
 
 /** Whether everybody who has to say yes has. */
 fun CoalitionPlan.agreedBy(everyone: Collection<String>): Boolean = everyone.all { it in agreed }

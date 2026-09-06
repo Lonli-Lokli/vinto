@@ -504,6 +504,7 @@
     <string name="board_step_take_discard">ڈسکارڈ لیں</string>
     <string name="board_step_put_down">%1$s پتہ %2$d نیچے رکھیں</string>
     <string name="board_step_put_down_known">%1$s پتہ %2$d، یعنی %3$s، نیچے رکھیں</string>
+    <string name="board_would_rather">%1$s ترجیح دیں گے کہ %2$s</string>
     <string name="board_shed">%1$s کی طرف سے %2$s شامل کیا جائے گا</string>
     <string name="board_edited_by">آخری تبدیلی: %1$s</string>
     <string name="board_nod_yes">%1$s متفق ہیں</string>

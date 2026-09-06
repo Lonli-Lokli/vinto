@@ -495,6 +495,7 @@
     <string name="board_step_take_discard">взяти зі скиду</string>
     <string name="board_step_put_down">викласти карту %2$d, яка належить %1$s</string>
     <string name="board_step_put_down_known">викласти карту %2$d, яка належить %1$s, — %3$s</string>
+    <string name="board_would_rather">%1$s радше %2$s</string>
     <string name="board_shed">%1$s підкине %2$s</string>
     <string name="board_edited_by">Востаннє змінено: %1$s</string>
     <string name="board_nod_yes">%1$s погоджується</string>

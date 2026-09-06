@@ -523,6 +523,7 @@
     <string name="board_step_take_discard">tomar el descarte</string>
     <string name="board_step_put_down">dejar la carta %2$d %1$s</string>
     <string name="board_step_put_down_known">dejar la carta %2$d %1$s, la %3$s</string>
+    <string name="board_would_rather">%1$s preferiría %2$s</string>
     <string name="board_shed">%1$s lanzará un %2$s</string>
     <string name="board_edited_by">último cambio de %1$s</string>
     <string name="board_nod_yes">%1$s está de acuerdo</string>

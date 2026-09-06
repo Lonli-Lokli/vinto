@@ -448,11 +448,23 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 - [x] 3.12 Copy for a broken plan that treats a wrong claim as the game working
       — `Detail.AClaimWasWrong` under the board's prompt whenever a lane is broken: "the game
       working, not a mistake"
-- [~] 3.13 Bots edit the plan, replacing the step they own and saying why
+- [x] 3.13 Bots edit the plan, replacing the step they own and saying why
       — **deliberately after 3.2c.** A bot that replaced a lane the moment a person set it would
       reset agreement in a loop; the bound on that is a decision, not a default
       — **half, with 2.5:** bots *seed* every empty lane, their own included. What is left is
       replacing a step after a person has set it, and saying why — the part that needs the bound
+      — **decided and done: a bot never writes over a person's edit.** As a person at a table
+      would, a bot offered a step for its own lane that it would not play says "that leaves us
+      worse" and offers what it would rather do — its best trade on its own picture — *beside*
+      the step, as `Lane.suggestion`. Whoever taps it puts it on the board as an ordinary edit
+      in their own name, which clears the suggestion; so does any other edit to that lane. No
+      loop is possible because no bot edit exists: the only writer is a person. Bots suggest
+      only for their own lane, since that is the only turn they can honestly judge (D3), and
+      only when a person set it.
+      `LaneAnswerTest.aBotOfferedAWorseStepForItsOwnLaneSaysSoAndOffersItsOwnIdeaBeside`,
+      `PlanEditTest.editingALaneClearsWhatItsOwnerWouldRatherHaveDone`,
+      `PlanBoardTest.whatALaneOwnerWouldRatherDoSitsBesideTheStepAndOneTapPutsItOnTheBoard`,
+      `CoalitionScreenTest.aLaneOwnersAlternativeIsReadOutBesideTheStep`
 - [x] 3.14 **Toss-in intents** in the plan beside the turn lanes: "I hold a 7 and will shed it",
       and the proposal that sets it up — "put down a 7". No conditional language (design D13a)
       — **the intent half:** "Throw in" on the open board opens the rank rail and puts a shed in

@@ -369,6 +369,26 @@ class CoalitionScreenTest {
     }
 
     @Test
+    fun aLaneOwnersAlternativeIsReadOutBesideTheStep() = runComposeUiTest {
+        // 3.13: "Nina would rather …" on the open board, as one tappable line.
+        val view = conferring()
+        val mates = view.players.filter { it.id != view.viewerId && it.id != view.vintoCallerId }
+        val set = Step.Swap(CardAt(mates[0].id, 0), CardAt(mates[1].id, 0))
+        val rather = Step.Swap(CardAt(mates[0].id, 1), CardAt(mates[1].id, 0))
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(mates[0].id, set, suggestion = rather)),
+            agreed = listOf(mates[0].id),
+            editedBy = view.viewerId,
+        )
+
+        show(view, plan = plan, question = Question.ThePlan)
+        assertTrue(
+            onAllNodesWithText("would rather", substring = true, ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
+            "the lane owner's alternative was not read out",
+        )
+    }
+
+    @Test
     fun agreeingIsOneTapUntilYouHave() = runComposeUiTest {
         val view = conferring()
         val mate = view.players.first { it.id != view.viewerId && it.id != view.vintoCallerId }

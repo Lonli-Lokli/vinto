@@ -515,6 +515,7 @@
     <string name="board_step_take_discard">atım yığınından al</string>
     <string name="board_step_put_down">%1$s %2$d numaralı kartını atım yığınına koy</string>
     <string name="board_step_put_down_known">%1$s %2$d numaralı kartını (%3$s) atım yığınına koy</string>
+    <string name="board_would_rather">%1$s şunu tercih ederdi: %2$s</string>
     <string name="board_shed">%1$s bir %2$s atacak</string>
     <string name="board_edited_by">son değiştiren: %1$s</string>
     <string name="board_nod_yes">%1$s onayladı</string>

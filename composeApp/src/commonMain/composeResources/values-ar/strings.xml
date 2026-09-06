@@ -508,6 +508,7 @@
     <string name="board_step_take_discard">أخذ بطاقة التخلص</string>
     <string name="board_step_put_down">وضع البطاقة رقم %2$d التي %1$s</string>
     <string name="board_step_put_down_known">وضع البطاقة رقم %2$d التي %1$s، وهي %3$s</string>
+    <string name="board_would_rather">الخيار الأفضل عند %1$s: %2$s</string>
     <string name="board_shed">سيرمي %1$s %2$s</string>
     <string name="board_edited_by">آخر تعديل: %1$s</string>
     <string name="board_nod_yes">وافق %1$s</string>

@@ -183,7 +183,7 @@ internal fun Map<String, List<PlanCard>>.swapped(from: Slot, to: Slot): Map<Stri
  * card through a watched swap (design D9). A bot's own unspoken card has no anchor, correctly:
  * the table has not been told what it is.
  */
-private fun cardAt(state: GameState, slot: Slot): CardAt {
+internal fun cardAt(state: GameState, slot: Slot): CardAt {
     val owner = state.players.first { it.id == slot.seat }
     return CardAt(slot.seat, slot.position, believedAt(owner, slot.position).sources.firstOrNull())
 }

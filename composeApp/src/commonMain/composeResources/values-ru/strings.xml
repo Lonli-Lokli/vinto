@@ -501,6 +501,7 @@
     <string name="board_step_take_discard">взять сброс</string>
     <string name="board_step_put_down">выложить карту %2$d (%1$s)</string>
     <string name="board_step_put_down_known">выложить карту %2$d (%1$s), %3$s</string>
+    <string name="board_would_rather">%1$s предпочитает %2$s</string>
     <string name="board_shed">%1$s подкинет %2$s</string>
     <string name="board_edited_by">последнее изменение: %1$s</string>
     <string name="board_nod_yes">%1$s: план поддержан</string>

@@ -12,9 +12,11 @@ import game.vinto.shapes.PlayerState
 import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
 import game.vinto.shapes.TableTalk
+import game.vinto.shapes.laneOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -114,6 +116,36 @@ class LaneAnswerTest {
         val answer = answerForLane(table(), bot, null, askedBy = third)
         assertEquals(bot, answer.by)
         assertEquals(third, answer.to)
+    }
+
+    @Test
+    fun aBotOfferedAWorseStepForItsOwnLaneSaysSoAndOffersItsOwnIdeaBeside() {
+        // 3.13, as a person would: "that leaves us worse — I'd rather trade my two for your
+        // three." The alternative sits beside the step for a person to put on the board; the
+        // step a person set is not written over.
+        val worse = Step.Swap(CardAt(bot, 0), CardAt(mate, 0))
+        val plan = CoalitionPlan(lanes = listOf(Lane(bot, worse)), agreed = listOf(mate), editedBy = mate)
+        val asked = botsAnswering(table(), plan, PlanEdit.SetLane(bot, worse), editor = mate, bots = listOf(bot, third))
+
+        assertEquals(TableTalk.Answer.Says.THAT_LEAVES_US_WORSE, (asked.said as TableTalk.Answer).says)
+        val offered = asked.plan.laneOf(bot)?.suggestion as? Step.Swap
+        assertNotNull(offered, "the bot said no and offered nothing in its place")
+        assertEquals(
+            CardAt(bot, 1) to CardAt(mate, 0),
+            offered.from.copy(anchor = null) to offered.to.copy(anchor = null),
+        )
+        assertEquals(worse, asked.plan.laneOf(bot)?.step, "a bot wrote over a person's edit")
+
+        // A step it agrees with needs no alternative.
+        val good = Step.Swap(CardAt(bot, 1), CardAt(mate, 0))
+        val fine = botsAnswering(
+            table(),
+            plan.copy(lanes = listOf(Lane(bot, good))),
+            PlanEdit.SetLane(bot, good),
+            editor = mate,
+            bots = listOf(bot, third),
+        )
+        assertNull(fine.plan.laneOf(bot)?.suggestion)
     }
 
     @Test

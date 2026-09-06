@@ -88,6 +88,10 @@ data class LaneLine(
      * not a player failing, and the copy says so.
      */
     val health: StepHealth = StepHealth.LIVE,
+    /** What the lane's own seat would rather do (3.13), offered beside the step, not over it. */
+    val suggestion: StepLine? = null,
+    /** One tap puts the suggestion on the board — an ordinary edit, by whoever taps. */
+    val useSuggestion: Move? = null,
 )
 
 /** A step in words a renderer can put into a sentence. Positions are one-based, as people count. */
@@ -141,12 +145,17 @@ internal fun boardFor(
             val index = reading?.plan?.lanes?.indexOfFirst { it.seat == seat } ?: -1
             val followed = reading?.plan?.lanes?.getOrNull(index) ?: lane
             val locked = lane?.locked == true
+            val editable = member && !locked && seat != onPlay
             LaneLine(
                 who = speakerFor(view, seat),
                 step = followed?.step?.let { stepLine(view, it) },
                 locked = locked,
-                move = Move.Ask(Question.Planning(seat)).takeIf { member && !locked && seat != onPlay },
+                move = Move.Ask(Question.Planning(seat)).takeIf { editable },
                 health = reading?.health?.getOrNull(index) ?: StepHealth.LIVE,
+                suggestion = lane?.suggestion?.let { stepLine(view, it) },
+                useSuggestion = lane?.suggestion
+                    ?.takeIf { editable }
+                    ?.let { Move.Plan(PlanEdit.SetLane(seat, it)) },
             )
         },
         sheds = plan?.sheds.orEmpty().map { shed ->

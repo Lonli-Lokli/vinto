@@ -488,6 +488,7 @@
     <string name="board_step_take_discard">weź kartę ze stosu odrzuconych</string>
     <string name="board_step_put_down">odłóż kartę %2$d (%1$s)</string>
     <string name="board_step_put_down_known">odłóż kartę %2$d (%1$s): %3$s</string>
+    <string name="board_would_rather">%1$s: raczej %2$s</string>
     <string name="board_shed">%1$s dorzuci %2$s</string>
     <string name="board_edited_by">ostatnio zmieniane przez %1$s</string>
     <string name="board_nod_yes">%1$s zgadza się</string>

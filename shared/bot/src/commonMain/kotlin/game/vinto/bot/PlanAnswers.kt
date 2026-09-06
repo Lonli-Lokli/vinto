@@ -7,8 +7,10 @@ import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.Step
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.agreeing
+import game.vinto.shapes.coalitionInTurnOrder
 import game.vinto.shapes.getCardValue
 import game.vinto.shapes.laneOf
+import game.vinto.shapes.suggesting
 
 /**
  * What the bots make of the coalition's shared plan (design D7a).
@@ -45,10 +47,36 @@ fun botsAnswering(
     var said: TableTalk? = null
     for (bot in bots) {
         val answer = answerForLane(state, bot, plan.laneOf(bot)?.step, askedBy = editor)
-        answered = answered.agreeing(bot, agree = answer.says == TableTalk.Answer.Says.YES)
-        if (edit is PlanEdit.SetLane && edit.seat == bot) said = answer
+        val agrees = answer.says == TableTalk.Answer.Says.YES
+        answered = answered.agreeing(bot, agree = agrees)
+        if (edit is PlanEdit.SetLane && edit.seat == bot) {
+            said = answer
+            // As a person would (3.13): a no comes with what the bot would rather do, set
+            // beside the step for somebody to put on the board — never written over it.
+            if (!agrees && editor !in bots) {
+                answered = answered.suggesting(bot, ownLaneAlternative(state, bot, edit.step))
+            }
+        }
     }
     return PlanAnswers(answered, said)
+}
+
+/**
+ * The trade a bot would rather make on its own turn, from its own picture — the same greedy
+ * concentration play it seeds the board with — or nothing when no trade helps, or when the best
+ * one is the step it was just offered.
+ */
+private fun ownLaneAlternative(state: GameState, bot: String, offered: Step): Step.Swap? {
+    val caller = state.vintoCallerId ?: return null
+    val input = buildCoalitionPlanInput(state, bot) ?: return null
+    val hands = input.members.associate { it.id to it.cards }
+    val coalition = coalitionInTurnOrder(state.players.map { it.id }, caller)
+    val swap = bestSwap(hands, coalition) ?: return null
+    val same = offered is Step.Swap &&
+        Slot(offered.from.seat, offered.from.position) == swap.from &&
+        Slot(offered.to.seat, offered.to.position) == swap.to
+    if (same) return null
+    return Step.Swap(cardAt(state, swap.from), cardAt(state, swap.to))
 }
 
 /**

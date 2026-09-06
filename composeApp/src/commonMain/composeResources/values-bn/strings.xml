@@ -487,6 +487,7 @@
     <string name="board_step_take_discard">বাতিল তাসটি নিন</string>
     <string name="board_step_put_down">%1$s তাস %2$d রাখুন</string>
     <string name="board_step_put_down_known">%1$s তাস %2$d, যা %3$s, রাখুন</string>
+    <string name="board_would_rather">%1$s বরং %2$s</string>
     <string name="board_shed">%1$s একটি %2$s ফেলে দেবেন</string>
     <string name="board_edited_by">সবশেষ পরিবর্তন করেছেন %1$s</string>
     <string name="board_nod_yes">%1$s সম্মত হয়েছেন</string>

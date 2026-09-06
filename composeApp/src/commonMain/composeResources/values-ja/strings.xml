@@ -506,6 +506,7 @@
     <string name="board_step_take_discard">捨て札を取る</string>
     <string name="board_step_put_down">%1$sカード%2$dを出す</string>
     <string name="board_step_put_down_known">%1$sカード%2$d（%3$s）を出す</string>
+    <string name="board_would_rather">%1$sは%2$sほうがいい</string>
     <string name="board_shed">%1$sが%2$sを投げ込む予定</string>
     <string name="board_edited_by">最後に変更したのは%1$s</string>
     <string name="board_nod_yes">%1$sが同意しました</string>

@@ -502,6 +502,7 @@
     <string name="board_step_take_discard">узяць скід</string>
     <string name="board_step_put_down">выкласці картку %2$d (%1$s)</string>
     <string name="board_step_put_down_known">выкласці картку %2$d (%1$s), %3$s</string>
+    <string name="board_would_rather">%1$s аддае перавагу: %2$s</string>
     <string name="board_shed">%1$s падкіне %2$s</string>
     <string name="board_edited_by">апошнія змены ад %1$s</string>
     <string name="board_nod_yes">%1$s пагаджаецца</string>

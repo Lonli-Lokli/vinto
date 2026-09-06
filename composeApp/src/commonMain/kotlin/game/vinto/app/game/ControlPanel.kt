@@ -67,6 +67,7 @@ import game.vinto.app.art.board_nod_not_yet
 import game.vinto.app.art.board_nod_yes
 import game.vinto.app.art.board_shed
 import game.vinto.app.art.board_title
+import game.vinto.app.art.board_would_rather
 import game.vinto.app.art.board_your_call
 import game.vinto.app.art.card_described
 import game.vinto.app.art.card_face_down
@@ -109,6 +110,7 @@ import game.vinto.client.SeatChoice
 import game.vinto.client.ShedLine
 import game.vinto.client.Speaker
 import game.vinto.client.StepHealth
+import game.vinto.client.StepLine
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
@@ -496,6 +498,29 @@ private fun LaneRow(lane: LaneLine, stage: Stage, onMove: (Move) -> Unit) {
             color = if (broken) WarnInk else Rail.ink,
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+    lane.suggestion?.let { WouldRather(lane, it, stage, onMove) }
+}
+
+/**
+ * "Nina would rather swap …": the lane owner's alternative to the step somebody set for them
+ * (3.13). Tapping what they said puts it on the board, the way agreeing with a person at a
+ * table does — nobody's edit is written over by a bot, and there is no second control to learn.
+ */
+@Composable
+private fun WouldRather(lane: LaneLine, suggestion: StepLine, stage: Stage, onMove: (Move) -> Unit) {
+    val words = stringResource(Res.string.board_would_rather, speakerName(lane.who), stepWords(suggestion))
+    val use = lane.useSuggestion
+    if (use != null) {
+        GameButton(
+            label = words,
+            tone = ButtonTone.KEEP,
+            onClick = { onMove(use) },
+            modifier = Modifier.fillMaxWidth().markedAs(stage, "suggest:" + speakerKey(lane.who)),
+            compact = true,
+        )
+    } else {
+        Text(text = words, fontSize = DetailSize, color = Rail.ink, modifier = Modifier.fillMaxWidth())
     }
 }
 

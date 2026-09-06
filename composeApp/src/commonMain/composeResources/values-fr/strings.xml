@@ -509,6 +509,7 @@
     <string name="board_step_take_discard">prendre la défausse</string>
     <string name="board_step_put_down">poser la carte %2$d de %1$s</string>
     <string name="board_step_put_down_known">poser la carte %2$d de %1$s, le %3$s</string>
+    <string name="board_would_rather">%1$s préférerait %2$s</string>
     <string name="board_shed">%1$s va riposter avec un %2$s</string>
     <string name="board_edited_by">dernière modification par %1$s</string>
     <string name="board_nod_yes">%1$s est d’accord</string>

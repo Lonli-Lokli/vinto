@@ -511,6 +511,7 @@
     <string name="board_step_take_discard">prendi lo scarto</string>
     <string name="board_step_put_down">metti giù la carta %2$d %1$s</string>
     <string name="board_step_put_down_known">metti giù la carta %2$d %1$s, la %3$s</string>
+    <string name="board_would_rather">%1$s preferirebbe %2$s</string>
     <string name="board_shed">%1$s butterà dentro un %2$s</string>
     <string name="board_edited_by">ultima modifica di %1$s</string>
     <string name="board_nod_yes">%1$s è d’accordo</string>

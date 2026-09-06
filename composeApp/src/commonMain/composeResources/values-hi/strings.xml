@@ -509,6 +509,7 @@
     <string name="board_step_take_discard">चुका हुआ पत्ता लें</string>
     <string name="board_step_put_down">%1$s पत्ता %2$d नीचे रखें</string>
     <string name="board_step_put_down_known">%1$s पत्ता %2$d, जो %3$s है, नीचे रखें</string>
+    <string name="board_would_rather">%1$s इसके बजाय पसंद करेंगे: %2$s</string>
     <string name="board_shed">%1$s एक %2$s फेंकेंगे</string>
     <string name="board_edited_by">आखिरी बदलाव %1$s द्वारा</string>
     <string name="board_nod_yes">%1$s ने सहमति दी है</string>

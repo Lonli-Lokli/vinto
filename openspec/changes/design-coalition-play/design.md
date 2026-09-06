@@ -362,6 +362,15 @@ plan is settled when each executor has accepted their own part — and it is the
 unanimity proves too slow for a twenty-second window. Whole-plan agreement is what the lanes'
 interdependence wants.
 
+**The bound on a bot editing the board (3.13), decided:** there is none, because there is no
+bot edit. A bot offered a step for its own lane that it would not play answers "that leaves us
+worse" and puts what it would rather do *beside* the step (`Lane.suggestion`), never over it.
+A person puts it on the board with one tap, which is an ordinary edit in their own name and
+clears the suggestion; any other edit to the lane clears it too. Three options were weighed —
+bots never counter; one bot counter-edit per person edit; the bot speaks and a person applies —
+and the third was chosen because it is what a person at a table does, and because it keeps both
+D5 and this section intact: propose, never command, and a person's edit stands.
+
 ## D8. Rehearse the plan; do not describe it
 
 `choreograph(action, before, after)` is pure, so a hypothetical before/after pair animates a
