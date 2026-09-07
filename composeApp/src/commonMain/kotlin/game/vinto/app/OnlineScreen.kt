@@ -34,11 +34,12 @@ import game.vinto.app.art.online_join
 import game.vinto.app.art.online_join_detail
 import game.vinto.app.art.online_join_screen
 import game.vinto.app.art.online_join_title
-import game.vinto.app.art.online_nickname_detail
 import game.vinto.app.art.online_offline
 import game.vinto.app.art.online_open_detail
 import game.vinto.app.art.online_open_screen
 import game.vinto.app.art.online_open_title
+import game.vinto.app.art.online_return_detail
+import game.vinto.app.art.online_return_title
 import game.vinto.app.art.online_screen_title
 import game.vinto.app.art.online_visibility
 import game.vinto.app.art.online_visibility_detail
@@ -59,9 +60,13 @@ import game.vinto.client.OnlineWord
 import game.vinto.client.RoomAnswer
 import game.vinto.client.RoomConnector
 import game.vinto.client.Vault
+import game.vinto.client.currentRoom
 import game.vinto.client.identity
 import game.vinto.client.onlineDoor
+import game.vinto.client.rememberAvatar
 import game.vinto.client.rememberNickname
+import game.vinto.protocol.AvatarKind
+import game.vinto.protocol.avatarKindOf
 import game.vinto.protocol.looksMinted
 import game.vinto.protocol.mintNickname
 import kotlinx.coroutines.launch
@@ -86,6 +91,8 @@ import org.jetbrains.compose.resources.stringResource
 fun OnlineScreen(
     vault: Vault,
     onOpenRoom: (nickname: String) -> Unit,
+    /** Back into a seat still held, rather than into a new room. */
+    onReturn: (code: String, nickname: String) -> Unit,
     onJoinByCode: (nickname: String) -> Unit,
     onBrowse: (nickname: String) -> Unit,
     onBack: () -> Unit,
@@ -104,11 +111,24 @@ fun OnlineScreen(
      * their vault, and reading it back would put exactly the text this change removes onto the
      * felt of the first room they joined.
      */
+    val saved = remember { vault.identity { freshSeed() } }
     var nickname by remember {
-        mutableStateOf(
-            vault.identity { freshSeed() }.nickname.takeIf(::looksMinted) ?: mintNickname(freshSeed()),
-        )
+        mutableStateOf(saved.nickname.takeIf(::looksMinted) ?: mintNickname(freshSeed()))
     }
+
+    /**
+     * The face, as the two numbers that draw it.
+     *
+     * A player who has never chosen is given one rather than shown a blank: an empty circle on
+     * the way into a game is a chore, and the whole point of generating these is that there is
+     * always one to hand. It is minted from the same fresh number the name is, so the first
+     * thing anybody sees is a face and a name that go together, and either can be changed.
+     */
+    var avatarKind by remember {
+        mutableStateOf(if (saved.hasAvatar) avatarKindOf(saved.avatarKind) else AvatarKind.FACE)
+    }
+    var avatarSeed by remember { mutableStateOf(if (saved.hasAvatar) saved.avatarSeed else freshSeed()) }
+    var ground by remember { mutableStateOf(saved.avatarGround) }
 
     // Whether any of the three can work at all. Aeroplane mode used to be found out one
     // screen later, as a failure with a hostname in it; the platform knew before the tap, so
@@ -117,23 +137,52 @@ fun OnlineScreen(
     // a network that is there and dead.
     val door = onlineDoor(LocalReachability.current)
 
+    /** The room this device stepped out of, if it has not given the seat up since. */
+    val held = remember { vault.currentRoom() }
+
     // Saved on the way out of this screen rather than on every keystroke: the vault is a
     // write to storage, and a name is typed a character at a time.
     fun leaveWith(go: (String) -> Unit) {
         // The sentence is already on the screen; a press on a dimmed tile has nothing to add.
         if (!door.open) return
         vault.rememberNickname(nickname)
+        vault.rememberAvatar(avatarKind.ordinal, avatarSeed, ground)
         go(nickname)
     }
 
     Scaffold(title = stringResource(Res.string.online_screen_title), onBack = onBack) {
-        // The name itself is the title, because it is the thing being looked at; the row is a
-        // press rather than a field because the only choice on offer is "not that one".
-        ActionTile(
-            title = nickname,
-            detail = stringResource(Res.string.online_nickname_detail),
-            onClick = { nickname = mintNickname(freshSeed()) },
+        // Who you are, and deliberately NOT a fourth ActionTile — see `IdentityControl.kt` for
+        // why the tile it used to wear was the wrong object for it.
+        IdentityStrip(
+            nickname = nickname,
+            avatarKind = avatarKind,
+            avatarSeed = avatarSeed,
+            ground = ground,
+            onNewName = { nickname = mintNickname(freshSeed()) },
+            onPick = { kind, seed ->
+                avatarKind = kind
+                avatarSeed = seed
+            },
+            onGround = { ground = it },
+            freshSeed = { freshSeed() },
         )
+
+        // The way back into a seat that is still held, above the three ways to take a new one.
+        //
+        // First because it is the answer to a question the other three cannot answer: somebody
+        // who stepped out of a room and came back here wants that room, and "open a room" giving
+        // them a second one is how a player ends up owning several. Offered whenever a code is
+        // remembered rather than checked against the room first — the front door has to work on
+        // a bad network, and a refusal is handled where every other refusal is, on the way in.
+        held?.let { code ->
+            ActionTile(
+                title = stringResource(Res.string.online_return_title),
+                detail = stringResource(Res.string.online_return_detail, code),
+                accent = ButtonTone.PLAY.rim,
+                onClick = { leaveWith { onReturn(code, it) } },
+                enabled = door.open,
+            )
+        }
 
         // Exhaustive, so a third word is a compile error here rather than a menu that dims
         // its tiles and says nothing about why.
@@ -147,11 +196,12 @@ fun OnlineScreen(
             )
         }
 
-        // The one that needs nothing from anybody else, so it is the one wearing the colour.
+        // The one that needs nothing from anybody else, so it wears the colour — unless there is
+        // a seat to go back to, which outranks opening a second room.
         ActionTile(
             title = stringResource(Res.string.online_open_title),
             detail = stringResource(Res.string.online_open_detail),
-            accent = ButtonTone.PLAY.rim,
+            accent = ButtonTone.PLAY.rim.takeIf { held == null },
             onClick = { leaveWith(onOpenRoom) },
             enabled = door.open,
         )

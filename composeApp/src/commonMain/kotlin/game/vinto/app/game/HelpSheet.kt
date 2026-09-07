@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import game.vinto.app.Pages
 import game.vinto.app.art.Res
 import game.vinto.app.art.help_card_worth
 import game.vinto.app.art.help_closing
@@ -30,6 +31,9 @@ import game.vinto.app.art.help_group_numbers
 import game.vinto.app.art.help_group_odd
 import game.vinto.app.art.help_no_action
 import game.vinto.app.art.help_right_now
+import game.vinto.app.art.help_rules_action
+import game.vinto.app.art.help_rules_body
+import game.vinto.app.art.help_rules_title
 import game.vinto.app.art.help_signals
 import game.vinto.app.art.help_the_cards
 import game.vinto.app.art.signal_coalition
@@ -51,7 +55,10 @@ import game.vinto.app.art.signal_vinto_meaning
 import game.vinto.app.cardLong
 import game.vinto.app.cardName
 import game.vinto.app.explained
+import game.vinto.app.openUrl
+import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.CardWhite
+import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Signal
 import game.vinto.app.theme.Slate
@@ -180,7 +187,40 @@ fun HelpSheet(open: Boolean, now: Explains?, onDismiss: () -> Unit, focus: Rank?
                     modifier = Modifier.padding(vertical = Pad),
                 )
             }
+
+            // The rulebook, and deliberately not in here. This sheet answers the question a
+            // player has mid-turn — what does this card do — with a card waiting and one hand
+            // free. `VINTO_RULES.md` runs to four pages, and the answer to "what are the rules"
+            // belongs with the people whose game it is: one authoritative copy, theirs.
+            item { RulesLink() }
         }
+    }
+}
+
+/** Where the rest of the rules are, on the original game's own site. */
+@Composable
+private fun RulesLink() {
+    Column(modifier = Modifier.padding(top = Gap, bottom = Pad)) {
+        Text(
+            stringResource(Res.string.help_rules_title),
+            fontWeight = FontWeight.Bold,
+            fontSize = TitleSize,
+        )
+        Text(
+            stringResource(Res.string.help_rules_body),
+            fontSize = BodySize,
+            color = Rail.inkDim,
+            modifier = Modifier.padding(vertical = Pad),
+        )
+        GameButton(
+            label = stringResource(Res.string.help_rules_action),
+            tone = ButtonTone.NEUTRAL,
+            // A link that cannot open is silent on purpose: there is nothing a player can do
+            // about a missing browser, and the sheet they are reading is not the place to say
+            // so. Settings, where a link is the point of the row, reports it.
+            onClick = { openUrl(Pages.RULES) },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

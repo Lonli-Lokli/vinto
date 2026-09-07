@@ -48,9 +48,11 @@ import game.vinto.client.Settings
 import game.vinto.client.ThemeChoice
 import game.vinto.client.Vault
 import game.vinto.client.forgetGame
+import game.vinto.client.forgetRoom
 import game.vinto.client.identity
 import game.vinto.client.loadGame
 import game.vinto.client.loadSettings
+import game.vinto.client.rememberRoom
 import game.vinto.client.saveSettings
 import game.vinto.protocol.AnalyticsEvent
 import game.vinto.protocol.FunnelStep
@@ -218,6 +220,8 @@ fun App(
                                     is Screen.Settings -> SettingsScreen(
                                         settings = settings,
                                         canForget = vault.loadGame() != null,
+                                        page = here.page,
+                                        onOpen = { screen = here.copy(page = it) },
                                         onChange = ::change,
                                         onForget = {
                                             vault.forgetGame()
@@ -255,9 +259,7 @@ fun App(
                                         room = here.room,
                                         pace = settings.pace,
                                         onSettings = { screen = Screen.Settings(back = here) },
-                                        onLeft = {
-                                            screen = Screen.Home(canContinue = vault.loadGame() != null)
-                                        },
+                                        onLeft = { screen = homeAfterLeaving(vault) },
                                     )
                                 }
                             }
@@ -308,6 +310,18 @@ private fun ThemeChoice.isDark(): Boolean = when (this) {
     ThemeChoice.DARK -> true
 }
 
+/**
+ * Where the Leave button lands, and what it forgets on the way.
+ *
+ * The seat was given up rather than stepped out of, so the room to offer a way back into is
+ * gone with it — leaving the code vaulted would put a "return to your room" on the front door
+ * pointing at a chair this player deliberately vacated.
+ */
+private fun homeAfterLeaving(vault: Vault): Screen {
+    vault.forgetRoom()
+    return Screen.Home(canContinue = vault.loadGame() != null)
+}
+
 /** Which surface a destination counts as. See [LocalSurface]. */
 private fun surfaceOf(screen: Screen): Surface = when (screen) {
     is Screen.Playing -> Surface.SOLO
@@ -327,11 +341,21 @@ private fun surfaceOf(screen: Screen): Surface = when (screen) {
  *  - **the settings know their own way back.** Since the gear reached the table's header they
  *    are reachable mid-round, and a back that went home would abandon the round somebody
  *    stepped out of to change the pace of.
- *  - **backing out of a room is leaving it**, so the socket loop does not outlive the screen.
- *    The seat token stays vaulted, so this is not a lost seat.
+ *  - **backing out of a room steps out of it**, so the socket loop does not outlive the screen,
+ *    and the seat is kept rather than given up. The room cannot tell a closed socket from a
+ *    tunnel and holds the chair either way; the front door offers the way back in. Giving the
+ *    seat up for good is the Leave button, which sends `ClientMessage.Leave`.
+ *
+ *    This used to be the same gesture as Leave, and that was the bug: neither of them told the
+ *    room anything, so a player who backed out and opened another room left the first one
+ *    holding a chair for somebody who was never coming back.
  */
 private fun Screen.backedOutOf(vault: Vault): Screen {
-    if (this is Screen.Settings) return back
+    // A submenu backs out to the settings' own front page first, which is where its chevron
+    // goes; only the front page leaves the settings altogether.
+    if (this is Screen.Settings) {
+        return if (page == SettingsPage.ROOT) back else copy(page = SettingsPage.ROOT)
+    }
     // The three ways in back out to the front door, which is where their own chevron goes.
     // They did not: `Discover` sent the system back button all the way Home while the button
     // drawn on the screen went to `Online`, so one gesture meant two things depending on
@@ -360,7 +384,16 @@ private sealed interface Screen {
      * setting nobody ever changes. [back] is the screen the gear was pressed on — the same
      * `Playing` holding the same `LocalGame`, so nothing is re-dealt or re-connected.
      */
-    data class Settings(val back: Screen) : Screen
+
+    /**
+     * The settings, on [page].
+     *
+     * The page is part of the destination rather than state inside the screen, so the phone's
+     * back gesture can step out of a submenu the same way the chevron does — see
+     * [backedOutOf]. `Discover` is the reason that matters: one gesture meaning two things
+     * depending on whether you used the phone's button or the app's is the bug this avoids.
+     */
+    data class Settings(val back: Screen, val page: SettingsPage = SettingsPage.ROOT) : Screen
 
     /** A real round with a coach over it. */
     data object Teaching : Screen
@@ -494,9 +527,14 @@ private fun roomScreen(
     scope: kotlinx.coroutines.CoroutineScope,
     code: String,
     nickname: String,
-): Screen = Screen.InRoom(
-    RemoteRoom(connector = connector, code = code, vault = vault, nickname = nickname, scope = scope),
-)
+): Screen {
+    // Remembered here rather than on the way out, because the way out that matters is the one
+    // nobody presses: a phone that dies in a lobby has still left a seat to come back to.
+    vault.rememberRoom(code)
+    return Screen.InRoom(
+        RemoteRoom(connector = connector, code = code, vault = vault, nickname = nickname, scope = scope),
+    )
+}
 
 /**
  * Everything between launching and playing, which is one disk read and one decision.
@@ -595,6 +633,7 @@ private fun OnlineFlow(
         Screen.Online -> OnlineScreen(
             vault = vault,
             onOpenRoom = { go(Screen.OpenRoom(it)) },
+            onReturn = { code, nickname -> go(enterRoom(code, nickname)) },
             onJoinByCode = { go(Screen.JoinByCode(it)) },
             onBrowse = { go(Screen.Discover(it)) },
             onBack = { go(Screen.Home(canContinue = vault.loadGame() != null)) },

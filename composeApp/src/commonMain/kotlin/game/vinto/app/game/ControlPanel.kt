@@ -95,6 +95,7 @@ import game.vinto.app.stepWords
 import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
+import game.vinto.app.theme.GeneratedAvatar
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltEdge
 import game.vinto.client.Aim
@@ -1144,17 +1145,27 @@ private fun SeatGrid(seats: List<SeatChoice>, onMove: (Move) -> Unit) {
         seats.forEach { seat ->
             // Keyed on the seat's own name rather than on what the button calls them: the
             // label reads "You" for your own seat, and "You" is not a face.
+            val chosen = chosenFace(seat.nickname)
             val portrait = portraitOrNull(seat.nickname)
+            val hasFace = chosen != null || portrait != null
             GameButton(
                 label = speakerName(seat.who),
                 tone = ButtonTone.DECLARE,
                 onClick = { onMove(seat.move) },
                 modifier = Modifier.weight(1f),
                 compact = true,
-                leadingContent = portrait?.let { face -> { SeatFace(face) } },
+                leadingContent = when {
+                    chosen != null -> {
+                        { GeneratedAvatar(chosen.traits(), chosen.ground(), SeatFaceSize) }
+                    }
+                    portrait != null -> {
+                        { SeatFace(portrait) }
+                    }
+                    else -> null
+                },
                 // Above the name where there is a face to show, beside it where there is not:
                 // a plaque with a blank space over the word is worse than a plain plaque.
-                stacked = portrait != null,
+                stacked = hasFace,
             )
         }
     }

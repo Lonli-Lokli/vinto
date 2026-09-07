@@ -52,6 +52,8 @@ class ScreenshotTest {
         SettingsScreen(
             settings = Settings(),
             canForget = true,
+            page = SettingsPage.ROOT,
+            onOpen = {},
             onChange = {},
             onForget = {},
             onBack = {},

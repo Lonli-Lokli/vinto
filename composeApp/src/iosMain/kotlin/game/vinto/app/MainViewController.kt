@@ -16,6 +16,13 @@ fun MainViewController(): platform.UIKit.UIViewController {
     // Before the controller is built, so a failure in the first composition is reported.
     // `install` is idempotent, and Swift may well ask for a second controller.
     Crashes.install(appReportingScope())
+
+    // The payment queue's observer belongs at launch rather than on the screen that offers the
+    // purchase: StoreKit delivers an interrupted transaction on the *next* launch, and nothing
+    // listening at that moment means a charge that never reaches the app. `attach` is
+    // idempotent for the same reason `install` is — Swift may ask for a second controller.
+    IosBilling.attach()
+
     return ComposeUIViewController { App(marketing = captureScene()) }
 }
 

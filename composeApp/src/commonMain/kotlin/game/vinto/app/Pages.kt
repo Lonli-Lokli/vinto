@@ -46,8 +46,36 @@ object Pages {
      */
     const val OFFICIAL: String = "https://vinto.game"
 
+    /**
+     * The rules, from the people whose game it is.
+     *
+     * The help sheet says what a card does *in this app*, which is the question somebody has
+     * mid-turn. It is deliberately not the whole rulebook — `VINTO_RULES.md` runs to four pages
+     * and the sheet is read one-handed with a card waiting. This is where the rest lives, and
+     * pointing at the original rather than restating them keeps one copy authoritative: if this
+     * app and that page disagree, that page is right and this app is the bug.
+     *
+     * The second address here that is deliberately not ours, and named in `SettingsLinksTest`
+     * for the same reason [OFFICIAL] is.
+     */
+    const val RULES: String = "$OFFICIAL/rules/"
+
     /** This app's own page on the studio's site: what it is, and what else is on the shelf. */
     const val THIS_APP: String = "$STUDIO/games/vinto"
+
+    /**
+     * Where somebody can say thanks with whatever amount they choose.
+     *
+     * **The web and the desktop only, and that is not a style note.** Sending a player to an
+     * outside payment page is App Store 3.1.1 — collecting money for a developer outside in-app
+     * purchase — and Google's policy says the same. Neither reaches a build that is in no store,
+     * which is what the web and the desktop are; the phones get a fixed-price in-app purchase
+     * instead (`Support.kt`).
+     *
+     * The third address in this file that is deliberately not ours, named in `SettingsLinksTest`
+     * beside the other two. `SupportLinkTest` is the one that keeps it off the phones.
+     */
+    const val SUPPORT: String = "https://buymeacoffee.com/lonlilokliv"
 
     /**
      * The two store listings, for the rate button. `storeReviewUrl()` picks between them.

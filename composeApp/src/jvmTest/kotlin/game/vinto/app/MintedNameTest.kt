@@ -2,11 +2,9 @@ package game.vinto.app
 
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runComposeUiTest
@@ -58,7 +56,7 @@ class MintedNameTest {
     }
 
     /**
-     * Pressing the row takes another name, which is the whole of the choice on offer.
+     * Pressing the re-roll takes another name, which is the whole of the choice on offer.
      *
      * Two presses rather than one, because a generator is allowed to hand back the same name
      * twice and a test that demanded otherwise would be flaky roughly one time in a thousand.
@@ -68,11 +66,11 @@ class MintedNameTest {
         online()
         val first = shownName()
 
-        nameRow().performClick()
+        reroll()
         waitForIdle()
         val second = shownName()
         if (second == first) {
-            nameRow().performClick()
+            reroll()
             waitForIdle()
         }
 
@@ -81,25 +79,29 @@ class MintedNameTest {
         assertNotEquals(first, third, "the name never changed across two presses")
     }
 
-    /** The name is the row's title, so reading it is reading the row. */
-    private fun ComposeUiTest.shownName(): String {
-        val detail = "What the other seats see. Tap for a different one. Not an account — there are none."
-        // The tile is described to a screen reader as "<title>. <detail>", so the name is what
-        // is left when the detail is taken off the end.
-        return tileDescription(detail).removeSuffix(detail).trim().removeSuffix(".").trim()
-    }
-
-    private fun ComposeUiTest.tileDescription(detail: String): String {
-        val node = onNodeWithText(detail, substring = true).performScrollTo()
-        node.assertIsDisplayed()
-        return node.fetchSemanticsNode().config
+    /**
+     * The strip announces itself as "<label>: <name>", so reading it is reading that one node.
+     *
+     * It used to read the name off an `ActionTile`'s description, which is what tied this test
+     * to the widget rather than to the screen. The strip that replaced the tile is not a tile —
+     * see `IdentityControl.kt` for why — so what is asserted now is the *announcement*, which is
+     * the thing a player using a screen reader actually gets.
+     */
+    private fun ComposeUiTest.shownName(): String =
+        onNodeWithContentDescription(NAME_LABEL, substring = true)
+            .performScrollTo()
+            .fetchSemanticsNode()
+            .config
             .first { it.key.name == "ContentDescription" }
             .value
             .let { (it as List<*>).joinToString(" ") }
-    }
+            .substringAfter(": ")
+            .trim()
 
-    private fun ComposeUiTest.nameRow(): SemanticsNodeInteraction =
-        onNodeWithText("What the other seats see", substring = true).performScrollTo()
+    /** The re-roll, which is now a button of its own rather than the name being tappable. */
+    private fun ComposeUiTest.reroll() {
+        onNodeWithContentDescription(ANOTHER_NAME).performScrollTo().performClick()
+    }
 
     private fun ComposeUiTest.press(label: String) {
         val node = onNodeWithContentDescription(label)
@@ -116,5 +118,9 @@ class MintedNameTest {
 
     private companion object {
         const val SEED = 20_260_901L
+
+        /** What the strip announces itself as, and what the re-roll is called to a reader. */
+        const val NAME_LABEL = "Your name at the table"
+        const val ANOTHER_NAME = "Give me another name"
     }
 }

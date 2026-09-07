@@ -128,6 +128,9 @@ kotlin {
             // WebSocket — java.net.http never shipped in the Android SDK.
             implementation(libs.okhttp)
             implementation(libs.androidx.activity.compose)
+            // The one thing this app sells. See `Support.kt` for why a single fixed price and
+            // not an amount somebody types.
+            implementation(libs.play.billing)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -333,16 +336,34 @@ abstract class GenerateBuildInfo : DefaultTask() {
     }
 }
 
+/**
+ * Kept identical to `OFFSET` in `Scripts/build-number.sh` and to `androidApp`'s own constant.
+ *
+ * Three copies of one number is two too many, and the reason is the same each time: Gradle
+ * cannot shell out to a `.sh` on Windows, where this module is expected to build. It is a
+ * constant that never changes again, and the documented release command passes `-PversionCode`
+ * anyway — this branch only serves a build that names no version.
+ */
+private val BUILD_NUMBER_OFFSET = 100
+
 val generateBuildInfo =
     tasks.register<GenerateBuildInfo>("generateBuildInfo") {
         description = "Writes the build-time constants a common source set cannot get from BuildConfig."
         // The same source as androidApp's versionCode, deliberately: a build number that a
         // player can read but nothing can be matched to is worse than none. `providers.exec`
         // because the configuration cache is on and shelling out any other way fails the build.
+        // `+ BUILD_NUMBER_OFFSET`, the same constant `Scripts/build-number.sh` and
+        // `androidApp/build.gradle.kts` carry: master's history was cherry-picked rather than
+        // merged, so its plain commit count sits below build numbers already on both stores.
+        // Without it the web footer disagreed with the phones about which build it was.
+        // Copied into a local before the provider chain: a lambda that reads the script-level
+        // constant captures the script itself, which the configuration cache cannot serialise.
+        val offset = BUILD_NUMBER_OFFSET
         buildNumber.set(
             providers.gradleProperty("versionCode").orElse(
                 providers.exec { commandLine("git", "rev-list", "--count", "HEAD") }
-                    .standardOutput.asText.map { it.trim() },
+                    .standardOutput.asText.map { (it.trim().toIntOrNull() ?: 0) + offset }
+                    .map { it.toString() },
             ).orElse("1"),
         )
         sentryDsn.set(

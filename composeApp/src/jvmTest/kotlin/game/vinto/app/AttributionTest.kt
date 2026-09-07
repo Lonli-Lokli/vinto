@@ -79,7 +79,8 @@ class AttributionTest {
      * The settings say it again, with the address itself and beside the app's own page.
      *
      * Twice on purpose: the home screen is where somebody is told, and About is where they
-     * go looking when they want to check. The first is a courtesy and the second is what a
+     * go looking when they want to check — now a door of its own, which is where the word
+     * sends somebody anyway. The first is a courtesy and the second is what a
      * person does when they suspect an app of pretending to be something it is not.
      */
     @Test
@@ -87,6 +88,11 @@ class AttributionTest {
         setContent { VintoTheme { App(seeds = { SEED }, vault = MemoryVault()) } }
         waitForIdle()
         onNodeWithContentDescription("Settings").performScrollTo().performClick()
+        waitForIdle()
+        // One tap further than it was: the settings' eighteen panels became three doors, and
+        // this is the one somebody goes looking under when they want to check. The promise is
+        // unchanged — the home screen still says it first, without scrolling and without a tap.
+        onNodeWithText("ABOUT").performScrollTo().performClick()
         waitForIdle()
 
         listOf("The original game", "About this app").forEach {

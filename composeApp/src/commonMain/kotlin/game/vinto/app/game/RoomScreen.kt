@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -109,6 +110,10 @@ fun RoomScreen(room: RemoteRoom, pace: Pace, onSettings: () -> Unit, onLeft: () 
     val session by room.session.collectAsState()
     val ended by room.ended.collectAsState()
 
+    // Provided once, here, because this is the only screen that has them: a solo game leaves the
+    // map empty and every seat falls through to its element's emblem, exactly as before.
+    val faces by room.faces.collectAsState()
+
     // What the room asked to have said once — a newer build waiting. Over whichever screen
     // is up, and gone when the person has answered it either way.
     val notice by room.notice.collectAsState()
@@ -123,6 +128,21 @@ fun RoomScreen(room: RemoteRoom, pace: Pace, onSettings: () -> Unit, onLeft: () 
         )
     }
 
+    CompositionLocalProvider(LocalFaces provides faces) {
+        Table(room, session, pace, ended, onSettings, onLeft)
+    }
+}
+
+/** The lobby or the felt, whichever the room is on. Split out so the provider above stays one line. */
+@Composable
+private fun Table(
+    room: RemoteRoom,
+    session: RemoteGameSession?,
+    pace: Pace,
+    ended: String?,
+    onSettings: () -> Unit,
+    onLeft: () -> Unit,
+) {
     when (val playing = session) {
         null -> LobbyScreen(room, onLeft)
         else -> RemoteGameScreen(
@@ -234,7 +254,9 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
                 label = stringResource(Res.string.lobby_leave),
                 tone = ButtonTone.NEUTRAL,
                 onClick = {
-                    room.leave()
+                    // The deliberate exit: the seat is given up, not merely disconnected from.
+                    // Backing out of this screen is the other one and keeps it.
+                    room.quit()
                     onLeft()
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -656,7 +678,7 @@ private fun RemoteGameScreen(
             },
             onQuit = {
                 scoreOpen = false
-                room.leave()
+                room.quit()
                 onLeft()
             },
         )

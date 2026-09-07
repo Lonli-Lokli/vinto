@@ -44,6 +44,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -58,6 +59,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import game.vinto.app.Support
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
 import game.vinto.app.art.badge_disputed
@@ -76,6 +78,7 @@ import game.vinto.app.art.header_deck_badge
 import game.vinto.app.art.header_deck_left
 import game.vinto.app.art.header_report
 import game.vinto.app.art.header_settings
+import game.vinto.app.art.header_support
 import game.vinto.app.art.table_away_mark
 import game.vinto.app.art.table_discard
 import game.vinto.app.art.table_draw
@@ -94,7 +97,10 @@ import game.vinto.app.art.table_toss_in_summary
 import game.vinto.app.art.table_toss_in_timed
 import game.vinto.app.art.table_tossed
 import game.vinto.app.art.table_vinto_mark
+import game.vinto.app.openUrl
 import game.vinto.app.speakerName
+import game.vinto.app.supportOffer
+import game.vinto.app.theme.GeneratedAvatar
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Slate
 import game.vinto.app.theme.Wordmark
@@ -149,6 +155,57 @@ private const val SHADOW_SQUASH = 0.38f
 
 /** Every control in the header is a thumb wide, whatever is drawn inside it. */
 private val HeaderTap = 44.dp
+
+/**
+ * The header's controls are rounded squares, not circles.
+ *
+ * Nothing else in the chrome is a circle. The deck is rounded rectangles, so are the buttons,
+ * the chips and the sheets — the four controls up here were the only round things that are not
+ * a *face*, which made them read as a different app's toolbar parked above the felt. The one
+ * genuinely round thing on this screen is a seat's portrait, and that is a portrait: keeping
+ * circles for faces and squares for controls says which is which before anything is read.
+ *
+ * 10 dp, the same corner `GameButton` cuts, so a header control and a button in the panel
+ * below it are the same object at two sizes.
+ */
+private val HeaderShape = RoundedCornerShape(10.dp)
+
+/**
+ * A hairline, and a ghost fill — four boxed controls made the header the busiest row on screen.
+ *
+ * `Rail.edge` is the 3:1 outline that says where a pressable thing begins, and dropping to
+ * `Rail.line` moves that job from the box to the **glyph**, which is why the mark inside stepped
+ * up from `Rail.inkDim` to `Rail.ink` in the same change. WCAG 1.4.11 asks that a control be
+ * identifiable, not that it be boxed: a high-contrast ? or gear identifies itself, and
+ * `ScreenContrastTest` measures the rendered pixels rather than taking that on trust.
+ *
+ * The fill goes entirely. It was `Rail.fill`, which on the rail is the rail's own colour — so it
+ * was never drawing anything, and the border was doing all the work by itself.
+ */
+private val HeaderHair = 1.dp
+
+/** Where a header control has room for a word beside its mark: a desktop or a landscape tablet. */
+private val WideHeader = 700.dp
+
+private val HeaderMark = 18.dp
+private val HeaderWordPad = 12.dp
+private val HeaderWordGap = 6.dp
+
+private const val CUP_PEN = 0.09f
+private const val CUP_LEFT = 0.18f
+private const val CUP_RIGHT = 0.68f
+private const val CUP_TOP = 0.42f
+private const val CUP_BOTTOM = 0.86f
+private const val CUP_LEFT_FOOT = 0.26f
+private const val CUP_RIGHT_FOOT = 0.60f
+private const val CUP_HANDLE_R = 0.13f
+private const val CUP_HANDLE_Y = 0.56f
+private const val CUP_HANDLE_FROM = -80f
+private const val CUP_HANDLE_SWEEP = 160f
+private const val CUP_MIDDLE = 0.42f
+private const val CUP_STEAM_OUT = 0.12f
+private const val CUP_STEAM_TOP = 0.10f
+private const val CUP_STEAM_FOOT = 0.28f
 private val WordmarkSize = 19.sp
 
 /**
@@ -329,6 +386,93 @@ data class TableState(
 )
 
 /**
+ * A way to say thanks, in the header — **and only where a store's rules do not reach**.
+ *
+ * Drawn when [supportOffer] answers [Support.Elsewhere], which is the web and the desktop. On
+ * Android and iOS the offer is an in-app purchase and lives in the settings, because sending a
+ * player from a game screen to an outside payment page is App Store 3.1.1 and Google's
+ * equivalent. That is not a rule this composable remembers: it simply has nothing to draw,
+ * because the platform's own actual never returns a link. `SupportLinkTest` is what keeps that
+ * true of the source.
+ *
+ * **The label appears when there is room for it**, which is the wide-window case — a desktop or
+ * a landscape tablet. On a narrow one the cup carries it alone, like every other control up
+ * here. It is measured against the window rather than switched on a platform: the web build
+ * runs on a phone as readily as on a laptop, and it is the width that decides whether a word
+ * fits, not what the app was compiled for.
+ */
+@Composable
+private fun SupportGlyph(wide: Boolean) {
+    val offer = remember { supportOffer() }
+    if (offer !is Support.Elsewhere) return
+
+    val label = stringResource(Res.string.header_support)
+    val ink = Rail.ink
+
+    Surface(
+        onClick = { openUrl(offer.url) },
+        modifier = Modifier.height(HeaderTap).semantics { contentDescription = label },
+        shape = HeaderShape,
+        color = Color.Transparent,
+        border = androidx.compose.foundation.BorderStroke(HeaderHair, Rail.line),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = if (wide) HeaderWordPad else 0.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(HeaderWordGap),
+        ) {
+            Box(
+                modifier = if (wide) Modifier else Modifier.width(HeaderTap),
+                contentAlignment = Alignment.Center,
+            ) {
+                Canvas(modifier = Modifier.size(HeaderMark)) { drawCup(ink) }
+            }
+            if (wide) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Rail.ink,
+                )
+            }
+        }
+    }
+}
+
+/** A cup with a handle and something rising off it — strokes, like every other mark here. */
+private fun DrawScope.drawCup(ink: Color) {
+    val w = size.minDimension
+    val pen = Stroke(width = w * CUP_PEN, cap = StrokeCap.Round)
+
+    val body = Path().apply {
+        moveTo(w * CUP_LEFT, w * CUP_TOP)
+        lineTo(w * CUP_RIGHT, w * CUP_TOP)
+        lineTo(w * CUP_RIGHT_FOOT, w * CUP_BOTTOM)
+        lineTo(w * CUP_LEFT_FOOT, w * CUP_BOTTOM)
+        close()
+    }
+    drawPath(body, color = ink, style = pen)
+
+    // The handle, on the right where a right-handed cup has it.
+    drawArc(
+        color = ink,
+        startAngle = CUP_HANDLE_FROM,
+        sweepAngle = CUP_HANDLE_SWEEP,
+        useCenter = false,
+        topLeft = Offset(w * CUP_RIGHT - w * CUP_HANDLE_R, w * CUP_HANDLE_Y - w * CUP_HANDLE_R),
+        size = Size(w * CUP_HANDLE_R * 2, w * CUP_HANDLE_R * 2),
+        style = pen,
+    )
+
+    // Two short strokes above it. Steam is what makes a cup read as a cup at 18 dp rather than
+    // as a bucket, and two is enough — a third closes the gap between them into a block.
+    listOf(-1f, 1f).forEach { side ->
+        val x = w * CUP_MIDDLE + side * w * CUP_STEAM_OUT
+        drawLine(ink, Offset(x, w * CUP_STEAM_TOP), Offset(x, w * CUP_STEAM_FOOT), pen.width, StrokeCap.Round)
+    }
+}
+
+/**
  * One header control: the dressed circle the "?" wears, holding a glyph drawn in the
  * rail's ink rather than fetched from an emoji font nobody chose.
  */
@@ -338,13 +482,13 @@ private fun HeaderGlyph(
     description: String,
     glyph: DrawScope.(Color) -> Unit,
 ) {
-    val ink = Rail.inkDim
+    val ink = Rail.ink
     Surface(
         onClick = onClick,
         modifier = Modifier.size(HeaderTap).semantics { contentDescription = description },
-        shape = CircleShape,
-        color = Rail.fill,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Rail.edge),
+        shape = HeaderShape,
+        color = Color.Transparent,
+        border = androidx.compose.foundation.BorderStroke(HeaderHair, Rail.line),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Canvas(modifier = Modifier.size(18.dp)) { glyph(ink) }
@@ -415,103 +559,113 @@ private fun TableHeader(
     val report = stringResource(Res.string.header_report)
     val settings = stringResource(Res.string.header_settings)
     val deck = stringResource(Res.string.header_deck_badge, view.drawPileSize)
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = Gap),
-        horizontalArrangement = Arrangement.spacedBy(Gap),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // On the rail, so the rail's own ink — not the theme's, which is a page colour and
-        // reads as dark-on-dark here.
-        Text(
-            stringResource(Res.string.app_name),
-            fontFamily = Wordmark,
-            fontSize = WordmarkSize,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 2.sp,
-            color = Rail.brand,
-        )
-        Text(
-            // The *game's* round, not the deal's. The engine counts rounds within one deal
-            // — it is a turn counter that wraps — while the player is counting hands played.
-            stringResource(Res.string.table_round_turn, round, view.turnNumber),
-            style = MaterialTheme.typography.labelLarge,
-            color = Rail.inkDim,
-        )
-
-        Box(modifier = Modifier.weight(1f))
-
-        // The rules, in the one place on the screen that never moves.
-        //
-        // It used to sit in the control panel beside the prompt, which meant it slid up and
-        // down with whatever the panel was asking — a fourteen-chip King grid one moment, one
-        // button the next. A control that is always available and never changes belongs in
-        // the header, where nothing else changes either.
-        Surface(
-            onClick = { onHelp(null) },
-            modifier = Modifier.size(HeaderTap).markedAs(LocalStage.current, Target.HELP),
-            shape = CircleShape,
-            color = Rail.fill,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Rail.edge),
+    // Measured here rather than from the window: `containerSize` reports the whole surface, and
+    // the header is not always the whole surface — a fixed-size preview, a split-screen phone or
+    // a resized desktop pane all have a header narrower than the window it sits in. Taking the
+    // window's width put the word on a phone-width header and squeezed the deck badge to nothing,
+    // which `TouchTargetTest` caught as a 0 dp target.
+    BoxWithConstraints {
+        val wideHeader = maxWidth >= WideHeader
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = Gap),
+            horizontalArrangement = Arrangement.spacedBy(Gap),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = "?",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Rail.inkDim,
-                )
+            // On the rail, so the rail's own ink — not the theme's, which is a page colour and
+            // reads as dark-on-dark here.
+            Text(
+                stringResource(Res.string.app_name),
+                fontFamily = Wordmark,
+                fontSize = WordmarkSize,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 2.sp,
+                color = Rail.brand,
+            )
+            Text(
+                // The *game's* round, not the deal's. The engine counts rounds within one deal
+                // — it is a turn counter that wraps — while the player is counting hands played.
+                stringResource(Res.string.table_round_turn, round, view.turnNumber),
+                style = MaterialTheme.typography.labelLarge,
+                color = Rail.inkDim,
+            )
+
+            Box(modifier = Modifier.weight(1f))
+
+            // The rules, in the one place on the screen that never moves.
+            //
+            // It used to sit in the control panel beside the prompt, which meant it slid up and
+            // down with whatever the panel was asking — a fourteen-chip King grid one moment, one
+            // button the next. A control that is always available and never changes belongs in
+            // the header, where nothing else changes either.
+            Surface(
+                onClick = { onHelp(null) },
+                modifier = Modifier.size(HeaderTap).markedAs(LocalStage.current, Target.HELP),
+                shape = HeaderShape,
+                color = Color.Transparent,
+                border = androidx.compose.foundation.BorderStroke(HeaderHair, Rail.line),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "?",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Rail.inkDim,
+                    )
+                }
             }
-        }
 
-        // The settings, from the table rather than only from the front door.
-        //
-        // Pace is the setting a player wants to change *while* something is too slow or too
-        // fast to sit through, and it was reachable only from the home screen — so changing it
-        // meant abandoning the round it was annoying you in, which is a price nobody pays; they
-        // put the phone down instead. Theme and haptics are the same shape of want. Going there
-        // and coming back returns to this exact table, mid-round, with nothing lost.
-        // The same dressed circle as the "?" beside it. These were colour emoji, which
-        // made the header three different design languages in a row — an outlined glyph,
-        // then whatever the platform's emoji font felt like. Drawn glyphs in the rail's
-        // own ink are one decision made once.
-        HeaderGlyph(onClick = onSettings, description = settings) { ink ->
-            drawGear(ink)
-        }
+            // The settings, from the table rather than only from the front door.
+            //
+            // Pace is the setting a player wants to change *while* something is too slow or too
+            // fast to sit through, and it was reachable only from the home screen — so changing it
+            // meant abandoning the round it was annoying you in, which is a price nobody pays; they
+            // put the phone down instead. Theme and haptics are the same shape of want. Going there
+            // and coming back returns to this exact table, mid-round, with nothing lost.
+            // The same dressed circle as the "?" beside it. These were colour emoji, which
+            // made the header three different design languages in a row — an outlined glyph,
+            // then whatever the platform's emoji font felt like. Drawn glyphs in the rail's
+            // own ink are one decision made once.
+            HeaderGlyph(onClick = onSettings, description = settings) { ink ->
+                drawGear(ink)
+            }
 
-        // Always reachable, because the moment worth reporting is the moment it goes wrong
-        // and nobody navigates to a menu to capture it.
-        HeaderGlyph(onClick = onReport, description = report) { ink ->
-            drawBug(ink)
-        }
+            // Always reachable, because the moment worth reporting is the moment it goes wrong
+            // and nobody navigates to a menu to capture it.
+            HeaderGlyph(onClick = onReport, description = report) { ink ->
+                drawBug(ink)
+            }
 
-        // The deck count, which answers when it is asked. It is the one number on the screen
-        // that decides how a round ends — when it runs out the pile is shuffled back in and
-        // everything anybody remembered about that pile is worthless — and a number nobody
-        // explains is a number nobody reads.
-        //
-        // Named as the control it is rather than as the count it shows: the draw pile on the
-        // felt below already reads out "N cards left in the deck", and when this said the same
-        // words a screen reader heard one screen say it twice without either saying that one
-        // of the two opens an explanation.
-        // Dressed exactly as the three controls beside it — one header, one language.
-        // It was a gold-on-green plaque, which made the row's fourth control a fourth style.
-        Surface(
-            onClick = onDeck,
-            modifier = Modifier
-                .size(HeaderTap)
-                .markedAs(LocalStage.current, Target.BADGE)
-                .semantics { contentDescription = deck },
-            shape = CircleShape,
-            color = Rail.fill,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Rail.edge),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    "${view.drawPileSize}",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Rail.inkDim,
-                )
+            SupportGlyph(wide = wideHeader)
+
+            // The deck count, which answers when it is asked. It is the one number on the screen
+            // that decides how a round ends — when it runs out the pile is shuffled back in and
+            // everything anybody remembered about that pile is worthless — and a number nobody
+            // explains is a number nobody reads.
+            //
+            // Named as the control it is rather than as the count it shows: the draw pile on the
+            // felt below already reads out "N cards left in the deck", and when this said the same
+            // words a screen reader heard one screen say it twice without either saying that one
+            // of the two opens an explanation.
+            // Dressed exactly as the three controls beside it — one header, one language.
+            // It was a gold-on-green plaque, which made the row's fourth control a fourth style.
+            Surface(
+                onClick = onDeck,
+                modifier = Modifier
+                    .size(HeaderTap)
+                    .markedAs(LocalStage.current, Target.BADGE)
+                    .semantics { contentDescription = deck },
+                shape = HeaderShape,
+                color = Color.Transparent,
+                border = androidx.compose.foundation.BorderStroke(HeaderHair, Rail.line),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        "${view.drawPileSize}",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Rail.inkDim,
+                    )
+                }
             }
         }
     }
@@ -718,9 +872,44 @@ private fun SideLabel(text: String, colour: Color) {
     )
 }
 
+/**
+ * Whoever said this, at badge size — the face they chose, or the emblem their name picks.
+ *
+ * Its own composable rather than a branch inside the badge, which was already at the edge of
+ * what a `when` over five speaker kinds should carry. Null draws nothing: your own face is on
+ * your plate already, so a claim of yours wears no portrait.
+ */
+@Composable
+private fun SpeakerFace(name: String?) {
+    val chosen = name?.let { chosenFace(it) }
+    if (chosen != null) {
+        GeneratedAvatar(traits = chosen.traits(), ground = chosen.ground(), size = BadgeFace)
+        return
+    }
+    portraitOrNull(name ?: "")?.let { portrait ->
+        Image(
+            painter = painterResource(portrait),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(BadgeFace).clip(CircleShape),
+        )
+    }
+}
+
 /** One player's portrait, at roster size. Named for a screen reader, since it is the label. */
 @Composable
 private fun Face(name: String, ringed: Boolean, ring: Color = Rail.brand) {
+    val chosen = chosenFace(name)
+    if (chosen != null) {
+        GeneratedAvatar(
+            traits = chosen.traits(),
+            ground = chosen.ground(),
+            size = FaceSize,
+            description = name,
+            modifier = if (ringed) Modifier.border(FaceRing, ring, CircleShape) else Modifier,
+        )
+        return
+    }
     Image(
         painter = painterResource(portraitFor(name)),
         contentDescription = name,
@@ -1238,14 +1427,7 @@ private fun ClaimBadge(badge: Badge, modifier: Modifier = Modifier) {
                     Speaker.You, Speaker.Nobody -> null
                 }
                 // Your own face is on your plate already; a claim of yours wears no portrait.
-                portraitOrNull(name ?: "")?.let { portrait ->
-                    Image(
-                        painter = painterResource(portrait),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(BadgeFace).clip(CircleShape),
-                    )
-                }
+                SpeakerFace(name)
             }
             Text(
                 text = mark + badge.text,

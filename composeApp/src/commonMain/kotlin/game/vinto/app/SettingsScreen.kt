@@ -1,6 +1,7 @@
 package game.vinto.app
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,8 +10,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -20,11 +23,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -39,12 +47,15 @@ import game.vinto.app.art.settings_bots
 import game.vinto.app.art.settings_bots_detail
 import game.vinto.app.art.settings_contact
 import game.vinto.app.art.settings_contact_detail
+import game.vinto.app.art.settings_explain
 import game.vinto.app.art.settings_forget
 import game.vinto.app.art.settings_forget_record
 import game.vinto.app.art.settings_group_about
-import game.vinto.app.art.settings_group_feel
+import game.vinto.app.art.settings_group_about_summary
 import game.vinto.app.art.settings_group_game
+import game.vinto.app.art.settings_group_game_summary
 import game.vinto.app.art.settings_group_privacy
+import game.vinto.app.art.settings_group_privacy_summary
 import game.vinto.app.art.settings_haptics
 import game.vinto.app.art.settings_haptics_detail
 import game.vinto.app.art.settings_language
@@ -65,7 +76,6 @@ import game.vinto.app.art.settings_pace_detail
 import game.vinto.app.art.settings_privacy
 import game.vinto.app.art.settings_privacy_detail
 import game.vinto.app.art.settings_rate
-import game.vinto.app.art.settings_rate_detail
 import game.vinto.app.art.settings_record
 import game.vinto.app.art.settings_record_detail
 import game.vinto.app.art.settings_saved_game
@@ -78,17 +88,32 @@ import game.vinto.app.art.settings_sound
 import game.vinto.app.art.settings_sound_detail
 import game.vinto.app.art.settings_studio
 import game.vinto.app.art.settings_studio_detail
+import game.vinto.app.art.settings_support
+import game.vinto.app.art.settings_support_buy
+import game.vinto.app.art.settings_support_detail
+import game.vinto.app.art.settings_support_link
+import game.vinto.app.art.settings_support_link_detail
+import game.vinto.app.art.settings_support_thanks
+import game.vinto.app.art.settings_support_unavailable
 import game.vinto.app.art.settings_terms
 import game.vinto.app.art.settings_terms_detail
 import game.vinto.app.art.settings_theme
 import game.vinto.app.art.settings_theme_detail
 import game.vinto.app.art.settings_title
 import game.vinto.app.art.settings_version
+import game.vinto.app.art.stats_best
+import game.vinto.app.art.stats_played
+import game.vinto.app.art.stats_separator
+import game.vinto.app.art.stats_streak
+import game.vinto.app.art.stats_won
+import game.vinto.app.openUrl
+import game.vinto.app.theme.ActionTile
 import game.vinto.app.theme.BackChevron
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Hairline
+import game.vinto.app.theme.LocalFeedback
 import game.vinto.app.theme.PickerField
 import game.vinto.app.theme.PickerRow
 import game.vinto.app.theme.PickerSheet
@@ -104,6 +129,7 @@ import game.vinto.client.ThemeChoice
 import game.vinto.client.forgetStats
 import game.vinto.client.loadStats
 import game.vinto.shapes.Difficulty
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 20.dp
@@ -124,10 +150,31 @@ private val PanelCorner = 12.dp
  * Each setting says what it *does* rather than what it is called. "Calm / Steady / Brisk" is a
  * label; "how quickly the table plays out what happened" is the setting.
  */
+
+/**
+ * Which page of the settings is showing.
+ *
+ * Carried on `Screen.Settings` rather than held here, so the phone's back gesture and the
+ * chevron drawn on the screen mean the same thing. `Discover` taught that lesson the hard way —
+ * one gesture meaning two things depending on which you used — and a submenu with local state
+ * would have repeated it exactly.
+ */
+enum class SettingsPage { ROOT, GAME, PRIVACY, ABOUT }
+
+/** What the heading says on each page. A submenu titled "Settings" says nothing about itself. */
+private fun titleOf(page: SettingsPage) = when (page) {
+    SettingsPage.ROOT -> Res.string.settings_title
+    SettingsPage.GAME -> Res.string.settings_group_game
+    SettingsPage.PRIVACY -> Res.string.settings_group_privacy
+    SettingsPage.ABOUT -> Res.string.settings_group_about
+}
+
 @Composable
 fun SettingsScreen(
     settings: Settings,
     canForget: Boolean,
+    page: SettingsPage,
+    onOpen: (SettingsPage) -> Unit,
     onChange: (Settings) -> Unit,
     onForget: () -> Unit,
     onBack: () -> Unit,
@@ -157,53 +204,21 @@ fun SettingsScreen(
                 onClick = onBack,
             )
             Text(
-                text = stringResource(Res.string.settings_title),
+                text = stringResource(titleOf(page)),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onFelt(),
                 modifier = Modifier.semantics { heading() },
             )
 
-            // Four groups rather than one column of eight.
+            // Three of the eighteen at the top, and three doors to the rest.
             //
-            // The controls have always fallen into these four and the screen never said so:
-            // uniform spacing between every panel makes a list of switches out of what is
-            // actually four decisions, and it left the two irreversible actions sitting at
-            // the same weight and rhythm as a haptics toggle.
-            Plaque(stringResource(Res.string.settings_group_game))
-            Bots(settings, onChange)
-            Pacing(settings, onChange)
-
-            Plaque(stringResource(Res.string.settings_group_feel))
-            Tongue(settings, onOpen = { pickingLanguage = true })
-            Motion(settings, onChange)
-            Palette(settings, onChange)
-            Noise(settings, onChange)
-            Buzz(settings, onChange)
-
-            Plaque(stringResource(Res.string.settings_group_privacy))
-            Counting(settings, onChange)
-
-            // Personal, so forgettable. The anonymous counts have an opt-out because they
-            // leave the device; this has one because it does not — a record about somebody
-            // that they cannot clear is a record they did not agree to keep.
-            ClearRecord()
-
-            if (canForget) {
-                Setting(
-                    title = stringResource(Res.string.settings_saved_game),
-                    detail = stringResource(Res.string.settings_saved_game_detail),
-                ) {
-                    GameButton(
-                        label = stringResource(Res.string.settings_forget),
-                        tone = ButtonTone.DANGER,
-                        onClick = onForget,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
+            // Sound, haptics and the review button are what people actually come here to press;
+            // the other fifteen are decisions somebody makes once. Eighteen tall panels made the
+            // three common ones as far away as the fifteen rare ones, which is the wrong way
+            // round on the longest screen in the app.
+            Page(page, settings, canForget, onOpen, onChange, onForget) {
+                pickingLanguage = true
             }
-
-            Plaque(stringResource(Res.string.settings_group_about))
-            About()
 
             Text(
                 text = stringResource(Res.string.settings_version, VERSION),
@@ -223,6 +238,88 @@ fun SettingsScreen(
             onChange = onChange,
             onDismiss = { pickingLanguage = false },
         )
+    }
+}
+
+/**
+ * Whichever page of the settings is open.
+ *
+ * Split from [SettingsScreen] so the scaffold around it — the felt, the chevron, the heading,
+ * the version — stays one readable block rather than a frame around a four-branch `when`.
+ */
+@Composable
+@Suppress("LongParameterList")
+private fun Page(
+    page: SettingsPage,
+    settings: Settings,
+    canForget: Boolean,
+    onOpen: (SettingsPage) -> Unit,
+    onChange: (Settings) -> Unit,
+    onForget: () -> Unit,
+    onPickLanguage: () -> Unit,
+) {
+    when (page) {
+        SettingsPage.ROOT -> {
+            SupportRow()
+            Noise(settings, onChange)
+            Buzz(settings, onChange)
+            RateRow()
+
+            Door(
+                title = stringResource(Res.string.settings_group_game),
+                summary = stringResource(Res.string.settings_group_game_summary),
+                onOpen = { onOpen(SettingsPage.GAME) },
+            )
+            Door(
+                title = stringResource(Res.string.settings_group_privacy),
+                summary = stringResource(Res.string.settings_group_privacy_summary),
+                onOpen = { onOpen(SettingsPage.PRIVACY) },
+            )
+            Door(
+                title = stringResource(Res.string.settings_group_about),
+                summary = stringResource(Res.string.settings_group_about_summary),
+                onOpen = { onOpen(SettingsPage.ABOUT) },
+            )
+        }
+
+        SettingsPage.GAME -> {
+            Bots(settings, onChange)
+            Pacing(settings, onChange)
+            Tongue(settings, onOpen = onPickLanguage)
+            Motion(settings, onChange)
+            Palette(settings, onChange)
+
+            // Personal, so forgettable. The anonymous counts have an opt-out because
+            // they leave the device; this has one because it does not — a record about
+            // somebody that they cannot clear is a record they did not agree to keep.
+            ClearRecord()
+
+            if (canForget) {
+                Setting(
+                    title = stringResource(Res.string.settings_saved_game),
+                    detail = stringResource(Res.string.settings_saved_game_detail),
+                    // Inline, never behind the (i): a consequence that cannot be undone
+                    // belongs beside the button that causes it.
+                    always = true,
+                ) {
+                    GameButton(
+                        label = stringResource(Res.string.settings_forget),
+                        tone = ButtonTone.DANGER,
+                        onClick = onForget,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
+
+        SettingsPage.PRIVACY -> {
+            Counting(settings, onChange)
+            PrivacyLinks()
+        }
+
+        SettingsPage.ABOUT -> {
+            About()
+        }
     }
 }
 
@@ -288,17 +385,13 @@ private fun Palette(settings: Settings, onChange: (Settings) -> Unit) {
 
 @Composable
 private fun Noise(settings: Settings, onChange: (Settings) -> Unit) {
-    Setting(
+    SwitchRow(
         title = stringResource(Res.string.settings_sound),
         detail = stringResource(Res.string.settings_sound_detail),
-    ) {
-        ChoiceRow(
-            options = listOf(true, false),
-            selected = settings.sound,
-            label = { on -> stringResource(if (on) Res.string.settings_on else Res.string.settings_off) },
-            onChoose = { on -> onChange(settings.copy(sound = on)) },
-        )
-    }
+        on = settings.sound,
+        mark = { drawSpeaker(it) },
+        onToggle = { on -> onChange(settings.copy(sound = on)) },
+    )
 }
 
 /**
@@ -310,32 +403,27 @@ private fun Noise(settings: Settings, onChange: (Settings) -> Unit) {
  */
 @Composable
 private fun Counting(settings: Settings, onChange: (Settings) -> Unit) {
-    Setting(
+    SwitchRow(
         title = stringResource(Res.string.settings_analytics),
         detail = stringResource(Res.string.settings_analytics_detail),
-    ) {
-        ChoiceRow(
-            options = listOf(true, false),
-            selected = settings.analytics,
-            label = { on -> stringResource(if (on) Res.string.settings_on else Res.string.settings_off) },
-            onChoose = { on -> onChange(settings.copy(analytics = on)) },
-        )
-    }
+        on = settings.analytics,
+        // Never behind the (i): this sentence is a claim about what leaves the device, and a
+        // player deciding whether to allow it should not have to open anything to read it.
+        always = true,
+        mark = { drawTally(it) },
+        onToggle = { on -> onChange(settings.copy(analytics = on)) },
+    )
 }
 
 @Composable
 private fun Buzz(settings: Settings, onChange: (Settings) -> Unit) {
-    Setting(
+    SwitchRow(
         title = stringResource(Res.string.settings_haptics),
         detail = stringResource(Res.string.settings_haptics_detail),
-    ) {
-        ChoiceRow(
-            options = listOf(true, false),
-            selected = settings.haptics,
-            label = { on -> stringResource(if (on) Res.string.settings_on else Res.string.settings_off) },
-            onChoose = { on -> onChange(settings.copy(haptics = on)) },
-        )
-    }
+        on = settings.haptics,
+        mark = { drawBuzz(it) },
+        onToggle = { on -> onChange(settings.copy(haptics = on)) },
+    )
 }
 
 /**
@@ -474,9 +562,11 @@ private fun toneFor(chosen: Boolean): ButtonTone =
  * `strings.xml`, not screen work.
  */
 @Composable
-private fun About() {
+private fun PrivacyLinks() {
     val failed = remember { mutableStateOf<String?>(null) }
 
+    // Beside the switch rather than under About: what is counted and the document describing it
+    // are one errand, and they were two screens apart because one is a toggle and one is a link.
     LinkRow(
         title = stringResource(Res.string.settings_privacy),
         detail = stringResource(Res.string.settings_privacy_detail),
@@ -489,6 +579,14 @@ private fun About() {
         url = Pages.TERMS,
         onFailed = { failed.value = it },
     )
+    OpenFailed(failed)
+}
+
+/** Whose game this is, whose app, and how to reach whoever made it. */
+@Composable
+private fun About() {
+    val failed = remember { mutableStateOf<String?>(null) }
+
     LinkRow(
         title = stringResource(Res.string.settings_contact),
         detail = stringResource(Res.string.settings_contact_detail),
@@ -505,22 +603,17 @@ private fun About() {
         detail = stringResource(Res.string.settings_original_detail),
         url = Pages.OFFICIAL,
         onFailed = { failed.value = it },
+        // Never behind the (i). This sentence carries the address of the game this app is an
+        // unofficial client for, and "we did mention it, one tap in" is not that promise —
+        // `AttributionTest` is what keeps it said.
+        always = true,
     )
     LinkRow(
         title = stringResource(Res.string.settings_studio),
         detail = stringResource(Res.string.settings_studio_detail),
         url = Pages.THIS_APP,
         onFailed = { failed.value = it },
-    )
-
-    // Ask for the review from the store the player actually got the game from — and on the web
-    // and the desktop, where there is no such store, from the app's own page. Never hidden: a
-    // control that exists on two platforms and not the other two is read as a fault.
-    LinkRow(
-        title = stringResource(Res.string.settings_rate),
-        detail = stringResource(Res.string.settings_rate_detail),
-        url = storeReviewUrl(),
-        onFailed = { failed.value = it },
+        always = true,
     )
 
     val subject = stringResource(Res.string.settings_share_subject)
@@ -541,9 +634,161 @@ private fun About() {
         )
     }
 
-    // Said out loud rather than swallowed. A locked-down desktop has no browse action at all,
-    // and a button that silently does nothing is indistinguishable from a broken app — so the
-    // address goes on the screen where it can at least be read or copied.
+    OpenFailed(failed)
+}
+
+/**
+ * A way to say thanks, at the top of the settings.
+ *
+ * One price and no box to type in, because neither store lets a buyer choose a figure — see
+ * `Support.kt` for the whole reasoning. The price shown is the store's own formatted string, so
+ * a player in Warsaw reads zloty and one in Tokyo reads yen without this app knowing either.
+ *
+ * **It says what it does not do.** "It unlocks nothing — there is nothing locked" is the line,
+ * because a support button in a game usually means a paywall somewhere, and the first thing
+ * somebody wants to know is which. Answering it before they ask is the difference between a
+ * thank-you and a sales pitch.
+ *
+ * On a platform with no store it says so rather than showing a button that cannot work: the
+ * RELIABILITY.md §6p rule, that a trouble picks the sentence.
+ */
+@Composable
+private fun SupportRow() {
+    val offer = remember { supportOffer() }
+    var thanked by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val failed = remember { mutableStateOf<String?>(null) }
+
+    Setting(
+        title = stringResource(Res.string.settings_support),
+        detail = stringResource(Res.string.settings_support_detail),
+    ) {
+        when {
+            thanked -> Text(
+                text = stringResource(Res.string.settings_support_thanks),
+                fontSize = TitleRowSize,
+                color = Rail.gold,
+            )
+
+            offer is Support.Offered -> GameButton(
+                label = stringResource(Res.string.settings_support_buy, offer.price),
+                tone = ButtonTone.PLAY,
+                onClick = { scope.launch { thanked = buySupport() } },
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // Web and desktop, where no store's rules reach and the amount is the giver's own.
+            offer is Support.Elsewhere -> Column(verticalArrangement = Arrangement.spacedBy(Tight)) {
+                Text(
+                    text = stringResource(Res.string.settings_support_link_detail),
+                    fontSize = DetailSize,
+                    color = Rail.inkDim,
+                )
+                GameButton(
+                    label = stringResource(Res.string.settings_support_link),
+                    tone = ButtonTone.PLAY,
+                    onClick = { if (!openUrl(offer.url)) failed.value = offer.url },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            else -> Text(
+                text = stringResource(Res.string.settings_support_unavailable),
+                fontSize = DetailSize,
+                color = Rail.inkDim,
+            )
+        }
+    }
+    OpenFailed(failed)
+}
+
+/**
+ * Leaving a review, on the first screen of the settings.
+ *
+ * One of the three things somebody actually comes here to press, so it is not behind a door.
+ * Asks the store the player actually installed from — and on the web and the desktop, where
+ * there is no such store, the app's own page. Never hidden: a control that exists on two
+ * platforms and not the other two is read as a fault.
+ */
+@Composable
+private fun RateRow() {
+    val failed = remember { mutableStateOf<String?>(null) }
+    val url = storeReviewUrl()
+
+    // A button, not a panel. There is nothing to choose and nothing to explain — a title, a
+    // sentence and an (i) around one action is furniture, and this is the one row on the page
+    // whose whole content is "press this".
+    GameButton(
+        label = stringResource(Res.string.settings_rate),
+        tone = ButtonTone.NEUTRAL,
+        onClick = { if (!openUrl(url)) failed.value = url },
+        modifier = Modifier.fillMaxWidth(),
+    )
+    OpenFailed(failed)
+}
+
+/**
+ * A two-state setting on one line: a mark, what it is, and where it stands.
+ *
+ * The panel these replace was a title, a sentence and a full-width two-position track — three
+ * stacked blocks for a yes/no. Sound and haptics are the two things people come to this screen
+ * to flip, and they were as tall as a difficulty picker.
+ *
+ * [detail] stays available behind the (i) unless [always], which is for a sentence that changes
+ * what somebody decides: the counting switch makes a claim about what leaves the device, and a
+ * privacy claim is not a footnote.
+ */
+@Composable
+private fun SwitchRow(
+    title: String,
+    detail: String,
+    on: Boolean,
+    always: Boolean = false,
+    mark: DrawScope.(Color) -> Unit,
+    onToggle: (Boolean) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    val feedback = LocalFeedback.current
+    // Read here, not inside the Canvas: `Rail.inkDim` is a composable property and a draw
+    // lambda is not a composition.
+    val markInk = Rail.inkDim
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(PanelCorner),
+        color = Rail.fill,
+        border = BorderStroke(1.dp, Rail.line),
+    ) {
+        Column(modifier = Modifier.padding(Gap), verticalArrangement = Arrangement.spacedBy(Tight)) {
+            SwitchLine(
+                title = title,
+                on = on,
+                markInk = markInk,
+                mark = mark,
+                explain = if (always) null else fun() { open = !open },
+                open = open,
+                onToggle = {
+                    feedback.commit()
+                    onToggle(!on)
+                },
+            )
+            if (always || open) {
+                Text(text = detail, fontSize = DetailSize, color = Rail.inkDim)
+            }
+        }
+    }
+}
+
+/**
+ * A link that would not open, said out loud rather than swallowed.
+ *
+ * A locked-down desktop has no browse action at all, and a button that silently does nothing is
+ * indistinguishable from a broken app — so the address goes on the screen where it can at least
+ * be read or copied. Shared by the three pages that carry links, so each of them fails the same
+ * way rather than two of them failing silently.
+ */
+@Composable
+private fun OpenFailed(failed: androidx.compose.runtime.MutableState<String?>) {
     failed.value?.let {
         Text(
             text = stringResource(Res.string.settings_link_failed, it),
@@ -555,8 +800,14 @@ private fun About() {
 
 /** A page, opened in whatever this device uses to read one. */
 @Composable
-private fun LinkRow(title: String, detail: String, url: String, onFailed: (String) -> Unit) {
-    Setting(title = title, detail = detail) {
+private fun LinkRow(
+    title: String,
+    detail: String,
+    url: String,
+    onFailed: (String) -> Unit,
+    always: Boolean = false,
+) {
+    Setting(title = title, detail = detail, always = always) {
         GameButton(
             label = stringResource(Res.string.settings_open),
             tone = ButtonTone.NEUTRAL,
@@ -566,9 +817,28 @@ private fun LinkRow(title: String, detail: String, url: String, onFailed: (Strin
     }
 }
 
-/** One thing to choose: what it is, what it does, and the control for it. */
+/**
+ * One thing to choose: what it is, what it does, and the control for it.
+ *
+ * **The sentence is behind an (i) by default**, which is what took this screen from eighteen
+ * tall panels to something a thumb can cross. Every one of those sentences is worth keeping —
+ * several answer a real question, like what the counts actually count — but a player who opens
+ * Settings to turn the sound off should not have to read past twelve of them to do it.
+ *
+ * [always] is the exception, and it is deliberately narrow: a consequence that cannot be undone,
+ * and a claim about privacy, are not footnotes. Putting "forgetting it cannot be undone" one tap
+ * away from the button that does it is exactly the place an explanation earns its height.
+ */
 @Composable
-private fun Setting(title: String, detail: String, control: @Composable () -> Unit) {
+private fun Setting(
+    title: String,
+    detail: String,
+    always: Boolean = false,
+    control: @Composable () -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    val shown = always || open
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(PanelCorner),
@@ -579,19 +849,116 @@ private fun Setting(title: String, detail: String, control: @Composable () -> Un
             modifier = Modifier.padding(Gap),
             verticalArrangement = Arrangement.spacedBy(Tight),
         ) {
-            Text(title, fontSize = TitleRowSize, fontWeight = FontWeight.Bold, color = Rail.ink)
-            Text(
-                text = detail,
-                fontSize = DetailSize,
-                color = Rail.inkDim,
-                modifier = Modifier.padding(bottom = Tight),
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = title,
+                    fontSize = TitleRowSize,
+                    fontWeight = FontWeight.Bold,
+                    color = Rail.ink,
+                    modifier = Modifier.weight(1f),
+                )
+                if (!always) Explain(open = open, title = title, onToggle = { open = !open })
+            }
+            if (shown) {
+                Text(
+                    text = detail,
+                    fontSize = DetailSize,
+                    color = Rail.inkDim,
+                    modifier = Modifier.padding(bottom = Tight),
+                )
+            }
             control()
         }
     }
 }
 
+/**
+ * The (i) that shows a row's sentence.
+ *
+ * Drawn rather than taken from an icon font, like every other mark in this app — see
+ * `Panels.kt` on the sheet's own ✕. Named for a screen reader with the row it belongs to, so
+ * "more about Sound" is what gets read rather than twelve identical "info" buttons.
+ */
+@Composable
+private fun Explain(open: Boolean, title: String, onToggle: () -> Unit) {
+    val label = stringResource(Res.string.settings_explain, title)
+    Surface(
+        onClick = onToggle,
+        shape = CircleShape,
+        color = Color.Transparent,
+        border = BorderStroke(1.dp, if (open) Rail.edge else Rail.line),
+        contentColor = Rail.inkDim,
+        modifier = Modifier.size(ExplainTap).semantics { contentDescription = label },
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = "i",
+                fontSize = DetailSize,
+                fontWeight = FontWeight.Bold,
+                color = if (open) Rail.ink else Rail.inkDim,
+            )
+        }
+    }
+}
+
+/**
+ * A way into a group of settings, rather than the group itself.
+ *
+ * Eighteen rows on one screen is what this replaces. The summary is the point: a door with only
+ * a name behind it makes somebody open all three to find the one they want, so each says what is
+ * inside in the words they would have gone looking for.
+ */
+@Composable
+private fun Door(title: String, summary: String, onOpen: () -> Unit) {
+    ActionTile(title = title, detail = summary, onClick = onOpen)
+}
+
 private const val PlaqueSize = 17
+
+/**
+ * The one line a two-state setting is: its mark, what it is, and where it stands.
+ *
+ * Split from [SwitchRow] because the row also carries the sentence underneath, and one function
+ * holding both was doing two jobs — the shape detekt reads as complexity and a reader reads as a
+ * long `if`.
+ */
+@Composable
+@Suppress("LongParameterList")
+private fun SwitchLine(
+    title: String,
+    on: Boolean,
+    markInk: Color,
+    mark: DrawScope.(Color) -> Unit,
+    explain: (() -> Unit)?,
+    open: Boolean,
+    onToggle: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Tight),
+    ) {
+        Canvas(modifier = Modifier.size(MarkSize)) { mark(markInk) }
+        Text(
+            text = title,
+            fontSize = TitleRowSize,
+            fontWeight = FontWeight.Bold,
+            color = Rail.ink,
+            modifier = Modifier.weight(1f),
+        )
+        explain?.let { Explain(open = open, title = title, onToggle = it) }
+        // The state and the control are one thing: the word says where it stands and pressing
+        // it is what moves it, which is what a switch has always been.
+        GameButton(
+            label = stringResource(if (on) Res.string.settings_on else Res.string.settings_off),
+            tone = if (on) ButtonTone.PLAY else ButtonTone.NEUTRAL,
+            onClick = onToggle,
+            compact = true,
+        )
+    }
+}
+
+private val ExplainTap = 32.dp
+private val MarkSize = 18.dp
 
 private val TitleRowSize = 17.sp
 private val DetailSize = 13.sp
@@ -619,10 +986,27 @@ private fun ClearRecord() {
     val stats = remember(vault, cleared) { vault.loadStats() }
     if (stats.roundsPlayed == 0) return
 
+    // The numbers themselves, which used to sit under the wordmark on the home screen. They
+    // were the reason to open the app a second time, and they were also the first thing anybody
+    // saw — a scoreboard on the front door of a game somebody opened to play. Here they are
+    // where a person goes when they want to know, beside the button that clears them.
+    val line = listOfNotNull(
+        stringResource(Res.string.stats_played, stats.roundsPlayed),
+        stats.winRate?.let { stringResource(Res.string.stats_won, it) },
+        stats.bestHand?.let { stringResource(Res.string.stats_best, it) },
+        stats.streak.takeIf { it > 1 }?.let { stringResource(Res.string.stats_streak, it) },
+    ).joinToString(stringResource(Res.string.stats_separator))
+
     Setting(
         title = stringResource(Res.string.settings_record),
         detail = stringResource(Res.string.settings_record_detail),
     ) {
+        Text(
+            text = line,
+            fontSize = TitleRowSize,
+            color = Rail.ink,
+            modifier = Modifier.padding(bottom = Tight),
+        )
         GameButton(
             label = stringResource(Res.string.settings_forget_record),
             tone = ButtonTone.DANGER,

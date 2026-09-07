@@ -81,7 +81,8 @@ class HeaderControlsTest {
     fun theGearOpensTheSettingsAndComesBackToTheSameTable() = onATable {
         onNodeWithContentDescription(SETTINGS).performClick()
         waitForIdle()
-        onNodeWithText("Pace", substring = true).assertIsDisplayed()
+        // The front page now, where sound and haptics are; pace lives behind "The game".
+        onNodeWithText("Sound", substring = true).assertIsDisplayed()
 
         // Scrolled to first: the settings column is taller than the window, and Compose clips
         // `boundsInRoot` to what is on screen — so a click aimed at an off-screen control lands

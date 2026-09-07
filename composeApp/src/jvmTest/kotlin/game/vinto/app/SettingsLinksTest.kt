@@ -38,15 +38,19 @@ class SettingsLinksTest {
         // Matched on the words the panel shows. Only `GameButton` sets a content description,
         // and every link button says "Open" — the panel around each is what says which page it
         // opens, so that is what a person reads and what this asserts.
-        listOf(
-            "Privacy",
-            "Terms of use",
-            "Get in touch",
-            "The original game",
-            "About this app",
-            "Rate this game",
-            "Tell somebody",
-        ).forEach {
+        // Rate is on the front page — it is one of the three things people actually come here
+        // to press — and it is a bare button now rather than a panel, so it is matched on the
+        // description `GameButton` sets rather than on a title that no longer exists.
+        onNodeWithContentDescription("Rate this game").performScrollTo().assertIsDisplayed()
+
+        door("What leaves this device")
+        listOf("Privacy", "Terms of use").forEach {
+            onNodeWithText(it).performScrollTo().assertIsDisplayed()
+        }
+
+        settings()
+        door("About")
+        listOf("Get in touch", "The original game", "About this app", "Tell somebody").forEach {
             onNodeWithText(it).performScrollTo().assertIsDisplayed()
         }
     }
@@ -62,14 +66,16 @@ class SettingsLinksTest {
     fun theSettingsAreGroupedRatherThanPouredIntoOneColumn() = runComposeUiTest {
         settings()
 
-        listOf(
-            "The game",
-            "Look and feel",
-            "What leaves this device",
-            "About",
-        ).forEach { group ->
+        // Three doors and the three controls people actually come for, rather than eighteen
+        // panels in one column. "Look and feel" is gone as a heading: its contents moved in
+        // with the rest of the game's settings, and sound and haptics came to the front.
+        listOf("The game", "What leaves this device", "About").forEach { group ->
             onNodeWithText(group.uppercase()).performScrollTo().assertIsDisplayed()
         }
+        listOf("Sound", "Haptics").forEach {
+            onNodeWithText(it).performScrollTo().assertIsDisplayed()
+        }
+        onNodeWithContentDescription("Rate this game").performScrollTo().assertIsDisplayed()
     }
 
     /**
@@ -107,6 +113,22 @@ class SettingsLinksTest {
             Pages.OFFICIAL.startsWith("https://"),
             "the original game is not absolute https: ${Pages.OFFICIAL}",
         )
+
+        // The rulebook is on the original game's own site, so it is excluded by the same
+        // argument and pinned to that host rather than merely to https — an outside link that
+        // drifted onto a different domain would still pass a bare scheme check.
+        assertTrue(
+            Pages.RULES.startsWith(Pages.OFFICIAL + "/"),
+            "the rules are not on the original game's site: ${Pages.RULES}",
+        )
+
+        // The third outside host, and the one with a policy attached: it may appear only in the
+        // web and desktop builds, which are in no store. `SupportLinkTest` is what holds that;
+        // here it is named so it cannot arrive by loosening the rule above.
+        assertTrue(
+            Pages.SUPPORT.startsWith("https://"),
+            "the support page is not absolute https: ${Pages.SUPPORT}",
+        )
     }
 
     /**
@@ -142,6 +164,12 @@ class SettingsLinksTest {
         setContent { VintoTheme { App(seeds = { SEED }, vault = MemoryVault()) } }
         waitForIdle()
         press("Settings")
+    }
+
+    /** Opens one of the three doors the settings' front page offers. */
+    private fun ComposeUiTest.door(name: String) {
+        onNodeWithText(name.uppercase()).performScrollTo().performClick()
+        waitForIdle()
     }
 
     private fun ComposeUiTest.press(label: String) {

@@ -97,6 +97,7 @@ class OfflineDoorTest {
                     OnlineScreen(
                         vault = vault,
                         onOpenRoom = onOpen,
+                        onReturn = { _, _ -> },
                         onJoinByCode = onJoin,
                         onBrowse = onBrowse,
                         onBack = {},

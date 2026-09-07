@@ -50,7 +50,11 @@
     <!-- ================================================================ online -->
     <string name="online_screen_title">Play online</string>
     <string name="online_nickname">Your name at the table</string>
-    <string name="online_nickname_detail">What the other seats see. Tap for a different one. Not an account — there are none.</string>
+    <string name="online_nickname_detail">What the other seats see. Tap the face to change it. Not an account — there are none.</string>
+    <string name="online_avatar_name">Give me another name</string>
+    <string name="online_avatar_pick">Choose a different face</string>
+    <string name="online_avatar_ground">Its colour</string>
+    <string name="online_avatar_another">Show me another set</string>
     <string name="online_code">Room code</string>
     <string name="online_code_detail">Six characters from whoever opened the room.</string>
     <string name="online_join">Join the room</string>
@@ -77,6 +81,10 @@
     <string name="online_open_detail">Four seats, a code to share, and bots for whoever does not arrive.</string>
     <string name="online_join_detail">Six characters, from whoever opened the room.</string>
     <string name="online_browse_detail">Rooms whose hosts chose to be listed. Anybody may sit down.</string>
+    <!-- Offered whenever a seat is still held somewhere. Backing out of a room keeps the seat,
+         so this is the way back to it; the Leave button in the room is what gives it up. -->
+    <string name="online_return_title">Return to your room</string>
+    <string name="online_return_detail">You stepped out of %1$s and your seat is still there. It is given up when you press Leave.</string>
     <string name="online_open_title">Open a room</string>
     <string name="online_join_title">Join with a code</string>
     <string name="online_open_screen">Open a room</string>
@@ -154,6 +162,22 @@
     <!-- Pages that belong to the game but are not in it. They open in the phone's browser
          rather than a view inside the app: these are documents somebody may want to keep,
          send to themselves, or read properly. -->
+    <!-- Names the row it belongs to, so a reader hears "more about Sound" rather than one of a
+         dozen identical "info" buttons. -->
+    <!-- One product at one price, because neither store lets a buyer type an amount. Never
+         "donate": nothing is unlocked and no charity is involved, and both words would be a
+         claim this app cannot make. -->
+    <string name="settings_support">Support the game</string>
+    <string name="settings_support_detail">If you have enjoyed it and would like to say so. It unlocks nothing — there is nothing locked.</string>
+    <string name="settings_support_buy">Say thanks — %1$s</string>
+    <string name="settings_support_link">Say thanks</string>
+    <string name="settings_support_link_detail">Opens a page where you choose the amount. The phone versions cannot do that — a store takes payments there, and its rules set the price.</string>
+    <string name="settings_support_unavailable">Not available here yet. Nothing to do about it from this screen; it needs a store, and the phones will get one first.</string>
+    <string name="settings_support_thanks">Thank you. Genuinely.</string>
+    <string name="settings_explain">More about %1$s</string>
+    <string name="settings_group_game_summary">Opponents, pace, motion, look, language and your record.</string>
+    <string name="settings_group_privacy_summary">What is counted, and how to switch it off.</string>
+    <string name="settings_group_about_summary">Whose game this is, who made the app, and how to get in touch.</string>
     <string name="settings_privacy">Privacy</string>
     <string name="settings_privacy_detail">What is counted, what is not, and how to switch it off.</string>
     <string name="settings_terms">Terms of use</string>
@@ -278,6 +302,9 @@
     <string name="table_see_score">See the score</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
+    <!-- Web and desktop only: the phones sell a fixed-price in-app purchase instead, and an
+         outside payment link on a store build is App Store 3.1.1. -->
+    <string name="header_support">Buy me a coffee</string>
     <string name="header_report">Report a problem</string>
     <string name="header_settings">Settings</string>
     <string name="header_deck_left">%1$d cards left in the deck</string>
@@ -715,6 +742,12 @@
     <string name="log_made_you_draw">%1$s made you draw a card</string>
     <string name="log_made_draw_they">%1$s made %2$s draw a card</string>
     <string name="log_round_begins">the round begins</string>
+
+    <!-- The rulebook lives with the people whose game it is; the sheet answers the mid-turn
+         question and points at the rest. -->
+    <string name="help_rules_title">The full rules</string>
+    <string name="help_rules_body">This sheet says what a card does here. The complete rules are on the game’s own site, from the people who made it.</string>
+    <string name="help_rules_action">Open the rules</string>
 
     <string name="help_counts_title">What this app counts</string>
     <string name="help_counts_body">Anonymous counts only: how many rounds are played, how far people get, whether a table stalled, and what a room costs to run. Never your name, your room code, what is in your hand, or anything that could be traced back to you or your device — there is nowhere in what is sent to put those. It can be switched off in Settings, and a browser that asks not to be tracked switches it off for you.</string>

@@ -51,6 +51,7 @@ import game.vinto.app.art.seat_pointed_coalition
 import game.vinto.app.art.seat_pointed_penalty
 import game.vinto.app.art.seat_pointed_turn
 import game.vinto.app.art.seat_pointed_vinto
+import game.vinto.app.theme.GeneratedAvatar
 import game.vinto.app.theme.Signal
 import game.vinto.app.theme.Slate
 import game.vinto.app.theme.onFelt
@@ -115,16 +116,28 @@ private fun Attention.spoken(): StringResource = when (this) {
  */
 @Composable
 private fun Portrait(name: String, bot: Boolean, edge: Color, size: Dp) {
+    val chosen = chosenFace(name)
     Box(contentAlignment = Alignment.BottomEnd) {
-        Image(
-            painter = painterResource(portraitFor(name)),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(size)
-                .clip(CircleShape)
-                .border(Hairline, edge, CircleShape),
-        )
+        // The face its owner picked, when there is one. A bot has no profile and keeps its
+        // element's emblem, which is the better answer than a mark it never chose.
+        if (chosen != null) {
+            GeneratedAvatar(
+                traits = chosen.traits(),
+                ground = chosen.ground(),
+                size = size,
+                modifier = Modifier.border(Hairline, edge, CircleShape),
+            )
+        } else {
+            Image(
+                painter = painterResource(portraitFor(name)),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(size)
+                    .clip(CircleShape)
+                    .border(Hairline, edge, CircleShape),
+            )
+        }
         if (bot) BotMark(diameter = size * BotShare)
     }
 }

@@ -44,6 +44,7 @@ import game.vinto.app.art.score_versus_none
 import game.vinto.app.art.score_you_called
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
+import game.vinto.app.theme.GeneratedAvatar
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.VintoSheet
 import game.vinto.client.RoundOutcome
@@ -252,12 +253,17 @@ private fun Line(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Gap),
         ) {
-            Image(
-                painter = painterResource(portraitFor(name)),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(FaceSize).clip(CircleShape),
-            )
+            val chosen = chosenFace(name)
+            if (chosen != null) {
+                GeneratedAvatar(traits = chosen.traits(), ground = chosen.ground(), size = FaceSize)
+            } else {
+                Image(
+                    painter = painterResource(portraitFor(name)),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(FaceSize).clip(CircleShape),
+                )
+            }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = name,

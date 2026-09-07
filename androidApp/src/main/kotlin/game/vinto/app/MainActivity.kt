@@ -25,6 +25,11 @@ class MainActivity : ComponentActivity() {
         // realistically fail; everything after it is covered.
         AndroidStorage.attach(this)
 
+        // Play needs an activity to draw its sheet over, and the billing seam is a plain suspend
+        // function with no composition to read one from — so it is handed over here beside
+        // storage, and taken back in `onDestroy` so a finished activity never reaches Play.
+        AndroidBilling.attach(this)
+
         // Then the reporter, and before `setContent` rather than inside it. A crash while the
         // deep link is read, or in the first composition, used to happen with nothing
         // listening — the handler was installed by a `LaunchedEffect` inside `App()`, which is
@@ -61,5 +66,11 @@ class MainActivity : ComponentActivity() {
         // how a run once produced six pictures of the same board. `captureScene` returns null
         // from the release source set, so the shipped binary never reaches `recreate`.
         if (captureScene(intent) != null) recreate()
+    }
+
+    override fun onDestroy() {
+        AndroidBilling.detach(this)
+
+        super.onDestroy()
     }
 }
