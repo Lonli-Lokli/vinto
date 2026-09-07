@@ -100,15 +100,15 @@ export default {
       // move over stills, and the store slot it would fill wants footage from inside the app —
       // so the only preview this config makes is the `reel` above, from recorded clips.
       screenshots: [
-        { target: 'appstore-iphone-6.9', style: 'premium' },
-        { target: 'appstore-iphone-6.5', style: 'premium' },
+        { target: 'appstore-iphone-6.9', style: 'framed' },
+        { target: 'appstore-iphone-6.5', style: 'framed' },
       ],
     },
     ipad: {
       // Required because the app ships on iPad: `composeApp` has no phone-only gate, and the
       // landscape layout in `TableLayout.forScreen` is written for exactly this screen.
       capturesDir: './marketing/captures/ios-ipad',
-      screenshots: [{ target: 'appstore-ipad-13', style: 'premium' }],
+      screenshots: [{ target: 'appstore-ipad-13', style: 'framed' }],
     },
 
     // Google Play. The opposite rules: no device frames, no added text, no backgrounds on the

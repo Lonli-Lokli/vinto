@@ -55,4 +55,34 @@ class ManifestTest {
             )
         }
     }
+
+    /**
+     * The one activity is `singleTop`, so a second intent reaches the app that is already open.
+     *
+     * Without it the launch mode is `standard`, and a launch that carries
+     * `FLAG_ACTIVITY_NEW_TASK` — which is every `am start`, and how a link handler starts an app
+     * that is already running — brings the existing task to the front and **discards the intent**.
+     * `onNewIntent` is then never called, so everything hanging off it is dead code: the second
+     * invitation of an evening does nothing at all, which is exactly the case
+     * `MainActivity.onNewIntent` was written for and could never have handled.
+     *
+     * It was found through the store captures, which drive one scene per `am start` and came out
+     * as six photographs of the home screen. That is the same defect wearing a harmless face:
+     * `CaptureHandleTest` proves the app understands every scene id, and nothing proved the id
+     * ever arrived. This is the missing half, and it is asserted on the manifest rather than in
+     * Compose because no test with a composition in it can see a launch mode.
+     */
+    @Test
+    fun theActivityIsSingleTopSoASecondIntentIsDeliveredRatherThanDropped() {
+        val text = manifest()
+        val activity = text.substringAfter("android:name=\".MainActivity\"", "")
+            .substringBefore("</activity>")
+        assertTrue(activity.isNotBlank(), "MainActivity is not in the manifest; this test is stale")
+
+        assertTrue(
+            activity.contains("android:launchMode=\"singleTop\""),
+            "MainActivity is not singleTop, so Android drops an intent aimed at the running app: " +
+                "a second invite link does nothing, and a capture run photographs one screen six times",
+        )
+    }
 }

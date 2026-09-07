@@ -38,10 +38,18 @@
             activity alive across the rotation: the layout re-decides itself inside
             `BoxWithConstraints`, and recreating the activity would cost the game's
             in-memory state for a change Compose absorbs in one recomposition.
+
+            `singleTop` is not the default and is load-bearing. A `standard` activity launched
+            with FLAG_ACTIVITY_NEW_TASK — which is every `am start`, and how a link handler
+            starts an app that is already running — brings the existing task forward and
+            DISCARDS the intent. `onNewIntent` is then never called and everything hanging off
+            it is unreachable: the second invitation of an evening does nothing at all, which
+            is the very case that method was written for. Held by `ManifestTest`.
         -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
