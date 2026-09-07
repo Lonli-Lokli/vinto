@@ -87,6 +87,14 @@ protocol bump is a coupled release of the room and both apps (DEPLOYMENT.md §9)
 
 ## Invariants (don't break)
 
+- **Builds are published from `master` and nowhere else.** This is the invariant the others
+  rest on, and it is enforced: `tools/check-release-branch.mjs` runs ahead of `store:prerelease`,
+  `play:internal` and `play:closed`, and refuses unless `HEAD` is an ancestor of (or equal to)
+  `master`. A commit count only means something along the history that survives — publish from a
+  branch, then squash it onto master, and the number counts commits that no longer exist while
+  Play keeps the versionCode forever. That is exactly how 384, 402 and 423 were spent and how
+  master came to need the +100. `ALLOW_OFF_MASTER=1` overrides one run, in the command line where
+  it can be read.
 - **The build number strictly increases** per marketing version, per store.
   `git rev-list --count` plus a constant guarantees it — as long as the checkout is a full clone. A shallow CI
   checkout counts only the commits it fetched, which is not monotonic; use `fetch-depth: 0` or

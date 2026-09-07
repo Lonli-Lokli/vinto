@@ -18,14 +18,14 @@
     "store:accessibility": "vydanne accessibility",
     "store:privacy": "vydanne privacy",
     "store:compliance": "vydanne compliance",
-    "store:prerelease": "vydanne prerelease",
+    "store:prerelease": "node tools/check-release-branch.mjs && vydanne prerelease",
     "store:push": "vydanne push",
     "play:inspect": "vydanne inspect --store google",
     "play:diff": "vydanne diff --store google",
     "play:preflight": "vydanne preflight --store google",
     "play:fill": "vydanne fill --store google",
-    "play:internal": "VYDANNE_TRACK=internal vydanne prerelease --store google",
-    "play:closed": "vydanne prerelease --store google",
+    "play:internal": "node tools/check-release-branch.mjs && VYDANNE_TRACK=internal vydanne prerelease --store google",
+    "play:closed": "node tools/check-release-branch.mjs && vydanne prerelease --store google",
     "store-assets": "zdymak build --clean && npm run store-bridge",
     "store-screenshots": "zdymak screenshots && npm run store-bridge",
     "store-previews": "zdymak reel",
@@ -36,7 +36,8 @@
     "capture-ios": "node ../zdymak/bin/zdymak.mjs capture --platform ios --device \"iPhone 17 Pro Max\" --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby,plan --settle 45 --out ./marketing/captures/ios",
     "capture-ipad": "node ../zdymak/bin/zdymak.mjs capture --platform ios --device \"iPad Pro 13-inch (M5)\" --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby,plan --settle 45 --out ./marketing/captures/ios-ipad",
     "capture-android": "node ../zdymak/bin/zdymak.mjs capture --platform android --component app.kupalinka.vinto/game.vinto.app.MainActivity --arg vinto.capture --states home,teach,table,score,lobby,plan --settle 90 --out ./marketing/captures/android",
-    "capture-headless": "./gradlew :composeApp:jvmTest --tests \"*StoreShotsTest*\" -PstoreShots --rerun"
+    "capture-headless": "./gradlew :composeApp:jvmTest --tests \"*StoreShotsTest*\" -PstoreShots --rerun",
+    "release:check": "node tools/check-release-branch.mjs"
   },
   "devDependencies": {
     "vydanne": "^0.12.0",
