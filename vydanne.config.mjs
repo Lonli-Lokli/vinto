@@ -64,6 +64,22 @@ export default {
     'be', 'ru', 'uk', 'he', 'ar', 'ur', 'hi', 'bn', 'ko', 'ja', 'zh',
   ],
 
+  /**
+   * `versionCode` / `CFBundleVersion` = `git rev-list --count HEAD` + 100.
+   *
+   * Not a preference — a repair. The release work that produced builds 384, 402 and 423 was
+   * archived from the long pre-squash branch and then cherry-picked onto master, so master's
+   * count fell to 386: BELOW three numbers already spent. Google Play reserves every versionCode
+   * it has ever been given and refuses one that does not strictly exceed the last, so there was
+   * no way back down. `Scripts/build-number.sh` adds the same 100, and so does
+   * `androidApp/build.gradle.kts`.
+   *
+   * Without this line `releases` reports every build as "past HEAD — built elsewhere", which is
+   * how the offset was found to have cost the commit mapping. `tools/check-release-branch.mjs`
+   * is what stops it happening a second time.
+   */
+  buildNumberOffset: 100,
+
   metadataDir: 'fastlane/metadata',
 
   // FREE, and no in-app purchases in 1.0. `docs/design/MONETIZATION.md` sequences cosmetics —
