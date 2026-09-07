@@ -85,4 +85,43 @@ class ManifestTest {
                 "a second invite link does nothing, and a capture run photographs one screen six times",
         )
     }
+    /**
+     * The Compose view on iOS gets the WHOLE screen, and insets it once.
+     *
+     * SwiftUI lays a `UIViewControllerRepresentable` out INSIDE the container safe area unless
+     * told otherwise, and `App.kt` already pads by `WindowInsets.safeDrawing`. Respecting the
+     * safe area on both sides applies it twice: measured against the same screen on Android,
+     * the iPhone spent 79pt above the wordmark where Android spent 18 — about 61pt of dead
+     * felt on every screen, on the platform with the least of it to spare. It also loses the
+     * effect `App.kt` describes, where the rail is painted BEHIND the bars so they read as the
+     * edge of the table rather than a border around it: what sat behind the status bar was the
+     * window's own black, because the app was not drawing there at all.
+     *
+     * `.ignoresSafeArea(.keyboard)` alone is the JetBrains template's line and is what this
+     * project shipped. It is right about the keyboard — Compose has its own handler — and says
+     * nothing about the top, which is the half that mattered.
+     *
+     * Asserted on the Swift source because nothing else can see it: no Compose test has a
+     * SwiftUI parent, and the whole defect lives in how that parent laid its child out.
+     */
+    @Test
+    fun theIosHostHandsComposeTheWholeScreenRatherThanTheSafeAreaOnly() {
+        val file = File("../iosApp/iosApp/ContentView.swift")
+        assertTrue(file.exists(), "ContentView.swift moved; this test is stale")
+        val swift = file.readText()
+        assertTrue(
+            swift.contains("ComposeView()"),
+            "ContentView no longer hosts ComposeView; this test is stale",
+        )
+
+        // `.ignoresSafeArea()`, `(.all)` and `(.container...)` all cover the top edge; the
+        // keyboard-only form does not, and is precisely the line that caused the double inset.
+        val allEdges = Regex("\\.ignoresSafeArea\\(\\s*(\\)|\\.all|\\.container)")
+            .containsMatchIn(swift)
+        assertTrue(
+            allEdges,
+            "the iOS host respects the container safe area, so Compose is inset twice — " +
+                "about 61pt of dead space above every screen (see App.kt's safeDrawing padding)",
+        )
+    }
 }
