@@ -141,20 +141,23 @@ export default {
       name: 'appstore-preview',
       size: [886, 1920],
       level: '4.0',
-      sceneDur: 6.8, // 4 clips ≈ 26s: past Apple's floor with room, and under its ceiling
+      sceneDur: 5.2, // 5 beats ≈ 26s: past Apple’s floor with room, and under its ceiling
       transition: 'dissolve',
       theme: { bleed: true, frame: false },
       music: { path: './marketing/music/bed.mp3', volume: 0.75, fadeIn: 0.8, fadeOut: 1.5 },
-      // The four screens that MOVE, and nothing else. The menu and the lobby are handsome and
-      // they sit perfectly still: a segment of either is a screenshot with a soundtrack, which
-      // is what this preview was the first time and why it was dull. Each of these carries the
-      // app's own animation — a turn being played, the lesson dealing, the coalition's plan
-      // rehearsed across the felt, the hands turning over at the end.
+      // A film with a shape, in five beats: the front door, a round the bots play out, the
+      // final round with the coalition's board open, what it came to, and the way to a table
+      // with friends on it. The two stills are deliberate bookends — zdymak gives an `image`
+      // segment a slow push-in, so neither of them freezes — and everything between them is
+      // real recorded motion. `demo.mov` is the DEMO capture at double speed: the app plays at
+      // the pace a player sees and the FOOTAGE is what hurries, because a round sped up in the
+      // app would film its own choreography being skipped.
       segments: [
-        { clip: './marketing/clips/table.mov' },
-        { clip: './marketing/clips/teach.mov' },
+        { image: './marketing/captures/ios/home.png' },
+        { clip: './marketing/clips/demo.mov' },
         { clip: './marketing/clips/plan.mov' },
         { clip: './marketing/clips/score.mov' },
+        { image: './marketing/captures/ios/lobby.png' },
       ],
     },
     {
@@ -163,14 +166,15 @@ export default {
       // claim on a music bed can take a listing's video down without warning.
       name: 'play-promo',
       size: [1080, 1920],
-      sceneDur: 6.8,
+      sceneDur: 5.2,
       transition: 'dissolve',
       theme: { bleed: true, frame: false },
       segments: [
-        { clip: './marketing/clips/table.mov' },
-        { clip: './marketing/clips/teach.mov' },
+        { image: './marketing/captures/ios/home.png' },
+        { clip: './marketing/clips/demo.mov' },
         { clip: './marketing/clips/plan.mov' },
         { clip: './marketing/clips/score.mov' },
+        { image: './marketing/captures/ios/lobby.png' },
       ],
     },
   ],
