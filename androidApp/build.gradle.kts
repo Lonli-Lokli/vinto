@@ -71,9 +71,22 @@ dependencies {
 }
 
 /**
- * The build number: the git commit count, monotonic and needing no stored state, and the same
- * number the iOS archive stamps in with `CURRENT_PROJECT_VERSION="$(Scripts/build-number.sh)"`.
- * Play refuses an upload whose versionCode does not strictly exceed the last one on the track.
+ * Kept identical to `OFFSET` in `Scripts/build-number.sh`, which carries the reasoning: master's
+ * history was cherry-picked rather than merged, so its plain commit count is lower than the builds
+ * already on both stores, and Play reserves every versionCode it has ever seen.
+ *
+ * The duplication is deliberate and narrow. Shelling out to a `.sh` from Gradle would not run on
+ * Windows, where this module is expected to build; the constant is one number that never changes
+ * again, and the documented release command passes `-PversionCode="$(Scripts/build-number.sh)"`
+ * anyway, so this branch only serves a local build that names no version.
+ */
+val BUILD_NUMBER_OFFSET = 100
+
+/**
+ * The build number: the git commit count plus [BUILD_NUMBER_OFFSET], monotonic and needing no
+ * stored state, and the same number the iOS archive stamps in with
+ * `CURRENT_PROJECT_VERSION="$(Scripts/build-number.sh)"`. Play refuses an upload whose versionCode
+ * does not strictly exceed the last one on the track.
  *
  * `-PversionCode=` overrides it, which is what a shallow CI checkout needs: counting commits in a
  * truncated clone is not monotonic. A tree with no git at all falls back to 1 rather than failing.
@@ -82,7 +95,7 @@ dependencies {
 val buildNumber = (project.findProperty("versionCode") as String?)?.toIntOrNull()
     ?: runCatching {
         project.providers.exec { commandLine("git", "rev-list", "--count", "HEAD") }
-            .standardOutput.asText.get().trim().toInt()
+            .standardOutput.asText.get().trim().toInt() + BUILD_NUMBER_OFFSET
     }.getOrDefault(1)
 
 /** The human semver, bumped by hand at a release. `VersionTest` holds it to `Version.kt`. */

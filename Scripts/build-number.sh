@@ -2,7 +2,20 @@
 # Single source of truth for the app build number, used by BOTH platforms so the same commit yields
 # the same number on iOS and Android (they still carry independent marketing versions — see VERSIONING.md).
 #
-#   build number = number of commits reachable from HEAD  (monotonic, deterministic, no stored state)
+#   build number = number of commits reachable from HEAD + OFFSET  (monotonic, deterministic,
+#                  no stored state, and reversible: subtract OFFSET to get the commit count)
+#
+# THE OFFSET IS NOT DECORATION, and it is not a version bump. On 2026-09-06 the release work was
+# cherry-picked onto master (`master@{1}` in the reflog) rather than merged, so master's history is
+# shorter than the branch the shipped builds were archived from. Both stores carry build 423 while
+# master counts 389, which makes the plain count go BACKWARDS across a release: Google Play refuses
+# a versionCode that does not strictly exceed the last one and permanently reserves every code ever
+# uploaded, so 384, 402 and 423 can never be freed or reused.
+#
+# 100 clears 423 from a base of 389 with 66 to spare, and it is a constant: it never changes again,
+# so the mapping stays one subtraction away and `vydanne releases` can name the commit behind a
+# build. The alternative was BUILD_NUMBER=424 once, which maps to no commit at all and leaves the
+# next release standing in the same place.
 #
 # Usage:
 #   iOS archive : xcodebuild archive … CURRENT_PROJECT_VERSION="$(Scripts/build-number.sh)"
@@ -24,6 +37,9 @@
 # command line where it can be read.
 set -e
 
+# See the note above before changing this. It only ever goes up.
+OFFSET=100
+
 if [ -n "$BUILD_NUMBER" ]; then
     echo "$BUILD_NUMBER"
     exit 0
@@ -43,4 +59,4 @@ if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
     exit 1
 fi
 
-git rev-list --count HEAD
+echo $(( $(git rev-list --count HEAD) + OFFSET ))
