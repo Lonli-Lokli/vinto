@@ -64,6 +64,7 @@
 				C263BE7E68B1B2B41CE2771C /* Build Kotlin framework */,
 				297B59D9CE634556D6007C40 /* Sources */,
 				1623B02D10928C8101C1F806 /* Resources */,
+				9933EE9E45B584065BEFBA17 /* Stamp build number */,
 				6C64E10F13BE52722A0D4B09 /* Upload dSYMs to Sentry */,
 			);
 			buildRules = (
@@ -142,6 +143,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# What makes an iOS crash report readable. A Kotlin/Native frame reaches Sentry as an\n# ADDRESS — `instruction_addr`, see composeApp's CrashFrame.kt — and Sentry turns that\n# into a function and a line by looking it up in the dSYM uploaded from here. One dSYM\n# covers the Swift entry point and the whole ComposeApp framework.\n#\n# Neither half works alone, and that is worth knowing before debugging either: without\n# the addresses the dSYM has nothing to match, and without the dSYM the addresses stay\n# hexadecimal. The first real report (issue 7710776149) had neither.\n#\n# --org and --project are EXPLICIT and must stay so. sentry-cli does NOT infer them from\n# the DSN; with no flags it takes the global `[defaults]`, and in this portfolio that\n# has already sent one game's symbols into another game's project. `~/.sentryclirc`\n# here sets an org and deliberately no project.\n#\n# ONE MECHANISM FOR A LAPTOP AND A RUNNER. sentry-cli reads its token from\n# SENTRY_AUTH_TOKEN or from ~/.sentryclirc, whichever it finds — so a developer keeps\n# using the rc file and CI sets the environment variable, and neither needs its own\n# branch here. Testing only for the rc file, as this did first, silently skipped every\n# upload on CI: the build stayed green and the symbols never arrived.\n#\n# A RELEASE THAT CANNOT BE SYMBOLICATED DOES NOT GET BUILT. This used to warn and carry\n# on, so that a contributor without credentials could still build; the cost of that is a\n# shipped build whose every crash is hexadecimal, produced by a green build that said\n# nothing was wrong. VINTO_ALLOW_UNSYMBOLICATED=1 is the way out, and it has to be\n# typed — the default is to fail, and skipping symbols becomes a choice rather than an\n# accident. The Android and web halves follow the same rule.\n#\n# RELEASE ONLY. A debug build's dSYMs describe a binary nobody but us runs, and\n# uploading them on every simulator build is how a Sentry project fills with symbols for\n# binaries that never shipped.\nif [ \"$CONFIGURATION\" != \"Release\" ]; then\n  echo \"note: $CONFIGURATION build — no dSYM upload\"\nelif [ -n \"$VINTO_ALLOW_UNSYMBOLICATED\" ]; then\n  echo \"warning: VINTO_ALLOW_UNSYMBOLICATED is set — this build will not symbolicate\"\nelif ! which sentry-cli >/dev/null 2>&1; then\n  echo \"error: sentry-cli absent, so this Release build's crashes would stay hexadecimal.\"\n  echo \"error: install it, or set VINTO_ALLOW_UNSYMBOLICATED=1 to build without symbols.\"\n  exit 1\nelif [ -z \"$SENTRY_AUTH_TOKEN\" ] && [ ! -f \"$HOME/.sentryclirc\" ]; then\n  echo \"error: no SENTRY_AUTH_TOKEN and no ~/.sentryclirc, so the dSYMs cannot be uploaded.\"\n  echo \"error: set one of them, or set VINTO_ALLOW_UNSYMBOLICATED=1 to build without symbols.\"\n  exit 1\nelse\n  # No `|| true`: an upload that fails is exactly the case this phase exists to catch.\n  sentry-cli debug-files upload --org echo-xl --project vinto \\\n    --include-sources \"$DWARF_DSYM_FOLDER_PATH\"\nfi\n";
+		};
+		9933EE9E45B584065BEFBA17 /* Stamp build number */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Stamp build number";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Xcode's Product ▸ Archive cannot pass CURRENT_PROJECT_VERSION on a command line, and\n# neither can `xcodebuild archive` without being told — so without this phase an archive\n# ships the fallback above, the literal \"1\". The comment on CURRENT_PROJECT_VERSION says\n# to \"pass it on the archive command rather than editing this line\", which is correct and\n# is exactly the instruction that gets forgotten in the GUI.\n#\n# Vinto was the only game in the portfolio without this phase, and the cost of not having\n# it is measured rather than argued: on 2026-09-04 Vodar 1.2 went to App Store Connect as\n# BUILD 1, above a 131, and Apple accepted it because CFBundleVersion only has to be\n# unique within a marketing version. Nothing failed. That binary cannot be traced to a\n# commit, tagged, or symbolicated, and it is still in review.\n#\n# Release FAILS rather than warning: a build that stops is a five-minute problem, a build\n# that ships an untraceable number is permanent. Debug warns, because a simulator run does\n# not need a real number.\nN=\"$(\"$SRCROOT/../Scripts/build-number.sh\")\" || N=\"\"\nif [ -n \"$N\" ] && [ \"$N\" != \"1\" ]; then\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $N\" \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n  echo \"note: stamped CFBundleVersion=$N\"\nelif [ \"$CONFIGURATION\" = \"Release\" ]; then\n  echo \"error: no build number — refusing to produce a Release binary that cannot be traced to a commit.\" >&2\n  echo \"note: set BUILD_NUMBER=<n> if this tree genuinely has no history (exported source, CI).\" >&2\n  exit 1\nelse\n  echo \"warning: no build number; $CONFIGURATION keeps CFBundleVersion=$CURRENT_PROJECT_VERSION\"\nfi\n";
 		};
 		C263BE7E68B1B2B41CE2771C /* Build Kotlin framework */ = {
 			isa = PBXShellScriptBuildPhase;

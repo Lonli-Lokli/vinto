@@ -40,6 +40,7 @@ import game.vinto.app.theme.rememberSounds
 import game.vinto.client.Analytics
 import game.vinto.client.AnalyticsConsent
 import game.vinto.client.LocalGame
+import game.vinto.client.Pace
 import game.vinto.client.Question
 import game.vinto.client.Reachability
 import game.vinto.client.RemoteRoom
@@ -239,9 +240,8 @@ fun App(
                                         },
                                     )
 
-                                    is Screen.Playing -> GameScreen(
-                                        game = here.game,
-                                        opening = here.opening,
+                                    is Screen.Playing -> AtTheTable(
+                                        here = here,
                                         pace = settings.pace,
                                         onSettings = { screen = Screen.Settings(back = here) },
                                         onQuit = { screen = Screen.Home(canContinue = true) },
@@ -403,7 +403,15 @@ private sealed interface Screen {
      * [Question.None] for every game a person starts and the board for the capture that
      * photographs it (`MarketingScene.PLAN`).
      */
-    data class Playing(val game: LocalGame, val opening: Question = Question.None) : Screen
+    data class Playing(
+        val game: LocalGame,
+        val opening: Question = Question.None,
+        /**
+         * The round plays itself, for a capture that is being filmed rather than photographed.
+         * Only `MarketingScene.DEMO` sets it; a player never reaches a table that moves on its own.
+         */
+        val autoplay: Boolean = false,
+    ) : Screen
 
     /** The front door: a name, and which of the three things you came to do. */
     data object Online : Screen, OnlineWay
@@ -584,6 +592,29 @@ private fun Startup(
 }
 
 /**
+ * A round on the felt, and — for one capture state — the loop that plays it.
+ *
+ * Extracted from `App`'s `when` rather than inlined into it: the branch needs a
+ * `LaunchedEffect` beside the screen, and a branch with a body is what pushed `App` past both
+ * the length and the complexity a reviewer can hold at once.
+ *
+ * The effect is owned by this composition, so leaving the table cancels the round with it, and
+ * it is keyed on the game so a rebuild does not start a second loop against the same table.
+ */
+@Composable
+private fun AtTheTable(here: Screen.Playing, pace: Pace, onSettings: () -> Unit, onQuit: () -> Unit) {
+    if (here.autoplay) LaunchedEffect(here.game) { playOn(here.game) }
+
+    GameScreen(
+        game = here.game,
+        opening = here.opening,
+        pace = pace,
+        onSettings = onSettings,
+        onQuit = onQuit,
+    )
+}
+
+/**
  * Where each capture state opens.
  *
  * Two of the five are screens and cost nothing; two are a staged round at different moments;
@@ -602,6 +633,7 @@ private suspend fun stagedScreen(scene: MarketingScene, vault: Vault): Screen = 
     MarketingScene.SCORE -> Screen.Playing(stagedGame(vault, toTheEnd = true))
     MarketingScene.LOBBY -> Screen.Online
     MarketingScene.PLAN -> Screen.Playing(coalitionGame(vault), opening = Question.ThePlan)
+    MarketingScene.DEMO -> Screen.Playing(demoGame(vault), autoplay = true)
 }
 
 /**

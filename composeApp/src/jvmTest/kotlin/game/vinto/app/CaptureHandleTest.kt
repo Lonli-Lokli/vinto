@@ -145,10 +145,50 @@ class CaptureHandleTest {
         waitForIdle()
     }
 
+    /**
+     * The demo scene plays itself, with nobody touching it.
+     *
+     * This is the one scene that is not a photograph. The App Store preview needs *footage of the
+     * game being played*, and every other staged scene is deliberately a frozen moment — `TABLE`
+     * deals a position and then waits for a human who, on a capture machine, is never coming. A
+     * clip of it is a still with a soundtrack.
+     *
+     * So the property worth asserting is the opposite of
+     * [theTableSceneIsTheSameTableTwice]: not that the deal is fixed, but that the round MOVES.
+     * The header's turn counter is what says so — it can only advance if seats are taking turns —
+     * and waiting for it beats comparing screenshots, which would also pass on the opening deal
+     * settling.
+     */
+    @Test
+    fun theDemoScenePlaysItselfWithNobodyTouchingIt() = runComposeUiTest {
+        open(marketing = "demo")
+
+        waitUntil(timeoutMillis = DEMO_TIMEOUT_MS) {
+            onAllNodesWithText(DEMO_TURN, substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        assertTrue(
+            onAllNodesWithText(DEMO_TURN, substring = true).fetchSemanticsNodes().isNotEmpty(),
+            "the demo table never reached $DEMO_TURN, so nothing played itself",
+        )
+    }
+
     private companion object {
         const val SEED = 20_260_903L
 
         /** Long enough for the opening deal to play out; short enough to fail rather than hang. */
         const val SHEET_TIMEOUT_MS = 10_000L
+
+        /**
+         * The header's counter reading two, as `table_round_turn` writes it.
+         *
+         * It is a LAP counter, not a move counter — `CallVinto.kt` advances it only when play
+         * comes back round to the first seat — so two means the table went all the way round
+         * with nobody touching it, which is exactly the claim. Four would mean four laps, which
+         * is more than a test wants to sit through.
+         */
+        const val DEMO_TURN = "/ T2"
+
+        /** A lap at the table's own pace, and a failure rather than a hang if it never comes. */
+        const val DEMO_TIMEOUT_MS = 60_000L
     }
 }

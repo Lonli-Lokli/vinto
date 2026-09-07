@@ -8,6 +8,9 @@ import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 /**
  * The states a store capture can ask the app to be in.
@@ -72,6 +75,16 @@ enum class MarketingScene(val id: String) {
      * one seat this screen is not about.
      */
     PLAN("plan"),
+
+    /**
+     * A round that plays ITSELF — the only scene meant to be filmed rather than photographed.
+     *
+     * The App Store preview slot wants footage of the game being played, and none of the scenes
+     * above move: [TABLE] deals a position and waits for a human. This one keeps the seats taking
+     * turns for as long as the camera is rolling. `demoGame` says how, and why the moves are real
+     * ones through the ordinary validator rather than a puppet show.
+     */
+    DEMO("demo"),
     ;
 
     companion object {
@@ -218,3 +231,87 @@ private const val MAX_TURNS = 30
 
 /** Long enough for three declarations and the seeding that follows them; not a whole round. */
 private const val SETTLING_PASSES = 8
+
+/**
+ * The staged game behind [MarketingScene.DEMO], and the loop that keeps it moving.
+ *
+ * Every other scene is a photograph: a moment arranged, then handed to the screen to sit still
+ * in. This one is footage. Apple's App Preview slot wants the game *being played*, and a clip of
+ * [MarketingScene.TABLE] is a still with a soundtrack — the table deals a position and then waits
+ * for a human who, on a capture machine, is never coming.
+ *
+ * **Not a rigged demo.** Every move below goes through the ordinary session and the ordinary
+ * validator, and the opponents are the same MCTS bots a player meets. What is arranged is only
+ * *that* the seats keep taking turns, not what any of them decides.
+ *
+ * The human's own turn is spent rather than played — draw it, put it down. A staged hand that
+ * kept improving would steer the round, and the point of the footage is the table.
+ */
+internal suspend fun demoGame(vault: Vault): LocalGame {
+    // Off the calling thread, unlike the photographed scenes. Those stage a fixed position and
+    // stop, so keeping the bots on the caller is what makes them reproducible; this one plays for
+    // as long as somebody is filming, and a search running on the frame-producing thread is a
+    // recording of a stalled screen.
+    val game = LocalGame.start(vault, DEMO_SEED, Difficulty.EASY, botDispatcher = Dispatchers.Default)
+    val me = game.playerId
+    game.session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+    game.session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+    game.session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+    return game
+}
+
+/**
+ * Keep [game] moving until the caller stops caring.
+ *
+ * Cancelled by the composition that started it, which is the whole reason it is a plain suspend
+ * loop rather than something with a lifecycle: leaving the screen cancels the scope and the round
+ * stops with it.
+ *
+ * The pause between moves is the point rather than an accident. The table has animations — a card
+ * crossing the felt, a toss-in landing — and a loop that dispatched as fast as the engine can
+ * reduce would finish the round behind its own choreography and film none of it. A reel that wants
+ * the game to look faster speeds up the FOOTAGE; the app plays at the pace a player would see.
+ */
+internal suspend fun playOn(game: LocalGame) {
+    val me = game.playerId
+    while (currentCoroutineContext().isActive) {
+        delay(DEMO_BEAT_MS)
+        val view = game.session.view.value
+        when {
+            // A finished round is the one thing that stops by itself. Dealing the next one keeps
+            // the camera fed, and it is the same button the score sheet offers a player.
+            game.result != null -> {
+                game.nextRound()
+            }
+
+            // The window after every discard. Nobody's turn advances until this seat says it is
+            // done with it, and a loop that never says so stops on its second lap — which is how
+            // the coalition scene first came out blank.
+            view.subPhase == GameSubPhase.TOSS_QUEUE_ACTIVE -> {
+                game.session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(me)))
+            }
+
+            view.players.getOrNull(view.currentPlayerIndex)?.id == me -> {
+                game.session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+                delay(DEMO_BEAT_MS)
+                game.session.dispatch(GameAction.DiscardCard(PlayerIdPayload(me)))
+            }
+
+            else -> {
+                game.session.dispatch(GameAction.ProcessAiTurn(PlayerIdPayload(me)))
+            }
+        }
+    }
+}
+
+/**
+ * A deal for the footage, and a different one from the photographed scenes on purpose.
+ *
+ * [MARKETING_SEED] was searched for a round the player WINS, because a score sheet is a still that
+ * a shopper reads. This one is not read, it is watched, so what it wants is a round with things
+ * happening in it rather than a flattering ending.
+ */
+private const val DEMO_SEED = 20_260_081L
+
+/** One beat per move: long enough for the card to cross the felt, short enough to feel played. */
+private const val DEMO_BEAT_MS = 900L

@@ -85,6 +85,7 @@ class ManifestTest {
                 "a second invite link does nothing, and a capture run photographs one screen six times",
         )
     }
+
     /**
      * The Compose view on iOS gets the WHOLE screen, and insets it once.
      *
@@ -116,7 +117,7 @@ class ManifestTest {
 
         // `.ignoresSafeArea()`, `(.all)` and `(.container...)` all cover the top edge; the
         // keyboard-only form does not, and is precisely the line that caused the double inset.
-        val allEdges = Regex("\\.ignoresSafeArea\\(\\s*(\\)|\\.all|\\.container)")
+        val allEdges = Regex("""\.ignoresSafeArea\(\s*(\)|\.all|\.container)""")
             .containsMatchIn(swift)
         assertTrue(
             allEdges,
