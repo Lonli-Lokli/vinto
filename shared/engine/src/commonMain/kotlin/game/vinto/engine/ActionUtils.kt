@@ -1,7 +1,10 @@
 package game.vinto.engine
 
+import game.vinto.shapes.ActionTarget
+import game.vinto.shapes.Card
 import game.vinto.shapes.Claim
 import game.vinto.shapes.Rank
+import game.vinto.shapes.SerializedOpponentKnowledge
 import game.vinto.shapes.TargetType
 
 /**
@@ -66,6 +69,111 @@ fun swapDeclarationsBetween(
     playerB.clearDeclarationAt(positionB)
     movingB.forEach { playerA.addClaim(it.copy(positions = listOf(positionA))) }
     movingA.forEach { playerB.addClaim(it.copy(positions = listOf(positionB))) }
+}
+
+/**
+ * A watched swap: what each seat has *seen* of the two cards follows them too.
+ *
+ * The pair of positions is public — the table watches them named and watches the cards move —
+ * so a seat that knew either card knows exactly where it went. Leaving this out pinned the
+ * table's memory to an address rather than to a card, and it cost a reported deal twice from
+ * one cause: a Joker swapped in publicly, moved on by somebody's Queen, and still believed to
+ * be in the row it had left, by every seat, all the way through the coalition round.
+ *
+ * Call it **before** the cards move. [lookedAtBoth] names the seat that peeked first — the
+ * Queen's player, who ends up knowing both sides whatever it knew before; a Jack is blind and
+ * passes null.
+ */
+fun carrySeenCardsAcrossSwap(
+    state: MutableGameState,
+    a: ActionTarget,
+    b: ActionTarget,
+    lookedAtBoth: String? = null,
+) {
+    val ownerA = state.playerById(a.playerId) ?: return
+    val ownerB = state.playerById(b.playerId) ?: return
+    val cardA = ownerA.cards.getOrNull(a.position)?.freeze() ?: return
+    val cardB = ownerB.cards.getOrNull(b.position)?.freeze() ?: return
+
+    for (observer in state.players) {
+        val peeked = observer.id == lookedAtBoth
+        val seenA = if (peeked) cardA else observer.seenAt(ownerA, a.position, cardA)
+        val seenB = if (peeked) cardB else observer.seenAt(ownerB, b.position, cardB)
+        observer.recordSeen(ownerA, a.position, seenB)
+        observer.recordSeen(ownerB, b.position, seenA)
+    }
+}
+
+/**
+ * What this observer knows sits at [position] of [owner]'s row, [card] being what is there.
+ *
+ * A seat's memory of its own row is a set of positions rather than of cards, so the truth has
+ * to be handed in: knowing position 2 means knowing the card that is at position 2.
+ */
+private fun MutablePlayerState.seenAt(
+    owner: MutablePlayerState,
+    position: Int,
+    card: Card,
+): Card? = if (id == owner.id) {
+    card.takeIf { position in knownCardPositions }
+} else {
+    opponentKnowledge?.get(owner.id)?.knownCards?.get(position)
+}
+
+/**
+ * Writes a belief back, null meaning the seat no longer knows what is there.
+ *
+ * Nothing is materialised for a seat that knew nothing and still knows nothing — an empty
+ * record serialises differently from an absent one, and the parity corpus is full of hands
+ * nobody has ever seen.
+ */
+private fun MutablePlayerState.recordSeen(
+    owner: MutablePlayerState,
+    position: Int,
+    card: Card?,
+) {
+    if (id == owner.id) {
+        when {
+            card == null -> knownCardPositions.remove(position)
+            position !in knownCardPositions -> knownCardPositions.add(position)
+        }
+        return
+    }
+
+    val about = opponentKnowledge?.get(owner.id)
+    if (card == null) {
+        if (about == null || position !in about.knownCards) return
+        opponentKnowledge?.put(owner.id, about.copy(knownCards = about.knownCards - position))
+        return
+    }
+
+    val knowledge = opponentKnowledge
+        ?: mutableMapOf<String, SerializedOpponentKnowledge>().also { opponentKnowledge = it }
+    val standing = about ?: SerializedOpponentKnowledge(emptyMap())
+    knowledge[owner.id] = standing.copy(knownCards = standing.knownCards + (position to card))
+}
+
+/**
+ * A removal renumbers the positions above it, and what the *other* seats have seen of that
+ * hand is renumbered with it — otherwise their memory silently points one card along.
+ *
+ * There are three of these, and they belong together: the owner's own `knownCardPositions`,
+ * this, and [shiftDeclarationsAfterRemoval]. A removal path that applies two of the three
+ * leaves the table believing something false, which is how the King's correct declaration
+ * came to — `SelfPlayGateTest` now fails on any seat holding an untrue belief.
+ */
+fun shiftSeenCardsAfterRemoval(state: MutableGameState, ownerId: String, removed: Int) {
+    for (observer in state.players) {
+        if (observer.id == ownerId) continue
+        val knowledge = observer.opponentKnowledge ?: continue
+        val about = knowledge[ownerId] ?: continue
+
+        val updated = about.knownCards
+            .filterKeys { it != removed }
+            .mapKeys { (position, _) -> if (position > removed) position - 1 else position }
+
+        knowledge[ownerId] = about.copy(knownCards = updated)
+    }
 }
 
 /** A removal renumbers the positions above it, and the claims move with their cards. */

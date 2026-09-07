@@ -5,6 +5,7 @@ import game.vinto.engine.MutableGameState
 import game.vinto.engine.MutablePlayerState
 import game.vinto.engine.PublicReveal
 import game.vinto.engine.shiftDeclarationsAfterRemoval
+import game.vinto.engine.shiftSeenCardsAfterRemoval
 import game.vinto.shapes.FailedTossInAttempt
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.SerializedOpponentKnowledge
@@ -56,7 +57,7 @@ fun handleParticipateInTossIn(
             clear()
             addAll(shifted)
         }
-        shiftOpponentKnowledge(state, playerId, position)
+        shiftSeenCardsAfterRemoval(state, playerId, position)
         player.shiftDeclarationsAfterRemoval(position)
 
         // An action card waits its turn in the queue; anything else goes straight to the
@@ -126,24 +127,5 @@ private fun applyFailedTossIn(
                 about.copy(knownCards = about.knownCards + (position to card.freeze()))
             observer.opponentKnowledge = knowledge
         }
-    }
-}
-
-/**
- * A card leaving a hand renumbers everything after it, so what other players believe about
- * that hand has to be renumbered too — otherwise their knowledge silently points at the
- * wrong card.
- */
-private fun shiftOpponentKnowledge(state: MutableGameState, ownerId: String, removed: Int) {
-    for (observer in state.players) {
-        if (observer.id == ownerId) continue
-        val knowledge = observer.opponentKnowledge ?: continue
-        val about = knowledge[ownerId] ?: continue
-
-        val updated = about.knownCards
-            .filterKeys { it != removed }
-            .mapKeys { (position, _) -> if (position > removed) position - 1 else position }
-
-        knowledge[ownerId] = about.copy(knownCards = updated)
     }
 }

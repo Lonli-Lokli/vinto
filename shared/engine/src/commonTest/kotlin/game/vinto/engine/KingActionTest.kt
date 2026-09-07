@@ -4,6 +4,7 @@ import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.ActionTarget
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.Rank
+import game.vinto.shapes.SerializedOpponentKnowledge
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -119,6 +120,41 @@ class KingActionTest {
         assertTrue(next.activeTossIn?.ranks?.contains(Rank.KING) == true)
         // Still awaiting: the declared 7 now has its own action to aim.
         assertEquals(GameSubPhase.AWAITING_ACTION, next.subPhase)
+    }
+
+    @Test
+    fun aCorrectDeclarationRenumbersWhatTheOtherSeatsHaveSeen() {
+        // A correct declaration takes the named card out of the hand, so everything above it
+        // slides down one — including what the rest of the table has been shown. p2 has seen
+        // p1's card at 2; after the 7 at 0 leaves, that card is at 1.
+        val state = testState(
+            subPhase = GameSubPhase.CHOOSING,
+            players = listOf(
+                testPlayer(
+                    "p1",
+                    "Player 1",
+                    isHuman = true,
+                    cards = listOf(
+                        testCard(Rank.SEVEN, "p1c1"),
+                        testCard(Rank.TWO, "p1c2"),
+                        testCard(Rank.THREE, "p1c3"),
+                    ),
+                ),
+                testPlayer("p2", "Player 2", isHuman = false).copy(
+                    opponentKnowledge = mapOf(
+                        "p1" to SerializedOpponentKnowledge(mapOf(2 to testCard(Rank.THREE, "p1c3"))),
+                    ),
+                ),
+            ),
+            pendingAction = kingAimedAt("p1", 0, testCard(Rank.SEVEN, "p1c1")),
+        )
+
+        var next = unsafeReduce(state, useCardAction("p1"))
+        next = unsafeReduce(next, declareKing("p1", Rank.SEVEN))
+
+        val seen = next.players[1].opponentKnowledge?.get("p1")?.knownCards.orEmpty()
+        assertEquals(Rank.THREE, seen[1]?.rank, "the three moved down to 1")
+        assertNull(seen[2], "and nothing is believed about 2 any more")
     }
 
     @Test

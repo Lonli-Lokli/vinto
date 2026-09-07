@@ -22,6 +22,12 @@ import kotlin.test.assertTrue
  * - a **stall**. Every action can be individually legal while the game never finishes,
  *   because two states hand back and forth. That is why reaching `scoring` is asserted rather
  *   than just "nothing threw".
+ * - a **false belief**. The engine records what each seat has been shown, and a seat that has
+ *   been told something untrue plays on it for the rest of the deal. This is checked here
+ *   rather than in the parity corpus because the corpus can no longer prove it: TypeScript
+ *   had the same defect, so its hashes recorded the wrong answer (see
+ *   `fixtures/recordings/README.md`). Asserting the beliefs are *true* is the stronger
+ *   question anyway — two engines agreeing about memory never said either was right.
  *
  * The loop itself lives in [playSelfPlayGame], shared with the tournament in
  * [TournamentTest]: legality and strength are two questions about one table, and they should
@@ -40,6 +46,13 @@ class SelfPlayGateTest {
         assertTrue(
             bad.isEmpty(),
             "games that never reached scoring:\n" + bad.joinToString("\n") { it.describe() },
+        )
+
+        val lied = played.filter { it.falseBelief.isNotEmpty() }
+        assertTrue(
+            lied.isEmpty(),
+            "a seat was told something untrue about another seat's hand:\n" +
+                lied.joinToString("\n") { "seed " + it.seed + ": " + it.falseBelief },
         )
 
         val moved = played.filter { it.callerHandChanged }

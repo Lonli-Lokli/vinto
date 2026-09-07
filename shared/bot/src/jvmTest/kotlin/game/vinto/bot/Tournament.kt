@@ -48,6 +48,16 @@ internal data class PlayedGame(
      * what they score.
      */
     val callerHandChanged: Boolean = false,
+    /**
+     * Non-empty when a seat held a belief about another seat's card that was not true; says
+     * who believed what, and after which action it went wrong.
+     *
+     * `opponentKnowledge` is the engine's record of what each seat has been *shown*, so an
+     * entry that does not match the card lying there is not a bot playing badly — it is the
+     * engine having told a seat something false. It used to: a Jack or a Queen moved two
+     * cards and left every watcher's memory pinned to the old addresses.
+     */
+    val falseBelief: String = "",
     /** How long [BotRunner.nextAction] spent thinking, and how many times it was asked. */
     val decisionNanos: Long = 0,
     val decisions: Int = 0,
@@ -158,6 +168,7 @@ private fun playOut(
     var callerFrozenHand: List<String>? = null
     var decisionNanos = 0L
     var decisions = 0
+    var falseBelief = ""
 
     while (actions < ACTION_LIMIT && state.phase != GamePhase.SCORING) {
         val startedAt = System.nanoTime()
@@ -192,6 +203,7 @@ private fun playOut(
 
             is Applied.Accepted -> state = applied.state
         }
+        falseBelief = falseBelief.ifEmpty { falseBeliefIn(state, action, actions) }
         if (action is GameAction.CallVinto) {
             calledVinto = true
             callerFrozenHand = state.players.first { it.id == state.vintoCallerId }.cards.map { it.id }
@@ -221,9 +233,31 @@ private fun playOut(
         // The rules give a tie to the caller, so this is `<=` and not `<`.
         callerWon = callerTotal != null && bestCoalition != null && callerTotal <= bestCoalition,
         callerHandChanged = callerFrozenHand != null && callerFrozenHand != caller?.cards?.map { it.id },
+        falseBelief = falseBelief,
         decisionNanos = decisionNanos,
         decisions = decisions,
     )
+}
+
+/**
+ * The first belief in [state] that is not true, or "" when every seat's memory matches the
+ * table. Checked after every action, because the action that breaks a belief and the action
+ * that reads it can be a whole round apart.
+ */
+private fun falseBeliefIn(state: GameState, after: GameAction, index: Int): String {
+    for (seat in state.players) {
+        for ((ownerId, about) in seat.opponentKnowledge.orEmpty()) {
+            val owner = state.players.firstOrNull { it.id == ownerId } ?: continue
+            for ((position, believed) in about.knownCards) {
+                val truth = owner.cards.getOrNull(position)
+                if (truth != null && truth.rank == believed.rank) continue
+                return "after action #$index (${after.type}): ${seat.id} believes " +
+                    "$ownerId@$position is ${believed.rank.serialName}, it is " +
+                    (truth?.rank?.serialName ?: "not there at all")
+            }
+        }
+    }
+    return ""
 }
 
 private sealed interface Applied {

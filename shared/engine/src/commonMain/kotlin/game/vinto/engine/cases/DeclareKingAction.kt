@@ -9,6 +9,7 @@ import game.vinto.engine.clearTossInReadyList
 import game.vinto.engine.getAutomaticallyReadyPlayers
 import game.vinto.engine.getTargetTypeFromRank
 import game.vinto.engine.shiftDeclarationsAfterRemoval
+import game.vinto.engine.shiftSeenCardsAfterRemoval
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameSubPhase
@@ -73,6 +74,7 @@ private fun applyCorrectDeclaration(
         clear()
         addAll(shifted)
     }
+    shiftSeenCardsAfterRemoval(state, targetPlayer.id, position)
     targetPlayer.shiftDeclarationsAfterRemoval(position)
 
     val targetType = getTargetTypeFromRank(removedCard.rank)

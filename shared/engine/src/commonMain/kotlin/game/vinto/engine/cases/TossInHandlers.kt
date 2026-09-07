@@ -4,6 +4,7 @@ import game.vinto.engine.MutableCard
 import game.vinto.engine.MutableGameState
 import game.vinto.engine.MutablePendingAction
 import game.vinto.engine.areAllPlayersReady
+import game.vinto.engine.carrySeenCardsAcrossSwap
 import game.vinto.engine.clearTossInAfterActionableCard
 import game.vinto.engine.getTargetTypeFromRank
 import game.vinto.engine.queuedTossInCardId
@@ -80,8 +81,9 @@ fun handlePlayerTossInFinished(
 /**
  * EXECUTE_JACK_SWAP — swap the two selected cards.
  *
- * Jack is a *blind* swap: nobody looked first, so both owners lose whatever they knew about
- * the position, and the player who played the Jack learns nothing.
+ * Jack is a *blind* swap: nobody looks first, so the player who played it learns nothing and
+ * neither owner learns what arrived. What anybody already knew about either card is a
+ * different matter — the table watched the pair move, so it follows the cards.
  *
  * Ported from `legacy-web/packages/engine/src/lib/cases/execute-jack-swap.ts`.
  */
@@ -93,13 +95,13 @@ fun handleExecuteJackSwap(state: MutableGameState, action: GameAction.ExecuteJac
     val player1 = state.playerById(target1.playerId) ?: return false
     val player2 = state.playerById(target2.playerId) ?: return false
 
+    carrySeenCardsAcrossSwap(state, target1, target2)
+
     val card1 = player1.cards[target1.position]
     val card2 = player2.cards[target2.position]
     player1.cards[target1.position] = card2
     player2.cards[target2.position] = card1
 
-    player1.knownCardPositions.remove(target1.position)
-    player2.knownCardPositions.remove(target2.position)
     swapDeclarationsBetween(player1, target1.position, player2, target2.position)
 
     clearTossInAfterActionableCard(
@@ -113,8 +115,9 @@ fun handleExecuteJackSwap(state: MutableGameState, action: GameAction.ExecuteJac
 /**
  * EXECUTE_QUEEN_SWAP — swap the two cards the player just peeked at.
  *
- * Unlike Jack, the acting player saw both cards, so they keep knowledge of wherever those
- * cards ended up. The other owners did not look, so they lose theirs.
+ * Unlike Jack, the acting player saw both cards, so they know both sides wherever those cards
+ * ended up. Every other seat carries across only what it already knew, which for an owner who
+ * did not look is nothing about the card that arrived.
  *
  * Ported from `legacy-web/packages/engine/src/lib/cases/execute-queen-swap.ts`.
  */
@@ -126,37 +129,19 @@ fun handleExecuteQueenSwap(state: MutableGameState, action: GameAction.ExecuteQu
     val player1 = state.playerById(target1.playerId) ?: return false
     val player2 = state.playerById(target2.playerId) ?: return false
 
+    carrySeenCardsAcrossSwap(
+        state,
+        target1,
+        target2,
+        lookedAtBoth = state.players[state.currentPlayerIndex].id,
+    )
+
     val card1 = player1.cards[target1.position]
     val card2 = player2.cards[target2.position]
     player1.cards[target1.position] = card2
     player2.cards[target2.position] = card1
 
     swapDeclarationsBetween(player1, target1.position, player2, target2.position)
-
-    val currentPlayer = state.players[state.currentPlayerIndex]
-
-    when (currentPlayer.id) {
-        player1.id ->
-            if (!currentPlayer.knownCardPositions.contains(target1.position)) {
-                currentPlayer.knownCardPositions.add(target1.position)
-            }
-
-        player2.id ->
-            if (!currentPlayer.knownCardPositions.contains(target2.position)) {
-                currentPlayer.knownCardPositions.add(target2.position)
-            }
-
-        else -> {
-            // Swapped two other players' cards, having seen both.
-            val knowledge = currentPlayer.opponentKnowledge ?: mutableMapOf()
-            knowledge.learn(player1.id, target1.position, card2)
-            knowledge.learn(player2.id, target2.position, card1)
-            currentPlayer.opponentKnowledge = knowledge
-        }
-    }
-
-    if (currentPlayer.id != player1.id) player1.knownCardPositions.remove(target1.position)
-    if (currentPlayer.id != player2.id) player2.knownCardPositions.remove(target2.position)
 
     clearTossInAfterActionableCard(
         pending.card.copy().also { it.played = true },
@@ -185,13 +170,4 @@ private fun discardPendingAndContinue(state: MutableGameState, playerId: String)
         playerId,
     )
     return true
-}
-
-private fun MutableMap<String, game.vinto.shapes.SerializedOpponentKnowledge>.learn(
-    ownerId: String,
-    position: Int,
-    card: MutableCard,
-) {
-    val about = this[ownerId] ?: game.vinto.shapes.SerializedOpponentKnowledge(emptyMap())
-    this[ownerId] = about.copy(knownCards = about.knownCards + (position to card.freeze()))
 }

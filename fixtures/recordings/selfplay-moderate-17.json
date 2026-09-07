@@ -876,7 +876,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "3e68b391d7b0854a19445d5fa408f1b8fa64f2c13ee64efb9721568175998117"
+      "stateHash": "03deb6d8cfb766297cd8d8e5389ad666ed05f06559e14552b4bda792ccfae6d4"
     },
     {
       "action": {
@@ -885,7 +885,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "1fd7a4e2d799401a83cd6ffa5cabf8a989ba384af47d7db1772f167c75743b9f"
+      "stateHash": "ac898d3d8e6d0073158c2c63f6f0acf6e2df96870fc7f0c0ec4a1919fbbf382f"
     },
     {
       "action": {
@@ -894,7 +894,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "97ecad6816a110e901941e213b9a978eec417690eada6d2578fdd47028d3b330"
+      "stateHash": "3ced50120173b673aaeb1aeeba9ab391ec022b3e673eee76e178a13365b12631"
     },
     {
       "action": {
@@ -903,7 +903,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "51a0de47d6386d335b13690c0a6fbd14ee4d4c803a3a3702d0f4d5225011b535"
+      "stateHash": "035a6e36cf649f5160c263966769faee665445ee69df32c8da3587cd6cc0a9ad"
     },
     {
       "action": {
@@ -912,7 +912,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "046447444e1066ef68c861777c8240fd80283a21e413769b91652a21a2f9f3c0"
+      "stateHash": "a1089126ca9c3eab271a16f71865d837c6552b8fee8d1aae9606caeb6fdd8cef"
     },
     {
       "action": {
@@ -921,7 +921,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "0ef23fd440a5c288a2f008a8038f5fd7504a577a161978d30987b45da7525f0a"
+      "stateHash": "9ed3fb8c893e0dc13f4ec6306903dad33c048106a218854d444b734e3294e1cc"
     },
     {
       "action": {
@@ -932,7 +932,7 @@
           "declaredRank": "10"
         }
       },
-      "stateHash": "468a51407394b24c013d9abdd882d995cac2d807c3f861e6972d531f30681700"
+      "stateHash": "b595fffcf2768c2b5f459ac1902271564c7941ad7a28a2917624790d6695333f"
     },
     {
       "action": {
@@ -944,7 +944,7 @@
           "position": 0
         }
       },
-      "stateHash": "1b62402b6ac967c0568c321670e70f1f26e72e258b6dec648c72bb6bf2e2b551"
+      "stateHash": "5cbb31f63185e50face9ac565e1fc555e2e50f8a8dbdddb2b6b476c38a4ad544"
     },
     {
       "action": {
@@ -953,7 +953,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "3a2da33b93ec75b71b2ad57993b6c5bb9e1de905ab384b41ee6da889145eb0fa"
+      "stateHash": "fdf04283ac0d7f7976c1fa5ee8b64092a34609338abc82da476015762b023f71"
     },
     {
       "action": {
@@ -962,7 +962,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "13da26d1216614db9bc240da53a33eb22673b7a5b05e1ec019f8aad0a512b443"
+      "stateHash": "c35d966c8895bfcc276f14265364793d7631dafeb594e3d02a069599d08dc3dc"
     },
     {
       "action": {
@@ -971,7 +971,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "d3620120a161839e21e0a0487c7624975a202935966a22fc6fbd233a7f5714d7"
+      "stateHash": "e2d00ae66b5735ded9edfff0029882758d9db0b8add65b2a4ed2b43fe145e4a0"
     },
     {
       "action": {
@@ -983,7 +983,7 @@
           ]
         }
       },
-      "stateHash": "82ac4249c174d6a3d7c98e2269b1a6d3ae128967910c43a72351b4f3c5000a5f"
+      "stateHash": "b72f0d8c4afb41509add170ef52e190f9ba2449b735755cd3af6920f67ed3c76"
     },
     {
       "action": {
@@ -992,7 +992,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "abaef1c77c3567551d34d20623632855f09abfec8441d0f3438c7add1d35e170"
+      "stateHash": "295b184918f515fa0fb22841d9b9e528d38cee7ed4c37f8d78eed6250ecfb1e0"
     },
     {
       "action": {
@@ -1001,7 +1001,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "ba33786572e8a895c5cd55654d31d332306a10222c0ae2f6de62702586ae6845"
+      "stateHash": "ff32f9daa33efa5bddf61addfa2f0547750f9097e80e0d011e4aa22efee588e9"
     },
     {
       "action": {
@@ -1010,7 +1010,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "e21a40361a3d00b35768df9289dd930f0b9c66f4919551bc96ebd4c92a5d4dd6"
+      "stateHash": "d29cf69315177f66e5a483cca9710bfe5bdab158459af0342fbd6249eea02db6"
     },
     {
       "action": {
@@ -1022,7 +1022,7 @@
           "position": 3
         }
       },
-      "stateHash": "8e5b361802c3d893148b7ecb009ae9faa21f259216a12d2e75a21793f3b2f7c9"
+      "stateHash": "8ca17c4edfb8d2a915657d448f8bd9ea77db65c3349130e6c43f4f1b57b18b5d"
     },
     {
       "action": {
@@ -1031,7 +1031,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "6c5653f2b6d23ff65939f5253daa999756b8b802637f4c35754c61c1049da22b"
+      "stateHash": "8c77014ebd85e6306b66e7b3c85f2395b61648ac10c4329897bd31625c04d3c4"
     },
     {
       "action": {
@@ -1040,7 +1040,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "6b7d39e1b8fd2c2ab0060509ed0c4058633771686c074a21b476ffb21c73d86d"
+      "stateHash": "d30c8bf03fdac7ab9ed29fd9225dced24723019e859c6b37b51765ab6e63af7a"
     },
     {
       "action": {
@@ -1049,7 +1049,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "39a803838c77c8e5ec82633010f7a32b85ca54f8c9da6fb62d948a070c0f49b0"
+      "stateHash": "a8112f76f8e6dbb5f83ba797a4460d9ace5b7db7074b5c2fcf5c71136050d106"
     },
     {
       "action": {
@@ -1058,7 +1058,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "055bd9545609e2fe814bb0cadc62a3e4c7bbb03bb9c81982e4454bbe6c60fc17"
+      "stateHash": "e13023b7b9a135a2c8df7abbd664c2fd0108e6bf736935b103c45957a631a400"
     },
     {
       "action": {
@@ -1067,7 +1067,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "e7586fbceea2aee2177901ef7144d4839719010a4dac1edfebb9d3356a4b89be"
+      "stateHash": "c97d9670f6510c066e4f8a31f62fc352405aa629fbbb5e05220cd21b21eae7d3"
     },
     {
       "action": {
@@ -1076,7 +1076,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "69db5ec15546603b6c9867cbd47d15c854fbec0230c3513938ba29fee9c4d4b3"
+      "stateHash": "e74960c6f1717831f03d155a509f09a70eb1b6f9cbb401552d1aeb9c105e8b6d"
     },
     {
       "action": {
@@ -1087,7 +1087,7 @@
           "declaredRank": "9"
         }
       },
-      "stateHash": "9012334b68904d08d38b30638e35418e3d2c936179b237c41502d60a5777d993"
+      "stateHash": "076fe79eee4ae25fc7d21eb0cf595dd6178f66845414bf8c121479ca849f8ee6"
     },
     {
       "action": {
@@ -1099,7 +1099,7 @@
           "position": 2
         }
       },
-      "stateHash": "01904a0f9d4835c170be1cf172daf1a3912a0f8786f60be10c41118d9a9902ae"
+      "stateHash": "0920edbd319c8f68143a034b667441a9c8a7c344c3fbafa567d73c9c588caaef"
     },
     {
       "action": {
@@ -1108,7 +1108,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "be3febc092712eb56dfdb876385bf8a4351e30579af343cd080fde518ec746d8"
+      "stateHash": "3e7166f423cd0b91c18371e24bcac38c5948ea1f0a0bbebe22b38f147ebab725"
     },
     {
       "action": {
@@ -1120,7 +1120,7 @@
           ]
         }
       },
-      "stateHash": "87de38f509d8fc05505750edfb79e4723f119b9dd33b8210fc24c56cceded2e4"
+      "stateHash": "153053f99d6c29a7a170b8371da591ddb1479f9789ca2db264ed5ef3f7d02cbb"
     },
     {
       "action": {
@@ -1129,7 +1129,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "6ce4016383df805642ae3a1dacb598ac166a9c8c4d23e15750f0fe96479f9506"
+      "stateHash": "db485cc7b79b9a659c2fd4e12b3911dc97d9c8a0268ce3cea796d0ae557a048e"
     },
     {
       "action": {
@@ -1141,7 +1141,7 @@
           ]
         }
       },
-      "stateHash": "2040864f582b145504fbacd151b947a5facf711da62a2f002c666d2b134c17e3"
+      "stateHash": "4bb415cff2becf20ef3f85a912ce92abffc0283768d31606a38d7a977ebe03f8"
     },
     {
       "action": {
@@ -1150,7 +1150,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "3b09cfb51e6369c3b66214b294473916b570c266b881673544c8e9ba1fcaf733"
+      "stateHash": "95551aa1a00625a47d9d7e25f3b0299170208e61870ae08dbdcbf1aae45dade0"
     },
     {
       "action": {
@@ -1159,7 +1159,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "bc8295162445d5783e2b60081e199336956292c99d3262718ff29c2944994784"
+      "stateHash": "b3aa560a7c68f924c28f37a7069ebd4a7cbe386f4580e568ba884ed2e92d9cea"
     },
     {
       "action": {
@@ -1168,7 +1168,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "652a5a4edd0325d91fb4a84826746269e42136cbd9cd9f5f79ba069edd4dd21f"
+      "stateHash": "4f72c1b11bd7f78d1fb377828c6cf22ce69a3bf845e3d39848e351da086ac189"
     },
     {
       "action": {
@@ -1177,7 +1177,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "9a71bcfcff499b7e04645c5c48d19cebd76009fb3129c78ecd7b0ed2cf5af670"
+      "stateHash": "0b608e69c92f66a2f6778da266a641b9340dd77bc86cdc66455ba11e15322085"
     },
     {
       "action": {
@@ -1189,7 +1189,7 @@
           "position": 0
         }
       },
-      "stateHash": "7cd9bac5c08eb17cb9da145bf88359d5f707071bdab54f4e5471a7495bea0c63"
+      "stateHash": "3489f049fb261e0472468a3f646c6715631c7b581a2ec78e2732ec31ec9233d0"
     },
     {
       "action": {
@@ -1198,7 +1198,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "c5295a0792b7079db5fe4b816375f879a809edf90c493f18c13134800374305d"
+      "stateHash": "009e352a5f675593f00124eda033b16a5737060760f9969bd777dcff25c37e36"
     },
     {
       "action": {
@@ -1210,7 +1210,7 @@
           "position": 0
         }
       },
-      "stateHash": "b8ea6b2183aa4e4cdc96515bb73c0c6f786deff6744c548e282ce395464a890c"
+      "stateHash": "54f1c3026321ab1e4b56dfc8554f2ba4954cc17b8963c1ac66220879af5aee39"
     },
     {
       "action": {
@@ -1219,7 +1219,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "7e13425a1722697a5144a548a5c31945c50d04f79ed38149b01c7249983bb9ed"
+      "stateHash": "2fc609723bbdf673f849411a44623719168a88c3cfc9356ae6a0719d6ef27973"
     },
     {
       "action": {
@@ -1228,7 +1228,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "ef0c3e0008e175d8af0b23f1aca0d3b494e67e4ea61e1b993070e880628aaabc"
+      "stateHash": "0d4e00b8bc0a9e9ac2dce60a692e3ecace60c0c08fcd5b02bdee6ed7691b74d7"
     },
     {
       "action": {
@@ -1237,7 +1237,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "d65dcc0e9b65a196b345c08bf0471d4b86c6d9bae4417e886c4fb6d5b1f15129"
+      "stateHash": "8077f7f893ef674920320d839090967fdad5124856ef628276aaaea2ccc71bbf"
     },
     {
       "action": {
@@ -1246,7 +1246,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "4ca633af307a7440f71c5e9a4fa0e4aadcefbd485afedd4f4c6e27d6ed20e61f"
+      "stateHash": "21b3df73258bb72c9d1355d31209f1fe6c0e66839e233ce0049e386cf5feb5a0"
     },
     {
       "action": {
@@ -1255,7 +1255,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "522db0e957651da74d387f9d96128cd9fcfacbe775cb36a0fe36d45a2f725801"
+      "stateHash": "91cf8e1d9d6fdf8f52ce12a6908bbdbd55c67e8b4d2991458974a7b4905bcf03"
     },
     {
       "action": {
@@ -1264,7 +1264,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "c2a7d3bcef4f65182ff7e5b06c8e4f09eced15298b0eac8729807f5b9fe19f44"
+      "stateHash": "4aa0a2b882aa7fc21f55b0163229b9213010456df9db5a975f6c8b53442cd56d"
     },
     {
       "action": {
@@ -1273,7 +1273,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "63c2366519cc6ff6c5f02d4305275be8fcf892304ef95a091fe080ece21ec609"
+      "stateHash": "4a12077799bc84a784e1611936d1ea98b02ef9af107f833c357351d4d2ff4686"
     },
     {
       "action": {
@@ -1285,7 +1285,7 @@
           "position": 1
         }
       },
-      "stateHash": "d15bccfc38093d362a183e1588a5e137ebc4a3fe6a89b4a4387e05c56849687e"
+      "stateHash": "1b42db028343c8736c25fe5a9b35ab05cb1aec38d4403a65b75fda8b43f3b3d8"
     },
     {
       "action": {
@@ -1295,7 +1295,7 @@
           "declaredRank": "2"
         }
       },
-      "stateHash": "74ad976c6e3f2ac2bbc598a149364ec0a97180b2ce32c237142c8393d922fd65"
+      "stateHash": "e4d28b95639ef031f068b1755cf29ecd4bc71a8a2b8fb83d6d54b0154545c492"
     },
     {
       "action": {
@@ -1307,7 +1307,7 @@
           ]
         }
       },
-      "stateHash": "350a4812b63370edbe8191d02ea5c63be23857281886502ae7c13e0cf595ac69"
+      "stateHash": "0037831da7a85d9375ce8f7d2eda55ca95519619a400d55a703030c6e5e6cea2"
     },
     {
       "action": {
@@ -1316,7 +1316,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "75708a9b60846ad4863e4d1a4090ed68779f2aa0fcf56c70f0b6f568ef08c999"
+      "stateHash": "264a259052450be66a608da5b5a08a4abec7511b1e9b1ff9469793bc640f6c83"
     },
     {
       "action": {
@@ -1325,7 +1325,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "0a64133e42da0a33317f9986572f19955754f62ee6bafab7b34233866c6cd5d7"
+      "stateHash": "91308307831aeb941f08bf138a9ae373c4b7cee624d54ffa4a2f8148b173b28b"
     },
     {
       "action": {
@@ -1334,7 +1334,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "e8894447d5b4e1ef2707f7d602e81c00ddfd8debac2e2b17f7bc83266ddb9622"
+      "stateHash": "17ec3b4c2c51cab13bd0da2d3c74586b1a5bc4b24f579cbb90c38cb28ad927d4"
     },
     {
       "action": {
@@ -1346,7 +1346,7 @@
           ]
         }
       },
-      "stateHash": "95fa1ba7b4a61675290ea7e71eec1f95268d09592868db6d0d8084066011e3bf"
+      "stateHash": "9fb5444d1fd72eff5a890ec00a68a19547ee0002553219516c54b0213144a8a5"
     },
     {
       "action": {
@@ -1355,7 +1355,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "70ae27fa128731d37f000f989b141810dff5c9ed5478bdba6b99e9231a95ce81"
+      "stateHash": "4d6725ef0105ee06199d2ba28b2b6bf5b34a05d4badc5752e985a522a552f59a"
     },
     {
       "action": {
@@ -1364,7 +1364,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "b5d1d1826d4faae1a71344a11dc8e72eb7bfd2790342c7bf5a6101c9528420c4"
+      "stateHash": "2a72d8af33edc1c4b0156a733444c962b2cd43a707b92f9c38c8d2d01485b634"
     },
     {
       "action": {
@@ -1373,7 +1373,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "ac21f3b349f18595ffc012a0ddd06c3d171979a5b08d4fc54e0201d95b7712b1"
+      "stateHash": "4110a2f798290ecc67ac18d99106a7282f5fb73913b12ebebb8c941fcc819a77"
     },
     {
       "action": {
@@ -1382,7 +1382,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "3a3f77f32137f37e569374c5f22c62277038ccad88bef9ae11c5acc9a3a69e5b"
+      "stateHash": "7349340772b84317cb453a0556759ec383b159b824e18fbd2ade2f8f6418433e"
     },
     {
       "action": {
@@ -1391,7 +1391,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "a84110b5788772b9c4f764a6cd37b5be4a00ef0ca1f54c4023263d22c932f309"
+      "stateHash": "e8a4bc9c3f5c736f1457f26d8125e5015d1fe7b6b0a7d3ac02ee52b8bb582a3f"
     },
     {
       "action": {
@@ -1400,7 +1400,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "2deb606fac9f93b3d44f238528db613e9af9176be2c5d613513e405eec629a85"
+      "stateHash": "e6471fd12eef12e4bf94c90ee682b7cf31b97fb5a2d98f1952953b216f7984c7"
     },
     {
       "action": {
@@ -1409,7 +1409,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "fb9005419f833aa4d3a4a0927d6af125360b717ff14274702a8ac493f02f6eed"
+      "stateHash": "8a25c20747f45715d19b61d9c47c6625cb2ca91ea19cd992fc24262190b0cb85"
     },
     {
       "action": {
@@ -1418,7 +1418,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "ec138337c011c19e0526a1354da3f497974e9b7187b4c3dec300f12e07bdedc4"
+      "stateHash": "25cb45a2ca4ecbacaf0a65de3347ad379ad91c66386c28eb478186530ae63525"
     },
     {
       "action": {
@@ -1427,7 +1427,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "013f700f936e828552f38d06c1839a5577141734f58798f5cfd151f1367c4eb3"
+      "stateHash": "74a26cf3ec1b9696dd82784c0704ecfdc78dbe52b8de01a8cc876d78253083c2"
     },
     {
       "action": {
@@ -1439,7 +1439,7 @@
           "position": 2
         }
       },
-      "stateHash": "4790e045fa6dc5adc5e735eb8b8dacd0856024565af85c547f803098f988f7a9"
+      "stateHash": "047b1c5f93848ee170d44e7f953914be1c18deb06795cfbfdcee79f22285a823"
     },
     {
       "action": {
@@ -1451,7 +1451,7 @@
           "position": 2
         }
       },
-      "stateHash": "6978e491486609a5531ed9f5d9e0fd85879f36c8c87536e4720c5275241800c9"
+      "stateHash": "724821785c9dc084fea00fa3d1a99d9c8dd62e570b9dffd3ba193a70b4853e78"
     },
     {
       "action": {
@@ -1460,7 +1460,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "468fb0e27754a2f7114a94b4a853488f2738756a116cef7ca79225081866a5a7"
+      "stateHash": "c08657b1c0e4c93e592112a8b4e548a3270b2614bb6e7bddf3ea4e4678816d7f"
     },
     {
       "action": {
@@ -1469,7 +1469,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "f5723120e413f9d7751de2c87d10a7dcd0883f4a672007f29f10b66c5ce87596"
+      "stateHash": "a756af5b187792a1c46ce476dd0f04096bc73ff60dea73e2e51b47dc05eae879"
     },
     {
       "action": {
@@ -1478,7 +1478,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "f57625f53750818e9a026ab3d8467f534203488f5a9f9c34595508022b9575ec"
+      "stateHash": "f1e8a70e212bca26d69a257cd9c17d3e68fa60836acb120f06b1ced9fe79a1c6"
     },
     {
       "action": {
@@ -1487,7 +1487,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "cdfa0d2598ad2d7acc3325cb81574760551c1e68040546cecf89e8880be452d8"
+      "stateHash": "ac10aedd5a727735a96c6723fcb131505ac9a565d11366c117ddb074cadd6837"
     },
     {
       "action": {
@@ -1496,7 +1496,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "ad9f9db58bf7d5b80b7d0b1ea54597b06bbac412ceb218a9d45bcdb30e31cfc6"
+      "stateHash": "cfdad50877e86b69f7af3d8063b12ba1960f75e4da570fb996a1a887acb003e3"
     },
     {
       "action": {
@@ -1505,7 +1505,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "38a2fc0651311d239abc65fd17cafa47fcecd2422ee2ddb2bb8eab921856241a"
+      "stateHash": "e06eff9d9782960c7490b5a3717302d3b25c1dc94fa86a17acfaf1142969a8fc"
     },
     {
       "action": {
@@ -1514,7 +1514,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "e62f0b83137d407696c7f84aeeee7d7cf273757da1b7fd13b024d037bec05630"
+      "stateHash": "1944dccdaa1139bfcb8ab2735163b705ce03649e72dd6933ca3baa082040e711"
     },
     {
       "action": {
@@ -1526,7 +1526,7 @@
           "position": 0
         }
       },
-      "stateHash": "83c735d971a188342a7d6fc7ee377ac72abce52ce9680def063558d872ce01d6"
+      "stateHash": "532b1a77b960bfe8b0eb8932fc282c4c4d5e59748bcd0c954a7e3ae74b299e78"
     },
     {
       "action": {
@@ -1536,7 +1536,7 @@
           "declaredRank": "6"
         }
       },
-      "stateHash": "2cf1e8aeed9956a4695eecce2bcc0531515bb2eb90cd864f6480ed063c863701"
+      "stateHash": "0ec0a8452846419b80fdadaa9807f37b3a0740632c4d8591715a27e9fb29490f"
     },
     {
       "action": {
@@ -1545,7 +1545,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "0d82e612bbab72903f14b7727a77979c54d42b6a5b1e139581d34e7f7ed31527"
+      "stateHash": "416f2fde692b347738186589d3d74dffc193de069c522f7eae6e67adf3c53f0a"
     },
     {
       "action": {
@@ -1557,7 +1557,7 @@
           ]
         }
       },
-      "stateHash": "136f01b9754aab78e13315a68ffc9174f78ae9c432e67f224b35c43a49ed77c9"
+      "stateHash": "f0d7f7b0d559afd16648cd81c3b60115fd10303d5c94c3c36ce1c428cbbd778a"
     },
     {
       "action": {
@@ -1566,7 +1566,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "5e8faf52852183ddeb8efa11feb37bcab4d7ecce1153835573d756785f8896d6"
+      "stateHash": "e8bc141f99c5e0ab9ad150dab24f0314708bcf9193db899df04b5f09fb0c7706"
     },
     {
       "action": {
@@ -1575,7 +1575,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "6655ee922ca540ae0d857a73f1acfe0e3cdea03b7d09c3b088aa4cce36ba3e2b"
+      "stateHash": "5337e2e7c62cf755538e92e5a5dfd210de150ad7913d3476374fce5bd9a32152"
     },
     {
       "action": {
@@ -1584,7 +1584,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "0a4deb04255c622200c2d98c2e41d5f00b5b90cd75eb53997371083691dcfaea"
+      "stateHash": "bb5d0248fc007f60d03b91559981d2da55dfbf88c34a717fa68db5da74a8af8e"
     },
     {
       "action": {
@@ -1593,7 +1593,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "08c340002b3d2c152415289bd0673ddc5cb9099ae068b46c57a4982c586bc10b"
+      "stateHash": "4707cb8315f7730657d86a9c85389d3d6dfe17488e9e3cf85fd58c5fc45f5574"
     },
     {
       "action": {
@@ -1602,7 +1602,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "552df33a56798d8f6f25cc3649f0ba3f6e6bcd32e541b0b5d3c561c027f9b731"
+      "stateHash": "1aa3d131314bf27840e3a824c28ac61188220fb77a29d82e7920c493c1f30c5b"
     },
     {
       "action": {
@@ -1614,7 +1614,7 @@
           "position": 0
         }
       },
-      "stateHash": "2f78eb105783e4ff3848a646803a7ff4a4885af1a30a281991e9c1cdc6edaffd"
+      "stateHash": "35868d36fccd25aae5ffeec0535e83268f2dedb86903daaf7ff4004d7b3996db"
     },
     {
       "action": {
@@ -1623,7 +1623,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "9fce35282ab95de378e3e52bcde4d904b3679a263e51e215f34dead67b54f64d"
+      "stateHash": "410584cf56fa9ecfff9905b0bb9ff2fff3a3d83cd39ffa2bf4a2466bc3463243"
     },
     {
       "action": {
@@ -1632,7 +1632,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "3f06b97b510acc7c98a4223278c4a19a4c502d0647c34072ce85260ea479815e"
+      "stateHash": "49d87526b377df45bff8ed34c4903820c4de45dbcd1e900b1e52f8c9aff434f3"
     },
     {
       "action": {
@@ -1641,7 +1641,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "707386287b60abaf8539142eb566b702fff98ce210b0c45f2a4daa4145e18218"
+      "stateHash": "5373d6022715822eb9b4eb29456a9708e0b9d59f793b686f019b1cf3af6fbe8c"
     },
     {
       "action": {
@@ -1650,7 +1650,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "6e6fcec68d9ed0e729e2241fc1862b8f99ade339a1bd8b00fdf637fcf37a1318"
+      "stateHash": "ef8f55eadd161e7b6b47f5b1da9d5c3d439d7b9fcfaa3c5dc460c6ceb797a303"
     },
     {
       "action": {
@@ -1659,7 +1659,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "2b43cae3f37b9d5c3172b735256febe3ec25b574a0ec249404e280b7c9954635"
+      "stateHash": "1cffb4deb809b6bb099e922b1d17465d0ab79f67e41448daa3d78c169d31be4f"
     },
     {
       "action": {
@@ -1668,7 +1668,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "28935d77ddfc2aa18dc911238491880a162bc13b86f0b4d8b352fc1437cd1a22"
+      "stateHash": "a71864006e4d905d86fbdcf86eef00312954b774b3e19dfe6d109074cf00624c"
     },
     {
       "action": {
@@ -1678,7 +1678,7 @@
           "position": 2
         }
       },
-      "stateHash": "181f3176b94e7efbbeec3638ad74a532cc4aa38ea1fa132f6867ee9d21cb20b7"
+      "stateHash": "c000969ed287384fff52ea072758f3b6f5313e225cb74bc97c5f82606ef9df03"
     },
     {
       "action": {
@@ -1690,7 +1690,7 @@
           ]
         }
       },
-      "stateHash": "ae6a4efc6f338c08a99f3f9ae889c40bd736f046d30f631ba14e23999d772ee5"
+      "stateHash": "b823ac174f0826275bd898b4c2b71fdb7eb6908106ba968e00b84b36642eaeeb"
     },
     {
       "action": {
@@ -1699,7 +1699,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "8deb4891b24453bd0bd0dd09c6be695232b0c4e67a4bf98ec56667f27e950b47"
+      "stateHash": "7ae60cb1ee511bd381b39fc2097799ec610eed54ef9410162a00a3187856de3c"
     },
     {
       "action": {
@@ -1708,7 +1708,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "7a62d6303f1545891c6997d47c8d881c4a8e629148a766307eace47c2cc9319f"
+      "stateHash": "c18a2cc219e3852d880e20f4b4a394627c229a5efd3b45192a327b4214e3940c"
     },
     {
       "action": {
@@ -1717,7 +1717,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "51c5c1a897028a8361e36fa49b1347abceda648796ba5360d684ebd7c85f4777"
+      "stateHash": "73fbf842227ce258c065b5dcc27f1f1764fc6c76161acaa9ee86c1dbfbd4ded5"
     },
     {
       "action": {
@@ -1729,7 +1729,7 @@
           ]
         }
       },
-      "stateHash": "15336761d5aba5e081d4818e9ee10ba2503e690d2e6c9aba3a71b0fba315f6cb"
+      "stateHash": "a5733e4831b56273aea9467dbd846f0a2230eb4f4ac76619c8e75f18e19a52a4"
     },
     {
       "action": {
@@ -1738,7 +1738,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "f598fe83b11d77bb26a8e51fb0e74878dfe0c83646212c18ea158eb313e6468d"
+      "stateHash": "427655104df6ecf0a21a57af9011c30b93a0cf68d982d73176b60dbf1ca6dc6d"
     },
     {
       "action": {
@@ -1747,7 +1747,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "ca3e18ba5d4470f16f0622faa06c3257ec9e603f1058fe4370c70f1ac5fcf33b"
+      "stateHash": "a66838b3da06eee3c17fabb72ae38367a97ac44962b9847644f8142422a51857"
     },
     {
       "action": {
@@ -1756,7 +1756,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "c03355b545995a419ed5c6e3e5ac0af769e01733e31dae5bd79142e7503378a4"
+      "stateHash": "e068181fd7896f558ed62c78c9985260b8f9b4f607e13a5e3454abae65c6acd4"
     },
     {
       "action": {
@@ -1768,7 +1768,7 @@
           "position": 0
         }
       },
-      "stateHash": "7c5246c2711a0a02cd29283dfd83b6e3f1a348d2112d3eb5adce0f4cf2771634"
+      "stateHash": "d29a904fc6174f4e364c8b2845fe5ee80a3e33e4721562c5abc10a77c705ca23"
     },
     {
       "action": {
@@ -1777,7 +1777,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "937400f27a9893943717f7f0824c68f8a60f3550dde6bf0e75fc5ab5541437fc"
+      "stateHash": "1f5540c1d5e942f7a3ab54ed43ca500e575005f727b9b4aa5836eea80544dc35"
     },
     {
       "action": {
@@ -1786,7 +1786,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "b89f7044c31fc538d8115951f3fe2fe0a3aa970c629900a6cedc89030d149b6d"
+      "stateHash": "86f1d443f6f8a370b93fe112cec5026f82870a34c2d7995d348d127925be9e9c"
     },
     {
       "action": {
@@ -1795,7 +1795,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "7a60a72aacf3793bfbca968931f170c23cf45cbff13ac7e65914f80a9f73b62f"
+      "stateHash": "44cfaa414714655f0145b3598e31ceb4c50dd8cc8ed509d8f1788778edda63ab"
     },
     {
       "action": {
@@ -1804,7 +1804,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "39b9bb24813fb62bd548b04dba6e73cb7322daee3cc1deec348e64f5d42bb76d"
+      "stateHash": "760eb83b8677769a509e63b964830e30f589217707828ad68bd73418f4917ef2"
     },
     {
       "action": {
@@ -1813,7 +1813,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "ebee8efee3c34a8b32ffb91ea1ac629916d81233f0622d0b0cbf1b26978f2e28"
+      "stateHash": "1a622147380d8be731388598e942dabd17cc4b8c5c4b3939c11faa95cb9c413d"
     },
     {
       "action": {
@@ -1822,7 +1822,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "dd7b6c28ffc18a32b3a86422ef25b7ec55de13294484ff49fcb7b6f26626829a"
+      "stateHash": "43265eaedecc03b25d12711eadf1b55f805064481ed6fd25cccb045027ff46fa"
     },
     {
       "action": {
@@ -1831,7 +1831,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "f2dda3fe3199cefca769eb7389ed1d9813202c3df6dd2f2c415428bd974d5108"
+      "stateHash": "63f324124c85f4855057766df2be7394b9ee0f710c1721f3ca07f1bd290fdaa2"
     },
     {
       "action": {
@@ -1843,7 +1843,7 @@
           "position": 0
         }
       },
-      "stateHash": "8f9955962ce7055895d3c7aeaa1f3c6c7e7efe5316477523013822e350b563a8"
+      "stateHash": "a8bf1ae5a559fa290c4d89958e1d7d6372a8a406f915c25f991c2cde2f11d9f9"
     },
     {
       "action": {
@@ -1852,7 +1852,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "33966b06abab57962a81f82055a2acab25b6c17b62d273809d961956bedd742b"
+      "stateHash": "02a3bbcb47ee8ccd143739fd9d6b28e86516592b9c0d38f6b369bcebe13c5142"
     },
     {
       "action": {
@@ -1861,7 +1861,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "7f088663cc70d211bdfa800aac004d2b5d8824b1d53e7bd1d0b1c023284cae01"
+      "stateHash": "6e65c6fbc1f433fe0a16add8bbed9586aadac5806695551848d390523827caa0"
     },
     {
       "action": {
@@ -1873,7 +1873,7 @@
           ]
         }
       },
-      "stateHash": "2285aac1ab28d588a900b6bc0aa95c833314f60710907dbcd677b14e2791a917"
+      "stateHash": "a112dcad701499b7bfdc8d188d8096cec9a11907df26f9ef2626cd1acbe1a889"
     },
     {
       "action": {
@@ -1882,7 +1882,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "8dcda6b0fd1062a8c35e71f0dd71cf066e3a0424861c8a49166032ad23d1de27"
+      "stateHash": "419716c72056c89f0d01fed88e40f231a57f3767cc94e6126bd921c14998cfe2"
     },
     {
       "action": {
@@ -1891,7 +1891,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "c84023c8bd84c7e40ceeae12978b2a76cc7c49386ab451b83b47e925fc0d07d7"
+      "stateHash": "11c2ecf03ac9bd49ac7c0d4e3b16cb844e72a72b3afb1818196cf55cccc49287"
     },
     {
       "action": {
@@ -1900,7 +1900,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "eba44482b4524acc40641a581cef95fd6a94a91e5c2842a1b4ff6eeacf717ebe"
+      "stateHash": "a5c734668b2bb0607ff5bf6da52d0e608cc2223c1501d71fbfc94993799fb1b8"
     },
     {
       "action": {
@@ -1909,7 +1909,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "e5021617525da73f119c1ea711d907c899cf3e8e52f5e4c90ecc6a17280f8295"
+      "stateHash": "a3d67d212c75d6a7aafe30fbe5b6676660d4156839e8919b0ce74dfd00c7d04a"
     },
     {
       "action": {
@@ -1918,7 +1918,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "6b5dd6dadc8b7c6027defe0ef252a1e7552d1f611560800b2d32e72d5594dc9c"
+      "stateHash": "9c2644aa2bd2569dd37c41b4663c42b3c374d9b165222fc7d8e1504c758c5f10"
     },
     {
       "action": {
@@ -1927,7 +1927,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "7a5f1d13cfcef051b7be3d8ddb12c512d0b52aef971eb28c0141548952cff9df"
+      "stateHash": "c933dc924d73de63bd30d3bd10b903c864a94b8d7b87c7c33b4bcfb0b43a405c"
     },
     {
       "action": {
@@ -1936,7 +1936,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "9d2cb1969114b22d16b3cd13f85fdadb2a04c8eaa5a6ccacd7482cd632cb03a1"
+      "stateHash": "ebc2c62688a886d2dd3069ac4af10436f3a448473e95eef058c0dc0b72559252"
     },
     {
       "action": {
@@ -1945,7 +1945,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "31817786b4319d74f22a325cd6cc9ec7d6ef970e98c45ace44677feff87e6e83"
+      "stateHash": "8f0e983b9565addd246514eb44a19781ddfa4fe5bc3fd9119817c7a0540baf35"
     },
     {
       "action": {
@@ -1955,7 +1955,7 @@
           "position": 0
         }
       },
-      "stateHash": "e25e6ac0c814470f0ed5f38345a1ecf6f378bd3ff90571f1c3cec06bf7bf0582"
+      "stateHash": "23133ccdd1943c2f98dbb34f9d29951874d320dc11a2a211abbe9eb04758f7d9"
     },
     {
       "action": {
@@ -1964,7 +1964,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "e6edd21d1d7fdae8e354519713772e416a35542caff72d904c0b7c2647461499"
+      "stateHash": "3b73c064359b7a83ca748a3f95f21430232dd8404c4cab36c9e65bf3ed181174"
     },
     {
       "action": {
@@ -1973,7 +1973,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "7174678c1dcfbcd4f43c4eed361cef04ad891b8f10323f0939b730df6130c1ab"
+      "stateHash": "d88c7a0e84432c14aac718d5d10797729e2117106983ba84fd54bad483f62195"
     },
     {
       "action": {
@@ -1982,7 +1982,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "b0dac13ae78e6ccf9fda8d4a88860a135e4f887414d752aab1e8cff147fe2e12"
+      "stateHash": "d61ad1d1755b0ebaa4bf2d1eaa2d7ef736964fe045965e7434f22823bdb21665"
     },
     {
       "action": {
@@ -1991,7 +1991,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "1c4ae0d22266a472ea4e6db97e4d096d3c9a40892bf1e9f7c04ea9b9aa6da804"
+      "stateHash": "29a582b7384efa131e9313b2356d08e6b09cd212c6281878c2df5aa05a43e969"
     },
     {
       "action": {
@@ -2000,7 +2000,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "19940fdc11625b848e5376dadb20ace7df6773f954e071ccce01383e2a8e1899"
+      "stateHash": "71dfa6286543206cdb7c478bfd1498c7547405153c9bf17599b8f3b504e0cb0c"
     },
     {
       "action": {
@@ -2010,7 +2010,7 @@
           "position": 2
         }
       },
-      "stateHash": "77152bf3bcb0eb85a38c1c4d63639e24d9296d782f4244c7f1d28f332829e114"
+      "stateHash": "9647f3bb749ffee4566a9d8875c5c6f9c5a0ec100157c3cae15d2b8941bdefcf"
     },
     {
       "action": {
@@ -2019,7 +2019,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "0ffa4d947828e633f082ebe7080e4a993afcc139e9a71df6be59e79821acf3ef"
+      "stateHash": "d88eed9a57e4dc4ae72d597a9b2f70feef7dd2eb935f5c0af2464290876064fb"
     },
     {
       "action": {
@@ -2028,7 +2028,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "cd97d3a396cd351bb1a6decef0d634711a36fad898d5add128b33c11deb00669"
+      "stateHash": "045a926c52447430565ee524d4d1efb4275fdbabfbf24e78ed8680673716b061"
     },
     {
       "action": {
@@ -2037,7 +2037,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "cda4c0073f212386c5057619861b144b547740be731d772432f58bc9d2d3c1ac"
+      "stateHash": "9f7177e293a083a8631b3ee50f179b34ba31703d3911b3d7efac7c812cacd997"
     },
     {
       "action": {
@@ -2046,7 +2046,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "8b6941873d01edf6508cb710b1ef686d32433bf67fdac21ded753b2c44b1a723"
+      "stateHash": "639be7f683499fb97c5dc0a4a80a099c0ad3820244b2052cf0c01a19911013df"
     },
     {
       "action": {
@@ -2055,7 +2055,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "de06211a8834cf9316165ab1da8697427e2f824f154c85f365c0a5d4649e249f"
+      "stateHash": "668380ee92eabb2ccacb97249e01041bcc1345de64fadaf533a942e74388903c"
     },
     {
       "action": {
@@ -2064,7 +2064,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "da7a047e4bd12ff9f00a9e2e25364fd447966f56a0db46737794131456fc453a"
+      "stateHash": "b113cb17b07a0911a3bcef17cea22c778c377444da60662b31db31549f941889"
     },
     {
       "action": {
@@ -2076,7 +2076,7 @@
           "position": 0
         }
       },
-      "stateHash": "6e626ce000632f2eae38ce4b7fd0cdc2aab906d9d81c15c1fdc352fb89b7ff1f"
+      "stateHash": "f3b7327d9c15a9c0760a4c698cac9c65111dc9b6418868c84276810f007f4a57"
     },
     {
       "action": {
@@ -2085,7 +2085,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "80f6e0962747180a005b9cb71f7525cf22a05d396e238005f652d271c9ec56f6"
+      "stateHash": "f7f836cfe70c58bc2decfe55fbc8bca69cd544e9416e5f30a9f4372267cf502c"
     },
     {
       "action": {
@@ -2094,7 +2094,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "a903168869ad7ddddcd5a4070eb107a6f3515e69cedbea016e1086cca0aaddac"
+      "stateHash": "2f18c0b1cecfada82c9cf4173819b3d6d4a64413fe54000d31ebcf52503a190f"
     },
     {
       "action": {
@@ -2106,7 +2106,7 @@
           ]
         }
       },
-      "stateHash": "f98aea3c843c2d6a339c7059441cc931054da95fd63b9823218729d627a5b3a1"
+      "stateHash": "f92a9ef16f274c26e8671041cf3325655f537d278974b6e0a2d67279ee9b1ff4"
     },
     {
       "action": {
@@ -2115,7 +2115,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "54308607edc6f3639e6fee1857d89b80d49f435bc93399774c9ab4a2c74ff8e2"
+      "stateHash": "1462aa569db18f217b3d11137d7eb9fa5701135ec6143019d8e3d4d914685150"
     },
     {
       "action": {
@@ -2124,7 +2124,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "d434848718d4712e6a400ba41d7f4879e52807ea5a918a15716657759b6deb10"
+      "stateHash": "99f7e94d540a3d0113e6083e6d92fbe97f73a7e1a5ebbd97af641b8f4de602b4"
     },
     {
       "action": {
@@ -2133,7 +2133,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "229269f3a41c68fb3a702b38822e0958c5822a4deefbf430425261cf75fbc155"
+      "stateHash": "a584693695145d00431f06911b3c9169a0d78a824345ea5b7f3f0c33e192c0e1"
     },
     {
       "action": {
@@ -2142,7 +2142,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "b8904d69c2141460fd957fb1a1bca7c3aa2915f7b92833bc3ba2b5519d2d6b9a"
+      "stateHash": "3c355be960c6400f4ce3d5a1ed385c616b91a8fd0ce61f14132de065b1d0256b"
     },
     {
       "action": {
@@ -2151,7 +2151,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "addfed859e72334938dba9ac1101522ad10c27a1531b303fb2b1117ee0dfbae6"
+      "stateHash": "83f71a05d7b825e03d4f7349ce0b58ef8815272edc26e540620c286348ba0980"
     },
     {
       "action": {
@@ -2160,7 +2160,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "a373f8380f091339ba4ee00d903ce22bf8e201464024af280c477a44d9758797"
+      "stateHash": "f767765233e0985b59131ebcf6e850a5e02ae914b2c1317b46d01e52a058923d"
     },
     {
       "action": {
@@ -2169,7 +2169,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "91d7b3793d2aa21b6a25fa82a99338a8b102abcf618b210d84a7a4c0debbe55d"
+      "stateHash": "9bf1c367954a92b96d2620a698f964e6f23d4f8ce43c423deacbe9d0e25176f5"
     },
     {
       "action": {
@@ -2178,7 +2178,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "aec15f7a9dee039ac0571c725b2ee89c46c8c1216307c57d712f60f1a648159e"
+      "stateHash": "50a9eb89f40a6d5489eca64dcdc82ab5b49996e6794807890db018fd30e4dcd2"
     },
     {
       "action": {
@@ -2188,7 +2188,7 @@
           "position": 1
         }
       },
-      "stateHash": "2f704a8aeb014051bfc9b1ee2fc2f2074620ba6ced7ae5ddf4b8986ab0560d94"
+      "stateHash": "5843eb694f77971901601d8bc61558afd0c2728396b9188f66f54bc72e1a6fd2"
     },
     {
       "action": {
@@ -2197,7 +2197,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "8c3c0c753fde7ccabd44fd721d1d96d539973f0c49df8a2b967399e4c56d8680"
+      "stateHash": "a823421ad6a1d5188790fac17a1c6ca45b431a8758adced590263c7a5e742b51"
     },
     {
       "action": {
@@ -2206,7 +2206,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "473fbe990a85074e6e76278010464443968c17aa50a8f8d5591e0810f202768e"
+      "stateHash": "b48ab8f8fb9f4c6549488f6f447d0d142a9886b6f65e278175a46a118985fa4d"
     },
     {
       "action": {
@@ -2215,7 +2215,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "58967b19a6777ad590f04755ea79c22c68c2fbb3c23c44bcb4d8b056c26d081e"
+      "stateHash": "0f7c217379b2664fd2faa7385454dedaf39957873c4121d8129d73ca881d6763"
     },
     {
       "action": {
@@ -2224,7 +2224,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "ea91b2e198b6167decbf6eb5b33474601f6e82f937fd599b73a90fb1d7b89924"
+      "stateHash": "46dc14d7549068808fb7857d1b55ca3ee72cbd5fd38c9e858fa98310b9e80cd2"
     },
     {
       "action": {
@@ -2233,7 +2233,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "feacd102f7a9591e0784b374ab6fbfbdba7904a57c683defbdfe088e3b5bc94a"
+      "stateHash": "beb7778f1d8294f689c63d5bf4f0ee69de9c886c7f990884551023bb6c20d540"
     },
     {
       "action": {
@@ -2245,7 +2245,7 @@
           "position": 1
         }
       },
-      "stateHash": "927cba99b3d36286540645134c1d051797f61089294d912e58f043893d120602"
+      "stateHash": "51ffdb1eeb7ef40eee3de01d00b7768ca46ef761645cbc4e040ca68ad765b18c"
     },
     {
       "action": {
@@ -2257,7 +2257,7 @@
           "position": 0
         }
       },
-      "stateHash": "66991c87907620927c540e044ae5dd4b18e468b4fe60b7c6e3fe76479cd30d91"
+      "stateHash": "4e792546b1827ceb62343f4338fd77c4d49bf960e42f2ccca9deadf3f9afbedc"
     },
     {
       "action": {
@@ -2266,7 +2266,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "906a13d7b27e1bd1367ba762dfe3fbb59f333f67a6d9ada8f651ca4f3f1a243b"
+      "stateHash": "ebcb67f0d6b9ec89ab9f1a8a9ac6a4828267bbaea6316ad01eb09bf8f0f46a03"
     },
     {
       "action": {
@@ -2275,7 +2275,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "10d160552bd6f5f90ab80ba93165518183c67d1a8a62f2c5eb7068f62352dcc2"
+      "stateHash": "aedffcf1e9c9eb9fcf8364c05a40c00a610bcf7de3bc91b05b680c2357992f21"
     },
     {
       "action": {
@@ -2284,7 +2284,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "3b85f9688ab848cfd037b7d85fdd40933f0970b5c3b7a9e8780b4b4ae847a269"
+      "stateHash": "dc3fca78a194e43bb7a0de84a13a7db18aaec17a9d95a291bc9f5a0c73632aa0"
     },
     {
       "action": {
@@ -2293,7 +2293,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "fdc904340c37cfe6967c599a170b5dc758894e2a13823acbf7e30caba8583898"
+      "stateHash": "409f51752769a6030d91811012042d565c8a305b26805b22b4a6934a519d11d4"
     },
     {
       "action": {
@@ -2302,7 +2302,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "f9eae465d878ca79b9180561192c817020e24fa89b6235c7251efad1d7aa534a"
+      "stateHash": "d114b894e30c2ddf3a8b58659c7dc1c91c6715ad02b958f2f9f7e58923bacf68"
     },
     {
       "action": {
@@ -2311,7 +2311,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "eba7cece728429d8a40b1bfcf1481d7d85877a1d5b9cc0340c71c1b3c3d1d805"
+      "stateHash": "71753908d5722edb77a489abb37e13c2d21104037ab821864aa6f162e389ae1c"
     },
     {
       "action": {
@@ -2321,7 +2321,7 @@
           "position": 1
         }
       },
-      "stateHash": "3006c582ef1b9f92e8e2d51cee7f57a489cab50f723bb31c9d6c52ec23d86b8f"
+      "stateHash": "42698c37efd93e11404387b5e71f2102b561d2fe4a7df3fb1bde5e8dcc36741b"
     },
     {
       "action": {
@@ -2330,7 +2330,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "8500bff7ab6be25e14fe41a49136d88e3645994b69b6143fc325da3c21bc7487"
+      "stateHash": "15ea4c777ecb04139eb44f292f96ab4dee6684afb76103510a060cf5896e8558"
     },
     {
       "action": {
@@ -2339,7 +2339,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "fead3c3261a7eb604eb19a24b4c3840ab71d70a8dc151acf68f820091d225746"
+      "stateHash": "68cd42c52c237a9063a5529af8ab062db664e306173f8b8058fa3d65e8af80c7"
     },
     {
       "action": {
@@ -2351,7 +2351,7 @@
           ]
         }
       },
-      "stateHash": "73c52a7918a602ab3928fd44e202e93789511ae7bf0f8b059f5f19743f8bac0d"
+      "stateHash": "12f9e6879787ab44afde469cbd01b00a851d71fd3867d1e685055bb728e357c3"
     },
     {
       "action": {
@@ -2360,7 +2360,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "a2fe96442b2b82c0aef3432e27a79b4af521a5410145ca6ef11f76528b6e4318"
+      "stateHash": "6a614e2b8db7e4eb1d878f298d42155408d4bf2d975db72c247a30c848450b21"
     },
     {
       "action": {
@@ -2369,7 +2369,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "31f8e2a2cc83169240372e470d0093bf769d448738bffe1e473bcc2bf45833e5"
+      "stateHash": "ccce4a0281aad8c17d51716c93212aadb325e412f6da7ef3195bc289700645be"
     },
     {
       "action": {
@@ -2378,7 +2378,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "5aaae5500fb96fee1313ce3b5f51c1fc4ed48e0ec3be9410fefcbeb2db59e2c6"
+      "stateHash": "547808baca86f720bdc43eb9801b5477e6fe4822618d9c2e25fa19ca2bffe4c2"
     },
     {
       "action": {
@@ -2387,7 +2387,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "ece5d361e90ad3aa6a622e35122373b220fff84edad008ca1d149a5510d23ea5"
+      "stateHash": "a808965b925cc204515c2a3bf9459b53ed7c2126e8dcc4e6d52280b9a96b0eba"
     },
     {
       "action": {
@@ -2399,7 +2399,7 @@
           "position": 1
         }
       },
-      "stateHash": "57bb5da2b17854f6626a5819c2687a58043ed3ae2a03759e618897962141832d"
+      "stateHash": "8ed6e0625ff256b2316d8e45d99153ddad5f16eb9f04da3c291b8ab628c69f3a"
     },
     {
       "action": {
@@ -2411,7 +2411,7 @@
           "position": 1
         }
       },
-      "stateHash": "305ce440e3eb0140e3ce9fc83772b4a8bb63a555ba73493b6e3ae5713289ddfa"
+      "stateHash": "33c6d13321012a226cba04b32b3c44943745ab51169e195a384c602b9d02a5a7"
     },
     {
       "action": {
@@ -2420,7 +2420,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "b3908d843350f2fabdca4b955051a9624d2c01825069fbac3692e36a8d42539f"
+      "stateHash": "f432eb538f301cf0291f94fb2780455bad2ae153416d484510e24ae15adf3e33"
     },
     {
       "action": {
@@ -2429,7 +2429,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "29d8c0c2591d91711abe687f99478c6e4f4aba54fe36c4e7316eba83a145d59d"
+      "stateHash": "fe7a0bcbe8d1ad9fb16d138c93596d8a036cf0d5f5d09b3bc3880bc6309cf6b0"
     },
     {
       "action": {
@@ -2438,7 +2438,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "bb77a11a0a043ef0529935d0b7ab7cb80d754d32b843e9e114a0fe8196346568"
+      "stateHash": "3d345818848e932906ba24cebb17ceb8031a3a7e8000e9d80cf22ce7e2d290d3"
     },
     {
       "action": {
@@ -2447,7 +2447,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "ff0c26253ac1a543c26c3485fd8e82eff69d77b47d9f2c1ae00578b4e3ad57a3"
+      "stateHash": "d76fabb1ce6c5438d0db77cb5186c013e954a4bf94cfcb038c1f3aeacf252edb"
     },
     {
       "action": {
@@ -2456,7 +2456,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "2eb0e9ed6ec404c5e4945e2bcf1625f1bf6bc28d32682733e443b43e1accef08"
+      "stateHash": "d415ed2da859ce582d4962cefa3f51866a388071e66faf770fbebe3b3956f847"
     },
     {
       "action": {
@@ -2465,7 +2465,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "6ee4144d21ded204fbe98d19a8b82c5925c841351b6267fe307aab2e753f2b8f"
+      "stateHash": "66c548165c7e70583409b5773681bd9d5f68900391d494f8fc5be96148064948"
     },
     {
       "action": {
@@ -2475,7 +2475,7 @@
           "position": 1
         }
       },
-      "stateHash": "350c609345b19ee98a25ade314e14af475442dd1e7a2bb9c6698ec64f45946a1"
+      "stateHash": "8e315d0d153f6ccf6061de213d1f728f57d8b8ef281c95b8bd06f3787e068099"
     },
     {
       "action": {
@@ -2484,7 +2484,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "f6914b5f8ffa4785e33a51487863fa426e3719af89febf36d7166eab78ae133c"
+      "stateHash": "e44ad468dc4906e4811666f8ac41fcad6957710284fd97d81fa3d22c62db9251"
     },
     {
       "action": {
@@ -2493,7 +2493,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "8206bb46a66138bf920ba5cb6df9a2564467fe8cf56d0290aa581230fd59e2a3"
+      "stateHash": "61e723c725d5f8f227706da04a3f72fa3572b92ebc3529dd831a7bc0c70d1e01"
     },
     {
       "action": {
@@ -2502,7 +2502,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "1600237f581efd4336e63ab7816c6941360560680085960511724f0d0e9f95af"
+      "stateHash": "abc745f44a30ac03c4629d11392c3132f98fec75a45b00b56913c779e66289cb"
     },
     {
       "action": {
@@ -2511,7 +2511,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "6fe290b88bd4a38d607ec41168fe72bbdcfaddb6e19a93900194fd7d83cc7ba2"
+      "stateHash": "3619e3c072770fd14ef2a24532f32c4057e2f9a2d472bd280938eb1c5cd1dcb2"
     },
     {
       "action": {
@@ -2520,7 +2520,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "b47cc14e71052209f06b2ee745f4fd5c0308f6d78def50843808e5d7c1cfb25e"
+      "stateHash": "d08bb73150549910e6f7154c3af1d2350e2b9d3ca31b48a1025c8391d46f92dd"
     },
     {
       "action": {
@@ -2532,7 +2532,7 @@
           "position": 0
         }
       },
-      "stateHash": "3ea0bb046c170f823838f72d28d2ed912b05ecfccbd4bf44fd6b8316ab9d49de"
+      "stateHash": "8924a147f59a23217e1a63b47f6f73eaf1339caa66dd4975621d243baf20956d"
     },
     {
       "action": {
@@ -2544,7 +2544,7 @@
           "position": 1
         }
       },
-      "stateHash": "0e7674e1aac4f3dc3fde91854f92e7d6e83fffeed267ac9676a46f3f0f5b6aa4"
+      "stateHash": "d0986a9b85e8bd838b59ea8748490c0abadc1113c6cbae4ef10eb3a001211820"
     },
     {
       "action": {
@@ -2553,7 +2553,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "774e776939472e31a90f3927e51960a0291cae19e915f7e39f87c1d188af65db"
+      "stateHash": "febb0500a3a30bdcfba6e2c31e521375839b768118788699d03ddb1ae270a321"
     },
     {
       "action": {
@@ -2562,7 +2562,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "8dadabc471aa984011852c2d8ad12cc2c717dc423db82857ccbd28ae96f503a9"
+      "stateHash": "19e7156a9d3ce66531651dfb41ede168733a2bbbca8f053149520a819d7b49cc"
     },
     {
       "action": {
@@ -2571,7 +2571,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "cd550be42035e86523daae25371072cd7626c1ff0e7a93934473ad0f82fd01c3"
+      "stateHash": "a34fad398832b7d08fcb28ac8b9525cadeda97559b985ada32bf3b5fcbaaf197"
     },
     {
       "action": {
@@ -2580,7 +2580,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "bafb2b1f1102401d6480140dbb28ea9ab1897047977cd7a83a593f522a90ae78"
+      "stateHash": "25f7d2895c607ec7e03ae3e13c6e90bf549e44c647c17951d73305bd44b5b1b5"
     },
     {
       "action": {
@@ -2589,7 +2589,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "7a91514247e0e9797656c4d7b2cc9158c14e64b0519044328979178c2c19ea5c"
+      "stateHash": "c8df8ea342269ca3f61246a1bffef6c4ea3a4f39f9c263ef28a1adfe675cdd30"
     },
     {
       "action": {
@@ -2598,7 +2598,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "51cd6dac70534c529a5f82737c54c57de79254e84c1f836434226a0587a82228"
+      "stateHash": "21fef78a9005262187515bc62bd22ef4f18f1be45fd2c1352c0005cd0db8381b"
     },
     {
       "action": {
@@ -2607,7 +2607,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "233854376edc3289981b591bd18819410fbbebfbd259f94b6f10967fa70b0522"
+      "stateHash": "7ce19097320c9106fa5b1cbd9faa68bd1563f0f897e39989c52d0d2aea11ce61"
     },
     {
       "action": {
@@ -2619,7 +2619,7 @@
           "position": 1
         }
       },
-      "stateHash": "44a752812a0e2e63fcc2624b70d6df82082b4bcb2283747e64af132702027b89"
+      "stateHash": "9442d115713405aabc6bb29fecb1da6d8fc9f282de3b8f9de1d789e0d0f732d2"
     },
     {
       "action": {
@@ -2628,7 +2628,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "722d02eee64774ae73f804d7b4dc402d297685340bc4a0f366a6cd49cbb629a7"
+      "stateHash": "5b08c693632d89370a434e73ad52021c9ee9ba5fe398d88e9bc874c205b03ad9"
     },
     {
       "action": {
@@ -2637,7 +2637,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "6cb2bde45d83d36209ffad1f7f77c7e49ea2b1a6ace3457a28972c08f85845bf"
+      "stateHash": "faef064d4691b577c0869fccc1bf4c15e5ac804473435508eddc2de46250b3bd"
     },
     {
       "action": {
@@ -2646,7 +2646,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "6956aed69eb595d4d3dfeab9b3f465015de38fccb347cbdb9a927a832dec96b9"
+      "stateHash": "dde381596cd6011569bd44d0f76f44c2f28a9e1e53ab13272e7825b7f7128d77"
     },
     {
       "action": {
@@ -2655,7 +2655,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "f8c7180443e5bceb245c1ee062242a34a93e99f01c18d5eb22c52900c1bbebd4"
+      "stateHash": "7b04370606d6aa2ee53190acc9b00dad260ad984403bd82b9d49a9946be00e65"
     },
     {
       "action": {
@@ -2664,7 +2664,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "a2e2e46bb8b8b8af80a6c356f8291686c3333d0a3309b75b6949c221718dfacc"
+      "stateHash": "b980dd898d967362db0d88fa31de10fa35f8476b63c15baec8a2fd99d7807ccb"
     },
     {
       "action": {
@@ -2673,7 +2673,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "1d0e78cd64ebd67077bf07bfa2324e03bfcf79ea9987bb7acda28f89959a765e"
+      "stateHash": "68dc7bf0e7d7ae9f7e12bd9c86c6980583aa3fb6a1b9272f3bbe6237b7541762"
     },
     {
       "action": {
@@ -2682,7 +2682,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "db231e737d2e37ccfcf4ab0ead9fd1e4c94ec1bc78f274371083ef8ecb44b293"
+      "stateHash": "37917e3cffd7645234ba42e231324dae3cf509148b0052f4b40925cf3f2867f2"
     },
     {
       "action": {
@@ -2694,7 +2694,7 @@
           "position": 0
         }
       },
-      "stateHash": "d5796bf014a8c9da97d4a1818c8b9f38a162e819bbb70b37071915b501c3b8d3"
+      "stateHash": "71ea2499091f397d286f73274f53a932895acfec05e662be2dea1b7e10c352e8"
     },
     {
       "action": {
@@ -2706,7 +2706,7 @@
           "position": 0
         }
       },
-      "stateHash": "b1aa4b373383fba5f24c1d86dfeceb682c8c0679969e95170c736c8f73ce4624"
+      "stateHash": "a56a545e9b6a8445ac87c3019b8592ee1f6faf9642fc4928b9e086856ea6b1d0"
     },
     {
       "action": {
@@ -2715,7 +2715,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "98a1acab4420c7ce9c873ef5928137933a34f218aa898774593ba118ef415932"
+      "stateHash": "f7728cfb31c2bce7191f788f3d1123d2a075cac3a6d5159e25af04619bd71593"
     },
     {
       "action": {
@@ -2724,7 +2724,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "b3f417cdc8c53fd2503cf5c935c42bab98df996b27e906e49158ad9bf48b5e74"
+      "stateHash": "1f16c5ae6974127f14b1874c45d9115700438eb50ffa6baba673dbacc15d2fb9"
     },
     {
       "action": {
@@ -2733,7 +2733,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "6de6a51feaac818d7cf6f0a24abe14cb7537ef77600934a42d215a7958ca82bc"
+      "stateHash": "8cbb38e7e46c4f696235dee5d1d108f127b1cd39f69894c904a2ed14afeb4213"
     },
     {
       "action": {
@@ -2742,7 +2742,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "64e3e63ebed6e79f255acb884b19621226ea0bfa4778636eba15b830eda6974f"
+      "stateHash": "6f42cc2e1bb76579727fe4d806aa1ea40d1bf2f1a275467b8e39ee8ac4f9dc79"
     },
     {
       "action": {
@@ -2751,7 +2751,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "c0c44b5a83578d2d4df8fe74ca349b3e30c9e668b9b74c0cc9a5638ae3d6f226"
+      "stateHash": "47b1652e20e19c2e1abcdaee3eb18f72d282eca88ea1a9e5a468e617ba747828"
     },
     {
       "action": {
@@ -2760,7 +2760,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "c8e98fcbb4c926ff46d900a2e029e8e28a0f6a177bc0bea951677e957471ab08"
+      "stateHash": "7c1895248880a4952e99bcf3345fbe16a175be959365ed774a678f58c516cefa"
     },
     {
       "action": {
@@ -2770,7 +2770,7 @@
           "position": 1
         }
       },
-      "stateHash": "0f16c8f28a9362207db5fba9b4436058219aeeda9cd24596ce2af094df848737"
+      "stateHash": "8f3f3de8d96cc18aef83aa716b94e9dbb63bf2797b2c7fd3cc5805990b0135be"
     },
     {
       "action": {
@@ -2782,7 +2782,7 @@
           ]
         }
       },
-      "stateHash": "4275ed07069abbc1a254f52530115d10842817e1b5724536cfcdedb6246a3757"
+      "stateHash": "6908cd54165fbfd606ad6c248e374263ed979739973f73b350dee4da0d9b17ed"
     },
     {
       "action": {
@@ -2791,7 +2791,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "4cd7782a21106be00f5fb7e10c0aaf7b489e9cfe96fbf5ddf735d5add8432a16"
+      "stateHash": "971c7243a2b2ed9f1c186d13aeaa965fa8cbafc271497ace1cb228ea39821889"
     },
     {
       "action": {
@@ -2800,7 +2800,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "c8745ff093322f4b72cac50a0b63c2dc4a201475690c136c149588d44e8e7137"
+      "stateHash": "16eacb948746aeacadc91a075506f71839472cb8b8ec607934ace236e78c87a9"
     },
     {
       "action": {
@@ -2809,7 +2809,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "c252229ef74ccdade8c931cae618fbbb234964eb84ccfa1464a8e2fa08946bd3"
+      "stateHash": "2ec4626f20a0b4b49ab920ac18ba3e189358aeb3b474f0537c78631a25c434b9"
     },
     {
       "action": {
@@ -2821,7 +2821,7 @@
           ]
         }
       },
-      "stateHash": "540e64f234f87330c5ec93b1e2b0189ae23678fadadc95f175c362f8c154460d"
+      "stateHash": "af050a32b380b0a8faa1a8adb18e1419f54e86d9da01d4ed0193fa5fcc118db0"
     },
     {
       "action": {
@@ -2830,7 +2830,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "e39205bd0ece0bc00b9b41162dedddf698eb33d705e000482c089d2a77962a06"
+      "stateHash": "d92aeca0545ea44bb9a5fde6dac4e873c5d9288b5adce71488a152f3b69cbaa1"
     },
     {
       "action": {
@@ -2839,7 +2839,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "0268332005ec5d9cb68cccbbce70a955b4ef431189d978efb92f029e0cd9cb11"
+      "stateHash": "35413aac3838d54ddb14c091140237841fb632944a304400ebc9f0acb1fb31d1"
     },
     {
       "action": {
@@ -2848,7 +2848,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "7e647c012bb20e2b38b0720a39d900848f3cafd1c70d940e3788ef2c8c4de48d"
+      "stateHash": "5db9e3f77d2d477b65a875f10c221ff2877d2c4bc51851d7386808c8b71cf54d"
     },
     {
       "action": {
@@ -2860,7 +2860,7 @@
           "position": 0
         }
       },
-      "stateHash": "5339c2f7038562f67ff224a5b17aaaee24dbc1694117377a8f3082ac9e8145bf"
+      "stateHash": "eb79a6ec2f5005e6f28f78eb15e36f5661bcfafbbd3c76ca9a86d3d37fbd9e59"
     },
     {
       "action": {
@@ -2869,7 +2869,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "dbec05ef25bab2c012c3b47914237e0236cd40242221443c55855f6c16e9d8fb"
+      "stateHash": "0641f43ca3b6ebeac323918ee7328938c7ddb9197240213b7bf8b4a87443a60e"
     },
     {
       "action": {
@@ -2878,7 +2878,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "fedc61f9d4fe4b19e8b8127ec5c63f3d995b0659573a05f3bd076e2bd82d257a"
+      "stateHash": "8836a0b6189c387ef272a875000d4afd783d65fa1430489ec6021b24a3186ad8"
     },
     {
       "action": {
@@ -2887,7 +2887,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "f1e358d6cb97a63e6c9e75d6f5fe5dbc58eb133a01f6662d0abb1a22ffb76b3a"
+      "stateHash": "7fef96704e999c9016087313e467a5245b63e38aef4db2f87048384a33ae3ee9"
     },
     {
       "action": {
@@ -2896,7 +2896,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "1a5a4d49d42c7743ea17aa66599d7d5488361080dfb0568e816c3c557073cf1e"
+      "stateHash": "db36aca157364ed1ce6c269576fbf6848830a9c599fe77bab555486bbc124a6a"
     },
     {
       "action": {
@@ -2905,7 +2905,7 @@
           "leaderId": "human-1"
         }
       },
-      "stateHash": "4dc2023368afe7bb949858d9dba3a6c4eafe5901f1ba8d31b1086031f853140c"
+      "stateHash": "6eca6954c678641ae31606ed6a05602eaefa8b3d708dd3dd68602568aeabe62f"
     },
     {
       "action": {
@@ -2914,7 +2914,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "664951977ed7da8f33a665f1dae1592e59e07328d966f1b9f6404eb979350416"
+      "stateHash": "a1aa598f80079e3dbfda8bf3d57d07f2a598d7e43edd8869ca6bb421316e1163"
     },
     {
       "action": {
@@ -2923,7 +2923,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "12cc34429c9b6b347835434d666429d53ace00f94042c3a4ada64fec3ca95c60"
+      "stateHash": "550d865723c2cc82f9dbb54e8de427825ec8bea8cfe400928f85cfe82de203ee"
     },
     {
       "action": {
@@ -2932,7 +2932,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "48f9a3352f731dbfe75d279750bc96889562ae7997ef62171a25413f0741ad89"
+      "stateHash": "60a89a1dc027c597e91c06779f69886fe7c61e42c650b718d91a0c94b9f29391"
     },
     {
       "action": {
@@ -2941,7 +2941,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "65ea26d2ef85a39c34165fae84344483f58fc703b13225051851da5f2326ff6a"
+      "stateHash": "9834b4ddd10bb17b56b7e3475e49d1578827ff1c907fb89215cbd5de00fdb130"
     },
     {
       "action": {
@@ -2950,7 +2950,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "da331d525bc3c7e9a02bd2002e391f92d373d208b2a75e03fec971d80aa6e41e"
+      "stateHash": "b0ddab2e1d0f7ee7f572a0d78d221c7ed8b8787c9fc0b3e686bb3c260e1ec245"
     },
     {
       "action": {
@@ -2959,7 +2959,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "aa018444e93795178f33bc60d0f1d179a93d102c5b277ca7daef2678c875bc33"
+      "stateHash": "17c7b57b126542b69d2c0e6b0083d02181f70b5c0336b6837e23eca25fbeb97e"
     },
     {
       "action": {
@@ -2968,7 +2968,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "ccbd4663f7848650372cd51c6fb03d70aea881f20321b143ba85cd4512bd6897"
+      "stateHash": "9ee72f88c82c3b2c52fa43e13bdcff0aaa769e373315c3dfe8416dd0b5cc996e"
     },
     {
       "action": {
@@ -2977,7 +2977,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "05bfcb42ceab9ccef84a7cdfd5bb74b52ceac92f41b0a5affe15d95531748ccd"
+      "stateHash": "59fdf2e9d14624c898ee8e7a24a03a58e36ae4a1bcc00ad0b56063d1a417f8bb"
     },
     {
       "action": {
@@ -2986,7 +2986,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "e66d359ec310046da67e399d0656764acff64e1f317171c7f0e7436a06292265"
+      "stateHash": "ad79162f0141861d23c5bd7dd311fe1db21224ec9081d5ae2e83a0c3e43c9341"
     },
     {
       "action": {
@@ -2995,7 +2995,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "c6d7fb7a130a488f9a165937970a2bceb49c884ac5e2dedfc45718d733b00e71"
+      "stateHash": "ba45ea67eca8be245615b98cc050d40cc70e7774eee911afd113cf4f3bc6fc0d"
     },
     {
       "action": {
@@ -3004,7 +3004,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "820faef741ff6d142273b8dd677460c80321fd9afea7cf4be25bd73107f5b73e"
+      "stateHash": "a8d8cbebc3ba8c1382fb3524d38ca8a07251619a949d05fbcb9a07e48c2fbc7f"
     },
     {
       "action": {
@@ -3014,7 +3014,7 @@
           "position": 0
         }
       },
-      "stateHash": "7c4cd2298ca1a43cc2156d74e0fb33a581590244d370eb554fe78e83b0d28140"
+      "stateHash": "e966b050ca61c5c17d4b2b6ed623ff209c50eb4f93048afd2c396479ab23a229"
     },
     {
       "action": {
@@ -3023,7 +3023,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "5ad3dc29ad5727b2baa9ebdaa533fc21a53639d4f999644fd033abf0fb5aae26"
+      "stateHash": "b6f255cf167dee71be7c325654106152ac7cd05479aff435de4d3d0445e4b014"
     },
     {
       "action": {
@@ -3035,7 +3035,7 @@
           ]
         }
       },
-      "stateHash": "a2ad337ad689828ee2df9816309a02220ba349a6318b84a2c5652a38a134704d"
+      "stateHash": "963a26b1a680ad7cd995d4727e3eee8b63355460e49acdb67b9e9b9863c4e284"
     },
     {
       "action": {
@@ -3044,7 +3044,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "87d6aebdc6921a60ffff6b4580103fb20c7abd95a59e0a3671bcec56efbd00f0"
+      "stateHash": "f777fbd2ba1f44156e5fe1fc2ebd1caef3f841e4d01570a28701bcf30f39254e"
     },
     {
       "action": {
@@ -3056,7 +3056,7 @@
           ]
         }
       },
-      "stateHash": "d4f3875a2316a83bcb20f86fd06d15cd62e3c9331175cd0cc0be4671132a8c34"
+      "stateHash": "dfdf90df2f66f0ffc7571547ef5084f1ca64de2782b294613c3c5b9d5d17922e"
     },
     {
       "action": {
@@ -3065,7 +3065,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "66ff5cef4d0a25ce0a0019f400552796ece116503e7304a8c4449a0e00b1f20c"
+      "stateHash": "b1d511b496af4c591109befe1e90f89369f2aab4f8484ced01d05955bb0c11f3"
     }
   ],
   "finalState": {
@@ -3090,7 +3090,9 @@
             "played": false
           }
         ],
-        "knownCardPositions": [],
+        "knownCardPositions": [
+          0
+        ],
         "isVintoCaller": false,
         "coalitionWith": [
           "human-1",
@@ -3105,22 +3107,23 @@
                 "rank": "4",
                 "value": 4,
                 "played": false
-              },
-              "1": {
-                "id": "6_3",
-                "rank": "6",
-                "value": 6,
-                "played": false
               }
             }
           },
           "bot-2": {
-            "knownCards": {}
+            "knownCards": {
+              "0": {
+                "id": "Joker1",
+                "rank": "Joker",
+                "value": -1,
+                "played": false
+              }
+            }
           },
           "bot-3": {
             "knownCards": {
               "0": {
-                "id": "Joker1",
+                "id": "Joker2",
                 "rank": "Joker",
                 "value": -1,
                 "played": false
@@ -3157,6 +3160,9 @@
             "knownCards": {}
           },
           "bot-3": {
+            "knownCards": {}
+          },
+          "bot-2": {
             "knownCards": {
               "0": {
                 "id": "Joker1",
@@ -3165,9 +3171,6 @@
                 "played": false
               }
             }
-          },
-          "bot-2": {
-            "knownCards": {}
           }
         }
       },
@@ -3192,7 +3195,14 @@
         "coalitionWith": [],
         "opponentKnowledge": {
           "human-1": {
-            "knownCards": {}
+            "knownCards": {
+              "0": {
+                "id": "4_3",
+                "rank": "4",
+                "value": 4,
+                "played": false
+              }
+            }
           },
           "bot-1": {
             "knownCards": {
@@ -3201,24 +3211,11 @@
                 "rank": "4",
                 "value": 4,
                 "played": false
-              },
-              "1": {
-                "id": "6_3",
-                "rank": "6",
-                "value": 6,
-                "played": false
               }
             }
           },
           "bot-3": {
-            "knownCards": {
-              "0": {
-                "id": "Joker1",
-                "rank": "Joker",
-                "value": -1,
-                "played": false
-              }
-            }
+            "knownCards": {}
           }
         }
       },
@@ -3254,17 +3251,18 @@
                 "rank": "4",
                 "value": 4,
                 "played": false
-              },
-              "1": {
-                "id": "6_3",
-                "rank": "6",
-                "value": 6,
-                "played": false
               }
             }
           },
           "bot-2": {
-            "knownCards": {}
+            "knownCards": {
+              "0": {
+                "id": "Joker1",
+                "rank": "Joker",
+                "value": -1,
+                "played": false
+              }
+            }
           }
         }
       }
@@ -3698,5 +3696,5 @@
     "roundFailedAttempts": [],
     "rngState": 2583707594
   },
-  "finalStateHash": "66ff5cef4d0a25ce0a0019f400552796ece116503e7304a8c4449a0e00b1f20c"
+  "finalStateHash": "b1d511b496af4c591109befe1e90f89369f2aab4f8484ced01d05955bb0c11f3"
 }

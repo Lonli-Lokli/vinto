@@ -1,19 +1,18 @@
-# The parity corpus — frozen
+# The parity corpus — frozen, and regenerated once
 
-50 games. 13,900 actions. Every action carries the canonical state hash **the TypeScript engine
-computed**, and the Kotlin engine reproduces every one of them, per action, in
-`CorpusReplayTest`.
+50 games. 13,900 actions. Every action carries a canonical state hash, and the Kotlin engine
+reproduces every one of them, per action, in `CorpusReplayTest`.
 
-**These files are frozen. They are never regenerated, and it is not possible to regenerate
-them.** `CorpusIsFrozenTest` fails if any of them changes, and `MANIFEST.sha256` beside this
-file is what it checks against.
+**These files are frozen.** `CorpusIsFrozenTest` fails if any of them changes, and
+`MANIFEST.sha256` beside this file is what it checks against.
+
+They have been regenerated **once**, on 2026-09-07, and that is recorded below rather than in
+a commit message, because a reader needs to know which of these hashes TypeScript computed and
+which this engine did.
 
 ---
 
 ## Why frozen, rather than kept up to date
-
-This is the decision the whole `retire-legacy-web` change exists to record, so it is worth
-stating plainly rather than as a rule.
 
 These recordings were produced by `legacy-web/tools/generate-recordings.ts`, running the
 **TypeScript** engine — a second implementation, written from the rules rather than from the
@@ -32,8 +31,44 @@ JVM, JS and Wasm; the tournament baseline pins the bot's strength against commit
 *wrong from the start*, in a way that is self-consistent. Only an implementation written from
 the rules can catch that, and there is no longer one.
 
-A regenerated corpus would look exactly like this one and be worth much less. Freezing it keeps
-the distinction visible.
+## The 2026-09-07 regeneration
+
+A player reported two faults from one deal: a bot aimed a Queen at the row a Joker had already
+left, and the whole coalition spent its final round planning against a Joker nobody held. Both
+came from the same place — the engine's record of **what each seat has been shown**, and two
+holes in it:
+
+- a Jack or a Queen moved two cards while the table watched, and left every watcher's memory
+  pinned to the addresses the cards had left (`carrySeenCardsAcrossSwap`);
+- a King's correct declaration took a card out of a hand and renumbered two of the three
+  records that point into it, but not the third (`shiftSeenCardsAfterRemoval`).
+
+TypeScript had both. The corpus is therefore not "the thing that was right" here — it faithfully
+records a defect the two implementations shared, and no fix to it could leave those hashes
+standing. Regenerating was the product owner's call, taken against the alternative of teaching
+the replay harness to reproduce the old rule.
+
+**What actually moved is narrow, and that is the part worth keeping straight.** 11,708 of the
+13,900 action hashes changed, along with `finalStateHash` and, in 178 seats, the two memory
+fields inside the stored `finalState`. **Nothing else in any of the fifty files changed** —
+not an action, not an initial state, not a card, a pile, a phase, a turn, a score or an RNG
+value. That was measured before the rewrite, not assumed: with the two memory fields excluded,
+the fixed engine reproduces the old engine's state stream byte-for-byte across all 13,900
+actions.
+
+So read these files as: **TypeScript's evidence for every field except what a seat has seen,
+and this engine's own answer for that one.** The claim is checkable — the pre-regeneration
+files are in git history at `e2fb336`, and the diff is confined to hashes and memory.
+
+What the corpus can no longer prove about that channel is covered better than it was, because
+two engines agreeing about memory never said either was right:
+
+| | |
+| --- | --- |
+| `SelfPlayGateTest` | fails if any seat, in twelve whole games, holds a belief that is not true |
+| `SwapKnowledgeTest` | the rule itself: what the table watched move, the table's memory follows |
+| `KingActionTest` | a removal renumbers what the *other* seats have seen, not only the owner |
+| `ReportedGamesTest` | the reported deal, replayed, with every belief checked against the table |
 
 ## What to do instead, when you want more coverage
 
@@ -50,15 +85,16 @@ Not this directory. Three answers, in order of preference:
 
 ## If `CorpusReplayTest` goes red
 
-It means the Kotlin engine no longer reproduces TypeScript's hashes. Two possibilities, and
-they need opposite responses:
+Two possibilities, and they need opposite responses:
 
 - **An accident.** Almost always. Fix the engine; the corpus is the thing that was right.
 - **A deliberate rules change**, where the new behaviour is correct and the old recordings
-  describe the old rules. Then the corpus genuinely cannot be satisfied — and the answer is
-  still not to regenerate it. Say so in the change: narrow what the gate replays, or retire it
-  with an argument. A silent rewrite converts a cross-implementation proof into a self-check
-  and leaves every test green, which is why `CorpusIsFrozenTest` exists to make it loud.
+  describe the old rules. Then the corpus genuinely cannot be satisfied. Regenerating is not
+  the reflex — it was done once, above, and it cost the cross-implementation proof for one
+  channel permanently. Prefer narrowing what the gate replays, or replaying under the recorded
+  rule, and if you do regenerate, say so here with what moved and what did not. A silent
+  rewrite converts a cross-implementation proof into a self-check and leaves every test green,
+  which is why `CorpusIsFrozenTest` exists to make it loud.
 
 ## Files
 

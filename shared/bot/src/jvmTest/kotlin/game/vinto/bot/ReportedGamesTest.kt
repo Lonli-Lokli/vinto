@@ -57,4 +57,42 @@ class ReportedGamesTest {
         }
         assertTrue(bad.isEmpty(), "a drawn Joker was thrown away:\n" + bad.joinToString("\n"))
     }
+
+    @Test
+    fun theTableFollowsTheJokerWhenAQueenMovesIt() {
+        // Reported 2026-09-06, as two complaints that turned out to be one defect. Ember
+        // swapped the Joker into its own row in front of everybody; Tide's Queen then moved
+        // it to Tide's hand. Dune aimed its own Queen at the row the Joker had left, and all
+        // three seats went on declaring "Ember has the Joker" through the coalition round —
+        // Ember held 4,4, and the Joker was in the caller's hand.
+        //
+        // The cause was in the engine, not the bot: a Jack or a Queen moved two cards and
+        // left every watcher's memory pinned to the old addresses. What is asserted is the
+        // property, not the two moves: `opponentKnowledge` is the engine's record of what a
+        // seat has been *shown*, so an entry that does not match the card lying there is the
+        // engine having told that seat something false.
+        val report = recording("joker-tracked-across-a-swap")
+        var state = report.initialState
+        val untrue = mutableListOf<String>()
+
+        report.actions.forEachIndexed { index, entry ->
+            val result = GameEngine.reduce(state, entry.action)
+            check(result !is ReduceResult.Failure) { "the report does not replay at " + entry.action.type }
+            state = result.state
+            for (seat in state.players) {
+                for ((ownerId, about) in seat.opponentKnowledge.orEmpty()) {
+                    val owner = state.players.first { it.id == ownerId }
+                    for ((position, believed) in about.knownCards) {
+                        val truth = owner.cards.getOrNull(position)
+                        if (truth?.rank == believed.rank) continue
+                        untrue += "#$index ${entry.action.type}: ${seat.id} believes " +
+                            "$ownerId@$position is ${believed.rank}, it is ${truth?.rank}"
+                    }
+                }
+            }
+        }
+
+        // Before the fix this reported 898 of them, the first at the Queen swap on move 159.
+        assertTrue(untrue.isEmpty(), "seats were told untrue things:\n" + untrue.take(10).joinToString("\n"))
+    }
 }
