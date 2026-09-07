@@ -24,7 +24,7 @@ import {
   seatVacatedPoint,
   sessionEndedPoint,
   newRoom, joinRoom, viewForSeat, seatForToken, replayRecordingJson,
-  addBot, removeBot, lobbyView, updatePresence, nextAlarmAt,
+  addBot, removeBot, leaveRoom, lobbyView, updatePresence, nextAlarmAt,
   applyActionEnvelopes, sayEnvelopes, doneConferringEnvelopes, editPlanEnvelopes, agreePlanEnvelopes, readyEnvelopes, moreTimeEnvelopes, alarmEnvelopes, syncEnvelope,
   roundRecording,
   newRegistry, mintRoomCode, resolveRoomCode, resolveRoomCodeFor, looksLikeRoomCode,
@@ -675,7 +675,21 @@ export class Room {
         const token = msg.token ?? mintToken();
         // A join without a number is a build from before the number existed: protocol 1.
         const protocol = Number.isInteger(msg.protocol) ? msg.protocol : 1;
-        const result = JSON.parse(joinRoom(stateJson, token, msg.nickname ?? '', Date.now(), protocol));
+        // The face travels with the name and is not checked: a seed names some mark whatever
+        // it is, so unlike a nickname there is nothing here to sanitise. A client older than
+        // protocol 3 sends none of these and lands on the defaults.
+        const result = JSON.parse(
+          joinRoom(
+            stateJson,
+            token,
+            msg.nickname ?? '',
+            Date.now(),
+            protocol,
+            msg.avatarKind ?? 0,
+            msg.avatarSeed ?? 0,
+            msg.avatarGround ?? 0,
+          ),
+        );
         if (result.error) {
           const refusal = { type: 'error', message: result.error };
           if (result.code) refusal.code = result.code;
@@ -769,6 +783,27 @@ export class Room {
         }
         await this.#save(JSON.stringify(result.state));
         return this.#sendPrebuilt(result.messages);
+      }
+
+      // Giving the seat up for good, which a closed socket deliberately does not do — the room
+      // cannot tell one from a tunnel, so it holds the seat unless it is told. Same tail as the
+      // bot cases: the seat freed, the registry told, and the lobby rebroadcast, because every
+      // client already listens for that and nothing new needs to come back for a leave.
+      case 'leave': {
+        const token = msg.token ?? (ws.deserializeAttachment() ?? {}).token;
+        if (!token) {
+          return ws.send(JSON.stringify({ type: 'error', message: 'join before leaving' }));
+        }
+
+        const result = JSON.parse(leaveRoom(stateJson, token, Date.now()));
+        if (result.error) {
+          return ws.send(JSON.stringify({ type: 'error', message: result.error }));
+        }
+
+        const leftJson = JSON.stringify(result.state);
+        await this.#save(leftJson);
+        await this.#reflectInRegistry(leftJson);
+        return this.#broadcastLobby(leftJson);
       }
 
       case 'add-bot':

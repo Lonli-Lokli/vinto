@@ -43,7 +43,7 @@ import kotlinx.serialization.json.Json
  * History: 1 — the wire as first shipped. 2 — coalition play: `say`, `done-conferring`,
  * `edit-plan`, `agree-plan`, `said`, `notice`, and the `DECLARE_CARDS` action.
  */
-public const val PROTOCOL_VERSION: Int = 2
+public const val PROTOCOL_VERSION: Int = 3
 
 /** The oldest protocol the room will seat. Below it, the join is refused with [UPDATE_NEEDED_CODE]. */
 public const val MIN_PROTOCOL: Int = 2
@@ -131,6 +131,17 @@ sealed interface ClientMessage {
         val token: String? = null,
         val nickname: String? = null,
         /**
+         * The face this seat sits behind, alongside the name and for the same reason.
+         *
+         * Loose fields rather than a whole [PlayerProfile], mirroring [nickname]: the room
+         * composes the profile, because it is the room that sanitises what a client claims and
+         * a record handed over whole invites trusting it as sent. Null from a build older than
+         * protocol 3, which lands on the default face rather than on nothing.
+         */
+        val avatarKind: Int? = null,
+        val avatarSeed: Long? = null,
+        val avatarGround: Int? = null,
+        /**
          * The protocol this client speaks — [PROTOCOL_VERSION] of the build that sent it.
          * Absent from every build before the number existed, which the room reads as 1.
          */
@@ -162,6 +173,26 @@ sealed interface ClientMessage {
         val token: String? = null,
         val seat: Int,
     ) : ClientMessage
+
+    /**
+     * Give the seat up for good — the exit that is not a dropped connection.
+     *
+     * **The room cannot tell a closed socket from a tunnel**, and that is deliberate: the seat
+     * token exists so a player can come back to a seat a bot has been keeping warm. The cost of
+     * that promise is that nothing was ever able to say "I am finished with this room", so the
+     * Leave button and the phone's back gesture did the identical thing — close the socket — and
+     * a player who opened a room, backed out and opened another accumulated rooms that only the
+     * registry's lease eventually swept.
+     *
+     * This is the other half. Backing out still just closes the socket and keeps the seat;
+     * pressing Leave sends this, and the room frees the seat rather than holding it.
+     *
+     * Added in protocol 3. An older room ignores it — [ProtocolJson] sets `ignoreUnknownKeys` —
+     * and the seat then behaves as it always did, which is why the floor did not have to move.
+     */
+    @Serializable
+    @SerialName("leave")
+    data class Leave(val token: String? = null) : ClientMessage
 
     /** Agree to another round. The last connected human to agree is what deals it. */
     @Serializable

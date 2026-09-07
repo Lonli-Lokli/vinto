@@ -6,6 +6,7 @@ import game.vinto.protocol.ClientMessage
 import game.vinto.protocol.LobbyView
 import game.vinto.protocol.NoticeSeverity
 import game.vinto.protocol.PROTOCOL_VERSION
+import game.vinto.protocol.PlayerProfile
 import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.RoundResult
 import game.vinto.protocol.ServerMessage
@@ -107,6 +108,29 @@ class RemoteRoom(
     private val _lobby = MutableStateFlow<LobbyView?>(null)
     val lobby: StateFlow<LobbyView?> = _lobby.asStateFlow()
 
+    private val _faces = MutableStateFlow<Map<String, PlayerProfile>>(emptyMap())
+
+    /**
+     * What each seat looks like, by name — the face its owner chose, not one derived from
+     * whatever they happen to be called.
+     *
+     * Keyed by name because that is what every draw site already has: the felt, the rail, the
+     * standings and the coalition board all take a nickname, and threading a seat index through
+     * five of them to key this map would be a worse change than the one that makes the key safe.
+     * `uniqueNickname` is what makes it safe — no two seats at a table share a name, which was
+     * worth fixing on its own account.
+     *
+     * **Accumulated rather than replaced.** The lobby is a pre-game broadcast: once the room
+     * deals, no more of them arrive, so a map rebuilt from the current lobby would be empty for
+     * the whole game — which is precisely when the faces are wanted. Seats do not change
+     * identity mid-round, so the last thing said about a name stays true.
+     *
+     * Kept beside the engine's view rather than inside it on purpose. A face is presentation;
+     * `GameState` is hashed, replayed and compared against a frozen corpus, and putting a
+     * picture in it would move every recorded hash for something no rule depends on.
+     */
+    val faces: StateFlow<Map<String, PlayerProfile>> = _faces.asStateFlow()
+
     /** The rounds played so far, as the room reports them. The score screen's source. */
     private val _standings = MutableStateFlow<List<RoundResult>>(emptyList())
     val standings: StateFlow<List<RoundResult>> = _standings.asStateFlow()
@@ -200,12 +224,58 @@ class RemoteRoom(
         }
     }
 
-    /** Leaves for good. The seat token stays vaulted — the seat is reclaimable until the room dies. */
+    private fun remember(lobby: LobbyView) {
+        val named = lobby.seats.mapNotNull { seat ->
+            val kind = seat.avatarKind ?: return@mapNotNull null
+            val name = seat.nickname?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            name to PlayerProfile(
+                nickname = name,
+                avatarKind = kind,
+                avatarSeed = seat.avatarSeed ?: 0,
+                avatarGround = seat.avatarGround ?: 0,
+            )
+        }
+        if (named.isNotEmpty()) _faces.value = _faces.value + named
+    }
+
+    /**
+     * Steps out of the room, keeping the seat.
+     *
+     * The socket closes and nothing is sent, so the room cannot tell this from a tunnel and
+     * holds the seat — which is the point. The token stays vaulted and the seat is reclaimable
+     * until the room dies. [quit] is the other exit, the one that gives the seat up.
+     */
     fun leave() {
         _connection.value = ConnectionState.Closed("left the room")
         socket?.close()
         running?.cancel()
         running = null
+    }
+
+    /**
+     * Gives the seat up for good, rather than merely closing the socket.
+     *
+     * [leave] and this used to be the same thing, and that is the bug it fixes: a closed socket
+     * is indistinguishable from a tunnel, so the room held the seat either way and a player who
+     * backed out and opened another room left the first one holding a chair for somebody who was
+     * never coming back. Stepping out is still [leave]; this is the Leave button.
+     *
+     * The message goes first and the socket closes after, because closing it first would drop
+     * the very frame that says why. Best-effort by nature — if it does not arrive, the seat
+     * behaves exactly as it did before this existed, which is a held seat and not a lost one.
+     */
+    fun quit() {
+        sender.launch {
+            try {
+                // In the same coroutine as the close, and before it: `fire` would launch a second
+                // one and `leave` would then race it, dropping the very frame that says why.
+                socket?.send(encode(ClientMessage.Leave(token())))
+            } catch (_: Exception) {
+                // A send into a dying socket. The seat then behaves as it did before this
+                // existed — held, not lost — which is the right way for a best-effort exit to fail.
+            }
+            leave()
+        }
     }
 
     /**
@@ -268,7 +338,17 @@ class RemoteRoom(
                         val opened = answer.value
                         socket = opened
                         everConnected = true
-                        val join = ClientMessage.Join(token(), nickname, protocol = PROTOCOL_VERSION)
+                        // The face goes with the name, so the other seats see the one its owner
+                        // sees rather than a mark derived from whatever they happen to be called.
+                        val mine = vault.identity { 0 }
+                        val join = ClientMessage.Join(
+                            token(),
+                            nickname,
+                            avatarKind = mine.avatarKind.takeIf { mine.hasAvatar },
+                            avatarSeed = mine.avatarSeed.takeIf { mine.hasAvatar },
+                            avatarGround = mine.avatarGround.takeIf { mine.hasAvatar },
+                            protocol = PROTOCOL_VERSION,
+                        )
                         opened.send(encode(join))
 
                         for (text in opened.incoming) {
@@ -306,6 +386,7 @@ class RemoteRoom(
             is ServerMessage.Joined -> joined(message)
             is ServerMessage.Lobby -> {
                 _lobby.value = message.lobby
+                remember(message.lobby)
                 // The lobby is the authority on who is sitting where, so its arrival is what
                 // ends every wait — whichever seat the room actually changed.
                 _pendingSeats.value = emptySet()

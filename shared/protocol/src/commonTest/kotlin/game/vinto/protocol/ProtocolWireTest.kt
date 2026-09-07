@@ -118,9 +118,9 @@ class ProtocolWireTest {
         // — so this one is pinned by decode plus a value round trip, not by text.
         val literal =
             """{"type":"lobby","lobby":{"phase":"STARTING","seats":[""" +
-                """{"index":0,"occupied":true,"isBot":false,"removable":false,"nickname":"Ann"},""" +
+                """{"index":0,"occupied":true,"isBot":false,"removable":false,"nickname":"Ann","avatarKind":null,"avatarSeed":null,"avatarGround":null},""" +
                 """{"index":1,"occupied":true,"isBot":true,"removable":true,"nickname":"Bot 2"},""" +
-                """{"index":2,"occupied":false,"isBot":false,"removable":false,"nickname":null},""" +
+                """{"index":2,"occupied":false,"isBot":false,"removable":false,"nickname":null,"avatarKind":null,"avatarSeed":null,"avatarGround":null},""" +
                 """{"index":3,"occupied":true,"isBot":false,"removable":false,"nickname":"Bob"}],""" +
                 """"humans":2,"startsAtEpochMs":1700000010000,"msUntilStart":9000}}"""
         // Deliberately without `botsOffered`, which is newer than this literal: a client or a
@@ -158,16 +158,16 @@ class ProtocolWireTest {
     fun aLobbyJoinedHasEverythingButAView() {
         val literal =
             """{"type":"joined","seat":0,"token":"tok-raw","seats":[""" +
-                """{"index":0,"playerId":null,"profile":{"nickname":"Ann"},"ownerId":null,""" +
+                """{"index":0,"playerId":null,"profile":{"nickname":"Ann","avatarKind":0,"avatarSeed":0,"avatarGround":0},"ownerId":null,""" +
                 """"occupied":true},""" +
                 """{"index":1,"playerId":null,"profile":null,"ownerId":null,"occupied":false},""" +
                 """{"index":2,"playerId":null,"profile":null,"ownerId":null,"occupied":false},""" +
                 """{"index":3,"playerId":null,"profile":null,"ownerId":null,"occupied":false}],""" +
                 """"nextIndex":0,"lobby":{"phase":"LOBBY","seats":[""" +
-                """{"index":0,"occupied":true,"isBot":false,"removable":false,"nickname":"Ann"},""" +
-                """{"index":1,"occupied":false,"isBot":false,"removable":false,"nickname":null},""" +
-                """{"index":2,"occupied":false,"isBot":false,"removable":false,"nickname":null},""" +
-                """{"index":3,"occupied":false,"isBot":false,"removable":false,"nickname":null}],""" +
+                """{"index":0,"occupied":true,"isBot":false,"removable":false,"nickname":"Ann","avatarKind":null,"avatarSeed":null,"avatarGround":null},""" +
+                """{"index":1,"occupied":false,"isBot":false,"removable":false,"nickname":null,"avatarKind":null,"avatarSeed":null,"avatarGround":null},""" +
+                """{"index":2,"occupied":false,"isBot":false,"removable":false,"nickname":null,"avatarKind":null,"avatarSeed":null,"avatarGround":null},""" +
+                """{"index":3,"occupied":false,"isBot":false,"removable":false,"nickname":null,"avatarKind":null,"avatarSeed":null,"avatarGround":null}],""" +
                 """"humans":1,"startsAtEpochMs":null,"msUntilStart":null,""" +
                 """"botsOffered":false},"view":null}"""
 

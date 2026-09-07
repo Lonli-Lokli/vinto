@@ -111,6 +111,7 @@ class WireSamplesTest {
         "add-bot" to ClientMessage.AddBot(token = "tok"),
         "remove-bot" to ClientMessage.RemoveBot(token = "tok", seat = 2),
         "next-round" to ClientMessage.NextRound(token = "tok"),
+        "leave" to ClientMessage.Leave(token = "tok"),
         "more-time" to ClientMessage.MoreTime(token = "tok"),
         "done-conferring" to ClientMessage.DoneConferring(token = "tok"),
         "say" to ClientMessage.Say(talk),

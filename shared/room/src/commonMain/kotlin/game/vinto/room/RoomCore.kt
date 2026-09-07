@@ -246,6 +246,42 @@ internal fun sanitiseNickname(raw: String, seatIndex: Int): String =
     if (looksMinted(raw)) raw else mintNickname(seatIndex.toLong())
 
 /**
+ * The same, and then made unique at this table.
+ *
+ * There are 1024 minted names and four seats, so two people arriving as the same one is rare and
+ * entirely possible — and a table with two "Lucky Rowan"s is worse than it sounds. It is not only
+ * confusing to read: the felt draws a seat by *name*, so two seats sharing one would share a face
+ * and a colour as well, and the whole point of letting somebody choose a face is that it is
+ * theirs.
+ *
+ * Re-minted rather than suffixed. "Lucky Rowan 2" is not a name this vocabulary can produce, so
+ * `looksMinted` would refuse it at the next door it passed — the invariant that nothing a player
+ * types reaches another screen is kept by every name being one of the 1024, and a decoration on
+ * the end quietly breaks that. Walking the seed gives another real name instead.
+ *
+ * Bounded: after [NAME_TRIES] the name is used as it is, because a table of four cannot exhaust
+ * 1024 names and a loop that cannot fail is better than one that might not stop.
+ */
+internal fun uniqueNickname(raw: String, seatIndex: Int, taken: Set<String>): String {
+    val wanted = sanitiseNickname(raw, seatIndex)
+    if (wanted !in taken) return wanted
+
+    var seed = seatIndex.toLong()
+    repeat(NAME_TRIES) {
+        seed += NAME_STRIDE
+        val next = mintNickname(seed)
+        if (next !in taken) return next
+    }
+    return wanted
+}
+
+/** Enough attempts that four seats cannot run out of 1024 names; small enough to be bounded. */
+private const val NAME_TRIES = 64
+
+/** Steps the adjective as well as the noun — see `mintNickname`'s own note on the divisors. */
+private const val NAME_STRIDE = 37L
+
+/**
  * The same rule without the fallback, for the places where "no name" is a legitimate answer.
  *
  * A seat must be called something, so [sanitiseNickname] mints a substitute. A room's host need
@@ -683,7 +719,7 @@ private fun withCountdown(state: RoomState, nowMs: Double): RoomState = when {
  * is the whole reconnect story in design D9 — and the reason a dropped player's seat can be
  * played by a bot in the meantime without losing it.
  */
-@Suppress("ReturnCount")
+@Suppress("ReturnCount", "LongParameterList")
 fun joinRoom(
     stateJson: String,
     token: String,
@@ -692,6 +728,17 @@ fun joinRoom(
     protocol: Int,
     floor: Int = MIN_PROTOCOL,
     current: Int = PROTOCOL_VERSION,
+    /**
+     * The face, as sent. Defaulted rather than required so every existing caller — and every
+     * client older than protocol 3 — keeps working and lands on the first family's seed 0.
+     *
+     * Unchecked on purpose: a seed names some mark whatever it is, so unlike a nickname there
+     * is nothing here to sanitise. `avatarKindOf` is what makes an unknown family draw rather
+     * than throw, and it runs where the face is drawn rather than here.
+     */
+    avatarKind: Int = 0,
+    avatarSeed: Long = 0,
+    avatarGround: Int = 0,
 ): String {
     val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
     val hash = Sha256.hex(token)
@@ -745,11 +792,24 @@ fun joinRoom(
         ?: state.seats.firstOrNull { it.isFiller }
         ?: return VintoJson.encodeToString(JoinResult(state, -1, "room is full"))
 
+    // Every other seat's name, so this one cannot arrive as a copy of somebody already sitting.
+    // The seat being taken is excluded: a reconnect keeps its own name rather than colliding
+    // with the seat it is coming back to.
+    val namesInUse = state.seats
+        .filter { it.index != target.index && it.occupied }
+        .mapNotNull { it.profile?.nickname }
+        .toSet()
+
     val seated = state.seats.map {
         if (it.index == target.index) {
             it.copy(
                 tokenHash = hash,
-                profile = PlayerProfile(nickname = sanitiseNickname(nickname, it.index)),
+                profile = PlayerProfile(
+                    nickname = uniqueNickname(nickname, it.index, namesInUse),
+                    avatarKind = avatarKind,
+                    avatarSeed = avatarSeed,
+                    avatarGround = avatarGround,
+                ),
                 isBot = false,
             )
         } else {
@@ -824,6 +884,38 @@ fun removeBot(stateJson: String, token: String, seatIndex: Int, nowMs: Double): 
 
     val next = withCountdown(state.copy(seats = seats), nowMs)
     return VintoJson.encodeToString(JoinResult(next, seatIndex))
+}
+
+/**
+ * Gives a seat up for good — the exit a dropped connection is not.
+ *
+ * **The room cannot tell a closed socket from a tunnel**, and holds the seat either way, which
+ * is the whole point of a seat token: a player comes back to a seat a bot has been keeping warm.
+ * The cost was that nothing could say "I am finished here", so backing out of a room and opening
+ * another left the first one holding a seat for somebody who was never coming back — and, for a
+ * host, left a listed room behind on every visit.
+ *
+ * So this is the deliberate half, reached only by the Leave button. It frees the seat outright:
+ * the token hash goes with it, so the seat cannot be reclaimed by the token that just gave it up.
+ *
+ * **Only in the lobby.** Mid-round a seat that emptied would leave a hand nobody is playing and
+ * a turn order with a hole in it; the room already knows how to run a disconnected seat as a bot,
+ * and that is the better answer for a player who walks away from a game in progress. Leaving is
+ * refused there rather than half-done.
+ */
+fun leaveRoom(stateJson: String, token: String, nowMs: Double): String {
+    val state = VintoJson.decodeFromString(RoomState.serializer(), stateJson)
+    val hash = Sha256.hex(token)
+
+    val seat = state.seats.firstOrNull { it.tokenHash == hash }
+        ?: return VintoJson.encodeToString(JoinResult(state, -1, "no seat here belongs to that token"))
+    if (state.phase != RoomPhase.LOBBY && state.phase != RoomPhase.STARTING) {
+        return VintoJson.encodeToString(JoinResult(state, -1, "the game has already started"))
+    }
+
+    val seats = state.seats.map { if (it.index == seat.index) Seat(index = it.index) else it }
+    val next = withCountdown(state.copy(seats = seats), nowMs)
+    return VintoJson.encodeToString(JoinResult(next, seat.index))
 }
 
 /**
@@ -1724,6 +1816,11 @@ fun lobbyView(stateJson: String, nowMs: Double): String {
                     isBot = it.isBot,
                     removable = it.isFiller,
                     nickname = it.profile?.nickname,
+                    // Only for a seat somebody is actually in: an empty chair has no face, and
+                    // a bot's is the emblem its name already picks.
+                    avatarKind = it.profile?.avatarKind?.takeIf { _ -> it.occupied && !it.isBot },
+                    avatarSeed = it.profile?.avatarSeed?.takeIf { _ -> it.occupied && !it.isBot },
+                    avatarGround = it.profile?.avatarGround?.takeIf { _ -> it.occupied && !it.isBot },
                 )
             },
             humans = state.humanCount,

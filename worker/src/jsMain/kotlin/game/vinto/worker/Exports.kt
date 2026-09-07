@@ -13,6 +13,7 @@ import game.vinto.room.editPlanEnvelopes as coreEditPlanEnvelopes
 import game.vinto.room.eventsSince as coreEventsSince
 import game.vinto.room.forgetRoom as coreForgetRoom
 import game.vinto.room.joinRoom as coreJoinRoom
+import game.vinto.room.leaveRoom as coreLeaveRoom
 import game.vinto.room.listPublicRooms as coreListPublicRooms
 import game.vinto.room.lobbyView as coreLobbyView
 import game.vinto.room.maxLiveRooms as coreMaxLiveRooms
@@ -64,13 +65,29 @@ fun newRoom(roomId: String, seed: Double, difficulty: String, nowMs: Double): St
     coreNewRoom(roomId, seed, difficulty, nowMs)
 
 @JsExport
+@Suppress("LongParameterList")
 fun joinRoom(
     stateJson: String,
     token: String,
     nickname: String,
     nowMs: Double,
     protocol: Int = PROTOCOL_VERSION,
-): String = coreJoinRoom(stateJson, token, nickname, nowMs, protocol)
+    /** The face, as sent. Defaults land a pre-protocol-3 client on the first family's seed 0. */
+    avatarKind: Int = 0,
+    avatarSeed: Double = 0.0,
+    avatarGround: Int = 0,
+): String = coreJoinRoom(
+    stateJson,
+    token,
+    nickname,
+    nowMs,
+    protocol,
+    avatarKind = avatarKind,
+    // A `Long` is not a JavaScript number, so the shim hands the seed across as a Double and it
+    // is narrowed here. Safe for every value a seed takes: `Prng` states are uint32.
+    avatarSeed = avatarSeed.toLong(),
+    avatarGround = avatarGround,
+)
 
 @JsExport
 fun addBot(stateJson: String, token: String, nowMs: Double): String =
@@ -86,6 +103,11 @@ fun startGame(stateJson: String, nowMs: Double): String = coreStartGame(stateJso
 @JsExport
 fun readyForNextRound(stateJson: String, token: String, nowMs: Double): String =
     coreReadyForNextRound(stateJson, token, nowMs)
+
+/** Gives a seat up for good, as opposed to a socket that merely closed. See `RoomCore`. */
+@JsExport
+fun leaveRoom(stateJson: String, token: String, nowMs: Double): String =
+    coreLeaveRoom(stateJson, token, nowMs)
 
 @JsExport
 fun updatePresence(stateJson: String, connectedSeatsCsv: String, nowMs: Double): String =

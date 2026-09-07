@@ -251,6 +251,18 @@ class TwoClientGameTest {
         private fun onMessage(socket: FakeSocket, text: String) {
             when (val message = ProtocolJson.decodeFromString(ClientMessage.serializer(), text)) {
                 is ClientMessage.Join -> { join(socket, message) }
+                is ClientMessage.Leave -> {
+                    // The deliberate exit, as opposed to `drop`, which is a socket that closed.
+                    // The seat is freed and the lobby rebroadcast, which is all the real room does.
+                    val result = VintoJson.decodeFromString(
+                        JoinResult.serializer(),
+                        leaveRoom(stateJson, message.token.orEmpty(), 0.0),
+                    )
+                    if (result.error == null) {
+                        stateJson = VintoJson.encodeToString(RoomState.serializer(), result.state)
+                        broadcastLobby()
+                    }
+                }
                 is ClientMessage.Action -> { action(socket, message) }
                 is ClientMessage.DoneConferring -> {
                     doneConferring(socket, message)

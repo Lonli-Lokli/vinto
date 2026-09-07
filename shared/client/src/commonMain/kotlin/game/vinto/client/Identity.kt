@@ -14,7 +14,31 @@ package game.vinto.client
  * clock or an ambient random source — the same rule the engine and the room follow, and the
  * reason every one of these functions is trivially testable.
  */
-data class Identity(val guestId: String, val nickname: String)
+data class Identity(
+    val guestId: String,
+    val nickname: String,
+    /**
+     * The face, as the two numbers that draw it: which family, and the seed within it.
+     *
+     * Not a picture and not a file name. `shared/protocol`'s `Avatar.kt` turns the pair into
+     * geometry every client draws identically, so what is stored here — and what later travels
+     * on the wire — is small enough to be free and says nothing about anybody.
+     *
+     * `-1` means this device has never chosen, which is not the same as choosing family zero:
+     * a player who has not picked should be offered a face, and one who deliberately took the
+     * first face on the first row should keep it.
+     */
+    val avatarKind: Int = UNCHOSEN,
+    val avatarSeed: Long = 0,
+    /** Which of the measured grounds it sits on; an index, so the palette can grow. */
+    val avatarGround: Int = 0,
+) {
+    /** Whether a face has ever been chosen on this device. */
+    val hasAvatar: Boolean get() = avatarKind != UNCHOSEN
+}
+
+/** No face chosen yet — distinct from having chosen the first one. */
+const val UNCHOSEN: Int = -1
 
 /**
  * This device's identity, minted on first ask and stable after.
@@ -24,12 +48,62 @@ data class Identity(val guestId: String, val nickname: String)
 fun Vault.identity(entropy: () -> Long): Identity {
     val existing = read(GUEST_KEY)
     val guestId = existing ?: mintGuestId(entropy(), entropy()).also { write(GUEST_KEY, it) }
-    return Identity(guestId = guestId, nickname = read(NICKNAME_KEY).orEmpty())
+    return Identity(
+        guestId = guestId,
+        nickname = read(NICKNAME_KEY).orEmpty(),
+        avatarKind = read(AVATAR_KIND_KEY)?.toIntOrNull() ?: UNCHOSEN,
+        // A seed that will not parse is treated as no seed rather than as zero: zero is a real
+        // face, and silently seating somebody behind it would look like the vault had ignored them.
+        avatarSeed = read(AVATAR_SEED_KEY)?.toLongOrNull() ?: 0,
+        avatarGround = read(AVATAR_GROUND_KEY)?.toIntOrNull() ?: 0,
+    )
 }
 
 /** Remembers what this player likes to be called. Sanitisation is the room's job. */
 fun Vault.rememberNickname(nickname: String) {
     if (nickname.isBlank()) erase(NICKNAME_KEY) else write(NICKNAME_KEY, nickname)
+}
+
+/**
+ * Remembers the face this player sits down behind.
+ *
+ * Three values written together, because two of them apart are not a face: a seed under the
+ * wrong family draws something its owner never chose, which is the one way this can go wrong
+ * silently. Written on the way out of the screen, like the nickname, rather than on every tap
+ * of a picker that offers forty-two of them.
+ */
+fun Vault.rememberAvatar(kind: Int, seed: Long, ground: Int) {
+    write(AVATAR_KIND_KEY, kind.toString())
+    write(AVATAR_SEED_KEY, seed.toString())
+    write(AVATAR_GROUND_KEY, ground.toString())
+}
+
+/**
+ * The room this device stepped out of and can still walk back into, if any.
+ *
+ * The vault reads and writes by key with no way to enumerate, so "which rooms do I hold a seat
+ * in" is not a question it can answer — this is the one room worth remembering, and there is
+ * only ever one worth remembering because a person sits at one table.
+ *
+ * Written on the way into a room and cleared by [forgetRoom] when the seat is given up for good
+ * or the room turns out to be gone. The pair with [seatToken] is what makes returning possible:
+ * the code says where, the token says who.
+ */
+fun Vault.currentRoom(): String? = read(ROOM_KEY)?.takeIf { it.isNotBlank() }
+
+/** Remembers the room to offer a way back into. */
+fun Vault.rememberRoom(code: String) = write(ROOM_KEY, code.uppercase())
+
+/**
+ * Forgets it — the seat was given up, or the room refused us and is not worth offering again.
+ *
+ * The seat token goes with it. A token for a room that will not have us back is not a
+ * credential, it is a stale key in a pocket, and keeping it would make the next refusal look
+ * like the same bug twice.
+ */
+fun Vault.forgetRoom() {
+    currentRoom()?.let { forgetSeatToken(it) }
+    erase(ROOM_KEY)
 }
 
 /** The seat token this device holds for [roomCode], or null if it never joined it. */
@@ -55,6 +129,10 @@ internal fun mintGuestId(a: Long, b: Long): String {
 
 private const val GUEST_KEY = "vinto.online.guest"
 private const val NICKNAME_KEY = "vinto.online.nickname"
+private const val AVATAR_KIND_KEY = "vinto.online.avatar.kind"
+private const val AVATAR_SEED_KEY = "vinto.online.avatar.seed"
+private const val AVATAR_GROUND_KEY = "vinto.online.avatar.ground"
+private const val ROOM_KEY = "vinto.online.room"
 private fun tokenKey(roomCode: String) = "vinto.online.token.${roomCode.uppercase()}"
 
 private const val HEX = 16

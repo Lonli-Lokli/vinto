@@ -23,18 +23,32 @@ class WireFreezeTest {
         1 to setOf("join", "action", "resync", "add-bot", "remove-bot", "next-round", "more-time"),
         2 to
             setOf("done-conferring", "say", "edit-plan", "agree-plan", "join", "action", "resync", "add-bot", "remove-bot", "next-round", "more-time"),
+        // 3 adds `leave`: the exit a dropped connection is not. Additive, so the floor stays 2.
+        3 to
+            setOf("done-conferring", "say", "edit-plan", "agree-plan", "join", "action", "resync", "add-bot", "remove-bot", "next-round", "more-time", "leave"),
     )
     private val serverMessages = mapOf(
         1 to setOf("joined", "events", "sync", "lobby", "started", "between-rounds", "ended", "closed", "error"),
         2 to
             setOf("joined", "notice", "events", "sync", "said", "lobby", "started", "between-rounds", "ended", "closed", "error"),
+        // Nothing new comes back for a leave: the lobby the room already broadcasts says the
+        // seat is free, which every client is listening for anyway.
+        3 to
+            setOf("joined", "notice", "events", "sync", "said", "lobby", "started", "between-rounds", "ended", "closed", "error"),
     )
-    private val actions = mapOf(
+    private val actions = mutableMapOf(
         1 to
             setOf("DRAW_CARD", "PLAY_DISCARD", "SWAP_CARD", "DISCARD_CARD", "USE_CARD_ACTION", "SELECT_ACTION_TARGET", "CONFIRM_PEEK", "SKIP_PEEK", "EXECUTE_JACK_SWAP", "SKIP_JACK_SWAP", "EXECUTE_QUEEN_SWAP", "SKIP_QUEEN_SWAP", "DECLARE_KING_ACTION", "PARTICIPATE_IN_TOSS_IN", "PLAYER_TOSS_IN_FINISHED", "FINISH_TOSS_IN_PERIOD", "CALL_VINTO", "SET_COALITION_LEADER", "DECLARE_CARDS", "END_ROUND", "PROCESS_AI_TURN", "PEEK_SETUP_CARD", "FINISH_SETUP", "UPDATE_DIFFICULTY", "SET_NEXT_DRAW_CARD", "SWAP_HAND_WITH_DECK", "EMPTY"),
         2 to
             setOf("DRAW_CARD", "PLAY_DISCARD", "SWAP_CARD", "DISCARD_CARD", "USE_CARD_ACTION", "SELECT_ACTION_TARGET", "CONFIRM_PEEK", "SKIP_PEEK", "EXECUTE_JACK_SWAP", "SKIP_JACK_SWAP", "EXECUTE_QUEEN_SWAP", "SKIP_QUEEN_SWAP", "DECLARE_KING_ACTION", "PARTICIPATE_IN_TOSS_IN", "PLAYER_TOSS_IN_FINISHED", "FINISH_TOSS_IN_PERIOD", "CALL_VINTO", "SET_COALITION_LEADER", "DECLARE_CARDS", "END_ROUND", "PROCESS_AI_TURN", "PEEK_SETUP_CARD", "FINISH_SETUP", "UPDATE_DIFFICULTY", "SET_NEXT_DRAW_CARD", "SWAP_HAND_WITH_DECK", "EMPTY"),
     )
+
+    init {
+        // Protocol 3 changed only the client's vocabulary. Inheriting the actions rather than
+        // restating them keeps the two lists from drifting apart on a version that did not
+        // touch the engine.
+        actions += 3 to actions.getValue(2)
+    }
 
     internal fun clientNamesForTest(): Set<String> = clientMessages.getValue(PROTOCOL_VERSION)
     internal fun serverNamesForTest(): Set<String> = serverMessages.getValue(PROTOCOL_VERSION)

@@ -32,6 +32,22 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PlayerProfile(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val nickname: String = "",
+    /**
+     * The face, as the two numbers that draw it — a family and a seed, never a picture.
+     *
+     * `Avatar.kt` turns the pair into geometry every client draws identically, so the wire
+     * carries eight bytes rather than an image and two seats looking at the same player see the
+     * same face. A build that has never heard of the family a newer one chose falls back rather
+     * than failing (`avatarKindOf`), which is why an unknown value here is not a refusal.
+     *
+     * Display-only, like everything else in this record: it identifies nobody, authorises
+     * nothing, and cannot seat anybody. There is no door on it because there is nothing to
+     * allow — every number names some mark and none of them names a word.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val avatarKind: Int = 0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val avatarSeed: Long = 0,
+    /** Which of the measured grounds it sits on — an index, so the palette can grow. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val avatarGround: Int = 0,
 )
 
 /** One finished round: what the hands came to, and what that was worth. */
@@ -83,6 +99,19 @@ data class LobbySeat(
     /** True only for a bot somebody added as filler — the ones a newcomer may displace. */
     val removable: Boolean,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val nickname: String? = null,
+    /**
+     * The face, beside the name and for the same reason: this is what a screen draws.
+     *
+     * An allow-list widens deliberately, one field at a time — the whole point of this type is
+     * that it says what may leave rather than stripping fields from the room's own record. These
+     * three are display-only and identify nobody, which is the same test the nickname passed.
+     *
+     * Null for a seat nobody is sitting in, and for a client older than protocol 3, both of
+     * which fall back to the mark derived from the seat's name.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val avatarKind: Int? = null,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val avatarSeed: Long? = null,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val avatarGround: Int? = null,
 )
 
 /**
