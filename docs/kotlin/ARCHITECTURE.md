@@ -60,6 +60,7 @@ named here so that the claim can be checked rather than believed.
 | A client is never sent another seat's hidden cards | `projectView`, `PeekPrivacyTest`, and the per-socket envelopes in `shared/room` |
 | A solo game touches no network | `NoNetworkGuardTest`, which installs a `SecurityManager` and proves it bites first |
 | A bot follows the rules, and games end | `SelfPlayGateTest` — every proposed action through `ActionValidator`, every game to `scoring` |
+| No seat is ever told something untrue about another seat's hand — what the table watched move, its memory follows | `SelfPlayGateTest` (twelve whole games, every belief against the table), `SwapKnowledgeTest`, `KingActionTest`, `ReportedGamesTest` |
 | Nothing identifying is ever counted or reported | `AnalyticsPrivacyTest` (types), `AnalyticsPrivacyUiTest` (the app), `gate-analytics.mjs` (the wire), `CrashReportTest` (crashes) |
 | Every screen's text clears WCAG AA, in both themes | `ContrastTest` (every declared pair of colours), `ScreenContrastTest` (every screen, measured from its own pixels) |
 | The public list cannot outlive its rooms | `gate-delisting.mjs` (the real Room's forget meeting the real Registry handler), `RegistryLeaseTest` (silence hides, then sweeps, a row whose forget was lost) |
@@ -168,22 +169,25 @@ whole UI.
 
 ## 7. The cross-implementation contract, and what it is now
 
-`fixtures/recordings` holds 50 games and 13,900 actions, each carrying the canonical state hash
-**TypeScript computed**. The Kotlin engine reproduces every one, per action.
+`fixtures/recordings` holds 50 games and 13,900 actions, each carrying a canonical state hash
+the Kotlin engine reproduces, per action. `legacy-web/` generated them and is gone, so the
+corpus is a **frozen artefact**: a real gate against the engine drifting, no longer evidence
+that two implementations agree *today*, and impossible to extend.
 
-Read that in the present tense with one correction. The corpus was *generated* from
-`legacy-web/`, which is frozen and going. After it goes, the corpus stays — it is committed,
-and `CorpusReplayTest` still replays it — but it becomes a **frozen artefact**: still a real
-gate against the Kotlin engine drifting, no longer evidence that two implementations agree
-today, and impossible to extend.
+**Whose numbers they are is not one answer any more, and the distinction is load-bearing.**
+For every field but one they are TypeScript's — an independent implementation, written from
+the rules, agreeing byte for byte. The exception is the engine's record of what each seat has
+been *shown*: those hashes were regenerated on 2026-09-07, because both engines shared a
+defect there and no fix could leave them standing. It was measured before it was done — with
+that one channel excluded, the fixed engine reproduces the old stream byte-for-byte across all
+13,900 actions — so nothing else in the corpus lost its provenance.
+`fixtures/recordings/README.md` carries the argument and the numbers; regenerating is not a
+reflex to reach for a second time.
 
-So the old policy ("a rules change lands in both engines and regenerates the corpus") is
-currently true and will not be for much longer. What replaces it is already in place: the same
-`commonTest` suites run on JVM, JS and Wasm, which is the property that still matters once one
-engine ships — a `Long` is two `Int`s on Kotlin/JS, and a recording that round-trips on the JVM
-does not therefore round-trip in a browser.
-
-Until `legacy-web/` is actually deleted, a rules change still belongs in both engines.
+What replaces the corpus as coverage grows is already in place: the same `commonTest` suites
+run on JVM, JS and Wasm, which is the property that still matters once one engine ships — a
+`Long` is two `Int`s on Kotlin/JS, and a recording that round-trips on the JVM does not
+therefore round-trip in a browser.
 
 ---
 

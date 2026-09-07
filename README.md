@@ -167,7 +167,9 @@ sequenceDiagram
 The Gradle build is the repository root. The rules live **once**, in Kotlin. They used to live
 twice — a Next.js client came first, and the two were held identical by a replay corpus — and
 what survives that arrangement is `fixtures/`: 50 games whose state hashes the TypeScript
-engine computed, now frozen, and still replayed on every run.
+engine computed, now frozen, and still replayed on every run. One channel of them — what each
+seat has been shown — was regenerated on 2026-09-07, because both engines shared a defect in
+it; `fixtures/recordings/README.md` says what moved and what provably did not.
 
 ```
 shared/
@@ -191,9 +193,9 @@ docs/kotlin/       # ARCHITECTURE.md (the shape), README.md (the state), protoco
   game from an online one.
 - **worker**: the authoritative room. It deals from a seed, validates every action, and sends
   each socket its own redacted view.
-- **fixtures**: 50 recordings and 13,900 actions, each carrying the state hash a *second
-  implementation* computed. Frozen — it cannot be regenerated, and that is deliberate
-  (`fixtures/recordings/README.md`).
+- **fixtures**: 50 recordings and 13,900 actions, each carrying a state hash a *second
+  implementation* computed — bar one channel, regenerated once and written up in
+  `fixtures/recordings/README.md`. Frozen, and deliberately not extensible.
 
 ## Getting Started
 
@@ -297,10 +299,11 @@ the bots run there.
 3. Teach `ActionValidator` when it is legal — including who may send it
 4. Dispatch it from the UI
 
-If the change moves any recorded state, note that **`fixtures/recordings` is frozen and cannot
-be regenerated**: it carries hashes computed by a second implementation that no longer exists.
-`fixtures/recordings/README.md` explains what to do instead, and `CorpusIsFrozenTest` will stop
-you rewriting it.
+If the change moves any recorded state, note that **`fixtures/recordings` is frozen**: it
+carries hashes computed by a second implementation that no longer exists.
+`fixtures/recordings/README.md` explains what to do instead — and records the one occasion it
+was regenerated anyway, and why that is not a precedent. `CorpusIsFrozenTest` will stop you
+rewriting it quietly.
 
 ### Testing game logic
 
