@@ -26,12 +26,51 @@ timers, no currencies. A card game bought once should feel bought once.
 | **Card backs** | The face-down side, which is what everyone stares at most of the game | Cheapest to produce, most visible in play |
 | **Table felts** | The felt colour/texture and the lamp | One drawable + theme tokens |
 | **Avatars / portraits** | Replaces `avatar_you.png`; a set of alternates | The one "personal profile" item that needs no profile |
-| **Supporter pack** | One purchase that unlocks everything above plus anything future | Also the honest "tip jar" for people who just want to pay |
+| **Supporter pack** | One purchase that unlocks everything above plus anything future | Also the honest "tip jar" for people who just want to pay. **Shipped ahead of the rest**, as `vinto.support.five` — see "The products, by name" below. It unlocks nothing today because there is nothing yet to unlock |
 
 The "paid personal profiles" idea reframed: the *data* half of a profile (stats, streaks) is
 already built, free, and local (`Stats` in the vault) — selling it would mean taking something
 away. The *identity* half — avatar, card back, felt, a title on your seat plate — is the
 sellable part, and it needs no account: it is a cosmetic id, not a person.
+
+## The products, by name
+
+One product exists today. Both consoles must use **the same id**, because `SUPPORT_PRODUCT` in
+`composeApp/src/commonMain/.../Support.kt` is a single constant asked of both stores — a
+mismatch is a store that answers "no such product" and a button that silently reports
+unavailable, which looks exactly like a network problem.
+
+| | |
+| --- | --- |
+| **Product id** | `vinto.support.five` |
+| **Type** | Consumable (Play: "in-app product", one-time; Apple: **Consumable**) |
+| **Price** | The store's five-unit tier, which is **4.99** rather than a flat 5.00 in most currencies — that is how both stores' price points are cut, and neither lets a seller name an arbitrary figure. Elsewhere it is whatever local tier each store maps that to. Never formatted by this app: `formattedPrice` on Play, `NSNumberFormatter` against `priceLocale` on Apple |
+| **Name shown** | "Support the game" |
+| **What it grants** | **Nothing.** No deck, no felt, no advantage, and nothing removed |
+| **Repeatable** | Yes, and only because it grants nothing — Play consumes it on receipt, Apple finishes the transaction |
+| **Where it appears** | Settings, first screen. The header's coffee cup is a *different* thing: an outside link, web and desktop only, never a store build |
+
+**Consumable and not one-time on purpose.** A non-consumable is owned forever, so somebody who
+wanted to say thanks twice could not — and an entitlement that unlocks nothing is a receipt for
+a thing that does not exist. Consuming it immediately is what makes it repeatable, and that is
+only honest *because* nothing is unlocked. A repeatable purchase that did grant something would
+be a currency, and this document is the reason there is no currency.
+
+### What has to exist before the button can work
+
+Neither store is set up, and the code reports that honestly rather than pretending
+(`Support.Unavailable` → "Not available here yet"). What is outstanding:
+
+1. **Play Console** — create the in-app product `vinto.support.five`, set the 4.99 tier, activate
+   it. It will not appear to a build that is not on a track, so an `alpha` upload comes first.
+2. **App Store Connect** — create a Consumable with the same id, set the 4.99 price point, and fill
+   the review screenshot and description an IAP requires before it can be submitted.
+   `vydanne.config.mjs`'s `iaps` array is where that is declared and pushed from.
+3. **Agreements** — Apple's Paid Applications agreement and Play's merchant account, both with
+   tax and banking details. Nothing sells before these are active, on either store.
+4. **A signed build on a track.** Play Billing answers `queryProductDetails` only for a build
+   signed with the upload key and published to at least one track; a debug APK always sees
+   nothing, which is the correct behaviour and not a bug to chase.
 
 ## How it fits the architecture
 

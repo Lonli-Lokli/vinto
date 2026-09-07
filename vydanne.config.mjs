@@ -82,13 +82,41 @@ export default {
 
   metadataDir: 'fastlane/metadata',
 
-  // FREE, and no in-app purchases in 1.0. `docs/design/MONETIZATION.md` sequences cosmetics —
-  // decks, backs, felts, a supporter pack — AFTER store releases exist, and its own rule is that
-  // the shop ships with its first premium deck rather than empty. So `iaps: []` is this release's
-  // decision, not a permanent one; the day a deck exists this array and the App Store's own IAP
-  // records grow together. Price itself is not here and cannot be — pricing is agreement-bound in
-  // App Store Connect and vydanne does not touch money.
-  iaps: [],
+  /**
+   * One product, and it is not a cosmetic.
+   *
+   * `docs/design/MONETIZATION.md` sequences the cosmetics — decks, backs, felts — after store
+   * releases exist, and its rule is that the shop ships with its first premium deck rather than
+   * empty. The supporter pack is the exception, and deliberately: it is not a shop, it is a way
+   * to say thanks, and it needs nothing built to be honest because **it unlocks nothing**.
+   *
+   * `productId` matches `SUPPORT_PRODUCT` in `composeApp/.../Support.kt` exactly, and the same
+   * id must be created in the Play Console. One constant is asked of both stores; a mismatch is
+   * a store answering "no such product" and a button reporting unavailable, which looks exactly
+   * like a network problem and is not one.
+   *
+   * **Consumable**, so it can be given more than once — which is only honest because nothing is
+   * unlocked. A non-consumable would be a receipt for a thing that does not exist.
+   *
+   * The `price` here is what vydanne declares; the figure a player sees is the store's own
+   * localisation of it, which is why neither client formats a price itself.
+   */
+  iaps: [
+    {
+      productId: 'vinto.support.five',
+      type: 'consumable',
+      price: 4.99,
+      // <= 30 chars, App Store facing.
+      displayName: 'Support the game',
+      // <= 45 chars. Says what it does NOT do, because a support button in a game usually
+      // means a paywall somewhere and that is the reviewer's first question too.
+      description: 'A thank you. Unlocks nothing.',
+      reviewNote:
+        'A tip jar. Consumable, repeatable, and grants no content, feature or advantage — ' +
+        'the game is free and has nothing locked. No account is needed; the reviewer can ' +
+        'reach it from Settings, first screen, and test it through the StoreKit sandbox.',
+    },
+  ],
 
   /**
    * 4+, and every content question below is genuinely NONE.

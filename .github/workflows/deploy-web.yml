@@ -84,6 +84,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          # The whole history, because the build number is a commit count. `actions/checkout`
+          # fetches depth 1 by default, which made `git rev-list --count HEAD` answer **1** —
+          # and the footer of the deployed site read "1.0 (1)" for every build. A shallow clone
+          # yields a plausible, wrong, SMALLER number, which is the failure mode
+          # `Scripts/build-number.sh` refuses outright and this checkout quietly produced.
+          fetch-depth: 0
 
       # Which branch you ran this from matters, and getting it wrong fails deep in a Gradle
       # build with an error about a missing project rather than about the ref.
@@ -115,7 +122,11 @@ jobs:
         run: ./gradlew --stacktrace :composeApp:jvmTest --tests '*WebShellTest*'
 
       - name: Build the Compose/Wasm client
-        run: ./gradlew --stacktrace :composeApp:wasmJsBrowserDistribution
+        # Stamped from the one source both stores use, rather than left to the fallback inside
+        # `composeApp/build.gradle.kts`. VERSIONING.md's rule: always from the script, never by
+        # hand — and passing it explicitly means the script's own shallow-clone refusal guards
+        # this deploy too.
+        run: ./gradlew --stacktrace :composeApp:wasmJsBrowserDistribution -PversionCode="$(Scripts/build-number.sh)"
 
       # The half of web symbolication that has no upload to fail.
       #
