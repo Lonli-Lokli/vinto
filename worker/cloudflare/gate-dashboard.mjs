@@ -19,6 +19,9 @@ import {
   dashboardConfigured,
   keyMatches,
   renderShell,
+  PERIODS,
+  periodFrom,
+  queriesFor,
   serveDashboard,
 } from './dashboard.mjs';
 
@@ -82,10 +85,28 @@ for (const query of QUERIES) {
 console.log('\ndashboard: who may read it');
 
 check('an unconfigured deployment has no dashboard', dashboardConfigured({}) === false);
-check('two of three secrets is still no dashboard',
-  dashboardConfigured({ ANALYTICS_TOKEN: 'a', ANALYTICS_ACCOUNT_ID: 'b' }) === false);
-check('all three configures it',
+check('a token with no account is not enough',
+  dashboardConfigured({ ANALYTICS_TOKEN: 'a' }) === false);
+// Two, not three: on a host behind Access the key is a second lock on a locked door, and
+// requiring it would make a correctly-protected deployment answer 404 for want of a password.
+check('the two reading secrets configure it',
+  dashboardConfigured({ ANALYTICS_TOKEN: 'a', ANALYTICS_ACCOUNT_ID: 'b' }) === true);
+check('and a key on top is still allowed',
   dashboardConfigured({ ANALYTICS_TOKEN: 'a', ANALYTICS_ACCOUNT_ID: 'b', DASHBOARD_KEY: 'c' }) === true);
+
+// The period is interpolated into a SQL statement, so it may only ever be one of the values
+// this module chose. Anything else — a bigger number, a string, an injection — is the default.
+console.log('\ndashboard: the period');
+for (const junk of ["1' OR '1'='1", '999', '-7', '', null, undefined, '7.5', {}]) {
+  check(`a period of ${JSON.stringify(junk)} falls back to the default`,
+    PERIODS.includes(periodFrom(junk)) && periodFrom(junk) === WINDOW_DAYS,
+    String(periodFrom(junk)));
+}
+for (const good of PERIODS) {
+  check(`${good} days is offered and honoured`, periodFrom(String(good)) === good);
+  check(`and ${good} days bounds every query`,
+    queriesFor(good).every((q) => q.sql.includes(`INTERVAL '${good}' DAY`)));
+}
 
 check('the right key matches', keyMatches('s3cret', 's3cret'));
 check('a wrong key of the same length does not', keyMatches('s3cret', 's3crXt') === false);

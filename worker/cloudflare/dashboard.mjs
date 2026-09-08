@@ -52,8 +52,22 @@ const SQL_API = (accountId) =>
 /** The dataset named by the `ANALYTICS` binding in wrangler.jsonc. */
 export const DATASET = 'vinto_events';
 
-/** How far back every query looks. A month is what the free plan retains. */
+/**
+ * The periods the page offers, and the one it opens on.
+ *
+ * A month is what the free plan retains, so there is nothing to show beyond it and offering it
+ * would be offering an empty chart. Days rather than hours because every series here is grouped
+ * by `toDate`: an hour axis would need a date function this cannot be tested against, since the
+ * Analytics Engine SQL API is the one part `wrangler dev` does not emulate.
+ */
+export const PERIODS = [7, 14, 30];
 export const WINDOW_DAYS = 30;
+
+/** The asked-for period, or the default — never a number a caller invented. */
+export function periodFrom(value) {
+  const days = Number(value);
+  return PERIODS.includes(days) ? days : WINDOW_DAYS;
+}
 
 /**
  * Weighting, and why every sum has two factors in it.
@@ -67,14 +81,17 @@ export const WINDOW_DAYS = 30;
 const WEIGHT = '_sample_interval * double1';
 
 /**
- * The six questions worth having (task 5.2).
+ * The six questions worth having (task 5.2), over whatever period was asked for.
  *
- * Each is one statement, because the SQL API takes one. They are here as data rather than
- * spread through the renderer so the set can be read, reviewed and tested without a network:
- * `gate-dashboard.mjs` asserts every one of them names the dataset, bounds its window and
- * weights its counts, which are the three ways one of these goes quietly wrong.
+ * A function rather than a constant because the page has a period picker now, and a window
+ * baked into the SQL is a window nobody can change without a deploy. Each is one statement,
+ * because the SQL API takes one; they are data rather than spread through the renderer so the
+ * set can be read, reviewed and tested without a network. `gate-dashboard.mjs` asserts every
+ * one of them names the dataset, bounds its window and weights its counts, which are the three
+ * ways one of these goes quietly wrong.
  */
-export const QUERIES = [
+export function queriesFor(days = WINDOW_DAYS) {
+  return [
   {
     id: 'solo_daily',
     chart: { x: 'day', y: 'games', of: 'finished', overTime: true },
@@ -86,7 +103,7 @@ export const QUERIES = [
                  avg(double4) / 60000 AS avg_minutes
           FROM ${DATASET}
           WHERE index1 = 'solo_round'
-            AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
+            AND timestamp > now() - INTERVAL '${days}' DAY
           GROUP BY day ORDER BY day DESC`,
   },
   {
@@ -101,7 +118,7 @@ export const QUERIES = [
                  avg(double6) AS avg_requests
           FROM ${DATASET}
           WHERE index1 = 'round_end'
-            AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
+            AND timestamp > now() - INTERVAL '${days}' DAY
           GROUP BY day ORDER BY day DESC`,
   },
   {
@@ -112,7 +129,7 @@ export const QUERIES = [
     sql: `SELECT double2 AS humans, double3 AS bots, sum(${WEIGHT}) AS rounds
           FROM ${DATASET}
           WHERE index1 = 'round_start'
-            AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
+            AND timestamp > now() - INTERVAL '${days}' DAY
           GROUP BY humans, bots ORDER BY rounds DESC`,
   },
   {
@@ -126,7 +143,7 @@ export const QUERIES = [
                  avg(double3) / 60000 AS avg_minutes
           FROM ${DATASET}
           WHERE index1 = 'session_ended'
-            AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
+            AND timestamp > now() - INTERVAL '${days}' DAY
           GROUP BY day ORDER BY day DESC`,
   },
   {
@@ -141,7 +158,7 @@ export const QUERIES = [
                  avg(double4) / 60000 AS avg_minutes
           FROM ${DATASET}
           WHERE index1 = 'solo_round'
-            AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
+            AND timestamp > now() - INTERVAL '${days}' DAY
           GROUP BY difficulty ORDER BY games DESC`,
   },
   {
@@ -155,14 +172,25 @@ export const QUERIES = [
                  avg(double3) / 60000 AS avg_minutes
           FROM ${DATASET}
           WHERE index1 = 'session_ended'
-            AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
+            AND timestamp > now() - INTERVAL '${days}' DAY
           GROUP BY ended_by ORDER BY sessions DESC`,
   },
 ];
+}
 
-/** Whether this deployment has everything the dashboard needs. */
+/** The default set, for anything that wants the shape without choosing a period. */
+export const QUERIES = queriesFor();
+
+/**
+ * Whether this deployment can read the counts at all.
+ *
+ * Two secrets, not three. `DASHBOARD_KEY` used to be required, which was right when a key in the
+ * URL was the only door; on a host behind Cloudflare Access it is a second lock on a locked door,
+ * and demanding it would mean a correctly-protected deployment answering 404 for want of a
+ * password nobody needs. It is still honoured when set — see [serveDashboard].
+ */
 export function dashboardConfigured(env) {
-  return Boolean(env?.ANALYTICS_TOKEN && env?.ANALYTICS_ACCOUNT_ID && env?.DASHBOARD_KEY);
+  return Boolean(env?.ANALYTICS_TOKEN && env?.ANALYTICS_ACCOUNT_ID);
 }
 
 /**
@@ -207,9 +235,9 @@ function format(value) {
  * dataset holds in the first place ([AnalyticsPrivacyTest] makes it so). A browser that could
  * query would be a browser holding a token that can read the whole account's analytics.
  */
-export async function dashboardData(env) {
-  return Promise.all(
-    QUERIES.map(async (query) => {
+export async function dashboardData(env, days = WINDOW_DAYS) {
+  const panels = await Promise.all(
+    queriesFor(days).map(async (query) => {
       const answer = await runQuery(env, query.sql);
       return {
         id: query.id,
@@ -225,15 +253,61 @@ export async function dashboardData(env) {
       };
     }),
   );
+
+  return { days, tiles: tilesFrom(panels), panels };
+}
+
+/**
+ * The headline row, computed here rather than in the page.
+ *
+ * A dashboard opens with the four or five numbers somebody came for, and only then shows the
+ * shapes behind them — the notes under every panel were doing that job in prose, which is a
+ * thing to read rather than a thing to see. Each of these is an exact total over the window, not
+ * an average of averages: a mean of daily means is a number that looks right and is not.
+ */
+function tilesFrom(panels) {
+  const rowsOf = (id) => panels.find((p) => p.id === id)?.rows ?? [];
+  const total = (rows, field) => rows.reduce((sum, row) => sum + (Number(row[field]) || 0), 0);
+
+  const solo = rowsOf('solo_finishing');
+  const played = total(solo, 'games');
+  const finished = total(solo, 'finished');
+  const together = rowsOf('together');
+  const commonest = together.reduce(
+    (best, row) => (best == null || Number(row.rounds) > Number(best.rounds) ? row : best),
+    null,
+  );
+
+  return [
+    { label: 'Games offline', value: format(played) },
+    {
+      label: 'Finished',
+      value: played ? `${Math.round((finished / played) * 100)}%` : '—',
+      hint: played ? `${format(finished)} of ${format(played)}` : 'nothing played yet',
+    },
+    { label: 'Rounds online', value: format(total(rowsOf('online_daily'), 'rounds')) },
+    { label: 'Sessions', value: format(total(rowsOf('sessions_daily'), 'sessions')) },
+    {
+      label: 'Usual table',
+      value: commonest ? `${format(commonest.humans)}H` : '—',
+      hint: commonest ? `${format(commonest.humans)} people, ${format(commonest.bots)} bots` : 'no rounds yet',
+    },
+  ];
 }
 
 /**
  * The page: HTML, CSS and JavaScript, drawing the JSON above with Chart.js.
  *
- * It was hand-rolled SVG rendered on the server, which had the virtue of loading nothing and the
- * defect of looking it — no hover, no legend that means anything, no axis a reader can trust,
- * and every improvement paid for in geometry by hand. A dashboard is a thing somebody reads
- * every week; it should look like one.
+ * **Self-explanatory, which mostly meant deleting.** Every panel carried a paragraph saying what
+ * it was for, and a paragraph is a thing to read: five of them stacked down a page is an essay
+ * with charts in it. A number under a heading needs no gloss, so the prose moved to the panel's
+ * `title` — there for a hover, gone from the layout — and the headline row above says in five
+ * numbers what the essay was saying in five paragraphs.
+ *
+ * **The period is part of the page**, not something to go and configure. Three buttons, the
+ * choice kept in the URL so a link to this dashboard is a link to *this* view of it, and the
+ * whole payload refetched — the window is in the SQL, so a period is a query rather than a
+ * filter over rows already fetched.
  *
  * **The library is pinned and hashed.** A `<script>` from a CDN is a supply-chain hole unless the
  * browser is told exactly what it is allowed to run, so the tag carries `integrity` and the CSP
@@ -250,131 +324,196 @@ export function renderShell() {
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src ${CHART_HOST} 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
 <title>Vinto — counts</title>
 <style>
-  :root { color-scheme: dark; --ink: #e8e6e3; --dim: #9aa3ad; --line: #262c33; --panel: #191e24; }
+  :root { color-scheme: dark; --ink: #e8e6e3; --dim: #8b939c; --line: #232a31;
+          --panel: #181d23; --bg: #11151a; --accent: #3fd07a; }
   * { box-sizing: border-box; }
-  body { margin: 0; padding: 24px; background: #14181d; color: var(--ink);
-         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  header { max-width: 1200px; margin: 0 auto 20px; }
-  h1 { font-size: 20px; margin: 0 0 4px; }
-  .sub { color: var(--dim); font-size: 13px; margin: 0; }
-  main { max-width: 1200px; margin: 0 auto; display: grid; gap: 18px;
-         grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
-  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
-            padding: 16px; min-width: 0; }
-  h2 { font-size: 15px; margin: 0 0 4px; }
-  .note { color: var(--dim); font-size: 12.5px; margin: 0 0 12px; }
-  .frame { position: relative; height: 220px; }
-  table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 13px; }
-  th, td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--line);
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 16px 20px 40px; }
+  .top { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: .2px; }
+  .when { color: var(--dim); font-size: 12px; margin-right: auto; }
+  .periods { display: flex; gap: 4px; }
+  .periods button { background: var(--panel); color: var(--dim); border: 1px solid var(--line);
+                    border-radius: 6px; padding: 5px 12px; font: inherit; font-size: 13px;
+                    cursor: pointer; }
+  .periods button[aria-current="true"] { color: #0d1114; background: var(--accent);
+                                         border-color: var(--accent); font-weight: 650; }
+  .tiles { display: grid; gap: 10px; margin-bottom: 14px;
+           grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+          padding: 12px 14px; }
+  .tile .k { color: var(--dim); font-size: 11.5px; text-transform: uppercase;
+             letter-spacing: .6px; }
+  .tile .v { font-size: 27px; font-weight: 650; line-height: 1.15; margin-top: 2px; }
+  .tile .h { color: var(--dim); font-size: 11.5px; }
+  main { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+            padding: 12px 14px 10px; min-width: 0; }
+  h2 { font-size: 13px; margin: 0 0 10px; font-weight: 600; color: #c9d1d9;
+       display: flex; align-items: center; gap: 6px; }
+  h2 .i { color: var(--dim); font-size: 11px; border: 1px solid var(--line);
+          border-radius: 50%; width: 15px; height: 15px; display: inline-flex;
+          align-items: center; justify-content: center; cursor: help; }
+  .frame { position: relative; height: 210px; }
+  details { margin-top: 8px; }
+  summary { color: var(--dim); font-size: 11.5px; cursor: pointer; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "▸ "; }
+  details[open] summary::before { content: "▾ "; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 12.5px; }
+  th, td { text-align: right; padding: 4px 8px; border-bottom: 1px solid var(--line);
            white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
   th { color: var(--dim); font-weight: 600; }
-  .scroll { overflow-x: auto; }
-  .empty { color: #6f7780; font-style: italic; margin: 0; }
-  .error { color: #e0796b; margin: 0; }
+  .scroll { overflow-x: auto; max-height: 240px; overflow-y: auto; }
+  .empty, .error { font-size: 12.5px; margin: 0; padding: 24px 0; text-align: center; }
+  .empty { color: #6f7780; }
+  .error { color: #e0796b; }
 </style></head>
-<body>
-<header>
-  <h1>Vinto — counts</h1>
-  <p class="sub">The last ${WINDOW_DAYS} days. Anonymous aggregates: there is nothing here that
-  identifies a person, because there is nowhere in what is collected to put it.</p>
-</header>
-<main id="board"><p class="empty">Loading…</p></main>
+<body><div class="wrap">
+<div class="top">
+  <h1>Vinto</h1>
+  <span class="when" id="when"></span>
+  <div class="periods" id="periods"></div>
+</div>
+<div class="tiles" id="tiles"></div>
+<main id="board"></main>
+</div>
 <script src="${CHART_SRC}" integrity="${CHART_SRI}" crossorigin="anonymous"></script>
 <script>
-(async function () {
+(function () {
+  var PERIODS = ${JSON.stringify(PERIODS)};
+  var INK = '#e8e6e3', DIM = '#8b939c', LINE = '#232a31';
+  var BAR = '#2f6f8f', PART = '#3fd07a';
   var board = document.getElementById('board');
-  var res = await fetch('?format=json', { headers: { accept: 'application/json' } });
-  if (!res.ok) { board.innerHTML = '<p class="error">Could not read the counts.</p>'; return; }
-  var sections = await res.json();
-  board.innerHTML = '';
+  var tiles = document.getElementById('tiles');
+  var picker = document.getElementById('periods');
+  var drawn = [];
 
-  var INK = '#e8e6e3', DIM = '#9aa3ad', LINE = '#262c33';
-  var BAR = '#2c5f46', PART = '#3fd07a';
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
 
-  sections.forEach(function (section) {
-    var el = document.createElement('section');
-    var head = '<h2></h2><p class="note"></p>';
-    el.innerHTML = head;
-    el.querySelector('h2').textContent = section.title;
-    el.querySelector('.note').textContent = section.note;
+  function chosen() {
+    var days = Number(new URLSearchParams(location.search).get('days'));
+    return PERIODS.indexOf(days) >= 0 ? days : PERIODS[PERIODS.length - 1];
+  }
 
-    if (section.error) {
-      var e = document.createElement('p');
-      e.className = 'error';
-      e.textContent = section.error;
-      el.appendChild(e);
-      board.appendChild(el);
-      return;
+  function picked(days) {
+    picker.innerHTML = '';
+    PERIODS.forEach(function (d) {
+      var b = el('button', null, d + 'd');
+      if (d === days) b.setAttribute('aria-current', 'true');
+      b.onclick = function () {
+        history.replaceState(null, '', '?days=' + d);
+        load(d);
+      };
+      picker.appendChild(b);
+    });
+  }
+
+  function panel(section) {
+    var s = el('section');
+    var h = el('h2');
+    h.appendChild(document.createTextNode(section.title));
+    if (section.note) {
+      var i = el('span', 'i', 'i');
+      i.title = section.note;
+      h.appendChild(i);
     }
-    if (!section.rows.length) {
-      var n = document.createElement('p');
-      n.className = 'empty';
-      n.textContent = 'Nothing yet.';
-      el.appendChild(n);
-      board.appendChild(el);
-      return;
-    }
+    s.appendChild(h);
+
+    if (section.error) { s.appendChild(el('p', 'error', section.error)); return s; }
+    if (!section.rows.length) { s.appendChild(el('p', 'empty', 'Nothing in this period.')); return s; }
 
     if (section.chart) {
       var spec = section.chart;
       var rows = spec.overTime ? section.rows.slice().reverse() : section.rows;
-      var frame = document.createElement('div');
-      frame.className = 'frame';
+      var frame = el('div', 'frame');
       var canvas = document.createElement('canvas');
       frame.appendChild(canvas);
-      el.appendChild(frame);
-
+      s.appendChild(frame);
       var sets = [{ label: spec.y, data: rows.map(function (r) { return r[spec.y]; }),
-                    backgroundColor: BAR, borderRadius: 3 }];
+                    backgroundColor: BAR, borderRadius: 2, borderWidth: 0 }];
       if (spec.of) {
         sets.push({ label: spec.of, data: rows.map(function (r) { return r[spec.of]; }),
-                    backgroundColor: PART, borderRadius: 3 });
+                    backgroundColor: PART, borderRadius: 2, borderWidth: 0 });
       }
-      new Chart(canvas, {
+      drawn.push(new Chart(canvas, {
         type: 'bar',
-        data: { labels: rows.map(function (r) { return String(r[spec.x]); }), datasets: sets },
+        data: { labels: rows.map(function (r) {
+          var v = String(r[spec.x]);
+          return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v.slice(5) : v;
+        }), datasets: sets },
         options: {
           responsive: true, maintainAspectRatio: false,
+          animation: false,
           scales: {
-            x: { grid: { display: false }, ticks: { color: DIM, maxRotation: 0, autoSkip: true } },
-            y: { beginAtZero: true, grid: { color: LINE }, ticks: { color: DIM, precision: 0 } }
+            x: { stacked: false, grid: { display: false },
+                 ticks: { color: DIM, maxRotation: 0, autoSkip: true, font: { size: 11 } } },
+            y: { beginAtZero: true, grid: { color: LINE, drawTicks: false },
+                 border: { display: false },
+                 ticks: { color: DIM, precision: 0, font: { size: 11 } } }
           },
           plugins: {
-            legend: { display: !!spec.of, labels: { color: INK, boxWidth: 12, boxHeight: 12 } },
+            legend: { display: !!spec.of, position: 'bottom',
+                      labels: { color: DIM, boxWidth: 10, boxHeight: 10, font: { size: 11 } } },
             tooltip: { mode: 'index', intersect: false }
           }
         }
-      });
+      }));
     }
 
     var columns = Object.keys(section.rows[0]);
-    var wrap = document.createElement('div');
-    wrap.className = 'scroll';
+    var d = el('details');
+    d.appendChild(el('summary', null, 'numbers'));
+    var wrap = el('div', 'scroll');
     var table = document.createElement('table');
     var thead = document.createElement('thead');
     var hr = document.createElement('tr');
-    columns.forEach(function (c) {
-      var th = document.createElement('th');
-      th.textContent = c;
-      hr.appendChild(th);
-    });
+    columns.forEach(function (c) { hr.appendChild(el('th', null, c)); });
     thead.appendChild(hr);
     table.appendChild(thead);
     var tbody = document.createElement('tbody');
     section.rows.forEach(function (row) {
       var tr = document.createElement('tr');
       columns.forEach(function (c) {
-        var td = document.createElement('td');
-        td.textContent = row[c] == null ? '' : String(row[c]);
-        tr.appendChild(td);
+        tr.appendChild(el('td', null, row[c] == null ? '' : String(row[c])));
       });
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
     wrap.appendChild(table);
-    el.appendChild(wrap);
-    board.appendChild(el);
-  });
+    d.appendChild(wrap);
+    s.appendChild(d);
+    return s;
+  }
+
+  async function load(days) {
+    picked(days);
+    document.getElementById('when').textContent = 'last ' + days + ' days';
+    drawn.forEach(function (c) { c.destroy(); });
+    drawn = [];
+    tiles.innerHTML = '';
+    board.innerHTML = '';
+    var res = await fetch('?format=json&days=' + days, { headers: { accept: 'application/json' } });
+    if (!res.ok) { board.appendChild(el('p', 'error', 'Could not read the counts.')); return; }
+    var data = await res.json();
+    data.tiles.forEach(function (t) {
+      var card = el('div', 'tile');
+      card.appendChild(el('div', 'k', t.label));
+      card.appendChild(el('div', 'v', t.value));
+      card.appendChild(el('div', 'h', t.hint || ''));
+      tiles.appendChild(card);
+    });
+    data.panels.forEach(function (section) { board.appendChild(panel(section)); });
+  }
+
+  load(chosen());
 })();
 </script>
 </body></html>`;
@@ -419,7 +558,11 @@ export async function serveDashboard(request, env, url, path = '/counts') {
   };
 
   if (url.searchParams.get('format') === 'json') {
-    return new Response(JSON.stringify(await dashboardData(env)), {
+    // The period is read here and validated by [periodFrom], so a number somebody typed into the
+    // address bar cannot reach the SQL — the window is interpolated into a statement, and the one
+    // rule for that is that it is never a value a caller chose.
+    const days = periodFrom(url.searchParams.get('days'));
+    return new Response(JSON.stringify(await dashboardData(env, days)), {
       headers: { 'content-type': 'application/json; charset=utf-8', ...guard },
     });
   }
