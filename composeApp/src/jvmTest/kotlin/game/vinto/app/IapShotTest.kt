@@ -31,20 +31,30 @@ import kotlin.test.assertTrue
  * after the thing it is required for has already been submitted.
  *
  * `LocalSupport` cuts that knot. The screen below is the real `SettingsScreen` — same rows, same
- * type, same felt — with the platform's answer replaced by the offer the console is about to
- * make. Nothing about the purchase is misrepresented: [PRICE] is the `iaps` price in
- * `vydanne.config.mjs`, which is the number that goes into App Store Connect, and
- * `SupportProductTest` fails if the two ever disagree.
+ * type, same felt — with the platform's answer replaced by the offer the console is about to make.
  *
- * ## The two things ASC rejects
+ * ## No price in it, deliberately
  *
- * **Alpha**, which every Compose render carries and which `bridge` refuses on the way to Apple —
- * so the shot is flattened before it is uploaded, with vydanne's own helper. That is the second
- * half of `npm run capture-iap`, and it writes a sibling: **`support-review-iap.png` is the file
- * that goes to the console**, not the one this test writes.
+ * A store screenshot must not carry a figure. It is right for one storefront and wrong for the
+ * other 174; the tier can move without the picture moving with it; and a reviewer holding a
+ * screenshot whose price is not what their own device shows has one more thing to ask about.
+ * Apple's own screenshot guidance says the same.
  *
- * **Size**: at least 640x920. [WIDE] x [HIGH] is the 6.9" phone the listing shots use, which is
- * comfortably past it and is the same screen a buyer will be looking at.
+ * So the offer is made with **no price**, and the button falls back to the figure-less label the
+ * app already ships — the same rendering a real phone gives when Play returns an empty
+ * `formattedPrice`. It is a state the app genuinely has, held by `SupportPriceTest`, rather than a
+ * picture staged to look like one.
+ *
+ * ## It is a capture, not the upload
+ *
+ * This writes a plain render with an alpha channel, and **App Store Connect rejects alpha**. The
+ * store-ready file is zdymak's — `npm run capture-iap` renders this and then composes it through
+ * the `iap` device group in `zdymak.config.mjs`, which is the tool that owns "a file a store will
+ * accept" for every other image in this repository. The upload is
+ * `store-assets/iap-review/01-support-review.png`, not this file.
+ *
+ * [WIDE] x [HIGH] is the size the listing shots use, and far past the 640x920 an IAP screenshot
+ * has to clear.
  */
 class IapShotTest {
 
@@ -59,7 +69,7 @@ class IapShotTest {
             VintoTheme(dark = false) {
                 CompositionLocalProvider(
                     LocalVault provides MemoryVault(),
-                    LocalSupport provides Support.Offered(PRICE),
+                    LocalSupport provides Support.Offered(price = ""),
                 ) {
                     SettingsScreen(
                         settings = Settings(),
@@ -85,7 +95,7 @@ class IapShotTest {
         }
 
         assertTrue(File(out, SHOT).length() > 0, "wrote an empty $SHOT into $OUT_DIR")
-        println("iap review screenshot -> $OUT_DIR/$SHOT (${WIDE}x$HIGH) — flatten before upload")
+        println("iap capture -> $OUT_DIR/$SHOT (${WIDE}x$HIGH) — zdymak composes the upload")
     }
 
     private companion object {
@@ -96,15 +106,6 @@ class IapShotTest {
 
         const val OUT_DIR = "../marketing/captures/iap"
         const val SHOT = "support-review.png"
-
-        /**
-         * The store's own five-unit point, as a US account reads it.
-         *
-         * Dollars rather than the listing's British pounds because App Review buys from a US
-         * storefront, and a reviewer holding a screenshot whose price is not the price their own
-         * device would show has one more thing to ask about.
-         */
-        const val PRICE = "\$4.99"
 
         const val WARM_FRAMES = 10
         const val WARM_SLEEP_MS = 50L

@@ -124,6 +124,41 @@ export default {
         { target: 'play-feature-graphic' }, // required by Play even with no video
       ],
     },
+
+    /**
+     * The review screenshot App Store Connect will not create an in-app purchase without.
+     *
+     * Not a listing asset — it never reaches a shopper. It goes in the purchase's own slot, and
+     * a reviewer looks at it once to see where in the app the thing being sold appears. So it is
+     * here rather than uploaded by hand for the reason every other image is here: **no alpha** is
+     * a store rule, this is the tool that knows it, and a flatten written into an npm script is a
+     * rule kept somewhere nobody looks.
+     *
+     * `bleed` and `caption: false` — the same pairing the Play uploads use, and for a stricter
+     * version of the same reason. Play merely dislikes a frame; here a bezel or a headline would
+     * be answering "where is this in your app?" with a marketing graphic.
+     *
+     * Its own `scenes`, because this device has ONE capture and it is not one of the six the
+     * listing tells its story with. `IapShotTest` renders it — the real settings screen, with the
+     * offer the console is about to make and deliberately no price in it.
+     */
+    iap: {
+      capturesDir: './marketing/captures/iap',
+      scenes: [{ id: 'support-review' }],
+      screenshots: [
+        {
+          target: 'appstore-iphone-6.9',
+          // `dir` keeps it out of `appstore-iphone-6.9/`, which is the listing set `vydanne
+          // bridge` uploads — this must never be mistaken for one of the ten a shopper sees.
+          dir: 'iap-review',
+          // The slot takes three sizes and this is the one the capture is rendered at, so no
+          // resample stands between the app's own pixels and the console.
+          size: [1290, 2796],
+          style: 'bleed',
+          caption: false,
+        },
+      ],
+    },
   },
 
   /**

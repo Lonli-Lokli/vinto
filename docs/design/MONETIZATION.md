@@ -83,7 +83,7 @@ Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired eith
    | --- | --- |
    | Product ID | `vinto.support.five` — **permanent**, and Play never lets it be reused |
    | Name (≤ 55) | Support the game |
-   | Description (≤ 200) | A thank you to the developer. It unlocks nothing — there is nothing locked. |
+   | Description (≤ 200) | A tip for the developer, if you have enjoyed the game. Nothing is locked: this unlocks no cards, no felts and no advantage, and there is nothing in the app it would remove. |
    | Price | the 4.99 tier, with "set prices in other currencies" left to Play's conversion |
    | Status | **Active**. A product left inactive answers exactly like one that does not exist |
 
@@ -94,24 +94,24 @@ Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired eith
 
    | Field | Value |
    | --- | --- |
-   | Reference Name (≤ 64) | Support the game — internal, never shown to a buyer |
+   | Reference Name (≤ 64) | Supporter tip — consumable, grants nothing. Internal, never shown to a buyer, so it says what the row is rather than what it is called |
    | Product ID | `vinto.support.five` — the same string, and also permanent |
    | Display Name (≤ 30) | Support the game |
-   | Description (≤ 45) | A thank you. Unlocks nothing. |
+   | Description (≤ 45) | A tip for the developer. Nothing is locked. |
    | Price | the 4.99 point, availability all territories |
-   | **Review Screenshot** | **required** — `marketing/captures/iap/support-review-iap.png` |
+   | **Review Screenshot** | **required** — `store-assets/iap-review/01-support-review.png` |
    | Review Notes | the `reviewNote` in `vydanne.config.mjs` |
 
    Every one of those is the `iaps` entry in `vydanne.config.mjs`, which is where they are kept
    in step; the two length limits are what `vydanne iap` checks.
 
    **The screenshot is the only artefact here that had to be made rather than typed**, and it is
-   made by the app: `npm run capture-iap` renders the real settings screen with the offer the
-   console is about to make and flattens it to RGB, because App Store Connect rejects an alpha
-   channel. `IapShotTest` carries the whole argument, including why a device screenshot is not
-   available until after the thing it is required for has been submitted. There is a second,
-   **optional** slot — a 1024×1024 Promotional Image, used only to promote the purchase on the
-   App Store page itself; it is not needed to submit.
+   made the way every other store image in this repository is: the app renders the capture
+   (`IapShotTest`), zdymak composes the file a store will accept (the `iap` device group), and
+   `npm run capture-iap` is both plus `vydanne iap`'s field check. `IapShotTest` carries the whole
+   argument — why it is rendered rather than photographed, and **why there is no price in it**.
+   There is a second, **optional** slot — a 1024×1024 Promotional Image, used only to promote the
+   purchase on the App Store page itself; it is not needed to submit.
 
    The purchase is reviewed **with an app version**, not on its own: attach it to the 1.0
    submission, or it sits at "Ready to Submit" indefinitely.

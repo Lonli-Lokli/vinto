@@ -106,11 +106,15 @@ export default {
       productId: 'vinto.support.five',
       type: 'consumable',
       price: 4.99,
-      // <= 30 chars, App Store facing.
+      // <= 30 chars, App Store facing — and the same words as the panel it sits in
+      // (`settings_support`), so a reviewer holding the screenshot is reading one name, not two.
       displayName: 'Support the game',
-      // <= 45 chars. Says what it does NOT do, because a support button in a game usually
-      // means a paywall somewhere and that is the reviewer's first question too.
-      description: 'A thank you. Unlocks nothing.',
+      // <= 45 chars, and it has to do two jobs in one line: say what the thing IS, and say what it
+      // does not do. "A thank you. Unlocks nothing." only did the second — it named no recipient,
+      // so the obvious question ("a thank you to whom, for what?") was the one it left open. The
+      // paywall answer stays, because a support button in a game usually means one somewhere and
+      // that is the reviewer's first question too.
+      description: 'A tip for the developer. Nothing is locked.',
       reviewNote:
         'A tip jar. Consumable, repeatable, and grants no content, feature or advantage — ' +
         'the game is free and has nothing locked. No account is needed; the reviewer can ' +
@@ -125,11 +129,13 @@ export default {
   // (`npm run store:iap`) validates the two length limits and prints the fields, and a person
   // types them into both consoles. MONETIZATION.md has the field-by-field runbook.
   //
-  // The one field that is not typed is Apple's REQUIRED review screenshot, and the app makes it:
-  // `npm run capture-iap` renders the real settings screen with this offer in it and flattens the
-  // alpha Compose leaves behind, because App Store Connect rejects an alpha channel. The upload is
-  // `marketing/captures/iap/support-review-iap.png`; `IapShotTest` says why it is rendered rather
-  // than photographed. Play asks for no screenshot at all.
+  // The one field that is not typed is Apple's REQUIRED review screenshot, and it is made the way
+  // every other store image here is: the app renders the capture (`IapShotTest`), zdymak composes
+  // the file a store will accept (the `iap` device group in `zdymak.config.mjs` — no alpha, which
+  // ASC rejects), and `npm run capture-iap` is both. The upload is
+  // `store-assets/iap-review/01-support-review.png`, and there is deliberately NO PRICE in it:
+  // a figure is right for one storefront and wrong for the rest, and it goes stale when a tier
+  // moves. Play asks for no screenshot at all.
 
   /**
    * 4+, and every content question below is genuinely NONE.

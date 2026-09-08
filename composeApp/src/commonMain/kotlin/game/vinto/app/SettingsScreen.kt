@@ -757,8 +757,17 @@ private fun SupportRow() {
                 color = Rail.gold,
             )
 
+            // A store that names no figure gets the figure-less label rather than "Say thanks — "
+            // with the separator hanging off it, which reads as a string that failed to load on the
+            // one control here that asks somebody for money. Play returns an empty `formattedPrice`
+            // for a product that is active but priced in no territory the buyer is in — a live
+            // product, so nothing upstream rejects it. `SupportPriceTest` holds both halves.
             offer is Support.Offered -> GameButton(
-                label = stringResource(Res.string.settings_support_buy, offer.price),
+                label = if (offer.price.isBlank()) {
+                    stringResource(Res.string.settings_support_link)
+                } else {
+                    stringResource(Res.string.settings_support_buy, offer.price)
+                },
                 tone = ButtonTone.PLAY,
                 onClick = { scope.launch { thanked = buySupport() } },
                 modifier = Modifier.fillMaxWidth(),
