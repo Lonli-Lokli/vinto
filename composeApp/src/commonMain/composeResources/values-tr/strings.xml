@@ -137,9 +137,6 @@
     <string name="settings_support_unavailable">Burada henüz yok. Bu ekrandan yapılabilecek bir şey yok; bunun için bir mağaza gerekiyor, ve onu önce telefonlar alacak.</string>
     <string name="settings_support_thanks">Teşekkürler. Gerçekten.</string>
     <string name="settings_explain">%1$s hakkında daha fazla</string>
-    <string name="settings_group_game_summary">Rakipler, tempo, hareket, görünüm, dil ve senin kayıtların.</string>
-    <string name="settings_group_privacy_summary">Neyin sayıldığı ve nasıl kapatılacağı.</string>
-    <string name="settings_group_about_summary">Bu oyunun kime ait olduğu, uygulamayı kimin yaptığı ve nasıl ulaşılacağı.</string>
 
     <string name="settings_privacy">Gizlilik politikası</string>
     <string name="settings_privacy_detail">Neyin sayıldığı, neyin sayılmadığı ve nasıl kapatılacağı.</string>

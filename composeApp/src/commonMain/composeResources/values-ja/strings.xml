@@ -137,9 +137,6 @@
     <string name="settings_support_unavailable">ここではまだ利用できません。この画面でできることはありません — ストアが必要で、まずスマートフォン版から対応します。</string>
     <string name="settings_support_thanks">ありがとうございます。心から。</string>
     <string name="settings_explain">%1$sについて詳しく</string>
-    <string name="settings_group_game_summary">対戦相手、テンポ、モーション、見た目、言語、あなたの記録。</string>
-    <string name="settings_group_privacy_summary">何が計測されるか、そしてオフにする方法。</string>
-    <string name="settings_group_about_summary">このゲームが誰のものか、アプリを作ったのは誰か、連絡方法。</string>
     <string name="settings_privacy">プライバシーポリシー</string>
     <string name="settings_privacy_detail">何が計測され、何がされないか、そしてオフにする方法。</string>
     <string name="settings_terms">利用規約</string>

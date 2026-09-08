@@ -136,9 +136,6 @@
     <string name="settings_support_unavailable">Pas encore disponible ici. Rien à faire depuis cet écran ; il faut une boutique, et les téléphones en auront une en premier.</string>
     <string name="settings_support_thanks">Merci. Sincèrement.</string>
     <string name="settings_explain">En savoir plus sur %1$s</string>
-    <string name="settings_group_game_summary">Adversaires, rythme, mouvement, apparence, langue et votre bilan.</string>
-    <string name="settings_group_privacy_summary">Ce qui est compté, et comment le désactiver.</string>
-    <string name="settings_group_about_summary">À qui appartient ce jeu, qui a fait l’application, et comment nous contacter.</string>
     <string name="settings_privacy">Politique de confidentialité</string>
     <string name="settings_privacy_detail">Ce qui est compté, ce qui ne l’est pas, et comment le désactiver.</string>
     <string name="settings_terms">Conditions d’utilisation</string>

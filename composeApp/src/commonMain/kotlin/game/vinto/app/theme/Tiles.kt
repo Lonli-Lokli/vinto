@@ -51,7 +51,16 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun ActionTile(
     title: String,
-    detail: String,
+    /**
+     * The sentence under the title, or null for a tile that is only its name.
+     *
+     * Null is not a degenerate case: the settings' three doors say GAME, PRIVACY and ABOUT and
+     * nothing else, because a door labelled with its subject does not need a line explaining that
+     * the subject is behind it — and three sentences of three different lengths drew three tiles
+     * of two different heights. The online screen's destinations keep theirs; there the sentence
+     * is the difference between "Play with friends" and "Join a room", which is a real choice.
+     */
+    detail: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     accent: Color? = null,
@@ -84,7 +93,10 @@ fun ActionTile(
         // eye, and a reader can reach it as the tile's own text.
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = MinHeight)
+            // 84dp is a title with a sentence under it. A tile that is only its name and kept
+            // that height is an empty slab — three of them stacked was what removing the doors'
+            // summaries first produced. Still well past the 48dp `TouchTargetTest` insists on.
+            .heightIn(min = if (detail == null) NameHeight else MinHeight)
             .pressable()
             .semantics { contentDescription = title },
         shape = shape,
@@ -121,11 +133,13 @@ fun ActionTile(
                         style = stamped(size = TitleSize),
                         color = accent ?: Slate.ink,
                     )
-                    Text(
-                        text = detail,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Slate.inkDim,
-                    )
+                    detail?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Slate.inkDim,
+                        )
+                    }
                 }
                 Chevron(colour = accent ?: Slate.inkDim)
             }
@@ -189,6 +203,7 @@ private val Corner = 12.dp
 private val Edge = 1.dp
 private val Lift = 3.dp
 private val MinHeight = 84.dp
+private val NameHeight = 56.dp
 private val MinTap = 48.dp
 private val PadH = 18.dp
 private val PadV = 16.dp

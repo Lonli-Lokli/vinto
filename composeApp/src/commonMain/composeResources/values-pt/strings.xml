@@ -135,9 +135,6 @@
     <string name="settings_support_unavailable">Ainda não disponível aqui. Nada a fazer a partir deste ecrã; precisa de uma loja, e os telemóveis vão ter uma primeiro.</string>
     <string name="settings_support_thanks">Obrigado. A sério.</string>
     <string name="settings_explain">Mais sobre %1$s</string>
-    <string name="settings_group_game_summary">Adversários, ritmo, movimento, aparência, idioma e o teu registo.</string>
-    <string name="settings_group_privacy_summary">O que é contabilizado, e como desativar.</string>
-    <string name="settings_group_about_summary">De quem é este jogo, quem fez a aplicação, e como entrar em contacto.</string>
     <string name="settings_privacy">Política de privacidade</string>
     <string name="settings_privacy_detail">O que é contabilizado, o que não é, e como desativar.</string>
     <string name="settings_terms">Termos de utilização</string>

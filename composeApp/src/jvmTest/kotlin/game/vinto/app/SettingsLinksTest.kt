@@ -1,5 +1,7 @@
 package game.vinto.app
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
@@ -12,6 +14,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.MemoryVault
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -166,6 +169,41 @@ class SettingsLinksTest {
         )
     }
 
+    /**
+     * A door carries its name and nothing else.
+     *
+     * Each of the three used to have a sentence under it saying what was behind it, and the three
+     * sentences were different lengths — so "About"'s wrapped to two lines and the row of tiles
+     * came out ragged, three things that are the same kind of thing drawn at two different sizes.
+     * The words were not earning that: a door labelled PRIVACY does not need a line explaining
+     * that privacy is behind it, and the page it opens says the rest in the place it matters.
+     *
+     * Asserted on the tile's **merged semantics** rather than by looking for the old sentences,
+     * which would be a test that passes the moment somebody writes different ones. One text entry
+     * per tile is the shape; a summary of any wording is a second.
+     */
+    @Test
+    fun aDoorSaysItsNameAndNothingElse() = runComposeUiTest {
+        settings()
+
+        listOf("Game", "Privacy", "About").forEach { group ->
+            val door = onNodeWithContentDescription(group)
+            door.performScrollTo()
+            val said = door.fetchSemanticsNode().config
+                .getOrNull(SemanticsProperties.Text)
+                .orEmpty()
+                .map { it.text }
+                // The chevron is drawn as a glyph rather than an icon, so it arrives here as a
+                // third "word". It is the affordance, not something the tile says.
+                .filterNot { it == CHEVRON }
+            assertEquals(
+                listOf(group.uppercase()),
+                said,
+                "the $group door is saying more than its name",
+            )
+        }
+    }
+
     private fun ComposeUiTest.settings() {
         setContent { VintoTheme { App(seeds = { SEED }, vault = MemoryVault()) } }
         waitForIdle()
@@ -187,5 +225,8 @@ class SettingsLinksTest {
 
     private companion object {
         const val SEED = 20_260_819L
+
+        /** `Chevron` draws its arrow as a glyph, so it reads back as one of the tile's texts. */
+        const val CHEVRON = "›"
     }
 }

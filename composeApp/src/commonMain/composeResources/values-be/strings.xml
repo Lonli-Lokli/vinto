@@ -143,9 +143,6 @@
     <string name="settings_support_unavailable">Тут гэта пакуль недаступна. З гэтага экрана нічога не зрабіць — патрэбна крама, а яна з'явіцца спачатку на тэлефонах.</string>
     <string name="settings_support_thanks">Дзякуй. Сапраўды.</string>
     <string name="settings_explain">Падрабязней — %1$s</string>
-    <string name="settings_group_game_summary">Супернікі, тэмп, рух, выгляд, мова і ваша статыстыка.</string>
-    <string name="settings_group_privacy_summary">Што ўлічваецца і як гэта выключыць.</string>
-    <string name="settings_group_about_summary">Чыя гэта гульня, хто зрабіў дадатак, і як з імі звязацца.</string>
     <string name="settings_privacy">Палітыка прыватнасці</string>
     <string name="settings_privacy_detail">Што лічыцца, што не, і як гэта выключыць.</string>
     <string name="settings_terms">Умовы карыстання</string>

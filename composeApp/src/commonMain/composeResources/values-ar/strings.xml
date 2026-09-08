@@ -134,9 +134,6 @@
     <string name="settings_support_unavailable">غير متاح هنا بعد. لا شيء يمكن فعله بخصوص ذلك من هذه الشاشة؛ يحتاج الأمر إلى متجر، وستحصل الهواتف عليه أولاً.</string>
     <string name="settings_support_thanks">شكرًا لك. بصدق.</string>
     <string name="settings_explain">المزيد عن %1$s</string>
-    <string name="settings_group_game_summary">الخصوم، الإيقاع، الحركة، المظهر، اللغة، وسجلّك.</string>
-    <string name="settings_group_privacy_summary">ما يُحصى، وكيف تُوقفه.</string>
-    <string name="settings_group_about_summary">لمن هذه اللعبة، ومن صنع التطبيق، وكيف تتواصل.</string>
 
     <string name="settings_privacy">سياسة الخصوصية</string>
     <string name="settings_privacy_detail">ما يُحصى، وما لا يُحصى، وكيف تُوقف ذلك.</string>

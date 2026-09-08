@@ -127,9 +127,6 @@
     <string name="settings_support_unavailable">这里暂时还不能用。这个页面无法解决——需要先有应用商店，而手机版会先支持。</string>
     <string name="settings_support_thanks">谢谢你，真心的。</string>
     <string name="settings_explain">了解更多关于 %1$s 的信息</string>
-    <string name="settings_group_game_summary">对手、节奏、动效、外观、语言，以及你的战绩。</string>
-    <string name="settings_group_privacy_summary">统计了什么，以及如何关闭它。</string>
-    <string name="settings_group_about_summary">这个游戏属于谁，这个应用是谁做的，以及如何联系。</string>
     <string name="settings_privacy">隐私政策</string>
     <string name="settings_privacy_detail">我们统计什么、不统计什么，以及如何关闭它。</string>
     <string name="settings_terms">使用条款</string>

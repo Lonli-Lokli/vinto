@@ -136,9 +136,6 @@
     <string name="settings_support_unavailable">Non ancora disponibile qui. Non c'è nulla da fare da questa schermata; serve uno store, e i telefoni ne avranno uno per primi.</string>
     <string name="settings_support_thanks">Grazie. Davvero.</string>
     <string name="settings_explain">Altro su %1$s</string>
-    <string name="settings_group_game_summary">Avversari, ritmo, movimento, aspetto, lingua e il tuo record.</string>
-    <string name="settings_group_privacy_summary">Cosa viene conteggiato, e come disattivarlo.</string>
-    <string name="settings_group_about_summary">Di chi è questo gioco, chi ha fatto l'app, e come metterti in contatto.</string>
     <string name="settings_privacy">Informativa sulla privacy</string>
     <string name="settings_privacy_detail">Cosa viene conteggiato, cosa no, e come disattivarlo.</string>
     <string name="settings_terms">Termini d'uso</string>

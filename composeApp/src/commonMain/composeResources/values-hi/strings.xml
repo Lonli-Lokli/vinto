@@ -135,9 +135,6 @@
     <string name="settings_support_unavailable">अभी यहां उपलब्ध नहीं है। इस स्क्रीन से इस बारे में कुछ नहीं किया जा सकता; इसके लिए एक स्टोर चाहिए, और फ़ोन को यह पहले मिलेगा।</string>
     <string name="settings_support_thanks">धन्यवाद। सच में।</string>
     <string name="settings_explain">%1$s के बारे में और जानें</string>
-    <string name="settings_group_game_summary">प्रतिद्वंद्वी, गति, गति-प्रभाव, रूप, भाषा और आपका रिकॉर्ड।</string>
-    <string name="settings_group_privacy_summary">क्या गिना जाता है, और इसे कैसे बंद करें।</string>
-    <string name="settings_group_about_summary">यह किसका खेल है, इस ऐप को किसने बनाया, और कैसे संपर्क करें।</string>
     <string name="settings_privacy">गोपनीयता नीति</string>
     <string name="settings_privacy_detail">क्या गिना जाता है, क्या नहीं, और इसे कैसे बंद करें।</string>
     <string name="settings_terms">इस्तेमाल की शर्तें</string>

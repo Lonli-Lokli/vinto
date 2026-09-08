@@ -127,9 +127,6 @@
     <string name="settings_support_unavailable">여기서는 아직 이용할 수 없어요. 이 화면에서 할 수 있는 건 없고, 스토어가 필요하며, 폰 버전이 먼저 지원될 거예요.</string>
     <string name="settings_support_thanks">고맙습니다. 진심으로요.</string>
     <string name="settings_explain">%1$s에 대해 더 알아보기</string>
-    <string name="settings_group_game_summary">상대, 속도, 움직임, 화면, 언어, 그리고 당신의 기록.</string>
-    <string name="settings_group_privacy_summary">무엇이 집계되는지, 그리고 끄는 방법.</string>
-    <string name="settings_group_about_summary">이 게임이 누구의 것인지, 앱은 누가 만들었는지, 연락하는 방법.</string>
     <string name="settings_privacy">개인정보 처리방침</string>
     <string name="settings_privacy_detail">무엇이 집계되고 무엇이 아닌지, 그리고 끄는 방법.</string>
     <string name="settings_terms">이용약관</string>

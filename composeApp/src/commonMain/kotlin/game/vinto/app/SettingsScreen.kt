@@ -61,11 +61,8 @@ import game.vinto.app.art.settings_explain
 import game.vinto.app.art.settings_forget
 import game.vinto.app.art.settings_forget_record
 import game.vinto.app.art.settings_group_about
-import game.vinto.app.art.settings_group_about_summary
 import game.vinto.app.art.settings_group_game
-import game.vinto.app.art.settings_group_game_summary
 import game.vinto.app.art.settings_group_privacy
-import game.vinto.app.art.settings_group_privacy_summary
 import game.vinto.app.art.settings_haptics
 import game.vinto.app.art.settings_haptics_detail
 import game.vinto.app.art.settings_language
@@ -308,17 +305,14 @@ private fun Page(
 
             Door(
                 title = stringResource(Res.string.settings_group_game),
-                summary = stringResource(Res.string.settings_group_game_summary),
                 onOpen = { onOpen(SettingsPage.GAME) },
             )
             Door(
                 title = stringResource(Res.string.settings_group_privacy),
-                summary = stringResource(Res.string.settings_group_privacy_summary),
                 onOpen = { onOpen(SettingsPage.PRIVACY) },
             )
             Door(
                 title = stringResource(Res.string.settings_group_about),
-                summary = stringResource(Res.string.settings_group_about_summary),
                 onOpen = { onOpen(SettingsPage.ABOUT) },
             )
         }
@@ -1083,13 +1077,21 @@ private fun Explain(open: Boolean, title: String, onToggle: () -> Unit) {
 /**
  * A way into a group of settings, rather than the group itself.
  *
- * Eighteen rows on one screen is what this replaces. The summary is the point: a door with only
- * a name behind it makes somebody open all three to find the one they want, so each says what is
- * inside in the words they would have gone looking for.
+ * Eighteen rows on one screen is what this replaces.
+ *
+ * **Its name, and nothing under it.** Each door used to carry a sentence saying what was inside,
+ * on the argument that a bare name makes somebody open all three to find the one they want. Three
+ * doors is not a search problem — GAME, PRIVACY and ABOUT are the three subjects an app has, and a
+ * reader scanning them is not helped by a line telling them that privacy is behind PRIVACY. What
+ * the sentences did do was make the tiles ragged: three lengths, one of which wrapped, so three
+ * things of the same kind were drawn at two different heights.
+ *
+ * Held by `SettingsLinksTest.aDoorSaysItsNameAndNothingElse`, on the tile's semantics rather than
+ * on the old wording — so a summary of *any* words is what fails it.
  */
 @Composable
-private fun Door(title: String, summary: String, onOpen: () -> Unit) {
-    ActionTile(title = title, detail = summary, onClick = onOpen)
+private fun Door(title: String, onOpen: () -> Unit) {
+    ActionTile(title = title, detail = null, onClick = onOpen)
 }
 
 private const val PlaqueSize = 17

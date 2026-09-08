@@ -134,9 +134,6 @@
     <string name="settings_support_unavailable">یہاں ابھی دستیاب نہیں۔ اس اسکرین سے کچھ نہیں کیا جا سکتا؛ اس کے لیے اسٹور درکار ہے، اور فونز کو یہ پہلے ملے گا۔</string>
     <string name="settings_support_thanks">شکریہ۔ دل سے۔</string>
     <string name="settings_explain">%1$s کے بارے میں مزید</string>
-    <string name="settings_group_game_summary">حریف، رفتار، حرکت، ظاہری شکل، زبان، اور آپ کا ریکارڈ۔</string>
-    <string name="settings_group_privacy_summary">کیا شمار ہوتا ہے، اور اسے کیسے بند کریں۔</string>
-    <string name="settings_group_about_summary">یہ کس کا گیم ہے، ایپ کس نے بنائی، اور رابطہ کیسے کریں۔</string>
 
     <string name="settings_privacy">پرائیویسی پالیسی</string>
     <string name="settings_privacy_detail">کیا شمار ہوتا ہے، کیا نہیں، اور اسے کیسے بند کریں۔</string>

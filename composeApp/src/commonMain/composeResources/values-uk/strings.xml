@@ -145,9 +145,6 @@
     <string name="settings_support_unavailable">Тут це поки недоступне. З цього екрана нічого не зробити — потрібен магазин, а він з'явиться спершу на телефонах.</string>
     <string name="settings_support_thanks">Дякую. Справді.</string>
     <string name="settings_explain">Детальніше — %1$s</string>
-    <string name="settings_group_game_summary">Суперники, темп, рух, вигляд, мова і ваша статистика.</string>
-    <string name="settings_group_privacy_summary">Що враховується і як це вимкнути.</string>
-    <string name="settings_group_about_summary">Чия це гра, хто зробив застосунок, і як з ними зв'язатися.</string>
     <string name="settings_privacy">Політика конфіденційності</string>
     <string name="settings_privacy_detail">Що рахується, що ні, і як це вимкнути.</string>
     <string name="settings_terms">Умови використання</string>

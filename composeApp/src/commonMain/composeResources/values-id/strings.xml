@@ -135,9 +135,6 @@
     <string name="settings_support_unavailable">Belum tersedia di sini. Tidak ada yang bisa dilakukan dari layar ini; ini butuh toko aplikasi, dan ponsel akan mendapatkannya lebih dulu.</string>
     <string name="settings_support_thanks">Terima kasih. Sungguh.</string>
     <string name="settings_explain">Lebih lanjut tentang %1$s</string>
-    <string name="settings_group_game_summary">Lawan, kecepatan, gerakan, tampilan, bahasa dan rekam jejak Anda.</string>
-    <string name="settings_group_privacy_summary">Apa yang dihitung, dan cara mematikannya.</string>
-    <string name="settings_group_about_summary">Milik siapa permainan ini, siapa yang membuat aplikasinya, dan cara menghubungi.</string>
     <string name="settings_privacy">Kebijakan privasi</string>
     <string name="settings_privacy_detail">Apa yang dihitung, apa yang tidak, dan cara mematikannya.</string>
     <string name="settings_terms">Ketentuan penggunaan</string>

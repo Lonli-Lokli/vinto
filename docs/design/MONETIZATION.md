@@ -82,6 +82,7 @@ Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired eith
    | Field | Value |
    | --- | --- |
    | Product ID | `vinto.support.five` — **permanent**, and Play never lets it be reused |
+   | **Purchase option ID** | `buy` — see below. Also permanent |
    | Name (≤ 55) | Support the game |
    | Description (≤ 200) | A tip for the developer, if you have enjoyed the game. Nothing is locked: this unlocks no cards, no felts and no advantage, and there is nothing in the app it would remove. |
    | Price | the 4.99 tier, with "set prices in other currencies" left to Play's conversion |
@@ -89,6 +90,22 @@ Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired eith
 
    No screenshot: Play asks for none, and there is no review step for an in-app product.
    It will not appear to a build that is not on a track, so an `alpha` upload comes first.
+
+   **The purchase option ID is a second identifier, and it is new.** Play's one-time products are
+   now a product that *contains* purchase options — buy, rent, tiers, regional variants — each
+   with its own id, and a product requires at least one. This one has exactly one thing to sell,
+   so it gets one option, of type **buy**, and `buy` is a good enough id for it. Like the product
+   id it cannot be changed or reused later.
+
+   **The trap is backward compatibility, and it fails silently.** `AndroidBilling.price()` reads
+   `oneTimePurchaseOfferDetails` — the single-offer accessor — and Play answers it with whichever
+   purchase option is marked *backwards compatible*, not with "the only one". The first `buy`
+   option created is marked automatically, so a product with one option is fine; a product whose
+   options were rearranged, or whose first one was deleted, can end up with none marked. Then the
+   accessor returns null, `supportOffer()` answers `Unavailable`, and the button says "Not
+   available here yet" — the same sentence as no network, on a product that is live and correct
+   everywhere a human would look. If the price ever goes missing on Android, that flag is the
+   first thing to check.
 
 2. **App Store Connect** → the app → In-App Purchases → Create → **Consumable**.
 

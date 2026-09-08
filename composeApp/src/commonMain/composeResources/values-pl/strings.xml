@@ -127,9 +127,6 @@
     <string name="settings_support_unavailable">Tutaj jeszcze niedostępne. Nic z tego poziomu nie da się zrobić — potrzebny jest sklep, a najpierw pojawi się on w telefonach.</string>
     <string name="settings_support_thanks">Dziękujemy. Naprawdę.</string>
     <string name="settings_explain">Więcej o %1$s</string>
-    <string name="settings_group_game_summary">Przeciwnicy, tempo, ruch, wygląd, język i twoje wyniki.</string>
-    <string name="settings_group_privacy_summary">Co jest liczone i jak to wyłączyć.</string>
-    <string name="settings_group_about_summary">Czyja to gra, kto stworzył aplikację, i jak się skontaktować.</string>
     <string name="settings_privacy">Polityka prywatności</string>
     <string name="settings_privacy_detail">Co jest liczone, co nie, i jak to wyłączyć.</string>
     <string name="settings_terms">Warunki korzystania</string>

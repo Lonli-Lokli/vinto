@@ -125,7 +125,21 @@ object AndroidBilling {
         }
     }
 
-    /** The price Play formatted, in the buyer's own currency, or null when there is none. */
+    /**
+     * The price Play formatted, in the buyer's own currency, or null when there is none.
+     *
+     * `oneTimePurchaseOfferDetails` is the single-offer accessor, and since Play's one-time
+     * products became a product *containing* purchase options it does not mean "the only one" —
+     * it means **the option marked backwards compatible**, of however many exist. The first `buy`
+     * option created is marked automatically, so one option is safe; a product left with none
+     * marked answers null here, which this reports as [Support.Unavailable] and the screen reports
+     * as "not available here yet". That is indistinguishable from having no network, on a product
+     * that looks correct in the console. `MONETIZATION.md` says which flag to go and look at.
+     *
+     * Blank rather than null is a separate case and a real one — an active product priced in no
+     * territory the buyer is in — and it is `SettingsScreen` that handles it, because what is
+     * wrong there is the label rather than the offer (`SupportPriceTest`).
+     */
     internal fun price(): String? =
         details?.oneTimePurchaseOfferDetails?.formattedPrice
 
