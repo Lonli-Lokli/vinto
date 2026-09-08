@@ -250,6 +250,7 @@
     <string name="header_support">커피 한 잔 사주기</string>
     <string name="header_report">문제 신고</string>
     <string name="header_settings">설정</string>
+    <string name="header_rules">규칙</string>
     <string name="header_leave">테이블 나가기</string>
     <string name="header_deck_left">덱에 %1$d장 남음</string>
     <string name="header_deck_badge">덱에 %1$d장 — 무슨 뜻인가요</string>

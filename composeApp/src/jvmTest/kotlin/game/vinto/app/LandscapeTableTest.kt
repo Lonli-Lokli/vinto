@@ -73,10 +73,16 @@ class LandscapeTableTest {
             tablet.sizes.mine.width > phone.sizes.mine.width,
             "a tablet's cards are phone-sized: ${tablet.sizes.mine} vs ${phone.sizes.mine}",
         )
-        assertEquals(
-            tablet.sizes,
-            desktop.sizes,
-            "a tablet and a desktop with big felts land on the same step",
+        // And a desktop steps up again, because the felt now fills the window it is in.
+        //
+        // This asserted the opposite — that a tablet and a desktop shared a step — which was
+        // true while the felt was held to a laptop's width whatever it was standing on. Once it
+        // is allowed to fill a desktop window, stopping the cards at a tablet's size is exactly
+        // the "miniature floating in cloth" the step above them exists to prevent, one size
+        // further up.
+        assertTrue(
+            desktop.sizes.mine.width > tablet.sizes.mine.width,
+            "a desktop was dealt a tablet's cards on a much bigger felt: ${desktop.sizes.mine}",
         )
         // And a portrait tablet lands on the same big cards as a landscape one.
         assertTrue(
@@ -96,9 +102,16 @@ class LandscapeTableTest {
             desktop.feltWidth < 1920.dp - desktop.railWidth,
             "a desktop felt stretched across the window: ${desktop.feltWidth}",
         )
+        // Capped by its *shape* rather than by a laptop's width. The absolute cap is a backstop
+        // for a wall-sized display now, so what holds a 1920 window in check is the aspect: a
+        // table is wider than it is deep and never more than half again.
         assertTrue(
-            desktop.feltWidth <= 980.dp,
-            "wider than any arm's reach: ${desktop.feltWidth}",
+            desktop.feltWidth <= desktop.feltHeight * 1.4f,
+            "deeper than a table: ${desktop.feltWidth} by ${desktop.feltHeight}",
+        )
+        assertTrue(
+            desktop.feltHeight <= desktop.feltWidth,
+            "a card table is not taller than it is wide: ${desktop.feltWidth} by ${desktop.feltHeight}",
         )
     }
 

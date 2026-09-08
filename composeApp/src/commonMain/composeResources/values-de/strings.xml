@@ -250,6 +250,7 @@
     <string name="header_support">Einen Kaffee spendieren</string>
     <string name="header_report">Problem melden</string>
     <string name="header_settings">Einstellungen</string>
+    <string name="header_rules">Regeln</string>
     <string name="header_leave">Tisch verlassen</string>
     <string name="header_deck_left">%1$d Karten übrig im Stapel</string>
     <string name="header_deck_badge">%1$d im Stapel — was das bedeutet</string>

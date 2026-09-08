@@ -250,6 +250,7 @@
     <string name="header_support">请我喝杯咖啡</string>
     <string name="header_report">反馈问题</string>
     <string name="header_settings">设置</string>
+    <string name="header_rules">规则</string>
     <string name="header_leave">离开牌桌</string>
     <string name="header_deck_left">牌堆还剩 %1$d 张</string>
     <string name="header_deck_badge">牌堆还剩 %1$d 张——这是什么意思</string>

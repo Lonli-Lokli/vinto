@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -135,13 +136,23 @@ private val PanelPad = 12.dp
 private val FootRow = 50.dp
 
 /**
- * The tallest the control group is ever drawn, however tall the rail holding it.
+ * How much of a side rail the control group takes, given how tall that rail is.
  *
- * Comfortably more than [railHeight] ever returns, so a phone's rail is unaffected and reaches
- * this only as the thing it already is; and enough for the deepest the panel goes — a King's
- * fourteen chips over a prompt of two lines — so nothing is ever squeezed by it.
+ * A share rather than a fixed height, because a fixed one left most of a desktop rail as empty
+ * cream: the group sat at its 340 in the middle of eight hundred points of nothing, which reads
+ * as a panel that failed to load rather than as a considered margin. Growing with the rail gives
+ * the room to the one tenant that can use it — the log of what has been happening — and keeps
+ * the margins above and below in proportion to the thing between them.
+ *
+ * Clamped at both ends. The floor is the deepest the panel ever goes (a King's fourteen chips
+ * over a prompt of two lines), so nothing is ever squeezed; the ceiling is where more height
+ * stops being a control panel and starts being a column of log.
  */
+private fun railGroup(rail: Dp): Dp = (rail * RAIL_GROUP_SHARE).coerceIn(TallRail, TallRailMost)
+
+private const val RAIL_GROUP_SHARE = 0.6f
 private val TallRail = 340.dp
+private val TallRailMost = 620.dp
 
 /** The card in play, drawn in the rail: no smaller than a card in your own hand on a phone. */
 private val RailCard = CardScale(56.dp, 78.dp)
@@ -306,7 +317,7 @@ private fun RailBody(
         val rail = maxHeight
         // What the group actually gets, which on a tall rail is [TallRail] rather than the
         // window: the foot's cap is a share of the room the choices really have.
-        val held = if (rail.isFinite) minOf(rail, TallRail) else rail
+        val held = if (rail.isFinite) minOf(rail, railGroup(rail)) else rail
         val footCap =
             if (held.isFinite) (held - promptLine - Gap).coerceAtLeast(promptLine) else Dp.Unspecified
 
@@ -323,8 +334,8 @@ private fun RailBody(
         // So a tall rail holds the same group at a phone's height and centres it on the felt it
         // stands beside. Nothing inside changes: the block still fills the group and the choices
         // still sit at its foot, which is what `RailFitsTest` measures.
-        val group = if (rail.isFinite && rail > TallRail) {
-            Modifier.fillMaxWidth().height(TallRail)
+        val group = if (rail.isFinite && rail > railGroup(rail)) {
+            Modifier.fillMaxWidth().height(railGroup(rail))
         } else {
             Modifier.fillMaxSize()
         }
@@ -825,12 +836,18 @@ private fun Choices(table: Table, side: Boolean, onMove: (Move) -> Unit) {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val each = (maxWidth - Half * (choices.size - 1)) / choices.size
         if (!side || each >= room) {
+            // One size, not just one width. `weight(1f)` already made them equally wide, and
+            // they still came out different *heights* the moment one label wrapped to two lines
+            // and its neighbour did not — "SWAP CARDS" standing a head taller than "DISCARD"
+            // beside it. Buttons sitting together read as a set, and a set with one member
+            // taller than the rest reads as a mistake. `IntrinsicSize.Min` measures the row
+            // against its tallest member and `fillMaxHeight` brings the others up to it.
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(Half),
             ) {
                 choices.forEach { choice ->
-                    ChoiceButton(choice, onMove, Modifier.weight(1f))
+                    ChoiceButton(choice, onMove, Modifier.weight(1f).fillMaxHeight())
                 }
             }
         } else {

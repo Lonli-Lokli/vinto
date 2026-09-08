@@ -250,6 +250,7 @@
     <string name="header_support">קניית קפה בשבילי</string>
     <string name="header_report">דיווח על בעיה</string>
     <string name="header_settings">הגדרות</string>
+    <string name="header_rules">חוקים</string>
     <string name="header_leave">יציאה מהשולחן</string>
     <string name="header_deck_left">%1$d קלפים נותרו בחפיסה</string>
     <string name="header_deck_badge">%1$d בחפיסה — מה זה אומר</string>

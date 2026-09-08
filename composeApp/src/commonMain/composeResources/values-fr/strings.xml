@@ -261,6 +261,7 @@
     <string name="header_support">M’offrir un café</string>
     <string name="header_report">Signaler un problème</string>
     <string name="header_settings">Paramètres</string>
+    <string name="header_rules">Règles</string>
     <string name="header_leave">Quitter la table</string>
     <string name="header_deck_left">%1$d cartes restantes dans la pioche</string>
     <string name="header_deck_badge">%1$d dans la pioche — ce que ça signifie</string>

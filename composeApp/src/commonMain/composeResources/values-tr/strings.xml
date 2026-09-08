@@ -263,6 +263,7 @@
     <string name="header_support">Bana bir kahve ısmarla</string>
     <string name="header_report">Sorun bildir</string>
     <string name="header_settings">Ayarlar</string>
+    <string name="header_rules">Kurallar</string>
     <string name="header_leave">Masadan ayrıl</string>
     <string name="header_deck_left">Destede %1$d kart kaldı</string>
     <string name="header_deck_badge">Destede %1$d — bunun anlamı</string>

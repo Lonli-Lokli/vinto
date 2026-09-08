@@ -269,6 +269,7 @@
     <string name="header_support">Invítame a un café</string>
     <string name="header_report">Informar de un problema</string>
     <string name="header_settings">Ajustes</string>
+    <string name="header_rules">Reglas</string>
     <string name="header_leave">Salir de la mesa</string>
     <string name="header_deck_left">%1$d cartas quedan en el mazo</string>
     <string name="header_deck_badge">%1$d en el mazo — qué significa</string>

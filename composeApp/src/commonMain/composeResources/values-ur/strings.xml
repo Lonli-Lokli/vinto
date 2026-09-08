@@ -260,6 +260,7 @@
     <string name="header_support">مجھے کافی پلائیں</string>
     <string name="header_report">کوئی مسئلہ بتائیں</string>
     <string name="header_settings">ترتیبات</string>
+    <string name="header_rules">قواعد</string>
     <string name="header_leave">میز چھوڑیں</string>
     <string name="header_deck_left">ڈیک میں %1$d پتے باقی ہیں</string>
     <string name="header_deck_badge">ڈیک میں %1$d — اس کا مطلب کیا ہے</string>

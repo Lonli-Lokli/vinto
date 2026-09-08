@@ -260,6 +260,7 @@
     <string name="header_support">Oferece-me um café</string>
     <string name="header_report">Reportar um problema</string>
     <string name="header_settings">Definições</string>
+    <string name="header_rules">Regras</string>
     <string name="header_leave">Sair da mesa</string>
     <string name="header_deck_left">%1$d cartas restantes no baralho</string>
     <string name="header_deck_badge">%1$d no baralho — o que significa</string>

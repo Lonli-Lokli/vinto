@@ -52,10 +52,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -79,6 +82,7 @@ import game.vinto.app.art.header_deck_badge
 import game.vinto.app.art.header_deck_left
 import game.vinto.app.art.header_leave
 import game.vinto.app.art.header_report
+import game.vinto.app.art.header_rules
 import game.vinto.app.art.header_settings
 import game.vinto.app.art.header_support
 import game.vinto.app.art.table_away_mark
@@ -147,13 +151,24 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * How far apart the middle row's three groups may be pushed — the two side seats and the piles.
+ * How much of the felt's width the middle row may spread across — the side seats and the piles.
  *
- * A reach rather than a width: about as far as somebody sitting at a table can put a card from
- * the seat opposite. Wider than this and the two side seats stop reading as being at the *same*
- * table, which is what a desktop felt did with `SpaceBetween` and nothing to stop it.
+ * A share, so the seats sit further apart at a bigger table and closer at a smaller one, which
+ * is what people do. Not the *whole* width: past about two thirds the two side seats stop
+ * reading as being at the same table, which is what a desktop felt did with `SpaceBetween` and
+ * nothing at all to stop it.
  */
-private val MiddleReach = 620.dp
+private const val MiddleShare = 0.66f
+
+/**
+ * And never tighter than the widest felt that has no room to spare anyway.
+ *
+ * A share alone would *squeeze* a phone: two thirds of a 390-point felt is 257, and the three
+ * groups on that row barely fit in the whole of it — which `TouchTargetTest` caught at once, as
+ * a bot's badge shrinking under a thumb. So the floor sits above any phone's felt, where it can
+ * only ever be slack, and the share takes over on the screens that actually have room to spread.
+ */
+private val MiddleLeast = 460.dp
 
 private val Gap = 6.dp
 private val Tight = 4.dp
@@ -198,6 +213,13 @@ private val HeaderHair = 1.dp
 
 /** Where a header control has room for a word beside its mark: a desktop or a landscape tablet. */
 private val WideHeader = 700.dp
+
+/**
+ * What the header has already spent before any control asks for a word: the wordmark, the round
+ * counter, the deck chip and the gaps around them. An estimate, and deliberately a generous one
+ * — [headerSaysItsWords] is the wrong thing to be optimistic in.
+ */
+private val HeaderTaken = 260.dp
 
 private val HeaderMark = 18.dp
 private val HeaderWordPad = 12.dp
@@ -510,27 +532,96 @@ private fun DrawScope.drawCup(ink: Color) {
 }
 
 /**
- * One header control: the dressed circle the "?" wears, holding a glyph drawn in the
- * rail's ink rather than fetched from an emoji font nobody chose.
+ * One header control: a mark, and its word beside it when the header is wide enough to say it.
+ *
+ * **Every control up here is this shape**, which is the point of it being one composable. They
+ * were three shapes before — a square for the drawn glyphs, a labelled pill for the cup, a
+ * plaque for the deck count — so a row of six controls was a row of three design languages, and
+ * a square with a "?" in it is a puzzle a first-time player has to solve by pressing it.
+ *
+ * On a phone the mark carries it alone, because there is no width for anything else. On a
+ * desktop the word is simply there, and nothing has to be learned. Which of the two is decided
+ * by [TableHeader] once, from *measuring the words in this language* against the room the header
+ * actually has — nineteen locales and six labels is not a threshold anybody can write down, and
+ * the German for "Leave the table" is not the English one.
  */
 @Composable
 private fun HeaderGlyph(
     onClick: () -> Unit,
     description: String,
+    wide: Boolean,
+    modifier: Modifier = Modifier,
     glyph: DrawScope.(Color) -> Unit,
 ) {
     val ink = Rail.ink
+    HeaderChip(onClick, description, wide, modifier) {
+        Canvas(modifier = Modifier.size(HeaderMark)) { glyph(ink) }
+    }
+}
+
+/** The chip itself, whatever the mark inside it is drawn with. */
+@Composable
+private fun HeaderChip(
+    onClick: () -> Unit,
+    description: String,
+    wide: Boolean,
+    modifier: Modifier = Modifier,
+    mark: @Composable () -> Unit,
+) {
     Surface(
         onClick = onClick,
-        modifier = Modifier.size(HeaderTap).semantics { contentDescription = description }.pressable(),
+        modifier = modifier
+            .height(HeaderTap)
+            .semantics { contentDescription = description }
+            .pressable(),
         shape = HeaderShape,
         color = Color.Transparent,
         border = androidx.compose.foundation.BorderStroke(HeaderHair, Rail.line),
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Canvas(modifier = Modifier.size(18.dp)) { glyph(ink) }
+        Row(
+            modifier = Modifier.padding(horizontal = if (wide) HeaderWordPad else 0.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(HeaderWordGap),
+        ) {
+            Box(
+                modifier = if (wide) Modifier else Modifier.width(HeaderTap),
+                contentAlignment = Alignment.Center,
+                content = { mark() },
+            )
+            if (wide) {
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Rail.ink,
+                    maxLines = 1,
+                )
+            }
         }
     }
+}
+
+/**
+ * Whether every header control can wear its word, measured rather than guessed.
+ *
+ * The same rule as the rail's choices and for the same reasons: the labels are translated into
+ * nineteen languages, there are six of them, and the width they have to fit in is a window
+ * somebody is dragging. A constant tuned against English on a laptop is wrong for German on a
+ * tablet, and wrong the day a seventh control is added.
+ *
+ * Conservative on purpose. It measures the words, adds every chip's own padding and mark and the
+ * gaps between them, and then asks for a little more than that — a header that *just* fits is a
+ * header one long translation away from clipping the deck count off the end.
+ */
+@Composable
+private fun headerSaysItsWords(labels: List<String>, room: Dp, taken: Dp): Boolean {
+    val measurer = rememberTextMeasurer()
+    val style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+    val words = with(LocalDensity.current) {
+        labels.sumOf { measurer.measure(AnnotatedString(it), style, maxLines = 1).size.width as Int }.toDp()
+    }
+    val chrome = (HeaderWordPad * 2 + HeaderMark + HeaderWordGap + Gap) * labels.size
+    return taken + words + chrome <= room
 }
 
 /** A gear: the ring, eight teeth, and the hub, all strokes. */
@@ -645,38 +736,62 @@ private fun TableHeader(
     val report = stringResource(Res.string.header_report)
     val settings = stringResource(Res.string.header_settings)
     val leave = stringResource(Res.string.header_leave)
+    val rules = stringResource(Res.string.header_rules)
     val deck = stringResource(Res.string.header_deck_badge, view.drawPileSize)
+    // Only where the cup is drawn at all, which is the web and the desktop: on a phone its word
+    // must not be counted against a header that will never show it.
+    val offer = remember { supportOffer() }
+    val support = stringResource(Res.string.header_support).takeIf { offer is Support.Elsewhere }
     // Measured here rather than from the window: `containerSize` reports the whole surface, and
     // the header is not always the whole surface — a fixed-size preview, a split-screen phone or
     // a resized desktop pane all have a header narrower than the window it sits in. Taking the
     // window's width put the word on a phone-width header and squeezed the deck badge to nothing,
     // which `TouchTargetTest` caught as a 0 dp target.
     BoxWithConstraints {
-        val wideHeader = maxWidth >= WideHeader
+        // Every word this header would like to say, measured against the room it has. The
+        // wordmark and the round counter are what is already spoken for; [WideHeader] stays as a
+        // floor so a narrow header never even tries.
+        val words = listOfNotNull(rules, settings, report, leave.takeIf { onLeave != null }, support)
+        val wideHeader = maxWidth >= WideHeader &&
+            headerSaysItsWords(words, maxWidth, taken = HeaderTaken)
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = Gap),
             horizontalArrangement = Arrangement.spacedBy(Gap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // On the rail, so the rail's own ink — not the theme's, which is a page colour and
-            // reads as dark-on-dark here.
-            Text(
-                stringResource(Res.string.app_name),
-                fontFamily = Wordmark,
-                fontSize = WordmarkSize,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 2.sp,
-                color = Rail.brand,
-            )
-            Text(
-                // The *game's* round, not the deal's. The engine counts rounds within one deal
-                // — it is a turn counter that wraps — while the player is counting hands played.
-                stringResource(Res.string.table_round_turn, round, view.turnNumber),
-                style = MaterialTheme.typography.labelLarge,
-                color = Rail.inkDim,
-            )
-
-            Box(modifier = Modifier.weight(1f))
+            // The name and the counter, and they are what gives way when the row runs out.
+            //
+            // The weight is on *this* group rather than on a spacer between the two halves, and
+            // that is the whole of it: a Row with no give squeezes its children from the end, so
+            // the deck count — the last thing in the row — came out 36 points wide under a
+            // 44-point thumb, which `TouchTargetTest` reads as a target nobody can hit. A word
+            // may be clipped; a control may not.
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(Gap),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // On the rail, so the rail's own ink — not the theme's, which is a page colour
+                // and reads as dark-on-dark here.
+                Text(
+                    stringResource(Res.string.app_name),
+                    fontFamily = Wordmark,
+                    fontSize = WordmarkSize,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp,
+                    color = Rail.brand,
+                    maxLines = 1,
+                )
+                Text(
+                    // The *game's* round, not the deal's. The engine counts rounds within one
+                    // deal — it is a turn counter that wraps — while the player is counting
+                    // hands played.
+                    stringResource(Res.string.table_round_turn, round, view.turnNumber),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Rail.inkDim,
+                    maxLines = 1,
+                )
+            }
 
             // The rules, in the one place on the screen that never moves.
             //
@@ -684,21 +799,18 @@ private fun TableHeader(
             // down with whatever the panel was asking — a fourteen-chip King grid one moment, one
             // button the next. A control that is always available and never changes belongs in
             // the header, where nothing else changes either.
-            Surface(
+            HeaderChip(
                 onClick = { onHelp(null) },
-                modifier = Modifier.size(HeaderTap).pressable().markedAs(LocalStage.current, Target.HELP),
-                shape = HeaderShape,
-                color = Color.Transparent,
-                border = androidx.compose.foundation.BorderStroke(HeaderHair, Rail.line),
+                description = rules,
+                wide = wideHeader,
+                modifier = Modifier.markedAs(LocalStage.current, Target.HELP),
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "?",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Rail.inkDim,
-                    )
-                }
+                Text(
+                    text = "?",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Rail.ink,
+                )
             }
 
             // The settings, from the table rather than only from the front door.
@@ -712,13 +824,13 @@ private fun TableHeader(
             // made the header three different design languages in a row — an outlined glyph,
             // then whatever the platform's emoji font felt like. Drawn glyphs in the rail's
             // own ink are one decision made once.
-            HeaderGlyph(onClick = onSettings, description = settings) { ink ->
+            HeaderGlyph(onClick = onSettings, description = settings, wide = wideHeader) { ink ->
                 drawGear(ink)
             }
 
             // Always reachable, because the moment worth reporting is the moment it goes wrong
             // and nobody navigates to a menu to capture it.
-            HeaderGlyph(onClick = onReport, description = report) { ink ->
+            HeaderGlyph(onClick = onReport, description = report, wide = wideHeader) { ink ->
                 drawBug(ink)
             }
 
@@ -729,7 +841,7 @@ private fun TableHeader(
             // finishing it — the score sheet's "Quit" was the single exit in the app. Nothing is
             // lost by taking it: the round is saved on every move, and the menu offers it back.
             onLeave?.let { go ->
-                HeaderGlyph(onClick = go, description = leave) { ink ->
+                HeaderGlyph(onClick = go, description = leave, wide = wideHeader) { ink ->
                     drawExit(ink)
                 }
             }
@@ -1109,9 +1221,15 @@ private fun MiddleRow(
     // distance and sends the two side seats to opposite horizons with a void between them —
     // which is the very thing `TABLE_ASPECT` says a table must not do with room. So the row is
     // capped and centred: past [MiddleReach] the extra width stays cloth.
-    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+    BoxWithConstraints(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        // A share of the table rather than a fixed reach. `SpaceBetween` across the whole felt
+        // sends the side seats to opposite horizons, which is what `TABLE_ASPECT`'s note says a
+        // table must not do with room — but a *fixed* cap does the opposite on a large one, and
+        // leaves the two of them huddled in the middle with a metre of cloth either side. The
+        // seats sit further apart at a bigger table, exactly as people do.
+        val reach = (maxWidth * MiddleShare).coerceAtLeast(MiddleLeast)
         Row(
-            modifier = Modifier.widthIn(max = MiddleReach).fillMaxWidth(),
+            modifier = Modifier.widthIn(max = reach).fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {

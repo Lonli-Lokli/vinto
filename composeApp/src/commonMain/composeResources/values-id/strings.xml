@@ -260,6 +260,7 @@
     <string name="header_support">Belikan saya kopi</string>
     <string name="header_report">Laporkan masalah</string>
     <string name="header_settings">Pengaturan</string>
+    <string name="header_rules">Aturan</string>
     <string name="header_leave">Tinggalkan meja</string>
     <string name="header_deck_left">%1$d kartu tersisa di dek</string>
     <string name="header_deck_badge">%1$d di dek — apa artinya itu</string>

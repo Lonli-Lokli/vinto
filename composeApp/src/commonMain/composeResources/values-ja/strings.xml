@@ -262,6 +262,7 @@
     <string name="header_support">コーヒーをおごる</string>
     <string name="header_report">問題を報告</string>
     <string name="header_settings">設定</string>
+    <string name="header_rules">ルール</string>
     <string name="header_leave">テーブルを退出</string>
     <string name="header_deck_left">山札に残り%1$d枚</string>
     <string name="header_deck_badge">山札に%1$d枚 — その意味</string>

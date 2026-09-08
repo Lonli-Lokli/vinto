@@ -116,13 +116,33 @@ data class TableSizes(
             avatarMine = 56.dp,
         )
 
+        /**
+         * Grand again by a third, for the felt a desktop window actually has.
+         *
+         * The steps stopped at a tablet's height, so every screen above that drew a tablet's
+         * cards on a much larger cloth — and once the felt was allowed to fill the window, that
+         * is exactly the "miniature floating in cloth" [GRAND_FLOOR] exists to prevent, one
+         * size further up. A card table is read at arm's length whatever it is standing on.
+         */
+        private val Vast = TableSizes(
+            mine = CardScale(100.dp, 139.dp),
+            theirs = CardScale(74.dp, 103.dp),
+            side = CardScale(66.dp, 92.dp),
+            avatar = 66.dp,
+            avatarMine = 74.dp,
+        )
+
         /** Below this the roomy table cannot fit four hands and two piles without clipping. */
         private val ROOMY_FLOOR = 560.dp
 
         /** Above this the roomy table starts to read as a miniature; the cards step up. */
         private val GRAND_FLOOR = 720.dp
 
+        /** And above this the grand one does, which is a desktop window and nothing smaller. */
+        private val VAST_FLOOR = 900.dp
+
         fun forHeight(height: Dp): TableSizes = when {
+            height >= VAST_FLOOR -> Vast
             height >= GRAND_FLOOR -> Grand
             height >= ROOMY_FLOOR -> Roomy
             else -> Tight
@@ -239,10 +259,15 @@ private const val TABLE_ASPECT = 1.4f
 private const val TABLE_DEEPEST = 1.25f
 
 /**
- * And the widest it may be at all: even the aspect cap, given a tall desktop window, allows
- * a felt wider than an arm's reach. Grand cards fill this comfortably; more is just cloth.
+ * And the widest it may be at all — a backstop for a wall, not a budget for a window.
+ *
+ * It was 980, which is about a laptop's worth, and on anything larger it left the table as a
+ * small island in a lot of empty app. That was the wrong lever: what stops a felt reading as
+ * cloth is the *cards* growing with it ([TableSizes]), not the felt being held small. So this
+ * is now only the point past which more width buys nothing at all — an ultrawide monitor, where
+ * a table two metres across would have the seats out of each other's reach.
  */
-private val TABLE_MAX_WIDTH = 980.dp
+private val TABLE_MAX_WIDTH = 1800.dp
 
 /** The strip above the felt: the wordmark, the round, the help, the bug, the deck count. */
 val HeaderHeight = 44.dp
