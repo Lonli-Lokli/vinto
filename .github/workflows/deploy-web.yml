@@ -83,7 +83,7 @@ jobs:
     environment: room
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # The whole history, because the build number is a commit count. `actions/checkout`
           # fetches depth 1 by default, which made `git rev-list --count HEAD` answer **1** —
