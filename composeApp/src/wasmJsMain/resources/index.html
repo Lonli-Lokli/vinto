@@ -261,6 +261,15 @@
       404 and a dead page rather than a stale one. Keep this a single plain `src="..."` on
       one line: the deploy step matches it literally.
     -->
+    <!--
+      The portfolio's usage beacon, and the game's own event sender with it. Before the app on
+      purpose and `defer`red like it: counting a visit must never be a reason the game starts a
+      millisecond later, and a beacon that only ran after a 3.7 MB wasm bundle finished would
+      under-count every visitor who left while it was loading.
+
+      Managed by `gulnya/web-template` — edit the block there, not here, and run its `sync.mjs`.
+    -->
+    <script defer src="loader.js"></script>
     <script defer src="composeApp.js"></script>
 
     <!--

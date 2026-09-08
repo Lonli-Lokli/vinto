@@ -1,0 +1,13 @@
+{
+  "game": "vinto",
+  "project": "vinto",
+  "publicUrl": "https://vinto.kupalinka.app",
+
+  "//": [
+    "Vinto takes the usage beacon and nothing else. It is a Compose Multiplatform game whose web",
+    "build IS the app rather than a `:web` daily, so it has no webpack config to manage; it deploys",
+    "through deploy-web.yml rather than a script; and its crash reporter covers four platforms",
+    "(composeApp/.../crash/) where the template's covers one."
+  ],
+  "skip": ["files", "crash-reporting"]
+}
