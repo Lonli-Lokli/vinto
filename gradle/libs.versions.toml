@@ -31,7 +31,7 @@ androidxActivityCompose = "1.10.1"
 # Play Billing, for the one thing this app sells: a fixed-price way to say thanks. `-ktx` for
 # the suspend wrappers — the callback API would otherwise need a hand-rolled continuation per
 # call, which is three chances to leak a coroutine in code nobody can test without a store.
-playBilling = "7.1.1"
+playBilling = "9.1.0"
 # 1.23.8 is the last 1.x line, and it is **not** the thing holding the toolchain back —
 # measured under Kotlin 2.4.10, 129 files analysed, zero findings. This build runs detekt
 # without type resolution, so it parses rather than resolves and does not care which compiler
