@@ -73,6 +73,16 @@
   // to set up in the dashboard beforehand.
   "analytics_engine_datasets": [{ "binding": "ANALYTICS", "dataset": "vinto_events" }],
 
+  // Reading those counts back needs three secrets, none of which is here:
+  //
+  //   ANALYTICS_TOKEN       Account Analytics · Read, and nothing else
+  //   ANALYTICS_ACCOUNT_ID  which account's datasets to query
+  //   STATS_KEY             the portfolio's shared server-to-server key for `/stats.json`
+  //
+  // `wrangler secret put <name>`. With any of them missing the route answers 404 and behaves as
+  // if it were not there, which is what lets every gate script run with no Cloudflare account —
+  // and means an unconfigured deployment never publishes its numbers by default.
+
   "observability": { "enabled": true },
 
   // --- Volume, at the door (design R6) ------------------------------------------------------

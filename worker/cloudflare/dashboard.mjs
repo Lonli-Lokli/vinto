@@ -14,29 +14,26 @@ export { keyMatches };
  * Server-side by design (§A6). The API token that can read the account's analytics never
  * reaches a browser, and there is no client-side querying.
  *
- * ### This module is on its way to `stats.kupalinka.app`
+ * ### This Worker answers with NUMBERS; `stats.kupalinka.app` draws them
  *
- * It is no longer routed from this Worker, and `vinto-room.kupalinka.app/counts` is gone. The
- * portfolio already has a stats host, it is behind Cloudflare Access, and a per-game URL with a
- * shared secret in its query string was the odd one out — SSO is a better door than `?key=`, and
- * one page for every game is a better place than one page per game.
+ * There is one dashboard for the whole portfolio and it is not here. What is here is
+ * [serveStats] — `GET /stats.json`, the same `{ tiles, panels }` the page renders, as JSON.
  *
- * **The data does not move, because it never had to.** Analytics Engine datasets are scoped to
- * the *account*, so any Worker on it can read `vinto_events` with exactly the SQL below.
+ * **The split is by what each side actually knows.** These queries encode this dataset's own
+ * layout — which double is a duration, which blob is a difficulty — and that layout is decided
+ * by `shared/protocol/.../Analytics.kt` in *this* repository. Queries living next to the schema
+ * they read cannot drift from it silently; the same queries in the dashboard's repository can,
+ * and the drift would surface as a chart of plausible wrong numbers rather than as an error.
+ * Drawing, on the other hand, is nothing to do with Vinto — so the page, the chart library and
+ * the period picker all belong to the dashboard, once, for every game.
  *
- * What stays here is [QUERIES], and that is deliberate: they encode this dataset's own layout —
- * which double is a duration, which blob is a difficulty — and that layout is decided by
- * `shared/protocol/.../Analytics.kt` in this repository. Queries living next to the schema they
- * read cannot drift from it silently; queries living in another repository can, and the drift
- * would show up as a chart of plausible wrong numbers.
- *
- * [renderPage] and [renderChart] are the opposite: nothing about them is Vinto's, and the stats
- * Worker should own them once it has them. This module carries a copy until it does, which is
- * the one honest state between "here" and "there".
+ * It also means the dashboard needs no list of games and no per-game code: it reads
+ * `kupalinka.app/games.json`, fetches whatever `stats` URL a game publishes, and renders what
+ * comes back. A game that has nothing to say simply has no such URL.
  *
  * **Absent-safe like everything else on this Worker.** With no `ANALYTICS_TOKEN`,
- * `ANALYTICS_ACCOUNT_ID` or `DASHBOARD_KEY` the route answers 404 and behaves as if it were
- * not there, so `wrangler dev` and every gate script run without a Cloudflare account.
+ * `ANALYTICS_ACCOUNT_ID` or `STATS_KEY` the route answers 404 and behaves as if it were not
+ * there, so `wrangler dev` and every gate script run without a Cloudflare account.
  *
  * The SQL API is the one part of Analytics Engine that `wrangler dev` does not emulate: local
  * `writeDataPoint` calls go nowhere queryable. So the queries below are gated for their
@@ -296,278 +293,60 @@ function tilesFrom(panels) {
 }
 
 /**
- * The page: HTML, CSS and JavaScript, drawing the JSON above with Chart.js.
+ * `GET /stats.json` — this game's contribution to the one dashboard.
  *
- * **Self-explanatory, which mostly meant deleting.** Every panel carried a paragraph saying what
- * it was for, and a paragraph is a thing to read: five of them stacked down a page is an essay
- * with charts in it. A number under a heading needs no gloss, so the prose moved to the panel's
- * `title` — there for a hover, gone from the layout — and the headline row above says in five
- * numbers what the essay was saying in five paragraphs.
+ * ## The contract, which every game in the portfolio answers the same way
  *
- * **The period is part of the page**, not something to go and configure. Three buttons, the
- * choice kept in the URL so a link to this dashboard is a link to *this* view of it, and the
- * whole payload refetched — the window is in the SQL, so a period is a query rather than a
- * filter over rows already fetched.
+ *     GET /stats.json?days=<7|14|30>          x-stats-key: <STATS_KEY>
+ *     -> { game, days, tiles: [{label, value, hint?}], panels: [{id, title, note, chart, rows, error}] }
  *
- * **The library is pinned and hashed.** A `<script>` from a CDN is a supply-chain hole unless the
- * browser is told exactly what it is allowed to run, so the tag carries `integrity` and the CSP
- * below names the two hosts and nothing else. If a byte of that file ever differs from the hash,
- * the browser refuses it and the charts do not draw — which is the failure you want, rather than
- * running somebody else's code on a page about your players. To drop the CDN entirely, serve the
- * file from this Worker and change the one `src`.
- */
-export function renderShell() {
-  return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src ${CHART_HOST} 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
-<title>Vinto — counts</title>
-<style>
-  :root { color-scheme: dark; --ink: #e8e6e3; --dim: #8b939c; --line: #232a31;
-          --panel: #181d23; --bg: #11151a; --accent: #3fd07a; }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  .wrap { max-width: 1440px; margin: 0 auto; padding: 16px 20px 40px; }
-  .top { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
-  h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: .2px; }
-  .when { color: var(--dim); font-size: 12px; margin-right: auto; }
-  .periods { display: flex; gap: 4px; }
-  .periods button { background: var(--panel); color: var(--dim); border: 1px solid var(--line);
-                    border-radius: 6px; padding: 5px 12px; font: inherit; font-size: 13px;
-                    cursor: pointer; }
-  .periods button[aria-current="true"] { color: #0d1114; background: var(--accent);
-                                         border-color: var(--accent); font-weight: 650; }
-  .tiles { display: grid; gap: 10px; margin-bottom: 14px;
-           grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
-          padding: 12px 14px; }
-  .tile .k { color: var(--dim); font-size: 11.5px; text-transform: uppercase;
-             letter-spacing: .6px; }
-  .tile .v { font-size: 27px; font-weight: 650; line-height: 1.15; margin-top: 2px; }
-  .tile .h { color: var(--dim); font-size: 11.5px; }
-  main { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); }
-  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
-            padding: 12px 14px 10px; min-width: 0; }
-  h2 { font-size: 13px; margin: 0 0 10px; font-weight: 600; color: #c9d1d9;
-       display: flex; align-items: center; gap: 6px; }
-  h2 .i { color: var(--dim); font-size: 11px; border: 1px solid var(--line);
-          border-radius: 50%; width: 15px; height: 15px; display: inline-flex;
-          align-items: center; justify-content: center; cursor: help; }
-  .frame { position: relative; height: 210px; }
-  details { margin-top: 8px; }
-  summary { color: var(--dim); font-size: 11.5px; cursor: pointer; list-style: none; }
-  summary::-webkit-details-marker { display: none; }
-  summary::before { content: "▸ "; }
-  details[open] summary::before { content: "▾ "; }
-  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 12.5px; }
-  th, td { text-align: right; padding: 4px 8px; border-bottom: 1px solid var(--line);
-           white-space: nowrap; }
-  th:first-child, td:first-child { text-align: left; }
-  th { color: var(--dim); font-weight: 600; }
-  .scroll { overflow-x: auto; max-height: 240px; overflow-y: auto; }
-  .empty, .error { font-size: 12.5px; margin: 0; padding: 24px 0; text-align: center; }
-  .empty { color: #6f7780; }
-  .error { color: #e0796b; }
-</style></head>
-<body><div class="wrap">
-<div class="top">
-  <h1>Vinto</h1>
-  <span class="when" id="when"></span>
-  <div class="periods" id="periods"></div>
-</div>
-<div class="tiles" id="tiles"></div>
-<main id="board"></main>
-</div>
-<script src="${CHART_SRC}" integrity="${CHART_SRI}" crossorigin="anonymous"></script>
-<script>
-(function () {
-  var PERIODS = ${JSON.stringify(PERIODS)};
-  var INK = '#e8e6e3', DIM = '#8b939c', LINE = '#232a31';
-  var BAR = '#2f6f8f', PART = '#3fd07a';
-  var board = document.getElementById('board');
-  var tiles = document.getElementById('tiles');
-  var picker = document.getElementById('periods');
-  var drawn = [];
-
-  function el(tag, cls, text) {
-    var n = document.createElement(tag);
-    if (cls) n.className = cls;
-    if (text != null) n.textContent = text;
-    return n;
-  }
-
-  function chosen() {
-    var days = Number(new URLSearchParams(location.search).get('days'));
-    return PERIODS.indexOf(days) >= 0 ? days : PERIODS[PERIODS.length - 1];
-  }
-
-  function picked(days) {
-    picker.innerHTML = '';
-    PERIODS.forEach(function (d) {
-      var b = el('button', null, d + 'd');
-      if (d === days) b.setAttribute('aria-current', 'true');
-      b.onclick = function () {
-        history.replaceState(null, '', '?days=' + d);
-        load(d);
-      };
-      picker.appendChild(b);
-    });
-  }
-
-  function panel(section) {
-    var s = el('section');
-    var h = el('h2');
-    h.appendChild(document.createTextNode(section.title));
-    if (section.note) {
-      var i = el('span', 'i', 'i');
-      i.title = section.note;
-      h.appendChild(i);
-    }
-    s.appendChild(h);
-
-    if (section.error) { s.appendChild(el('p', 'error', section.error)); return s; }
-    if (!section.rows.length) { s.appendChild(el('p', 'empty', 'Nothing in this period.')); return s; }
-
-    if (section.chart) {
-      var spec = section.chart;
-      var rows = spec.overTime ? section.rows.slice().reverse() : section.rows;
-      var frame = el('div', 'frame');
-      var canvas = document.createElement('canvas');
-      frame.appendChild(canvas);
-      s.appendChild(frame);
-      var sets = [{ label: spec.y, data: rows.map(function (r) { return r[spec.y]; }),
-                    backgroundColor: BAR, borderRadius: 2, borderWidth: 0 }];
-      if (spec.of) {
-        sets.push({ label: spec.of, data: rows.map(function (r) { return r[spec.of]; }),
-                    backgroundColor: PART, borderRadius: 2, borderWidth: 0 });
-      }
-      drawn.push(new Chart(canvas, {
-        type: 'bar',
-        data: { labels: rows.map(function (r) {
-          var v = String(r[spec.x]);
-          return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v.slice(5) : v;
-        }), datasets: sets },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          animation: false,
-          scales: {
-            x: { stacked: false, grid: { display: false },
-                 ticks: { color: DIM, maxRotation: 0, autoSkip: true, font: { size: 11 } } },
-            y: { beginAtZero: true, grid: { color: LINE, drawTicks: false },
-                 border: { display: false },
-                 ticks: { color: DIM, precision: 0, font: { size: 11 } } }
-          },
-          plugins: {
-            legend: { display: !!spec.of, position: 'bottom',
-                      labels: { color: DIM, boxWidth: 10, boxHeight: 10, font: { size: 11 } } },
-            tooltip: { mode: 'index', intersect: false }
-          }
-        }
-      }));
-    }
-
-    var columns = Object.keys(section.rows[0]);
-    var d = el('details');
-    d.appendChild(el('summary', null, 'numbers'));
-    var wrap = el('div', 'scroll');
-    var table = document.createElement('table');
-    var thead = document.createElement('thead');
-    var hr = document.createElement('tr');
-    columns.forEach(function (c) { hr.appendChild(el('th', null, c)); });
-    thead.appendChild(hr);
-    table.appendChild(thead);
-    var tbody = document.createElement('tbody');
-    section.rows.forEach(function (row) {
-      var tr = document.createElement('tr');
-      columns.forEach(function (c) {
-        tr.appendChild(el('td', null, row[c] == null ? '' : String(row[c])));
-      });
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    wrap.appendChild(table);
-    d.appendChild(wrap);
-    s.appendChild(d);
-    return s;
-  }
-
-  async function load(days) {
-    picked(days);
-    document.getElementById('when').textContent = 'last ' + days + ' days';
-    drawn.forEach(function (c) { c.destroy(); });
-    drawn = [];
-    tiles.innerHTML = '';
-    board.innerHTML = '';
-    var res = await fetch('?format=json&days=' + days, { headers: { accept: 'application/json' } });
-    if (!res.ok) { board.appendChild(el('p', 'error', 'Could not read the counts.')); return; }
-    var data = await res.json();
-    data.tiles.forEach(function (t) {
-      var card = el('div', 'tile');
-      card.appendChild(el('div', 'k', t.label));
-      card.appendChild(el('div', 'v', t.value));
-      card.appendChild(el('div', 'h', t.hint || ''));
-      tiles.appendChild(card);
-    });
-    data.panels.forEach(function (section) { board.appendChild(panel(section)); });
-  }
-
-  load(chosen());
-})();
-</script>
-</body></html>`;
-}
-
-/** Pinned, hashed, and named in the CSP — the three things that make a CDN script safe to run. */
-const CHART_HOST = 'https://cdn.jsdelivr.net';
-const CHART_SRC = `${CHART_HOST}/npm/chart.js@4.4.6/dist/chart.umd.min.js`;
-const CHART_SRI = 'sha384-Sse/HDqcypGpyTDpvZOJNnG0TT3feGQUkF9H+mnRvic+LjR+K1NhTt8f51KIQ3v3';
-
-/**
- * The route, in two halves: the page, and the numbers it draws.
+ * `tiles` are the handful of numbers somebody came for; `panels` are the shapes behind them, each
+ * a list of already-formatted rows plus the chart type to draw them as. Nothing here is Vinto's
+ * vocabulary — a dashboard can render this without knowing what a coalition is, which is the
+ * whole point of the split.
  *
- * `?format=json` answers the rows and anything else answers the shell that fetches them. Two
- * halves rather than one server-rendered page because the charting happens in the browser now,
- * and one URL rather than two because whatever is guarding this — Cloudflare Access on the
- * stats host — should guard both without anybody having to remember the second one.
+ * ## Why it is a key and not Cloudflare Access
  *
- * The key check stays for a deployment that is *not* behind Access, and does nothing when
- * `DASHBOARD_KEY` is unset. On the stats host, Access is the door and this is belt to its
- * braces; without either, the route answers 404 and is indistinguishable from absent.
+ * Access guards a *browser* reaching `stats.kupalinka.app`; this is the dashboard's Worker
+ * reaching this one, server to server, where there is no human to challenge and no session to
+ * carry. One shared `STATS_KEY` across the portfolio rather than one per game, because a secret
+ * per game is a registry the dashboard would have to maintain — and `px`'s own config says at
+ * length why a hand-maintained list of games is wrong exactly when something is happening.
+ *
+ * **Unset means closed, never open.** No `STATS_KEY` and the route is 404 — the same answer as a
+ * path that does not exist, so a prober cannot tell a game that is missing its secret from one
+ * that never published stats. The counts are aggregate and carry no identifier
+ * (`AnalyticsPrivacyTest`), so this is not protecting people; it is refusing to publish the
+ * business's own numbers to anyone who guesses the path.
  *
  * Returns null when this is not that route, so the caller's router reads as a list of routes
  * rather than a nest of conditions.
  */
-export async function serveDashboard(request, env, url, path = '/counts') {
+export async function serveStats(request, env, url, path = '/stats.json') {
   if (url.pathname !== path) return null;
 
-  // An unconfigured deployment does not have a dashboard, and says exactly that — the same
-  // answer as a path that does not exist, so a prober cannot tell a service that is missing
-  // its secret from one that never had this route.
+  // An unconfigured deployment has no numbers and says exactly that.
   if (!dashboardConfigured(env)) return new Response('not found', { status: 404 });
-  if (env.DASHBOARD_KEY && !keyMatches(url.searchParams.get('key'), env.DASHBOARD_KEY)) {
+  if (!env.STATS_KEY || !keyMatches(request.headers.get('x-stats-key'), env.STATS_KEY)) {
     return new Response('not found', { status: 404 });
   }
 
-  // Never cached and never indexed: it is a private view, and a stale one is worse than none
-  // because the number it shows is the one somebody will act on.
-  const guard = {
-    'cache-control': 'no-store',
-    'x-robots-tag': 'noindex, nofollow',
-  };
+  // The period is read here and validated by [periodFrom], so a number somebody typed into the
+  // address bar cannot reach the SQL — the window is interpolated into a statement, and the one
+  // rule for that is that it is never a value a caller chose.
+  const days = periodFrom(url.searchParams.get('days'));
+  const data = await dashboardData(env, days);
 
-  if (url.searchParams.get('format') === 'json') {
-    // The period is read here and validated by [periodFrom], so a number somebody typed into the
-    // address bar cannot reach the SQL — the window is interpolated into a statement, and the one
-    // rule for that is that it is never a value a caller chose.
-    const days = periodFrom(url.searchParams.get('days'));
-    return new Response(JSON.stringify(await dashboardData(env, days)), {
-      headers: { 'content-type': 'application/json; charset=utf-8', ...guard },
-    });
-  }
-
-  return new Response(renderShell(), {
-    headers: { 'content-type': 'text/html; charset=utf-8', ...guard },
+  // Never cached and never indexed: a stale number is worse than none, because it is the one
+  // somebody will act on.
+  return new Response(JSON.stringify({ game: GAME, ...data }), {
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+      'x-robots-tag': 'noindex, nofollow',
+    },
   });
 }
+
+/** Which game these numbers are, so the dashboard can label the section without being told. */
+export const GAME = 'vinto';

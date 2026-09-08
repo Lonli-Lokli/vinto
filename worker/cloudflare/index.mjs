@@ -41,6 +41,7 @@ import {
  * which names are real is telling it something.
  */
 import { reportError, roomContext } from './sentry.mjs';
+import { serveStats } from './dashboard.mjs';
 import { keyMatches } from './secrets.mjs';
 
 const CLIENT_EVENTS = new Set(['funnel', 'solo_round', 'lesson', 'failure']);
@@ -1303,12 +1304,19 @@ async function handle(request, env) {
       return new Response(null, { status: 204 });
     }
 
-    // The counts are read at `stats.kupalinka.app`, not here.
+    // The counts are DRAWN at `stats.kupalinka.app` and computed here.
     //
-    // This Worker used to serve them at `/counts?key=…`, which put a per-game URL and a shared
-    // secret where the portfolio already had a stats host behind Cloudflare Access. Analytics
-    // Engine datasets are account-scoped, so nothing had to move but the page: the room still
-    // writes `vinto_events` and something else reads it. `dashboard.mjs` holds the queries.
+    // One dashboard for the portfolio, and each game answers `/stats.json` with its own numbers —
+    // so the queries live next to the schema they read (`dashboard.mjs`, and the layout it reads
+    // is decided by `shared/protocol/.../Analytics.kt`) while the page, the chart library and the
+    // period picker are written once for every game. This Worker used to serve the whole page at
+    // `/counts?key=…`, which was a per-game URL and a second door beside the one the portfolio
+    // already had.
+    //
+    // Above the `ROOM_OPEN` gate, for the same reason `/health` is: it reports on the service
+    // rather than taking part in it, and a closed room still has a month of history worth reading.
+    const stats = await serveStats(request, env, url);
+    if (stats) return stats;
 
     if (env.ROOM_OPEN !== 'true') {
       return new Response('the room service is closed', {

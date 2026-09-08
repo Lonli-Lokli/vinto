@@ -1,5 +1,5 @@
 /**
- * The dashboard: its queries, its refusals, and its escaping.
+ * This game's contribution to the dashboard: its queries, its refusals, and its shape.
  *
  *   node worker/cloudflare/gate-dashboard.mjs
  *
@@ -9,8 +9,13 @@
  * against actual rows. Task 5.1 is therefore built and **not ticked**; §1f says so.
  *
  * What it can do is the three ways one of these goes quietly wrong without anybody noticing:
- * a query that forgets to weight its counts and under-reports, one that forgets its window
- * and reads the whole retention, and a route that hands the page to somebody without the key.
+ * a query that forgets to weight its counts and under-reports, one that forgets its window and
+ * reads the whole retention, and a route that hands the numbers to somebody without the key.
+ *
+ * The page itself is no longer here — `stats.kupalinka.app` draws every game, and this Worker
+ * answers `/stats.json`. So what used to be asserted about the HTML (its CSP, its pinned chart
+ * library, that rows reach the DOM as text) is asserted in that repository, once, rather than
+ * once per game. What IS asserted here is the contract: the shape the dashboard renders.
  */
 import {
   QUERIES,
@@ -18,11 +23,11 @@ import {
   WINDOW_DAYS,
   dashboardConfigured,
   keyMatches,
-  renderShell,
   PERIODS,
   periodFrom,
   queriesFor,
-  serveDashboard,
+  serveStats,
+  GAME,
 } from './dashboard.mjs';
 
 let failures = 0;
@@ -115,55 +120,57 @@ check('a missing key does not', keyMatches(null, 's3cret') === false);
 check('nothing matches an unset secret', keyMatches('anything', undefined) === false);
 
 const configured = {
-  ANALYTICS_TOKEN: 'token', ANALYTICS_ACCOUNT_ID: 'account', DASHBOARD_KEY: 'letmein',
+  ANALYTICS_TOKEN: 'token', ANALYTICS_ACCOUNT_ID: 'account', STATS_KEY: 'letmein',
 };
 const at = (path) => new URL(`https://vinto-room.example${path}`);
+const asking = (key) => new Request('https://x/stats.json', key ? { headers: { 'x-stats-key': key } } : {});
 
 check(
-  'a path that is not the dashboard is not answered here',
-  (await serveDashboard(new Request('https://x/health'), configured, at('/health'))) === null,
+  'a path that is not the stats route is not answered here',
+  (await serveStats(new Request('https://x/health'), configured, at('/health'))) === null,
 );
 
-const noKey = await serveDashboard(new Request('https://x/counts'), configured, at('/counts'));
+const noKey = await serveStats(asking(null), configured, at('/stats.json'));
 check('no key is a 404, not a 401', noKey.status === 404, String(noKey?.status));
 
-const wrongKey = await serveDashboard(new Request('https://x/counts'), configured, at('/counts?key=nope'));
+const wrongKey = await serveStats(asking('nope'), configured, at('/stats.json'));
 check('a wrong key is the same 404', wrongKey.status === 404, String(wrongKey?.status));
 
-const unconfigured = await serveDashboard(new Request('https://x/counts'), {}, at('/counts?key=letmein'));
+const unconfigured = await serveStats(asking('letmein'), {}, at('/stats.json'));
 check(
   'an unconfigured deployment is indistinguishable from one without the route',
   unconfigured.status === 404,
   String(unconfigured?.status),
 );
 
-console.log('\ndashboard: the page');
+// Unset means CLOSED. The opposite default would publish the business's own numbers to anyone
+// who guessed the path, and would do it on exactly the deployments nobody had configured yet.
+const noSecret = await serveStats(asking('letmein'), {
+  ANALYTICS_TOKEN: 'token', ANALYTICS_ACCOUNT_ID: 'account',
+}, at('/stats.json'));
+check('a deployment with no STATS_KEY is closed, not open', noSecret.status === 404, String(noSecret?.status));
 
-const page = renderShell();
+console.log('\nstats.json: the contract the dashboard renders');
 
-check('the page asks not to be indexed', page.includes('noindex'));
-check('it fetches its own numbers rather than embedding them', page.includes("format=json"));
-check('the canvas the charts draw on is there', page.includes('<canvas') || page.includes("'canvas'"));
+check('the payload names its own game, so the dashboard needs no list', GAME === 'vinto');
 
-// A `<script>` from a CDN is somebody else's code running on a page about our players. Three
-// things make that acceptable and this asserts all three: the version is pinned, the browser is
-// told the exact bytes to accept, and the CSP names the one host it may come from.
-const src = /<script src="([^"]+)" integrity="([^"]+)"/.exec(page);
-check('the chart library is loaded with an integrity hash', src !== null);
-check('and pinned to an exact version', /chart\.js@\d+\.\d+\.\d+\//.test(src?.[1] ?? ''));
-check('with a sha384 hash', (src?.[2] ?? '').startsWith('sha384-'), src?.[2]);
-check('and a CSP that names where scripts may come from', page.includes('script-src'));
-check(
-  'the CSP allows the library host and nothing else to run',
-  page.includes(`script-src ${new URL(src?.[1] ?? 'https://x/').origin}`),
-);
-check('nothing may be fetched cross-origin from the page', page.includes("connect-src 'self'"));
-
-// The rows are built into the DOM with textContent rather than interpolated into HTML, so a
-// value that ever *did* carry markup is text rather than markup. Asserted on the source because
-// the alternative is asserting it on a browser this gate does not have.
-check('values reach the DOM as text, never as markup', page.includes('textContent'));
-check('and the page never assigns a row into innerHTML', !/innerHTML\s*=\s*[^;]*row/.test(page));
+// The tiles and panels are built from the queries above, so their shape can be checked without
+// the SQL API: `dashboardData` is the only thing that reaches out, and these do not.
+const shaped = queriesFor(7);
+check('every panel declares an id the dashboard can key on', shaped.every((q) => typeof q.id === 'string' && q.id));
+check('and a title a person can read', shaped.every((q) => typeof q.title === 'string' && q.title));
+// A chart names the COLUMNS it plots, and a name that no column answers to draws an empty
+// chart rather than an error — the dashboard has no way to tell the difference, so it is
+// checked here, against the statement that produces the rows.
+for (const q of shaped) {
+  if (!q.chart) continue;
+  const named = [q.chart.x, q.chart.y, q.chart.of].filter(Boolean);
+  check(
+    `${q.id}: every column its chart plots is one the query selects`,
+    named.every((column) => new RegExp(`\\bAS ${column}\\b`, 'i').test(q.sql)),
+    named.filter((column) => !new RegExp(`\\bAS ${column}\\b`, 'i').test(q.sql)).join(', '),
+  );
+}
 
 console.log(failures === 0 ? '\ndashboard gate: ok\n' : `\ndashboard gate: ${failures} FAILED\n`);
 process.exit(failures === 0 ? 0 : 1);
