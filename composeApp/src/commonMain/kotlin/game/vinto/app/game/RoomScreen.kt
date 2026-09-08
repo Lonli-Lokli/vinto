@@ -101,6 +101,7 @@ import game.vinto.client.lobbyUi
 import game.vinto.client.roundPoints
 import game.vinto.engine.PlayerView
 import game.vinto.engine.mySeat
+import game.vinto.engine.tossInIsOpen
 import game.vinto.shapes.GamePhase
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
@@ -756,9 +757,13 @@ private fun wayOut(room: RemoteRoom, onLeft: () -> Unit): () -> Unit =
 @Composable
 internal fun TossClock(view: PlayerView, wide: Boolean, onMoreTime: () -> Unit) {
     val toss = view.activeTossIn
+    // `tossInIsOpen` rather than the window record's own flag, which is false for a window
+    // the engine has just reopened - see it for why. The clock this strip counts down is set
+    // from the same answer in the room, so reading the other one hid the countdown on exactly
+    // the windows that had one.
     val waitedOn = view.mySeat != null &&
         toss != null &&
-        toss.waitingForInput &&
+        view.tossInIsOpen &&
         view.viewerId !in toss.playersReadyForNextTurn
     val seconds = rememberCountdownSeconds(view.tossInMsRemaining.takeIf { waitedOn })
 

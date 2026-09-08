@@ -18,6 +18,7 @@ import game.vinto.app.theme.VintoTheme
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.ActiveTossIn
+import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.Rank
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -120,10 +121,16 @@ class TossClockTest {
         }
     }
 
-    /** The viewer's own seat, with a window open and waiting on them. */
+    /**
+     * The viewer's own seat, with a window open and waiting on them.
+     *
+     * The sub-phase is what makes it open, not the record's `waitingForInput` — see
+     * `tossInIsOpen`, and the table that stopped because the two disagreed.
+     */
     private fun windowOpen(): PlayerView {
         val view = teachingSession().view.value
         return view.copy(
+            subPhase = GameSubPhase.TOSS_QUEUE_ACTIVE,
             activeTossIn = ActiveTossIn(
                 ranks = listOf(Rank.EIGHT),
                 initiatorId = view.players.first { it.id != view.viewerId }.id,

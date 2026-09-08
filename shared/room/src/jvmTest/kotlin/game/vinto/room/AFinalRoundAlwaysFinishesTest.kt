@@ -1,8 +1,10 @@
 package game.vinto.room
 
+import game.vinto.engine.tossInIsOpen
 import game.vinto.protocol.RoomPhase
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.GameState
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import kotlin.test.Test
@@ -30,11 +32,34 @@ class AFinalRoundAlwaysFinishesTest {
 
     @Test
     fun aRoundAPersonCallsVintoInReachesScoring() {
-        val stuck = SEEDS.mapNotNull { seed -> whereItStops(seed) }
+        val stuck = SEEDS.mapNotNull { seed -> whereItStops(seed, silent = null) }
 
         assertTrue(
             stuck.isEmpty(),
             "the final round stopped and never restarted:\n" + stuck.joinToString("\n"),
+        )
+    }
+
+    /**
+     * And a person who stops answering does not stop the table.
+     *
+     * This is the case the room's clock exists for, and the one that was broken. The window a
+     * queued toss-in action reopens has `waitingForInput` false — see `tossInIsOpen` — and
+     * `laggingHumans` was asking that flag who it was waiting on. It answered "nobody", so the
+     * room set **no deadline**, and a window with a silent person in it had nothing left to end
+     * it: every other seat sat behind a turn that could not be taken.
+     *
+     * Seat 1 goes quiet here from the moment the final round starts, which is the shape of
+     * somebody putting their phone down — not dropping, so no seat grace, nothing else to
+     * rescue it.
+     */
+    @Test
+    fun aPersonWhoStopsAnsweringDoesNotStopTheTable() {
+        val stuck = SEEDS.mapNotNull { seed -> whereItStops(seed, silent = 1) }
+
+        assertTrue(
+            stuck.isEmpty(),
+            "one person went quiet and the table stopped with them:\n" + stuck.joinToString("\n"),
         )
     }
 
@@ -45,7 +70,7 @@ class AFinalRoundAlwaysFinishesTest {
      * splitting it into helpers would spread one readable walk across the file for a number.
      */
     @Suppress("CognitiveComplexMethod")
-    private fun whereItStops(seed: Long): String? {
+    private fun whereItStops(seed: Long, silent: Int?): String? {
         var state = dealtRoom(seed = seed.toDouble())
         var now = START
         var called = false
@@ -58,8 +83,13 @@ class AFinalRoundAlwaysFinishesTest {
 
             // Only the people act. The bots are the room's, and it plays them in the answer to
             // whatever a person sends — which is exactly the arrangement under test.
+            //
+            // [silent] answers no toss-in window — and still takes its turns, deliberately. A
+            // person who goes quiet on their *own turn* holds the table for as long as they
+            // like, which is the decided rule and not a defect: only a window is bounded,
+            // because a window holds every other seat as well.
             val move = people(room).firstNotNullOfOrNull { (seat, id) ->
-                nextMove(room, id, seat.index == 0 && !called)?.also {
+                nextMove(room, id, seat.index == 0 && !called, quiet = seat.index == silent)?.also {
                     if (it.first is GameAction.CallVinto) called = true
                 }
             }
@@ -96,40 +126,68 @@ class AFinalRoundAlwaysFinishesTest {
      * [mayCall] is what makes this the *reported* shape rather than an ordinary round — a person
      * ending their own turn with a Vinto call, leaving a coalition of one person and two bots.
      */
-    private fun nextMove(room: RoomState, me: String, mayCall: Boolean): Pair<GameAction, Int>? {
+    private fun nextMove(
+        room: RoomState,
+        me: String,
+        mayCall: Boolean,
+        quiet: Boolean = false,
+    ): Pair<GameAction, Int>? {
         val game = room.game ?: return null
         val seatIndex = room.seats.first { it.playerId == me }.index
+        val action = when {
+            game.phase == GamePhase.SETUP -> settingUp(game, me)
+            game.tossInIsOpen -> inTheWindow(game, me, mayCall, quiet)
+            game.players.getOrNull(game.currentPlayerIndex)?.id == me -> takingATurn(game, me)
+            else -> null
+        }
+        return action?.let { it to seatIndex }
+    }
+
+    /** Two peeks each, and finishing only once the whole table has taken theirs. */
+    private fun settingUp(game: GameState, me: String): GameAction? {
         val player = game.players.firstOrNull { it.id == me } ?: return null
-        fun move(action: GameAction) = action to seatIndex
-
-        if (game.phase == GamePhase.SETUP) {
-            if (player.knownCardPositions.size < SETUP_PEEKS) {
-                val position = player.cards.indices.first { it !in player.knownCardPositions }
-                return move(GameAction.PeekSetupCard(PositionPayload(me, position)))
-            }
-            // Finishing is for the table, not for a seat: the room refuses it while anybody
-            // still owes a peek, and a driver that offered it early spent every pass being
-            // told so. The bots are dealt theirs, so this waits on the other person.
-            val everybodyLooked = game.players.all { it.knownCardPositions.size >= SETUP_PEEKS }
-            return if (everybodyLooked) move(GameAction.FinishSetup(PlayerIdPayload(me))) else null
+        if (player.knownCardPositions.size < SETUP_PEEKS) {
+            val position = player.cards.indices.first { it !in player.knownCardPositions }
+            return GameAction.PeekSetupCard(PositionPayload(me, position))
         }
+        // Finishing is for the table, not for a seat: the room refuses it while anybody still
+        // owes a peek, and a driver that offered it early spent every pass being told so. The
+        // bots are dealt theirs, so this waits on the other person.
+        val everybodyLooked = game.players.all { it.knownCardPositions.size >= SETUP_PEEKS }
+        return if (everybodyLooked) GameAction.FinishSetup(PlayerIdPayload(me)) else null
+    }
 
-        val toss = game.activeTossIn
-        if (toss != null && toss.waitingForInput && me !in toss.playersReadyForNextTurn) {
-            val mine = game.players.getOrNull(toss.originalPlayerIndex)?.id == me
-            if (mine && mayCall && game.vintoCallerId == null) {
-                return move(GameAction.CallVinto(PlayerIdPayload(me)))
-            }
-            return move(GameAction.PlayerTossInFinished(PlayerIdPayload(me)))
-        }
+    /**
+     * A window open for throws is answered; one this seat has already answered is *waited* on.
+     *
+     * Read from `tossInIsOpen` rather than the window's own `waitingForInput`, because that is
+     * what a client asks (`tossInTable`) and the flag disagrees with it — a driver reading the
+     * flag drew into an open window on every pass and was told, correctly, that it could not.
+     */
+    private fun inTheWindow(
+        game: GameState,
+        me: String,
+        mayCall: Boolean,
+        quiet: Boolean,
+    ): GameAction? {
+        val toss = game.activeTossIn ?: return null
+        if (quiet || me in toss.playersReadyForNextTurn) return null
 
-        if (game.players.getOrNull(game.currentPlayerIndex)?.id != me) return null
-        return if (game.pendingAction != null) {
-            move(GameAction.DiscardCard(PlayerIdPayload(me)))
+        val mine = game.players.getOrNull(toss.originalPlayerIndex)?.id == me
+        return if (mine && mayCall && game.vintoCallerId == null) {
+            GameAction.CallVinto(PlayerIdPayload(me))
         } else {
-            move(GameAction.DrawCard(PlayerIdPayload(me)))
+            GameAction.PlayerTossInFinished(PlayerIdPayload(me))
         }
     }
+
+    /** Draw, and put it straight down: a round that ends, not a good one. */
+    private fun takingATurn(game: GameState, me: String): GameAction =
+        if (game.pendingAction != null) {
+            GameAction.DiscardCard(PlayerIdPayload(me))
+        } else {
+            GameAction.DrawCard(PlayerIdPayload(me))
+        }
 
     private fun stopped(room: RoomState, seed: Long, why: String = "nobody has a move"): String {
         val game = room.game ?: return "  seed $seed: no game ($why)"

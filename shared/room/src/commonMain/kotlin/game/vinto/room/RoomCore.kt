@@ -12,6 +12,7 @@ import game.vinto.engine.calculateFinalScores
 import game.vinto.engine.calculateRoundPoints
 import game.vinto.engine.initializeGame
 import game.vinto.engine.projectView
+import game.vinto.engine.tossInIsOpen
 import game.vinto.protocol.LobbySeat
 import game.vinto.protocol.LobbyView
 import game.vinto.protocol.LoggedAction
@@ -1073,7 +1074,13 @@ private fun laggingHumans(state: RoomState): List<String> {
     // top of the pile — with its ready list emptied. Only a window still *open for throws*
     // is waiting on anyone; reading the record alone put the two humans on the clock during
     // one of their own turns, and the room then answered the window for them.
-    if (!toss.waitingForInput) return emptyList()
+    //
+    // Asked of `tossInIsOpen` rather than of `waitingForInput`, which was the first repair and
+    // is not reliable: the flag is false for a window the engine has just reopened, and the
+    // room then set no clock on it at all. An open window with a turn behind it and nothing to
+    // end it is a table that stops, which is worse than the answering-too-eagerly this line was
+    // originally written to prevent. See `tossInIsOpen` for why the flag cannot be corrected.
+    if (!game.tossInIsOpen) return emptyList()
     return game.players
         .filter { it.isHuman && it.id !in toss.playersReadyForNextTurn }
         .map { it.id }
@@ -1091,11 +1098,19 @@ private fun laggingHumans(state: RoomState): List<String> {
  */
 internal fun withPacing(state: RoomState, nowMs: Double, watching: Int = 0): RoomState {
     val playing = state.phase == RoomPhase.PLAYING
+    val running = state.tossInDeadlineEpochMs
     val tossDeadline = if (playing && laggingHumans(state).isNotEmpty()) {
-        state.tossInDeadlineEpochMs ?: nowMs + TOSS_IN_MS + animationAllowance(watching)
+        running ?: nowMs + TOSS_IN_MS + animationAllowance(watching)
     } else {
         null
     }
+
+    // Whether this clock is a *new* window's rather than one already running. It matters for
+    // the extensions below: one window can follow another with no gap between them — answering
+    // a window ends a turn, the bots play, and one of their discards opens the next — so
+    // "the deadline went null" is no longer a reliable sign that a window ended, and a second
+    // window used to be born with the first one's extensions already spent.
+    val freshWindow = tossDeadline != null && running == null
     // A window that has run out of people is **closed**, not merely un-clocked. Nulling the
     // deadline while leaving `conferredRound` unset let it mint a fresh twenty seconds the
     // moment somebody reconnected — and again on the next reconnect, indefinitely. That is
@@ -1123,7 +1138,7 @@ internal fun withPacing(state: RoomState, nowMs: Double, watching: Int = 0): Roo
         conferredRound = conferred,
         plan = state.plan?.let { state.withLanesLocked(it) },
         // A window's extensions die with it; the next window starts with a full allowance.
-        tossInExtensions = if (tossDeadline == null) 0 else state.tossInExtensions,
+        tossInExtensions = if (tossDeadline == null || freshWindow) 0 else state.tossInExtensions,
     )
 }
 

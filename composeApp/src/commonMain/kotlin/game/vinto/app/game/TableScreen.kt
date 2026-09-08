@@ -134,6 +134,7 @@ import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.engine.cardInPlay
 import game.vinto.engine.mySeat
+import game.vinto.engine.tossInIsOpen
 import game.vinto.engine.turnHolderId
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.ActiveTossIn
@@ -1580,7 +1581,9 @@ private fun badgesFor(
     val toss = view.activeTossIn
     val waiting = when {
         view.phase == GamePhase.SETUP -> seat.knownCardPositions.size < SETUP_PEEKS
-        toss?.waitingForInput == true -> seat.id !in toss.playersReadyForNextTurn
+        // `tossInIsOpen` and not the window record's own flag: it reads false for a window the
+        // engine has just reopened, so the seats a table was genuinely waiting on wore no mark.
+        view.tossInIsOpen && toss != null -> seat.id !in toss.playersReadyForNextTurn
         else -> active
     }
     if (waiting) add(SeatBadge.WAITING)
@@ -1959,7 +1962,9 @@ private fun TossIn(view: PlayerView) {
         // wears: this is the one moment that belongs to the whole table at once, and a
         // static chip read as furniture — a player who missed the cards' rings had nothing
         // saying "the table is waiting on this".
-        val open = toss.waitingForInput
+        // The same question the rail asks (`tossInTable`) and the room asks (`laggingHumans`),
+        // asked once: a window the engine has reopened is open, whatever its own flag says.
+        val open = view.tossInIsOpen
         val pulse = rememberInfiniteTransition(label = "tossWindow")
         val breath by pulse.animateFloat(
             initialValue = TossQuiet,

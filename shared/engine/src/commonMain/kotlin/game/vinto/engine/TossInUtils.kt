@@ -216,6 +216,13 @@ fun clearTossInAfterActionableCard(
     } else {
         clearTossInReadyList(state)
         // Back to toss-in so a human can still call Vinto.
+        //
+        // **`waitingForInput` is deliberately left as it is, and is therefore not the truth
+        // about this window.** Setting it here is the obvious repair and it moves a field that
+        // is inside the canonical hash: `CorpusReplayTest` diverges at action 54 of
+        // `selfplay-moderate-1`, because the corpus records what both engines did. The corpus
+        // is frozen (`fixtures/recordings/README.md`), so the field stays wrong and nothing
+        // reads it — see `tossInIsOpen`, which is what "is this window open" means everywhere.
         state.subPhase = GameSubPhase.TOSS_QUEUE_ACTIVE
     }
 }

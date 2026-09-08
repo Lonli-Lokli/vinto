@@ -2,6 +2,7 @@ package game.vinto.room
 
 import game.vinto.bot.BotRunner
 import game.vinto.engine.initializeGame
+import game.vinto.engine.tossInIsOpen
 import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.RoomPhase
@@ -42,7 +43,20 @@ class PacingTimeoutTest {
             room.tossInDeadlineEpochMs,
             "a window waiting on a human carries a deadline",
         )
-        assertEquals(openedAt + TOSS_IN_MS, deadline, "fifteen seconds from the opening")
+        // Fifteen seconds of *deciding*, which is the window plus whatever the same response
+        // handed the client to watch first — see `ANIMATION_PER_MOVE_MS`. It used to be an
+        // equality, and it held only while the window happened to open behind nothing; a window
+        // that arrives behind three bot moves is a window a player reaches with a third of it
+        // already spent, which is the thing the allowance exists to stop.
+        assertTrue(
+            deadline >= openedAt + TOSS_IN_MS,
+            "a window that arrives behind a batch gives less than the window: " +
+                "${(deadline - openedAt).toLong()} ms",
+        )
+        assertTrue(
+            deadline <= openedAt + TOSS_IN_MS + MAX_WATCHING_MS,
+            "the allowance for watching is unbounded: ${(deadline - openedAt).toLong()} ms",
+        )
 
         // The expiry: the room finishes the window for the laggards, byBot, and the
         // envelope form delivers it as ordinary events with per-event views.
@@ -51,7 +65,13 @@ class PacingTimeoutTest {
             alarmEnvelopes(state, deadline + 1),
         )
         val after = fired.state
-        assertNull(after.tossInDeadlineEpochMs, "an expired deadline does not linger")
+        // The expired clock is gone. Whatever stands now belongs to a later window: closing one
+        // plays the round on, and the next discard opens another — which is why this asks that
+        // the *old* deadline did not survive rather than that the room fell silent.
+        assertTrue(
+            after.tossInDeadlineEpochMs?.let { it > deadline } != false,
+            "an expired deadline lingers: ${after.tossInDeadlineEpochMs} against $deadline",
+        )
         val synthesized = after.log.drop(room.log.size)
             .filter { it.byBot && it.action is GameAction.PlayerTossInFinished }
         assertTrue(synthesized.isNotEmpty(), "the room moved for the humans it out-waited")
@@ -92,9 +112,21 @@ class PacingTimeoutTest {
             current = encode(result.state)
         }
 
-        assertNull(
-            decodeRoom(current).tossInDeadlineEpochMs,
-            "nobody is being waited on, so nothing is on the clock",
+        // The window they were on the clock for is gone — which is not the same as "no clock",
+        // and used to be asserted as though it were. Answering a window ends the turn, the room
+        // plays the bots that follow, and one of their discards opens a *fresh* window waiting
+        // on these same people. A deadline on that one is the rule working, not a leak: what
+        // must never happen is the old window's clock surviving its window.
+        val after = decodeRoom(current)
+        val stillOpen = after.game?.let { it.tossInIsOpen } == true
+        assertEquals(
+            stillOpen,
+            after.tossInDeadlineEpochMs != null,
+            "a clock and its window disagree: open=$stillOpen, deadline=${after.tossInDeadlineEpochMs}",
+        )
+        assertTrue(
+            after.tossInDeadlineEpochMs == null || after.tossInDeadlineEpochMs!! > now,
+            "the clock is in the past, so it is the window's that has been left behind",
         )
     }
 
@@ -137,14 +169,20 @@ class PacingTimeoutTest {
         val third = askedForTime(second.state, token, now)
         assertNotNull(third.error, "a window is extended at most twice")
 
-        // And the allowance dies with the window: the expiry clears both the deadline and
-        // the count, so the next window starts fresh.
+        // And the allowance dies with the window: the expiry ends it, the count goes back to
+        // zero, and whatever clock stands afterwards belongs to a *later* window — the round
+        // plays on when a window closes, and the next discard opens a new one. What is checked
+        // is therefore that nothing survived the expiry, not that the room fell silent.
+        val expiredAt = second.state.tossInDeadlineEpochMs!! + 1
         val fired = VintoJson.decodeFromString(
             AlarmEnvelopes.serializer(),
-            alarmEnvelopes(encode(second.state), second.state.tossInDeadlineEpochMs!! + 1),
+            alarmEnvelopes(encode(second.state), expiredAt),
         )
-        assertNull(fired.state.tossInDeadlineEpochMs)
-        assertEquals(0, fired.state.tossInExtensions)
+        assertEquals(0, fired.state.tossInExtensions, "the extensions outlived their window")
+        assertTrue(
+            fired.state.tossInDeadlineEpochMs?.let { it > expiredAt } != false,
+            "the expired clock is still standing: ${fired.state.tossInDeadlineEpochMs}",
+        )
     }
 
     @Test
@@ -323,6 +361,9 @@ class PacingTimeoutTest {
         const val MOVE_LIMIT = 600
         const val TOSS_IN_MS = 15_000.0
         const val MORE_TIME_MS = 15_000.0
+
+        /** `RoomCore`'s cap on the watching allowance, pinned here so a drift fails this. */
+        const val MAX_WATCHING_MS = 15_000.0
         val SEEDS = listOf(42L, 7L, 11L)
         val TOKENS = mapOf(0 to "token-ann", 1 to "token-bob")
     }

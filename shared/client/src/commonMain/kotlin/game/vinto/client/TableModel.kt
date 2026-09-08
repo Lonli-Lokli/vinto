@@ -6,6 +6,7 @@ import game.vinto.engine.PendingTargetView
 import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.engine.PublicReveal
+import game.vinto.engine.tossInIsOpen
 import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Believed
@@ -1265,7 +1266,7 @@ private fun playing(current: PlayerSeatView?, view: PlayerView): Speaker = when 
 
 private fun tossInTable(view: PlayerView): Table? {
     val toss = view.activeTossIn ?: return null
-    if (view.subPhase != GameSubPhase.TOSS_QUEUE_ACTIVE) return null
+    if (!view.tossInIsOpen) return null
 
     val me = view.viewerId
     if (me in toss.playersReadyForNextTurn) {
