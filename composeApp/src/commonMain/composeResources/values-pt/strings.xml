@@ -117,14 +117,14 @@
     <!-- ================================================================ settings -->
     <string name="settings_title">Definições</string>
 
-    <string name="settings_group_game">O jogo</string>
+    <string name="settings_group_game">Jogo</string>
     <string name="settings_group_feel">Aparência</string>
     <string name="settings_language">Idioma</string>
     <string name="settings_language_detail">Ainda não traduzido? O jogo volta ao inglês, e as palavras que uma carta diz nunca mudam.</string>
     <string name="settings_language_device">Seguir o dispositivo</string>
     <string name="settings_language_current">Idioma: %1$s</string>
     <string name="settings_language_chosen">%1$s, selecionado</string>
-    <string name="settings_group_privacy">O que sai deste dispositivo</string>
+    <string name="settings_group_privacy">Privacidade</string>
     <string name="settings_group_about">Sobre</string>
 
     <string name="settings_support">Apoiar o jogo</string>
@@ -138,7 +138,7 @@
     <string name="settings_group_game_summary">Adversários, ritmo, movimento, aparência, idioma e o teu registo.</string>
     <string name="settings_group_privacy_summary">O que é contabilizado, e como desativar.</string>
     <string name="settings_group_about_summary">De quem é este jogo, quem fez a aplicação, e como entrar em contacto.</string>
-    <string name="settings_privacy">Privacidade</string>
+    <string name="settings_privacy">Política de privacidade</string>
     <string name="settings_privacy_detail">O que é contabilizado, o que não é, e como desativar.</string>
     <string name="settings_terms">Termos de utilização</string>
     <string name="settings_terms_detail">A versão resumida do que podes esperar, e do que se espera de ti.</string>
@@ -259,6 +259,8 @@
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">Oferece-me um café</string>
     <string name="header_report">Reportar um problema</string>
+    <string name="settings_report_detail">Envia a ronda em que estava: a distribuição, cada jogada por ordem e nenhum nome. É o que torna um erro reproduzível.</string>
+    <string name="settings_report_send">Reportar</string>
     <string name="header_settings">Definições</string>
     <string name="header_rules">Regras</string>
     <string name="header_leave">Sair da mesa</string>
@@ -406,7 +408,6 @@
     <string name="gloss_pulse">Uma carta que pulsa pode ser tocada agora.</string>
     <string name="gloss_toss">A etiqueta por baixo das pilhas indica o valor para o qual a janela está aberta.</string>
     <string name="gloss_log">Todas as jogadas ficam registadas nesta caixa — espreita-a quando as cartas se moverem mais depressa do que consegues ler.</string>
-    <string name="gloss_badge">O número verde conta o que resta no baralho.</string>
 
     <string name="teach_note">%1$s — vale %2$s. %3$s.</string>
     <string name="teach_note_plain">%1$s — vale %2$s, e não faz nada. Está bem guardá-la por agora, e é uma a trocar antes de alguém chamar.</string>

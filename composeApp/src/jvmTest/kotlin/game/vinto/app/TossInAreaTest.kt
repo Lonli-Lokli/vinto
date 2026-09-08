@@ -127,8 +127,6 @@ class TossInAreaTest {
                         onMove = {},
                         onHelp = {},
                         onSettings = {},
-                        onReport = {},
-                        onDeck = {},
                     )
                 }
             }

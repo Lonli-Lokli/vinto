@@ -43,6 +43,7 @@ import game.vinto.client.LocalGame
 import game.vinto.client.Pace
 import game.vinto.client.Question
 import game.vinto.client.Reachability
+import game.vinto.client.Recording
 import game.vinto.client.RemoteRoom
 import game.vinto.client.RoomConnector
 import game.vinto.client.Settings
@@ -227,6 +228,7 @@ fun App(
                                             screen = Screen.Home(canContinue = false)
                                         },
                                         onBack = { screen = here.back },
+                                        report = reportFor(here.back),
                                     )
 
                                     Screen.Teaching -> TeachScreen(
@@ -603,6 +605,23 @@ private fun AtTheTable(here: Screen.Playing, pace: Pace, onSettings: () -> Unit,
         onQuit = onQuit,
     )
 }
+
+/**
+ * The round to report, when the settings were opened from one.
+ *
+ * The bug report is a *recording* — the deal, every action in order, a hash after each — and it
+ * is worth having precisely because it is reproducible. So the offer only exists where there is
+ * a game to describe: from the front door there is nothing to send, and a report with no round
+ * in it is a description, which is the thing recordings exist to replace.
+ *
+ * Read off the screen the settings were opened *from*, which is the one place that knows.
+ */
+private fun reportFor(back: Screen): (() -> Recording)? =
+    if (back is Screen.Playing) {
+        { back.game.session.report(at = nowIso(), label = "reported from the settings") }
+    } else {
+        null
+    }
 
 /**
  * Where each capture state opens.

@@ -641,8 +641,6 @@ private fun RemoteGameScreen(
                     onMove = act.unlessRehearsing(),
                     onHelp = { helpOpen = true },
                     onSettings = onSettings,
-                    onReport = {},
-                    onDeck = {},
                     modifier = Modifier.weight(1f),
                     onLeave = wayOut(room, onLeft),
                 )
@@ -668,7 +666,7 @@ private fun RemoteGameScreen(
         }
     }
 
-    HelpSheet(open = helpOpen, now = holder.table.help, onDismiss = { helpOpen = false })
+    HelpSheet(helpOpen, holder.table.help, holder.current.drawPileSize, { helpOpen = false })
 
     // The room is finished, so leaving is the whole of what is left: `quit` tells it so, and
     // `onLeft` is the same door the lobby's own Leave uses.

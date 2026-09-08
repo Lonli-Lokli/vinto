@@ -117,14 +117,14 @@
     <!-- ================================================================ settings -->
     <string name="settings_title">ترتیبات</string>
 
-    <string name="settings_group_game">کھیل</string>
+    <string name="settings_group_game">گیم</string>
     <string name="settings_group_feel">نظر اور احساس</string>
     <string name="settings_language">زبان</string>
     <string name="settings_language_detail">ابھی ترجمہ نہیں ہوا؟ گیم انگریزی پر واپس چلا جاتا ہے، اور کارڈ کے الفاظ کبھی نہیں بدلتے۔</string>
     <string name="settings_language_device">ڈیوائس کی پیروی کریں</string>
     <string name="settings_language_current">زبان: %1$s</string>
     <string name="settings_language_chosen">%1$s، منتخب شدہ</string>
-    <string name="settings_group_privacy">اس ڈیوائس سے کیا باہر جاتا ہے</string>
+    <string name="settings_group_privacy">پرائیویسی</string>
     <string name="settings_group_about">بارے میں</string>
     <string name="settings_support">گیم کی حمایت کریں</string>
     <string name="settings_support_detail">اگر آپ نے لطف اٹھایا اور یہ بتانا چاہتے ہیں۔ اس سے کچھ کھلتا نہیں — کچھ بند بھی نہیں ہے۔</string>
@@ -138,7 +138,7 @@
     <string name="settings_group_privacy_summary">کیا شمار ہوتا ہے، اور اسے کیسے بند کریں۔</string>
     <string name="settings_group_about_summary">یہ کس کا گیم ہے، ایپ کس نے بنائی، اور رابطہ کیسے کریں۔</string>
 
-    <string name="settings_privacy">رازداری</string>
+    <string name="settings_privacy">پرائیویسی پالیسی</string>
     <string name="settings_privacy_detail">کیا شمار ہوتا ہے، کیا نہیں، اور اسے کیسے بند کریں۔</string>
     <string name="settings_terms">استعمال کی شرائط</string>
     <string name="settings_terms_detail">مختصر یہ کہ آپ کیا توقع رکھ سکتے ہیں، اور آپ سے کیا توقع ہے۔</string>
@@ -259,6 +259,8 @@
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">مجھے کافی پلائیں</string>
     <string name="header_report">کوئی مسئلہ بتائیں</string>
+    <string name="settings_report_detail">آپ جس راؤنڈ میں تھے وہ بھیجتا ہے: تقسیم، ہر چال ترتیب سے، کوئی نام نہیں۔ یہی بگ کو قابلِ تکرار بناتا ہے۔</string>
+    <string name="settings_report_send">رپورٹ</string>
     <string name="header_settings">ترتیبات</string>
     <string name="header_rules">قواعد</string>
     <string name="header_leave">میز چھوڑیں</string>
@@ -406,7 +408,6 @@
     <string name="gloss_pulse">جو پتہ سانس لیتا نظر آئے وہ ابھی چھوا جا سکتا ہے۔</string>
     <string name="gloss_toss">ڈھیروں کے نیچے چپ اس درجے کا نام بتاتی ہے جس کے لیے ونڈو کھلی ہے۔</string>
     <string name="gloss_log">ہر چال اس خانے میں لکھی جاتی ہے — جب پتے آپ کے پڑھنے سے تیز چلیں تو اس پر نظر ڈالیں۔</string>
-    <string name="gloss_badge">سبز نمبر بتاتا ہے ڈیک میں کیا بچا ہے۔</string>
 
     <string name="teach_note">%1$s — قیمت %2$s۔ %3$s۔</string>
     <string name="teach_note_plain">%1$s — قیمت %2$s، اور یہ کچھ نہیں کرتا۔ ابھی رکھنے کے لیے ٹھیک ہے، اور کسی کے کال کرنے سے پہلے بدلنے کے قابل۔</string>

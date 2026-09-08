@@ -126,7 +126,7 @@
     <string name="settings_language_device">端末の設定に従う</string>
     <string name="settings_language_current">言語: %1$s</string>
     <string name="settings_language_chosen">%1$s（選択中）</string>
-    <string name="settings_group_privacy">送信される情報</string>
+    <string name="settings_group_privacy">プライバシー</string>
     <string name="settings_group_about">このアプリについて</string>
 
     <string name="settings_support">ゲームを支援する</string>
@@ -140,7 +140,7 @@
     <string name="settings_group_game_summary">対戦相手、テンポ、モーション、見た目、言語、あなたの記録。</string>
     <string name="settings_group_privacy_summary">何が計測されるか、そしてオフにする方法。</string>
     <string name="settings_group_about_summary">このゲームが誰のものか、アプリを作ったのは誰か、連絡方法。</string>
-    <string name="settings_privacy">プライバシー</string>
+    <string name="settings_privacy">プライバシーポリシー</string>
     <string name="settings_privacy_detail">何が計測され、何がされないか、そしてオフにする方法。</string>
     <string name="settings_terms">利用規約</string>
     <string name="settings_terms_detail">あなたが期待できること、あなたに期待されることの要約。</string>
@@ -261,6 +261,8 @@
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">コーヒーをおごる</string>
     <string name="header_report">問題を報告</string>
+    <string name="settings_report_detail">プレイ中のラウンドを送ります。配札と全ての手を順番に、名前は含みません。バグを再現可能にするのはこれです。</string>
+    <string name="settings_report_send">報告</string>
     <string name="header_settings">設定</string>
     <string name="header_rules">ルール</string>
     <string name="header_leave">テーブルを退出</string>
@@ -414,7 +416,6 @@
     <string name="gloss_pulse">呼吸するように光るカードは、今触れられます。</string>
     <string name="gloss_toss">山の下のチップが、投げ込みが開いているランクを示します。</string>
     <string name="gloss_log">すべての手はこの枠に記録されます — カードが速く動きすぎて追えなかったときはここを見てください。</string>
-    <string name="gloss_badge">緑の数字は山札に残っている枚数です。</string>
 
     <!-- A card met for the first time. -->
     <string name="teach_note">%1$s — 価値%2$s。%3$s。</string>

@@ -127,7 +127,7 @@
     <string name="settings_language_device">Cihazı izle</string>
     <string name="settings_language_current">Dil: %1$s</string>
     <string name="settings_language_chosen">%1$s, seçildi</string>
-    <string name="settings_group_privacy">Bu cihazdan ne çıkar</string>
+    <string name="settings_group_privacy">Gizlilik</string>
     <string name="settings_group_about">Hakkında</string>
     <string name="settings_support">Oyunu destekle</string>
     <string name="settings_support_detail">Beğendiysen ve bunu belirtmek istersen. Hiçbir şeyin kilidini açmaz — zaten kilitli bir şey yok.</string>
@@ -141,7 +141,7 @@
     <string name="settings_group_privacy_summary">Neyin sayıldığı ve nasıl kapatılacağı.</string>
     <string name="settings_group_about_summary">Bu oyunun kime ait olduğu, uygulamayı kimin yaptığı ve nasıl ulaşılacağı.</string>
 
-    <string name="settings_privacy">Gizlilik</string>
+    <string name="settings_privacy">Gizlilik politikası</string>
     <string name="settings_privacy_detail">Neyin sayıldığı, neyin sayılmadığı ve nasıl kapatılacağı.</string>
     <string name="settings_terms">Kullanım koşulları</string>
     <string name="settings_terms_detail">Senden ve senin için beklenenlerin kısa hâli.</string>
@@ -262,6 +262,8 @@
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">Bana bir kahve ısmarla</string>
     <string name="header_report">Sorun bildir</string>
+    <string name="settings_report_detail">Oynadığınız eli gönderir: dağıtım, sırayla her hamle, isim yok. Bir hatayı tarif edilebilir değil yeniden üretilebilir kılan budur.</string>
+    <string name="settings_report_send">Bildir</string>
     <string name="header_settings">Ayarlar</string>
     <string name="header_rules">Kurallar</string>
     <string name="header_leave">Masadan ayrıl</string>
@@ -414,7 +416,6 @@
     <string name="gloss_pulse">Nefes alan bir kart şimdi dokunulabilir.</string>
     <string name="gloss_toss">Yığınların altındaki jeton, pencerenin hangi değer için açık olduğunu söyler.</string>
     <string name="gloss_log">Her hamle bu kutuya yazılır — kartlar okuyabileceğinden hızlı hareket ettiğinde bir göz at.</string>
-    <string name="gloss_badge">Yeşil sayı destede kalanı sayar.</string>
 
     <string name="teach_note">%1$s — değeri %2$s. %3$s.</string>
     <string name="teach_note_plain">%1$s — değeri %2$s, ve hiçbir şey yapmaz. Şimdilik tutmak sorun değil, biri çağırmadan önce değiştirilecek biri.</string>

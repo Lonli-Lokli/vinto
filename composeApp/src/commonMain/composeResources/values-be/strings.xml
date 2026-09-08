@@ -132,7 +132,7 @@
     <string name="settings_language_device">Як на прыладзе</string>
     <string name="settings_language_current">Мова: %1$s</string>
     <string name="settings_language_chosen">%1$s — абрана</string>
-    <string name="settings_group_privacy">Што сыходзіць з прылады</string>
+    <string name="settings_group_privacy">Прыватнасць</string>
     <string name="settings_group_about">Пра дадатак</string>
 
     <string name="settings_support">Падтрымаць гульню</string>
@@ -146,7 +146,7 @@
     <string name="settings_group_game_summary">Супернікі, тэмп, рух, выгляд, мова і ваша статыстыка.</string>
     <string name="settings_group_privacy_summary">Што ўлічваецца і як гэта выключыць.</string>
     <string name="settings_group_about_summary">Чыя гэта гульня, хто зрабіў дадатак, і як з імі звязацца.</string>
-    <string name="settings_privacy">Прыватнасць</string>
+    <string name="settings_privacy">Палітыка прыватнасці</string>
     <string name="settings_privacy_detail">Што лічыцца, што не, і як гэта выключыць.</string>
     <string name="settings_terms">Умовы карыстання</string>
     <string name="settings_terms_detail">Коратка пра тое, чаго чакаць ад нас і чаго мы чакаем ад вас.</string>
@@ -265,6 +265,8 @@
 
     <string name="header_support">Пачаставаць кавай</string>
     <string name="header_report">Паведаміць пра праблему</string>
+    <string name="settings_report_detail">Дасылае раунд, у якім вы былі: раздачу і кожны ход па парадку, без імёнаў. Менавіта гэта робіць памылку прайграванай.</string>
+    <string name="settings_report_send">Паведаміць</string>
     <string name="header_settings">Налады</string>
     <string name="header_rules">Правілы</string>
     <string name="header_leave">Пакінуць стол</string>
@@ -407,7 +409,6 @@
     <string name="gloss_pulse">Картку, якая дыхае, можна крануць прама зараз.</string>
     <string name="gloss_toss">Фішка пад стосамі называе намінал, для якога адкрыта акно.</string>
     <string name="gloss_log">Кожны ход запісваецца ў гэта акенца — зазірніце, калі карткі рухаліся хутчэй, чым вы паспявалі чытаць.</string>
-    <string name="gloss_badge">Зялёны лік лічыць, колькі засталося ў калодзе.</string>
 
     <string name="teach_note">%1$s — каштуе %2$s. %3$s.</string>
     <string name="teach_note_plain">%1$s — каштуе %2$s і не робіць роўным лікам нічога. Пакуль можна трымаць, але да чыёйсьці заяўкі яе варта памяняць.</string>

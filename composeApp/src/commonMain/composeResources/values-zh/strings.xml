@@ -116,7 +116,7 @@
     <string name="settings_language_device">跟随设备</string>
     <string name="settings_language_current">语言：%1$s</string>
     <string name="settings_language_chosen">%1$s，已选择</string>
-    <string name="settings_group_privacy">会发送出去的内容</string>
+    <string name="settings_group_privacy">隐私</string>
     <string name="settings_group_about">关于</string>
 
     <string name="settings_support">支持这个游戏</string>
@@ -130,7 +130,7 @@
     <string name="settings_group_game_summary">对手、节奏、动效、外观、语言，以及你的战绩。</string>
     <string name="settings_group_privacy_summary">统计了什么，以及如何关闭它。</string>
     <string name="settings_group_about_summary">这个游戏属于谁，这个应用是谁做的，以及如何联系。</string>
-    <string name="settings_privacy">隐私</string>
+    <string name="settings_privacy">隐私政策</string>
     <string name="settings_privacy_detail">我们统计什么、不统计什么，以及如何关闭它。</string>
     <string name="settings_terms">使用条款</string>
     <string name="settings_terms_detail">简要说明你可以期待什么，以及对你有什么期待。</string>
@@ -249,6 +249,8 @@
 
     <string name="header_support">请我喝杯咖啡</string>
     <string name="header_report">反馈问题</string>
+    <string name="settings_report_detail">发送你所在的这一局：发牌和按顺序的每一步，不含姓名。这才能让缺陷可复现，而不只是被描述。</string>
+    <string name="settings_report_send">报告</string>
     <string name="header_settings">设置</string>
     <string name="header_rules">规则</string>
     <string name="header_leave">离开牌桌</string>
@@ -391,7 +393,6 @@
     <string name="gloss_pulse">会呼吸闪动的牌现在可以点按。</string>
     <string name="gloss_toss">牌堆下方的标签标出了这个窗口正在接受跟打的点数。</string>
     <string name="gloss_log">每一步操作都会记录在这个框里——牌动得太快看不清时，可以瞥一眼这里。</string>
-    <string name="gloss_badge">绿色数字是牌堆里剩余的牌数。</string>
 
     <string name="teach_note">%1$s——点数 %2$s。%3$s。</string>
     <string name="teach_note_plain">%1$s——点数 %2$s，没有任何动作。现在留着没问题，喊牌前记得换掉。</string>

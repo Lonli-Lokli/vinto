@@ -5,16 +5,22 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.runComposeUiTest
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.MemoryVault
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The four controls in the header, each of which answers something.
@@ -27,10 +33,18 @@ import kotlin.test.assertEquals
 class HeaderControlsTest {
 
     @Test
-    fun theDeckCountExplainsItself() = onATable {
-        onNodeWithContentDescription(BADGE, substring = true).performClick()
+    fun theDeckIsExplainedInTheRules() = onATable {
+        // No chip of its own any more: six controls is too many for a phone's header, and this
+        // was the one of them that was a number rather than something to press. The explanation
+        // went where the rest of "what does this mean" already lives.
+        onNodeWithText("?").performClick()
         waitForIdle()
-        onNodeWithText("The deck").assertIsDisplayed()
+        // Scrolled to within the sheet's own list: it is the last section, and a LazyColumn has
+        // not composed what is below the fold. `onAllNodes` because the table behind the sheet
+        // has scrollables of its own and a strict matcher picks one of those.
+        onAllNodes(hasScrollAction()).onLast()
+            .performScrollToNode(hasText("The deck", substring = true))
+        onNodeWithText("The deck", substring = true).assertIsDisplayed()
     }
 
     /**
@@ -56,10 +70,13 @@ class HeaderControlsTest {
     }
 
     @Test
-    fun theBugIconOffersToSendTheGame() = onATable {
-        onNodeWithContentDescription(REPORT).performClick()
-        waitForIdle()
-        onNodeWithText("Report a problem", substring = true).assertIsDisplayed()
+    fun theHeaderNoLongerCarriesAReport() = onATable {
+        // It is in the settings now, under the review button — a control every player saw on
+        // every turn, for the sake of the few who would ever press it, on the one screen with
+        // no room to spare. `SettingsScreen` is where it is tested.
+        onAllNodesWithContentDescription(REPORT).fetchSemanticsNodes().let {
+            assertTrue(it.isEmpty(), "the header still has a report control")
+        }
     }
 
     @Test
@@ -81,7 +98,7 @@ class HeaderControlsTest {
     fun theGearOpensTheSettingsAndComesBackToTheSameTable() = onATable {
         onNodeWithContentDescription(SETTINGS).performClick()
         waitForIdle()
-        // The front page now, where sound and haptics are; pace lives behind "The game".
+        // The front page now, where sound and haptics are; pace lives behind "Game".
         onNodeWithText("Sound", substring = true).assertIsDisplayed()
 
         // Scrolled to first: the settings column is taller than the window, and Compose clips
@@ -90,7 +107,9 @@ class HeaderControlsTest {
         onNodeWithContentDescription("Back").performScrollTo().performClick()
         waitForIdle()
 
-        onNodeWithContentDescription(BADGE, substring = true).assertIsDisplayed()
+        onAllNodesWithText("DRAW", substring = true).fetchSemanticsNodes().let {
+            assertTrue(it.isNotEmpty(), "coming back out of the settings did not land on a table")
+        }
         onAllNodesWithText("Play").fetchSemanticsNodes().let {
             assertEquals(0, it.size, "it went home instead of back to the round")
         }

@@ -73,9 +73,9 @@ class MenuUiTest {
 
         press("Settings")
         waitForIdle()
-        // Pace lives behind "The game" now — the settings' front page carries only the three
+        // Pace lives behind "Game" now — the settings' front page carries only the three
         // controls people actually come to press.
-        onNodeWithText("THE GAME").performScrollTo().performClick()
+        onNodeWithText("GAME").performScrollTo().performClick()
         waitForIdle()
         press("Calm")
         waitForIdle()

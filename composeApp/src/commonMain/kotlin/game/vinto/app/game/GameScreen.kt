@@ -1,6 +1,5 @@
 package game.vinto.app.game
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +18,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import game.vinto.app.CountRefusals
 import game.vinto.app.LocalCounting
@@ -28,18 +26,11 @@ import game.vinto.app.art.Res
 import game.vinto.app.art.deck_body
 import game.vinto.app.art.deck_dismiss
 import game.vinto.app.art.deck_title
-import game.vinto.app.art.report_body
-import game.vinto.app.art.report_copy
-import game.vinto.app.art.report_dismiss
-import game.vinto.app.art.report_send
 import game.vinto.app.art.report_subject
-import game.vinto.app.art.report_title
 import game.vinto.app.art.table_see_score
 import game.vinto.app.counted
 import game.vinto.app.elapsedMs
 import game.vinto.app.hasSystemBack
-import game.vinto.app.nowIso
-import game.vinto.app.shareText
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.LocalSounds
@@ -47,7 +38,6 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Sfx
 import game.vinto.app.theme.VintoDialog
 import game.vinto.client.LocalGame
-import game.vinto.client.LocalGameSession
 import game.vinto.client.Pace
 import game.vinto.client.Question
 import game.vinto.client.RoundResult
@@ -55,7 +45,6 @@ import game.vinto.client.dealScenes
 import game.vinto.client.loadStats
 import game.vinto.client.plus
 import game.vinto.client.saveStats
-import game.vinto.client.toJson
 import game.vinto.protocol.AnalyticsEvent
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
@@ -168,8 +157,6 @@ fun GameScreen(
                     // got stuck" is worth nothing — this is the seed, every action in order, and
                     // a hash after each one, so the exact deal can be played back and the first
                     // action that disagrees is the bug's address.
-                    onReport = { reported = true },
-                    onDeck = { deckOpen = true },
                     modifier = Modifier.weight(1f),
                     onLeave = wayOut(onQuit),
                 )
@@ -181,15 +168,19 @@ fun GameScreen(
         }
     }
 
-    Reporting(session, reportSubject, clipboard, reported) { reported = false }
-
     DeckExplained(
         open = deckOpen,
         left = holder.current.drawPileSize,
         onDismiss = { deckOpen = false },
     )
 
-    HelpSheet(open = help.open, now = holder.table.help, focus = help.focus, onDismiss = help::dismiss)
+    HelpSheet(
+        open = help.open,
+        now = holder.table.help,
+        left = holder.current.drawPileSize,
+        focus = help.focus,
+        onDismiss = help::dismiss,
+    )
 
     if (scoreOpen) {
         SoloScore(
@@ -258,92 +249,6 @@ private fun SoloScore(
             onNextRound = onNextRound,
             onQuit = onQuit,
         )
-    }
-}
-
-/**
- * The report offer, lifted out of [GameScreen] rather than written inside it.
- *
- * Composed whether or not it is showing: `VintoDialog` animates on `open`, and a dialog that is
- * only composed while visible has nothing to animate *from*.
- */
-@Composable
-@Suppress("DEPRECATION")
-private fun Reporting(
-    session: LocalGameSession,
-    subject: String,
-    clipboard: androidx.compose.ui.platform.ClipboardManager,
-    open: Boolean,
-    onDone: () -> Unit,
-) {
-    fun report() = session.report(at = nowIso(), label = "reported from the table")
-
-    ReportProblem(
-        open = open,
-        onSend = {
-            val made = report()
-            if (!shareText(subject, made.toJson())) {
-                clipboard.setText(AnnotatedString(made.toJson()))
-            }
-            onDone()
-        },
-        onCopy = {
-            clipboard.setText(AnnotatedString(report().toJson()))
-            onDone()
-        },
-        onDismiss = onDone,
-    )
-}
-
-/**
- * Reporting a problem, offered rather than performed.
- *
- * It used to copy the game to the clipboard and then tell the player it had — which leaves
- * them holding a wall of JSON and no idea where to put it, and is where most bug reports
- * stop. Now it says what would be sent and what is *not* in it, and hands the sending to the
- * platform's own share sheet, where the player already knows how to mail it, message it or
- * keep it. The clipboard is still there as the second answer, and as the answer on platforms
- * that have nothing to share with.
- */
-@Composable
-private fun ReportProblem(
-    open: Boolean,
-    onSend: () -> Unit,
-    onCopy: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    VintoDialog(
-        open = open,
-        onDismiss = onDismiss,
-        title = stringResource(Res.string.report_title),
-        body = stringResource(Res.string.report_body),
-    ) {
-        // All three stacked rather than split across a confirm and a dismiss slot: a row of
-        // two with a wrapped third is what that produces, and these are three answers to one
-        // question rather than two and an afterthought.
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(DialogGap),
-        ) {
-            GameButton(
-                label = stringResource(Res.string.report_send),
-                tone = ButtonTone.PLAY,
-                onClick = onSend,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            GameButton(
-                label = stringResource(Res.string.report_copy),
-                tone = ButtonTone.NEUTRAL,
-                onClick = onCopy,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            GameButton(
-                label = stringResource(Res.string.report_dismiss),
-                tone = ButtonTone.NEUTRAL,
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
     }
 }
 

@@ -37,9 +37,11 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
+import game.vinto.app.art.header_report
 import game.vinto.app.art.home_version
 import game.vinto.app.art.settings_analytics
 import game.vinto.app.art.settings_analytics_detail
@@ -79,6 +81,8 @@ import game.vinto.app.art.settings_privacy_detail
 import game.vinto.app.art.settings_rate
 import game.vinto.app.art.settings_record
 import game.vinto.app.art.settings_record_detail
+import game.vinto.app.art.settings_report_detail
+import game.vinto.app.art.settings_report_send
 import game.vinto.app.art.settings_saved_game
 import game.vinto.app.art.settings_saved_game_detail
 import game.vinto.app.art.settings_share
@@ -125,6 +129,7 @@ import game.vinto.app.theme.pressable
 import game.vinto.app.theme.stamped
 import game.vinto.client.MotionChoice
 import game.vinto.client.Pace
+import game.vinto.client.Recording
 import game.vinto.client.Settings
 import game.vinto.client.ThemeChoice
 import game.vinto.client.forgetStats
@@ -179,8 +184,16 @@ fun SettingsScreen(
     onChange: (Settings) -> Unit,
     onForget: () -> Unit,
     onBack: () -> Unit,
+    /**
+     * The game to report, when the settings were reached from one.
+     *
+     * Null from the front door, where there is no round to describe — and a "report a problem"
+     * that sent an empty report would be worse than one that is not offered. See [Reporting].
+     */
+    report: (() -> Recording)? = null,
 ) {
     var pickingLanguage by remember { mutableStateOf(false) }
+    var reporting by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -217,8 +230,8 @@ fun SettingsScreen(
             // the other fifteen are decisions somebody makes once. Eighteen tall panels made the
             // three common ones as far away as the fifteen rare ones, which is the wrong way
             // round on the longest screen in the app.
-            Page(page, settings, canForget, onOpen, onChange, onForget) {
-                pickingLanguage = true
+            Page(page, settings, canForget, onOpen, onChange, onForget, { pickingLanguage = true }, report) {
+                reporting = true
             }
 
             // The same words as the home screen's corner, from the same two values.
@@ -231,15 +244,20 @@ fun SettingsScreen(
             Text(
                 text = stringResource(Res.string.home_version, VERSION, BUILD_NUMBER),
                 fontSize = FootnoteSize,
-                // Below the last panel, so on the felt rather than on paper.
+                // Below the last panel, so on the felt rather than on paper. Centred, because a
+                // colophon left-aligned under a column of panels reads as one more setting that
+                // failed to draw its control.
                 color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
-                modifier = Modifier.padding(top = Tight),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = Tight),
             )
         }
 
         // Outside the scrolling column and inside the root box, which is the only place a
         // full-screen overlay can be composed from: inside the column it would be clipped to
         // the column's width and scroll away with it.
+        Reporting(recording = report, open = reporting) { reporting = false }
+
         TongueSheet(
             open = pickingLanguage,
             settings = settings,
@@ -265,6 +283,8 @@ private fun Page(
     onChange: (Settings) -> Unit,
     onForget: () -> Unit,
     onPickLanguage: () -> Unit,
+    report: (() -> Recording)?,
+    onReport: () -> Unit,
 ) {
     when (page) {
         SettingsPage.ROOT -> {
@@ -272,6 +292,10 @@ private fun Page(
             Noise(settings, onChange)
             Buzz(settings, onChange)
             RateRow()
+            // Under the review button, and for the same reason it is here at all: both are
+            // things a player does *about* the app rather than in it, and neither belongs on a
+            // header a player looks at every turn.
+            if (report != null) ReportRow(onReport)
 
             Door(
                 title = stringResource(Res.string.settings_group_game),
@@ -726,6 +750,22 @@ private fun SupportRow() {
  * there is no such store, the app's own page. Never hidden: a control that exists on two
  * platforms and not the other two is read as a fault.
  */
+
+/** The way to send a game that went wrong, where a player looks when something has. */
+@Composable
+private fun ReportRow(onReport: () -> Unit) {
+    Setting(
+        title = stringResource(Res.string.header_report),
+        detail = stringResource(Res.string.settings_report_detail),
+    ) {
+        GameButton(
+            label = stringResource(Res.string.settings_report_send),
+            tone = ButtonTone.NEUTRAL,
+            onClick = onReport,
+        )
+    }
+}
+
 @Composable
 private fun RateRow() {
     val failed = remember { mutableStateOf<String?>(null) }

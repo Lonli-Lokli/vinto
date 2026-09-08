@@ -109,14 +109,14 @@
 
     <string name="settings_title">সেটিংস</string>
 
-    <string name="settings_group_game">খেলা</string>
+    <string name="settings_group_game">গেম</string>
     <string name="settings_group_feel">দেখতে ও অনুভূতিতে</string>
     <string name="settings_language">ভাষা</string>
     <string name="settings_language_detail">এখনো অনুবাদ হয়নি? খেলাটি ইংরেজিতে ফিরে যায়, আর একটি তাস যা বলে তা কখনো বদলায় না।</string>
     <string name="settings_language_device">ডিভাইস অনুসরণ করুন</string>
     <string name="settings_language_current">ভাষা: %1$s</string>
     <string name="settings_language_chosen">%1$s, নির্বাচিত</string>
-    <string name="settings_group_privacy">এই ডিভাইস থেকে কী পাঠানো হয়</string>
+    <string name="settings_group_privacy">গোপনীয়তা</string>
     <string name="settings_group_about">সম্পর্কে</string>
 
     <string name="settings_support">খেলাটিকে সহায়তা করুন</string>
@@ -130,7 +130,7 @@
     <string name="settings_group_game_summary">প্রতিপক্ষ, গতি, নড়াচড়া, দেখতে কেমন, ভাষা আর আপনার রেকর্ড।</string>
     <string name="settings_group_privacy_summary">কী গোনা হয়, আর কীভাবে তা বন্ধ করবেন।</string>
     <string name="settings_group_about_summary">এটা কার খেলা, অ্যাপটি কে তৈরি করেছেন, আর কীভাবে যোগাযোগ করবেন।</string>
-    <string name="settings_privacy">গোপনীয়তা</string>
+    <string name="settings_privacy">গোপনীয়তা নীতি</string>
     <string name="settings_privacy_detail">কী গোনা হয়, কী হয় না, আর কীভাবে তা বন্ধ করবেন।</string>
     <string name="settings_terms">ব্যবহারের শর্তাবলী</string>
     <string name="settings_terms_detail">সংক্ষেপে, আপনি কী আশা করতে পারেন, আর আপনার কাছে কী প্রত্যাশা করা হয়।</string>
@@ -249,6 +249,8 @@
 
     <string name="header_support">আমাকে এক কাপ কফি খাওয়ান</string>
     <string name="header_report">সমস্যা জানান</string>
+    <string name="settings_report_detail">আপনি যে রাউন্ডে ছিলেন তা পাঠায়: ডিল, ক্রম অনুসারে প্রতিটি চাল, কোনো নাম নয়। এটিই বাগটিকে পুনরুৎপাদনযোগ্য করে।</string>
+    <string name="settings_report_send">রিপোর্ট</string>
     <string name="header_settings">সেটিংস</string>
     <string name="header_rules">নিয়ম</string>
     <string name="header_leave">টেবিল ছেড়ে যান</string>
@@ -391,7 +393,6 @@
     <string name="gloss_pulse">যে তাসটি স্পন্দিত হয় তা এখনই স্পর্শ করা যায়।</string>
     <string name="gloss_toss">স্তূপগুলোর নিচের চিপটি বলে দেয় কোন র‌্যাংকের জন্য উইন্ডো খোলা আছে।</string>
     <string name="gloss_log">প্রতিটি চাল এই বাক্সে লেখা থাকে — তাস আপনার পড়ার চেয়ে দ্রুত সরে গেলে একবার এখানে চোখ বুলান।</string>
-    <string name="gloss_badge">সবুজ সংখ্যাটি ডেকে বাকি থাকা তাস গোনে।</string>
 
     <string name="teach_note">%1$s — মূল্য %2$s। %3$s।</string>
     <string name="teach_note_plain">%1$s — মূল্য %2$s, আর এটা কিছুই করে না। এখন ধরে রাখা ঠিক আছে, তবে কেউ ডাকার আগে বদলে দেওয়ার মতো একটি তাস।</string>

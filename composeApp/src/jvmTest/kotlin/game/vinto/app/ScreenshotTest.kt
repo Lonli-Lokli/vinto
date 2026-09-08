@@ -71,8 +71,6 @@ class ScreenshotTest {
                     onMove = {},
                     onHelp = {},
                     onSettings = {},
-                    onReport = {},
-                    onDeck = {},
                 )
             }
         }
@@ -89,8 +87,6 @@ class ScreenshotTest {
                     onMove = {},
                     onHelp = {},
                     onSettings = {},
-                    onReport = {},
-                    onDeck = {},
                 )
             }
         }

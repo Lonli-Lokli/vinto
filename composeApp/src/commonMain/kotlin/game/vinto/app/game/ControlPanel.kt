@@ -154,6 +154,15 @@ private const val RAIL_GROUP_SHARE = 0.6f
 private val TallRail = 340.dp
 private val TallRailMost = 620.dp
 
+/**
+ * The log's own strip at the foot of a tall rail.
+ *
+ * A fixed height on purpose: the whole point of moving it out of the block is that it stops
+ * being something the rest of the panel has to make room for, and a strip that grew with its
+ * contents would be the same problem wearing a different hat.
+ */
+private val LogTall = 132.dp
+
 /** The card in play, drawn in the rail: no smaller than a card in your own hand on a phone. */
 private val RailCard = CardScale(56.dp, 78.dp)
 
@@ -334,15 +343,20 @@ private fun RailBody(
         // So a tall rail holds the same group at a phone's height and centres it on the felt it
         // stands beside. Nothing inside changes: the block still fills the group and the choices
         // still sit at its foot, which is what `RailFitsTest` measures.
-        val group = if (rail.isFinite && rail > railGroup(rail)) {
-            Modifier.fillMaxWidth().height(railGroup(rail))
-        } else {
-            Modifier.fillMaxSize()
-        }
+        val tall = rail.isFinite && rail > railGroup(rail)
+        val group = if (tall) Modifier.fillMaxWidth().height(railGroup(rail)) else Modifier.fillMaxSize()
 
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        // **On a tall rail the log has a place of its own, at the foot, and never moves.**
+        //
+        // It used to live inside the block, under the prompt, and only when the panel was not
+        // otherwise busy — so a King's fourteen chips arrived, the log vanished, and everything
+        // above it jumped. A record of what just happened is the one thing on this panel that is
+        // *never* the thing you are being asked about, and it is exactly the thing that was
+        // being moved by every question. Outside the centred group it is furniture: same place,
+        // same height, whatever the turn is doing.
+        Box(modifier = Modifier.fillMaxSize()) {
             Column(
-                modifier = group,
+                modifier = group.align(Alignment.Center),
                 verticalArrangement = Arrangement.spacedBy(Gap),
             ) {
                 RailBlock(
@@ -350,12 +364,23 @@ private fun RailBody(
                     table,
                     inPlay,
                     recent,
-                    crowded,
+                    crowded = crowded || tall,
                     twoLines,
                     onMove,
                     modifier = Modifier.weight(1f),
                 )
                 RailFoot(table, footCap, side, onMove)
+            }
+
+            if (tall) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(LogTall),
+                ) {
+                    RecentActions(recent)
+                }
             }
         }
     }

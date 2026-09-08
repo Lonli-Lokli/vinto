@@ -41,6 +41,20 @@ data class Identity(
 const val UNCHOSEN: Int = -1
 
 /**
+ * A ground for somebody who never picked one, from the one thing they already have.
+ *
+ * Not random: it has to be the same colour every time this device sits down, and a random one
+ * would make a player a different colour in every room. The guest id is already stable and
+ * already theirs, and every character of it moves the answer, so two ids that differ anywhere
+ * differ here.
+ */
+internal fun groundFrom(guestId: String): Int =
+    guestId.fold(0) { acc, ch -> acc * GROUND_MIX + ch.code }.let { if (it < 0) -it else it }
+
+/** An odd multiplier, so every character of the id moves the answer. */
+private const val GROUND_MIX = 31
+
+/**
  * This device's identity, minted on first ask and stable after.
  *
  * @param entropy fresh randomness from the platform, used only when no id exists yet.
@@ -55,7 +69,18 @@ fun Vault.identity(entropy: () -> Long): Identity {
         // A seed that will not parse is treated as no seed rather than as zero: zero is a real
         // face, and silently seating somebody behind it would look like the vault had ignored them.
         avatarSeed = read(AVATAR_SEED_KEY)?.toLongOrNull() ?: 0,
-        avatarGround = read(AVATAR_GROUND_KEY)?.toIntOrNull() ?: 0,
+        // A ground nobody chose is taken from the guest id rather than left at zero.
+        //
+        // Zero is the first colour in the palette — a pale pewter — so every player who had not
+        // opened the face picker sat behind the *same* pale disc, and a table of them was a
+        // table where the colour told you nothing. Reported as "I do not see color assigned to
+        // player", from a room with two people in it wearing one colour between them.
+        //
+        // The id is already this device's own and already stable, so a ground derived from it is
+        // stable too: the same player is the same colour in every room they join, without
+        // anything new being stored or sent. `PlayerProfile.ground()` takes it modulo the
+        // palette, so any integer names some colour and the palette can still grow.
+        avatarGround = read(AVATAR_GROUND_KEY)?.toIntOrNull() ?: groundFrom(guestId),
     )
 }
 

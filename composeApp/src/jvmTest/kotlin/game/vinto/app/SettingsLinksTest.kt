@@ -43,8 +43,10 @@ class SettingsLinksTest {
         // description `GameButton` sets rather than on a title that no longer exists.
         onNodeWithContentDescription("Rate this game").performScrollTo().assertIsDisplayed()
 
-        door("What leaves this device")
-        listOf("Privacy", "Terms of use").forEach {
+        door("Privacy")
+        // "Privacy policy", not "Privacy": the group is a subject and the link is a document,
+        // and while they shared a word the page had two nodes reading the same thing.
+        listOf("Privacy policy", "Terms of use").forEach {
             onNodeWithText(it).performScrollTo().assertIsDisplayed()
         }
 
@@ -69,7 +71,11 @@ class SettingsLinksTest {
         // Three doors and the three controls people actually come for, rather than eighteen
         // panels in one column. "Look and feel" is gone as a heading: its contents moved in
         // with the rest of the game's settings, and sound and haptics came to the front.
-        listOf("The game", "What leaves this device", "About").forEach { group ->
+        //
+        // One word each. They were sentences — "What leaves this device" said plainly what the
+        // group was for, and said it in the place a reader is scanning rather than reading; the
+        // sentence is still there, under the heading, where the summary line has always been.
+        listOf("Game", "Privacy", "About").forEach { group ->
             onNodeWithText(group.uppercase()).performScrollTo().assertIsDisplayed()
         }
         listOf("Sound", "Haptics").forEach {

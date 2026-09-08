@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -93,7 +94,9 @@ fun VintoSheet(open: Boolean, onDismiss: () -> Unit, content: @Composable () -> 
             exit = slideOutVertically(tween(RiseMs)) { it },
         ) {
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                // Capped for the same reason as [VintoDialog], and a little wider because a
+                // sheet carries a table of ranks rather than a sentence.
+                modifier = Modifier.widthIn(max = SheetWide).fillMaxWidth(),
                 shape = RoundedCornerShape(topStart = SheetCorner, topEnd = SheetCorner),
                 color = Rail.fill,
                 contentColor = Rail.ink,
@@ -152,8 +155,13 @@ fun VintoDialog(
             exit = fadeOut(tween(RiseMs)),
         ) {
             Surface(
+                // Capped, because `fillMaxWidth` on a phone is a dialog and on a desktop is a
+                // banner: two metres of panel holding one sentence and a button stretched across
+                // all of it. A dialog is read, and a line of text past about sixty characters
+                // stops being read and starts being scanned.
                 modifier = Modifier
                     .padding(DialogInset)
+                    .widthIn(max = DialogWide)
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(DialogCorner),
                 color = Rail.fill,
@@ -253,9 +261,22 @@ private fun Grip() {
 private val Line = 1.dp
 private val SheetCorner = 18.dp
 private val DialogCorner = 14.dp
+
+/**
+ * The widest a dialog and a sheet are ever drawn.
+ *
+ * Both filled the window, which is right on the phone they were drawn for and wrong on
+ * everything else: on a desktop the deck explainer came out two metres wide, one sentence
+ * across all of it and a "GOT IT" the width of the screen. Reading has a comfortable measure
+ * and it is nowhere near a monitor's width.
+ */
+private val DialogWide = 460.dp
+
+private val SheetWide = 620.dp
+
 private val DialogInset = 28.dp
 private val DialogPad = 20.dp
-private val DialogGap = 12.dp
+internal val DialogGap = 12.dp
 private val DialogLift = 8.dp
 private val GripWidth = 36.dp
 private val GripHeight = 4.dp

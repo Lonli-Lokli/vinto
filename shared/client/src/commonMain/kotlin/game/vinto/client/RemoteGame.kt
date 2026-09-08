@@ -226,13 +226,24 @@ class RemoteRoom(
 
     private fun remember(lobby: LobbyView) {
         val named = lobby.seats.mapNotNull { seat ->
-            val kind = seat.avatarKind ?: return@mapNotNull null
             val name = seat.nickname?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            // A *ground* is what says there is a person here, not a face family.
+            //
+            // This used to require `avatarKind`, so a player who had never opened the face
+            // picker was skipped entirely — no entry in `LocalFaces`, so the felt fell through
+            // to `portraitFor`, and a minted nickname matches none of the four elements, so
+            // every one of them was dealt Gale's emblem. Gale is pewter. That is the grey.
+            //
+            // The room sends all three for a person and none of them for a bot, so a ground is
+            // exactly the test for "somebody is sitting here" — and a bot keeps the emblem its
+            // name picks, which is still the better answer than a mark it never chose. A client
+            // older than protocol 3 sends no ground either, and falls back the same way.
+            val ground = seat.avatarGround ?: return@mapNotNull null
             name to PlayerProfile(
                 nickname = name,
-                avatarKind = kind,
+                avatarKind = seat.avatarKind ?: 0,
                 avatarSeed = seat.avatarSeed ?: 0,
-                avatarGround = seat.avatarGround ?: 0,
+                avatarGround = ground,
             )
         }
         if (named.isNotEmpty()) _faces.value = _faces.value + named
@@ -346,7 +357,14 @@ class RemoteRoom(
                             nickname,
                             avatarKind = mine.avatarKind.takeIf { mine.hasAvatar },
                             avatarSeed = mine.avatarSeed.takeIf { mine.hasAvatar },
-                            avatarGround = mine.avatarGround.takeIf { mine.hasAvatar },
+                            // The ground travels whether or not a *face* was chosen, and that is
+                            // the fix for a colour that was picked and never seen: it used to be
+                            // sent only alongside a face family, so choosing a colour alone left
+                            // the room holding the default — the first entry in the palette, a
+                            // pale pewter, which every unchosen player then wore at once.
+                            // `Identity` always has a ground now, derived from the guest id when
+                            // nobody picked one, so there is always something true to send.
+                            avatarGround = mine.avatarGround,
                             protocol = PROTOCOL_VERSION,
                         )
                         opened.send(encode(join))

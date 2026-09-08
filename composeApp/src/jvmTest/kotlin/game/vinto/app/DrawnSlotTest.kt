@@ -80,8 +80,6 @@ class DrawnSlotTest {
                         onMove = {},
                         onHelp = {},
                         onSettings = {},
-                        onReport = {},
-                        onDeck = {},
                     )
                 }
             }

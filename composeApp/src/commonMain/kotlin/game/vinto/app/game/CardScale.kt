@@ -222,8 +222,7 @@ data class TableLayout(
         fun forScreen(width: Dp, height: Dp): TableLayout = if (width > height) {
             // What there is to play on, before the table is cut out of it.
             val available = height - HeaderHeight
-            val rail = railWidth(width)
-            val wide = minOf(width - rail, available * TABLE_ASPECT, TABLE_MAX_WIDTH)
+            val wide = minOf(width - railWidth(width), available * TABLE_ASPECT, TABLE_MAX_WIDTH)
             // And never deeper than a table is: the two caps together hold the felt's shape
             // between [TABLE_DEEPEST] and [TABLE_ASPECT], whatever shape the window is.
             val deep = minOf(available, wide / TABLE_DEEPEST)
@@ -231,7 +230,17 @@ data class TableLayout(
                 sizes = TableSizes.forHeight(deep),
                 railHeight = 0.dp,
                 landscape = true,
-                railWidth = rail,
+                // **The rail takes what the felt could not**, rather than a share of its own.
+                //
+                // The felt is capped by its shape, so on a wide window there was width left over
+                // and it became margin: a band of app floating between two stripes of surround.
+                // Worse than idle, it was *costing* something — the rail stayed at a phone's
+                // width beside it, so two choices side by side got about a hundred points each
+                // and "CALL VINTO" came out on two lines with empty window either side of it.
+                //
+                // Giving the remainder to the rail spends it where there is something to spend
+                // it on. Still clamped: past [RAIL_WIDEST] a control panel stops being a panel.
+                railWidth = (width - wide).coerceIn(railWidth(width), RAIL_WIDEST),
                 feltWidth = wide,
                 feltHeight = deep,
             )
@@ -298,3 +307,11 @@ fun railWidth(screen: Dp): Dp = (screen * RAIL_FRACTION).coerceIn(RAIL_MIN, RAIL
 private const val RAIL_FRACTION = 0.31f
 private val RAIL_MIN = 240.dp
 private val RAIL_MAX = 300.dp
+
+/**
+ * The widest the side rail is drawn, however much window is left over.
+ *
+ * Wide enough that two choices sit side by side with their words whole in any of the nineteen
+ * languages, and not so wide that the thing reads as a second page rather than a panel.
+ */
+private val RAIL_WIDEST = 480.dp

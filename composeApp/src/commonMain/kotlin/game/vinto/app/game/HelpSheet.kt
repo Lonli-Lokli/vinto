@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.Pages
 import game.vinto.app.art.Res
+import game.vinto.app.art.deck_body
+import game.vinto.app.art.deck_title
 import game.vinto.app.art.help_card_worth
 import game.vinto.app.art.help_closing
 import game.vinto.app.art.help_counts_body
@@ -88,7 +90,7 @@ private val Chip = 46.dp
  * app shows. One set of rules, written once.
  */
 @Composable
-fun HelpSheet(open: Boolean, now: Explains?, onDismiss: () -> Unit, focus: Rank? = null) {
+fun HelpSheet(open: Boolean, now: Explains?, left: Int, onDismiss: () -> Unit, focus: Rank? = null) {
     // A tap on one card asks about that card and nothing else: its line, its row, and the
     // sheet is done. The whole reference is behind the "?" for whoever wants it.
     if (focus != null) {
@@ -188,12 +190,30 @@ fun HelpSheet(open: Boolean, now: Explains?, onDismiss: () -> Unit, focus: Rank?
                 )
             }
 
+            item { TheDeck(left) }
+
             // The rulebook, and deliberately not in here. This sheet answers the question a
             // player has mid-turn — what does this card do — with a card waiting and one hand
             // free. `VINTO_RULES.md` runs to four pages, and the answer to "what are the rules"
             // belongs with the people whose game it is: one authoritative copy, theirs.
             item { RulesLink() }
         }
+    }
+}
+
+/**
+ * The deck, which used to be a chip of its own in the header.
+ *
+ * Six controls is too many for a phone's header, and this was the one of them that was a
+ * *number* rather than a thing to press — so it came out, and its explanation came here, where
+ * the rest of "what does this mean" already lives. The count is live, so the sentence is still
+ * about this round rather than about decks in general.
+ */
+@Composable
+private fun TheDeck(left: Int) {
+    Column(modifier = Modifier.padding(top = Gap, bottom = Pad)) {
+        Text(stringResource(Res.string.deck_title), fontWeight = FontWeight.Bold, fontSize = TitleSize)
+        Text(stringResource(Res.string.deck_body, left), fontSize = BodySize, color = Rail.inkDim)
     }
 }
 

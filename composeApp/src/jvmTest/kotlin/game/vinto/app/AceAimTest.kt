@@ -71,8 +71,6 @@ class AceAimTest {
                             onMove = {},
                             onHelp = {},
                             onSettings = {},
-                            onReport = {},
-                            onDeck = {},
                         )
                     }
                 }

@@ -116,7 +116,7 @@
     <string name="settings_language_device">Zgodnie z urządzeniem</string>
     <string name="settings_language_current">Język: %1$s</string>
     <string name="settings_language_chosen">%1$s, wybrany</string>
-    <string name="settings_group_privacy">Co opuszcza to urządzenie</string>
+    <string name="settings_group_privacy">Prywatność</string>
     <string name="settings_group_about">O aplikacji</string>
 
     <string name="settings_support">Wesprzyj grę</string>
@@ -130,7 +130,7 @@
     <string name="settings_group_game_summary">Przeciwnicy, tempo, ruch, wygląd, język i twoje wyniki.</string>
     <string name="settings_group_privacy_summary">Co jest liczone i jak to wyłączyć.</string>
     <string name="settings_group_about_summary">Czyja to gra, kto stworzył aplikację, i jak się skontaktować.</string>
-    <string name="settings_privacy">Prywatność</string>
+    <string name="settings_privacy">Polityka prywatności</string>
     <string name="settings_privacy_detail">Co jest liczone, co nie, i jak to wyłączyć.</string>
     <string name="settings_terms">Warunki korzystania</string>
     <string name="settings_terms_detail">Krótka wersja tego, czego możesz oczekiwać, i czego oczekuje się od ciebie.</string>
@@ -249,6 +249,8 @@
 
     <string name="header_support">Postaw mi kawę</string>
     <string name="header_report">Zgłoś problem</string>
+    <string name="settings_report_detail">Wysyła rundę, w której byłeś: rozdanie, każdy ruch po kolei, bez nazw. To właśnie czyni błąd odtwarzalnym.</string>
+    <string name="settings_report_send">Zgłoś</string>
     <string name="header_settings">Ustawienia</string>
     <string name="header_rules">Zasady</string>
     <string name="header_leave">Opuść stół</string>
@@ -391,7 +393,6 @@
     <string name="gloss_pulse">Kartę, która pulsuje, można teraz dotknąć.</string>
     <string name="gloss_toss">Znacznik pod stosami pokazuje rangę, dla której otwarte jest okno.</string>
     <string name="gloss_log">Każdy ruch zapisywany jest w tym okienku — zerknij tam, gdy karty poruszały się szybciej, niż dało się przeczytać.</string>
-    <string name="gloss_badge">Zielona liczba pokazuje, ile zostało w talii.</string>
 
     <string name="teach_note">%1$s — warta %2$s. %3$s.</string>
     <string name="teach_note_plain">%1$s — warta %2$s i nie robi zupełnie nic. Na razie można ją zatrzymać, ale warto wymienić, zanim ktoś zawoła.</string>

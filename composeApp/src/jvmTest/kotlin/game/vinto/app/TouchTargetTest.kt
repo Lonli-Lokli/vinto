@@ -109,8 +109,6 @@ class TouchTargetTest {
                         onMove = {},
                         onHelp = {},
                         onSettings = {},
-                        onReport = {},
-                        onDeck = {},
                     )
                 }
             }
@@ -171,8 +169,6 @@ class TouchTargetTest {
                             onMove = {},
                             onHelp = {},
                             onSettings = {},
-                            onReport = {},
-                            onDeck = {},
                         )
                     }
                 }
@@ -223,8 +219,6 @@ class TouchTargetTest {
                             onMove = {},
                             onHelp = {},
                             onSettings = {},
-                            onReport = {},
-                            onDeck = {},
                         )
                     }
                 }

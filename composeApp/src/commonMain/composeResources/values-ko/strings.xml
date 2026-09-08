@@ -116,7 +116,7 @@
     <string name="settings_language_device">기기 설정 따르기</string>
     <string name="settings_language_current">언어: %1$s</string>
     <string name="settings_language_chosen">%1$s, 선택됨</string>
-    <string name="settings_group_privacy">이 기기 밖으로 나가는 것</string>
+    <string name="settings_group_privacy">개인정보</string>
     <string name="settings_group_about">정보</string>
 
     <string name="settings_support">게임 후원하기</string>
@@ -130,7 +130,7 @@
     <string name="settings_group_game_summary">상대, 속도, 움직임, 화면, 언어, 그리고 당신의 기록.</string>
     <string name="settings_group_privacy_summary">무엇이 집계되는지, 그리고 끄는 방법.</string>
     <string name="settings_group_about_summary">이 게임이 누구의 것인지, 앱은 누가 만들었는지, 연락하는 방법.</string>
-    <string name="settings_privacy">개인정보 보호</string>
+    <string name="settings_privacy">개인정보 처리방침</string>
     <string name="settings_privacy_detail">무엇이 집계되고 무엇이 아닌지, 그리고 끄는 방법.</string>
     <string name="settings_terms">이용약관</string>
     <string name="settings_terms_detail">기대할 수 있는 것과 요구되는 것을 짧게 정리했어요.</string>
@@ -249,6 +249,8 @@
 
     <string name="header_support">커피 한 잔 사주기</string>
     <string name="header_report">문제 신고</string>
+    <string name="settings_report_detail">진행 중이던 라운드를 보냅니다: 딜과 모든 수를 순서대로, 이름은 없습니다. 버그를 재현 가능하게 만드는 것입니다.</string>
+    <string name="settings_report_send">신고</string>
     <string name="header_settings">설정</string>
     <string name="header_rules">규칙</string>
     <string name="header_leave">테이블 나가기</string>
@@ -391,7 +393,6 @@
     <string name="gloss_pulse">숨 쉬듯 빛나는 카드는 지금 만질 수 있어요.</string>
     <string name="gloss_toss">더미 아래 칩이 이 던지기 창이 열려 있는 숫자를 알려줘요.</string>
     <string name="gloss_log">모든 수는 이 상자 안에 기록돼요 — 카드가 너무 빨리 움직여 놓쳤을 때 살펴보세요.</string>
-    <string name="gloss_badge">초록색 숫자는 덱에 남은 카드 수예요.</string>
 
     <string name="teach_note">%1$s — %2$s점. %3$s.</string>
     <string name="teach_note_plain">%1$s — %2$s점, 아무 능력도 없어요. 지금은 갖고 있어도 괜찮고, 누가 선언하기 전에는 바꿔두는 게 좋아요.</string>

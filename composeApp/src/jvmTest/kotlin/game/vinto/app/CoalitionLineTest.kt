@@ -120,8 +120,6 @@ class CoalitionLineTest {
                         onMove = {},
                         onHelp = {},
                         onSettings = {},
-                        onReport = {},
-                        onDeck = {},
                     )
                 }
             }

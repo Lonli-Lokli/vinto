@@ -128,8 +128,6 @@ class LogFollowsTheTailTest {
             onMove = {},
             onHelp = {},
             onSettings = {},
-            onReport = {},
-            onDeck = {},
         )
     }
 

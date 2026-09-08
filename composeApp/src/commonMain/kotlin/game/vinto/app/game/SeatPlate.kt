@@ -64,7 +64,26 @@ import org.jetbrains.compose.resources.stringResource
 private val PlatePad = 4.dp
 private val PlateGap = 8.dp
 private val NamePad = 10.dp
+
+/**
+ * How much width a name gets, which grows with the table it is on.
+ *
+ * It was a flat 76 points, sized for a phone, and every online player was introduced as
+ * "Clever H…" on a desktop with half a metre of empty felt beside them. A minted nickname is two
+ * words and the room guarantees they differ — but only if you can read enough of them to tell,
+ * and an ellipsis after eight characters is where "Clever Hedgehog" and "Clever Heron" become
+ * the same player.
+ *
+ * Tied to the portrait rather than to the screen, because that is what already steps with the
+ * felt, and floored at the old value so a phone's plate is exactly what it was: on a phone the
+ * cap is real, and a plate that grows there pushes the player's own hand onto a second row.
+ */
+private fun nameRoom(portrait: Dp): Dp = (portrait * NAME_SHARE).coerceIn(NameMax, NameWidest)
+
+private const val NAME_SHARE = 2.5f
+
 private val NameMax = 76.dp
+private val NameWidest = 180.dp
 private val Hairline = 1.dp
 private val Ring = 2.dp
 
@@ -290,7 +309,7 @@ fun SeatPlate(
             // Capped, and the name gives way before the marks do. A plate that grows with
             // "Vinto · 12" is a plate that pushes the player's own hand onto a second row,
             // which is the one hand that has to stay in one piece.
-            Column(modifier = Modifier.padding(end = NamePad).widthIn(max = NameMax)) {
+            Column(modifier = Modifier.padding(end = NamePad).widthIn(max = nameRoom(size))) {
                 Text(
                     text = name,
                     style = MaterialTheme.typography.titleSmall,

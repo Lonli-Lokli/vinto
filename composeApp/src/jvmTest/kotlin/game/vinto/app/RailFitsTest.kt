@@ -83,8 +83,6 @@ class RailFitsTest {
                         onMove = {},
                         onHelp = {},
                         onSettings = {},
-                        onReport = {},
-                        onDeck = {},
                     )
                 }
             }
@@ -135,8 +133,6 @@ class RailFitsTest {
             onMove = {},
             onHelp = {},
             onSettings = {},
-            onReport = {},
-            onDeck = {},
         )
     }
 
@@ -253,8 +249,6 @@ class RailFitsTest {
                             onMove = {},
                             onHelp = {},
                             onSettings = {},
-                            onReport = {},
-                            onDeck = {},
                         )
                     }
                 }

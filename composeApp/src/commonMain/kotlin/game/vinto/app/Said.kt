@@ -179,7 +179,6 @@ import game.vinto.app.art.explains_scoring
 import game.vinto.app.art.explains_setup
 import game.vinto.app.art.explains_toss_in
 import game.vinto.app.art.explains_turn
-import game.vinto.app.art.gloss_badge
 import game.vinto.app.art.gloss_log
 import game.vinto.app.art.gloss_pulse
 import game.vinto.app.art.gloss_toss
@@ -883,7 +882,6 @@ fun glossed(gloss: Gloss): String = when (gloss) {
     Gloss.PULSE -> stringResource(Res.string.gloss_pulse)
     Gloss.TOSS -> stringResource(Res.string.gloss_toss)
     Gloss.LOG -> stringResource(Res.string.gloss_log)
-    Gloss.BADGE -> stringResource(Res.string.gloss_badge)
 }
 
 /**

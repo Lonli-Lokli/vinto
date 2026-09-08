@@ -185,7 +185,7 @@ class ScreenContrastTest {
     fun theHelpSheetCanBeRead() = eachScheme { dark, scheme ->
         judged(
             scheme,
-            shown(dark, "the help sheet") { HelpSheet(open = true, now = null, onDismiss = {}) },
+            shown(dark, "the help sheet") { HelpSheet(open = true, now = null, left = 33, onDismiss = {}) },
         )
     }
 
@@ -420,8 +420,6 @@ class ScreenContrastTest {
             onMove = {},
             onHelp = {},
             onSettings = {},
-            onReport = {},
-            onDeck = {},
         )
     }
 

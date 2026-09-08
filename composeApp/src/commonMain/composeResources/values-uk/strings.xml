@@ -134,7 +134,7 @@
     <string name="settings_language_device">Як на пристрої</string>
     <string name="settings_language_current">Мова: %1$s</string>
     <string name="settings_language_chosen">%1$s — обрано</string>
-    <string name="settings_group_privacy">Що залишає цей пристрій</string>
+    <string name="settings_group_privacy">Приватність</string>
     <string name="settings_group_about">Про застосунок</string>
 
     <string name="settings_support">Підтримати гру</string>
@@ -148,7 +148,7 @@
     <string name="settings_group_game_summary">Суперники, темп, рух, вигляд, мова і ваша статистика.</string>
     <string name="settings_group_privacy_summary">Що враховується і як це вимкнути.</string>
     <string name="settings_group_about_summary">Чия це гра, хто зробив застосунок, і як з ними зв'язатися.</string>
-    <string name="settings_privacy">Конфіденційність</string>
+    <string name="settings_privacy">Політика конфіденційності</string>
     <string name="settings_privacy_detail">Що рахується, що ні, і як це вимкнути.</string>
     <string name="settings_terms">Умови використання</string>
     <string name="settings_terms_detail">Коротко про те, чого чекати від нас і чого чекають від вас.</string>
@@ -267,6 +267,8 @@
 
     <string name="header_support">Пригостити кавою</string>
     <string name="header_report">Повідомити про проблему</string>
+    <string name="settings_report_detail">Надсилає раунд, у якому ви були: роздачу та кожен хід по порядку, без імен. Саме це робить помилку відтворюваною.</string>
+    <string name="settings_report_send">Повідомити</string>
     <string name="header_settings">Налаштування</string>
     <string name="header_rules">Правила</string>
     <string name="header_leave">Залишити стіл</string>
@@ -409,7 +411,6 @@
     <string name="gloss_pulse">Карту, яка дихає, можна торкнутися просто зараз.</string>
     <string name="gloss_toss">Фішка під стопками називає достоїнство, для якого відкрито вікно.</string>
     <string name="gloss_log">Кожен хід записується в це віконце — зазирніть туди, якщо карти рухалися швидше, ніж ви встигали читати.</string>
-    <string name="gloss_badge">Зелене число рахує, скільки залишилося в колоді.</string>
 
     <string name="teach_note">%1$s — коштує %2$s. %3$s.</string>
     <string name="teach_note_plain">%1$s — коштує %2$s і не робить рівним рахунком нічого. Поки можна тримати, але до чиєїсь заявки її варто поміняти.</string>

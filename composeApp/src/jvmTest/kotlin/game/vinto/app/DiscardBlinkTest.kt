@@ -80,8 +80,6 @@ class DiscardBlinkTest {
                                 onMove = {},
                                 onHelp = {},
                                 onSettings = {},
-                                onReport = {},
-                                onDeck = {},
                             )
                         }
                     }

@@ -107,10 +107,10 @@ class LanguagePickerTest {
         setContent { VintoTheme { App(seeds = { SEED }, vault = MemoryVault()) } }
         waitForIdle()
         press("Settings")
-        // Language sits behind "The game" now — the settings' eighteen panels became three
+        // Language sits behind "Game" now — the settings' eighteen panels became three
         // doors, and a language is a decision somebody makes once rather than a thing they
         // came to press.
-        onNodeWithText("THE GAME").performScrollTo().performClick()
+        onNodeWithText("GAME").performScrollTo().performClick()
         waitForIdle()
     }
 

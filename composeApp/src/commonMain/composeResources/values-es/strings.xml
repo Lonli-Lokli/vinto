@@ -122,14 +122,14 @@
     <string name="settings_title">Ajustes</string>
 
     <!-- The four groups the settings are read in. -->
-    <string name="settings_group_game">El juego</string>
+    <string name="settings_group_game">Juego</string>
     <string name="settings_group_feel">Aspecto</string>
     <string name="settings_language">Idioma</string>
     <string name="settings_language_detail">¿Aún no está traducido? El juego vuelve al inglés, y lo que dice una carta nunca cambia.</string>
     <string name="settings_language_device">Seguir el dispositivo</string>
     <string name="settings_language_current">Idioma: %1$s</string>
     <string name="settings_language_chosen">%1$s, elegido</string>
-    <string name="settings_group_privacy">Qué sale de este dispositivo</string>
+    <string name="settings_group_privacy">Privacidad</string>
     <string name="settings_group_about">Acerca de</string>
 
     <string name="settings_support">Apoyar el juego</string>
@@ -145,7 +145,7 @@
     <string name="settings_group_about_summary">De quién es este juego, quién hizo la app, y cómo ponerte en contacto.</string>
 
     <!-- Pages that belong to the game but are not in it. -->
-    <string name="settings_privacy">Privacidad</string>
+    <string name="settings_privacy">Política de privacidad</string>
     <string name="settings_privacy_detail">Qué se cuenta, qué no, y cómo desactivarlo.</string>
     <string name="settings_terms">Condiciones de uso</string>
     <string name="settings_terms_detail">La versión breve de qué puedes esperar, y qué se espera de ti.</string>
@@ -268,6 +268,8 @@
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">Invítame a un café</string>
     <string name="header_report">Informar de un problema</string>
+    <string name="settings_report_detail">Envía la ronda en la que estabas: el reparto, cada jugada en orden y ningún nombre. Es lo que hace que un fallo sea reproducible.</string>
+    <string name="settings_report_send">Informar</string>
     <string name="header_settings">Ajustes</string>
     <string name="header_rules">Reglas</string>
     <string name="header_leave">Salir de la mesa</string>
@@ -423,7 +425,6 @@
     <string name="gloss_pulse">Una carta que respira se puede tocar ahora mismo.</string>
     <string name="gloss_toss">La ficha bajo las pilas nombra la carta para la que la ventana está abierta.</string>
     <string name="gloss_log">Cada jugada queda anotada en este cuadro — échale un vistazo cuando las cartas se muevan más rápido de lo que puedas leer.</string>
-    <string name="gloss_badge">El número verde cuenta lo que queda en el mazo.</string>
 
     <!-- A card met for the first time. -->
     <string name="teach_note">%1$s — vale %2$s. %3$s.</string>

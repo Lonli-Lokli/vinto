@@ -61,8 +61,6 @@ class PeekSettleTest {
                             onMove = {},
                             onHelp = {},
                             onSettings = {},
-                            onReport = {},
-                            onDeck = {},
                         )
                     }
                 }

@@ -67,7 +67,6 @@ sealed interface Target {
     data class Furniture(val id: String) : Target
 
     companion object {
-        const val BADGE = "badge"
         const val LOG = "log"
         const val HELP = "help"
         const val TOSS_SLOT = "toss"
@@ -237,7 +236,7 @@ fun lessonFor(
             gloss = glossOnce(taught, Gloss.LOG),
         )
 
-        else -> playing(view, table, taught, memory)
+        else -> playing(view, table, memory)
     }?.let { lesson ->
         val rank = visibleRanks(view).firstOrNull { it !in taught.notedRanks }
         lesson.copy(noteRank = rank)
@@ -245,7 +244,7 @@ fun lessonFor(
 }
 
 /** The moves of your own turn: take a card, then decide what to do with it. */
-private fun playing(view: PlayerView, table: Table, taught: Taught, memory: Map<Int, Card>): Lesson? {
+private fun playing(view: PlayerView, table: Table, memory: Map<Int, Card>): Lesson? {
     val pending = (view.pendingAction?.card as? CardView.Visible)?.card
 
     val mine = view.pendingAction?.playerId == view.viewerId
@@ -281,7 +280,6 @@ private fun playing(view: PlayerView, table: Table, taught: Taught, memory: Map<
             chapter = Chapter.DRAW,
             teaches = Teaches.EveryTurnStarts,
             point = table.choices.firstOrNull()?.let { Target.Button(it.label) },
-            gloss = glossOnce(taught, Gloss.BADGE),
         )
 
         else -> null

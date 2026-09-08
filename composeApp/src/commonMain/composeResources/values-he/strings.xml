@@ -109,14 +109,14 @@
 
     <string name="settings_title">הגדרות</string>
 
-    <string name="settings_group_game">המשחק</string>
+    <string name="settings_group_game">משחק</string>
     <string name="settings_group_feel">מראה ותחושה</string>
     <string name="settings_language">שפה</string>
     <string name="settings_language_detail">עדיין לא תורגם? המשחק חוזר לאנגלית, והמילים שקלף אומר אף פעם לא משתנות.</string>
     <string name="settings_language_device">לפי המכשיר</string>
     <string name="settings_language_current">שפה: %1$s</string>
     <string name="settings_language_chosen">%1$s, נבחרה</string>
-    <string name="settings_group_privacy">מה יוצא מהמכשיר</string>
+    <string name="settings_group_privacy">פרטיות</string>
     <string name="settings_group_about">אודות</string>
     <string name="settings_support">תמיכה במשחק</string>
     <string name="settings_support_detail">אם נהניתם ורוצים לומר את זה. זה לא פותח כלום — אין כאן שום דבר נעול.</string>
@@ -130,7 +130,7 @@
     <string name="settings_group_privacy_summary">מה נספר, ואיך מכבים את זה.</string>
     <string name="settings_group_about_summary">למי שייך המשחק, מי יצר את האפליקציה, ואיך יוצרים קשר.</string>
 
-    <string name="settings_privacy">פרטיות</string>
+    <string name="settings_privacy">מדיניות פרטיות</string>
     <string name="settings_privacy_detail">מה נספר, מה לא, ואיך לכבות את זה.</string>
     <string name="settings_terms">תנאי שימוש</string>
     <string name="settings_terms_detail">הגרסה הקצרה של מה שאפשר לצפות לו, ומה מצופה מכם.</string>
@@ -249,6 +249,8 @@
 
     <string name="header_support">קניית קפה בשבילי</string>
     <string name="header_report">דיווח על בעיה</string>
+    <string name="settings_report_detail">שולח את הסיבוב שהיית בו: החלוקה, כל מהלך לפי הסדר, ללא שמות. זה מה שהופך תקלה לניתנת לשחזור.</string>
+    <string name="settings_report_send">דיווח</string>
     <string name="header_settings">הגדרות</string>
     <string name="header_rules">חוקים</string>
     <string name="header_leave">יציאה מהשולחן</string>
@@ -391,7 +393,6 @@
     <string name="gloss_pulse">קלף שנושם אפשר לגעת בו עכשיו.</string>
     <string name="gloss_toss">השבב מתחת לערמות מציין את הדרגה שהחלון פתוח עבורה.</string>
     <string name="gloss_log">כל מהלך נכתב בתיבה הזו — הציצו בה כשקלפים זזו מהר יותר משיכולתם לקרוא.</string>
-    <string name="gloss_badge">המספר הירוק סופר מה נשאר בחפיסה.</string>
 
     <string name="teach_note">%1$s — שווה %2$s. %3$s.</string>
     <string name="teach_note_plain">%1$s — שווה %2$s, ולא עושה כלום. בסדר להחזיק בו לעת עתה, וכדאי להחליף אותו לפני שמישהו יכריז.</string>

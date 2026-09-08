@@ -117,14 +117,14 @@
     <!-- ================================================================ settings -->
     <string name="settings_title">सेटिंग्स</string>
 
-    <string name="settings_group_game">खेल</string>
+    <string name="settings_group_game">गेम</string>
     <string name="settings_group_feel">रूप और अनुभव</string>
     <string name="settings_language">भाषा</string>
     <string name="settings_language_detail">अभी अनुवाद नहीं हुआ? खेल अंग्रेज़ी में वापस चला जाता है, और किसी पत्ते के शब्द कभी नहीं बदलते।</string>
     <string name="settings_language_device">डिवाइस के अनुसार</string>
     <string name="settings_language_current">भाषा: %1$s</string>
     <string name="settings_language_chosen">%1$s, चुनी गई</string>
-    <string name="settings_group_privacy">इस डिवाइस से क्या बाहर जाता है</string>
+    <string name="settings_group_privacy">गोपनीयता</string>
     <string name="settings_group_about">बारे में</string>
 
     <string name="settings_support">खेल का समर्थन करें</string>
@@ -138,7 +138,7 @@
     <string name="settings_group_game_summary">प्रतिद्वंद्वी, गति, गति-प्रभाव, रूप, भाषा और आपका रिकॉर्ड।</string>
     <string name="settings_group_privacy_summary">क्या गिना जाता है, और इसे कैसे बंद करें।</string>
     <string name="settings_group_about_summary">यह किसका खेल है, इस ऐप को किसने बनाया, और कैसे संपर्क करें।</string>
-    <string name="settings_privacy">निजता</string>
+    <string name="settings_privacy">गोपनीयता नीति</string>
     <string name="settings_privacy_detail">क्या गिना जाता है, क्या नहीं, और इसे कैसे बंद करें।</string>
     <string name="settings_terms">इस्तेमाल की शर्तें</string>
     <string name="settings_terms_detail">आप क्या उम्मीद कर सकते हैं और आपसे क्या अपेक्षित है, इसका संक्षिप्त रूप।</string>
@@ -259,6 +259,8 @@
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">मुझे एक कॉफ़ी पिलाएं</string>
     <string name="header_report">समस्या बताएं</string>
+    <string name="settings_report_detail">आप जिस राउंड में थे वह भेजता है: डील, क्रम में हर चाल, कोई नाम नहीं। यही बग को पुनरुत्पाद्य बनाता है।</string>
+    <string name="settings_report_send">रिपोर्ट</string>
     <string name="header_settings">सेटिंग्स</string>
     <string name="header_rules">नियम</string>
     <string name="header_leave">मेज़ छोड़ें</string>
@@ -408,7 +410,6 @@
     <string name="gloss_pulse">जो पत्ता सांस लेता है उसे अभी छुआ जा सकता है।</string>
     <string name="gloss_toss">ढेरों के नीचे की चिप उस रैंक का नाम बताती है जिसके लिए विंडो खुली है।</string>
     <string name="gloss_log">हर चाल इस बक्से में लिखी जाती है — जब पत्ते आपकी पढ़ने की रफ़्तार से तेज़ चलें तो इस पर एक नज़र डालें।</string>
-    <string name="gloss_badge">हरा अंक डेक में बचे पत्तों को गिनता है।</string>
 
     <string name="teach_note">%1$s — कीमत %2$s। %3$s।</string>
     <string name="teach_note_plain">%1$s — कीमत %2$s, और यह कुछ नहीं करता। अभी के लिए रखना ठीक है, और किसी के पुकारने से पहले इसे बदल देना बेहतर।</string>

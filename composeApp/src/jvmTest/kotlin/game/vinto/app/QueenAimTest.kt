@@ -74,8 +74,6 @@ class QueenAimTest {
                             onMove = {},
                             onHelp = {},
                             onSettings = {},
-                            onReport = {},
-                            onDeck = {},
                         )
                     }
                 }
@@ -129,8 +127,6 @@ class QueenAimTest {
                             onMove = {},
                             onHelp = {},
                             onSettings = {},
-                            onReport = {},
-                            onDeck = {},
                         )
                     }
                 }
@@ -185,8 +181,6 @@ class QueenAimTest {
                             onMove = {},
                             onHelp = {},
                             onSettings = {},
-                            onReport = {},
-                            onDeck = {},
                         )
                     }
                 }

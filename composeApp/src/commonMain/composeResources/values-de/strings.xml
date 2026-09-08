@@ -109,14 +109,14 @@
 
     <string name="settings_title">Einstellungen</string>
 
-    <string name="settings_group_game">Das Spiel</string>
+    <string name="settings_group_game">Spiel</string>
     <string name="settings_group_feel">Erscheinungsbild</string>
     <string name="settings_language">Sprache</string>
     <string name="settings_language_detail">Noch nicht übersetzt? Das Spiel verwendet dann Englisch — die Worte auf einer Karte ändern sich nie.</string>
     <string name="settings_language_device">Geräteeinstellung folgen</string>
     <string name="settings_language_current">Sprache: %1$s</string>
     <string name="settings_language_chosen">%1$s, ausgewählt</string>
-    <string name="settings_group_privacy">Was dieses Gerät verlässt</string>
+    <string name="settings_group_privacy">Datenschutz</string>
     <string name="settings_group_about">Über</string>
 
     <string name="settings_support">Das Spiel unterstützen</string>
@@ -130,7 +130,7 @@
     <string name="settings_group_game_summary">Gegner, Tempo, Bewegung, Aussehen, Sprache und Ihre Bilanz.</string>
     <string name="settings_group_privacy_summary">Was gezählt wird, und wie man es abschaltet.</string>
     <string name="settings_group_about_summary">Wessen Spiel das ist, wer die App gemacht hat, und wie man Kontakt aufnimmt.</string>
-    <string name="settings_privacy">Datenschutz</string>
+    <string name="settings_privacy">Datenschutzerklärung</string>
     <string name="settings_privacy_detail">Was gezählt wird, was nicht, und wie man es abschaltet.</string>
     <string name="settings_terms">Nutzungsbedingungen</string>
     <string name="settings_terms_detail">Kurz gesagt: was Sie erwarten können und was von Ihnen erwartet wird.</string>
@@ -249,6 +249,8 @@
 
     <string name="header_support">Einen Kaffee spendieren</string>
     <string name="header_report">Problem melden</string>
+    <string name="settings_report_detail">Sendet die Runde, in der Sie waren: das Geben, jeden Zug der Reihe nach, keine Namen. Das macht einen Fehler reproduzierbar statt nur beschrieben.</string>
+    <string name="settings_report_send">Melden</string>
     <string name="header_settings">Einstellungen</string>
     <string name="header_rules">Regeln</string>
     <string name="header_leave">Tisch verlassen</string>
@@ -391,7 +393,6 @@
     <string name="gloss_pulse">Eine Karte, die pulsiert, kann jetzt berührt werden.</string>
     <string name="gloss_toss">Die Marke unter den Stapeln nennt den Rang, für den das Fenster offen ist.</string>
     <string name="gloss_log">Jeder Zug wird in diesem Feld festgehalten — ein Blick hinein, wenn die Karten schneller waren als das Lesen.</string>
-    <string name="gloss_badge">Die grüne Zahl zählt, was im Stapel übrig ist.</string>
 
     <string name="teach_note">%1$s — wert %2$s. %3$s.</string>
     <string name="teach_note_plain">%1$s — wert %2$s, und tut überhaupt nichts. Kann man vorerst behalten, sollte aber vor einem Ruf eingetauscht werden.</string>

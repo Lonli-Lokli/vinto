@@ -98,9 +98,13 @@ class LandscapeTableTest {
             phone.feltWidth,
             "a rotated phone has no width to spare and the felt should take all of it",
         )
-        assertTrue(
-            desktop.feltWidth < 1920.dp - desktop.railWidth,
-            "a desktop felt stretched across the window: ${desktop.feltWidth}",
+        // The felt keeps a table's shape, and the *rail* takes what it could not use — so the
+        // band fills the window rather than floating between two stripes of surround. This
+        // asserted the opposite while the leftover was margin.
+        assertEquals(
+            1920.dp,
+            desktop.feltWidth + desktop.railWidth,
+            "the table and its rail left width unspent: ${desktop.feltWidth} + ${desktop.railWidth}",
         )
         // Capped by its *shape* rather than by a laptop's width. The absolute cap is a backstop
         // for a wall-sized display now, so what holds a 1920 window in check is the aspect: a
@@ -117,13 +121,12 @@ class LandscapeTableTest {
 
     @Test
     fun aDesktopTableIsCenteredNotStretched() = runComposeUiTest {
-        // A desktop-shaped window that still fits the test surface: the felt is capped by
-        // its aspect, so the felt-and-rail group sits centred with the surround showing on
-        // both sides — and every card stays on the felt.
+        // A desktop-shaped window that still fits the test surface: the felt is capped by its
+        // aspect, the rail takes the remainder, and every card stays on the felt.
         val layout = TableLayout.forScreen(DESK_W, DESK_H)
         assertTrue(
-            layout.feltWidth < DESK_W - layout.railWidth,
-            "this window was meant to engage the cap: ${layout.feltWidth}",
+            layout.feltWidth < DESK_W,
+            "the felt was meant to be capped by its shape: ${layout.feltWidth}",
         )
         show(dealt(), DESK_W, DESK_H)
 
@@ -237,8 +240,6 @@ class LandscapeTableTest {
                         onMove = {},
                         onHelp = {},
                         onSettings = {},
-                        onReport = {},
-                        onDeck = {},
                     )
                 }
             }

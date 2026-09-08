@@ -118,14 +118,14 @@
     <!-- ================================================================ settings -->
     <string name="settings_title">Paramètres</string>
 
-    <string name="settings_group_game">Le jeu</string>
+    <string name="settings_group_game">Jeu</string>
     <string name="settings_group_feel">Apparence</string>
     <string name="settings_language">Langue</string>
     <string name="settings_language_detail">Pas encore traduit ? Le jeu revient à l’anglais, et les mots qu’une carte prononce ne changent jamais.</string>
     <string name="settings_language_device">Suivre l’appareil</string>
     <string name="settings_language_current">Langue : %1$s</string>
     <string name="settings_language_chosen">%1$s, choisie</string>
-    <string name="settings_group_privacy">Ce qui quitte cet appareil</string>
+    <string name="settings_group_privacy">Confidentialité</string>
     <string name="settings_group_about">À propos</string>
 
     <string name="settings_support">Soutenir le jeu</string>
@@ -139,7 +139,7 @@
     <string name="settings_group_game_summary">Adversaires, rythme, mouvement, apparence, langue et votre bilan.</string>
     <string name="settings_group_privacy_summary">Ce qui est compté, et comment le désactiver.</string>
     <string name="settings_group_about_summary">À qui appartient ce jeu, qui a fait l’application, et comment nous contacter.</string>
-    <string name="settings_privacy">Confidentialité</string>
+    <string name="settings_privacy">Politique de confidentialité</string>
     <string name="settings_privacy_detail">Ce qui est compté, ce qui ne l’est pas, et comment le désactiver.</string>
     <string name="settings_terms">Conditions d’utilisation</string>
     <string name="settings_terms_detail">La version courte de ce que vous pouvez attendre, et de ce qu’on attend de vous.</string>
@@ -260,6 +260,8 @@
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">M’offrir un café</string>
     <string name="header_report">Signaler un problème</string>
+    <string name="settings_report_detail">Envoie la manche en cours : la donne, chaque coup dans l'ordre, aucun nom. C'est ce qui rend un bug reproductible.</string>
+    <string name="settings_report_send">Signaler</string>
     <string name="header_settings">Paramètres</string>
     <string name="header_rules">Règles</string>
     <string name="header_leave">Quitter la table</string>
@@ -408,7 +410,6 @@
     <string name="gloss_pulse">Une carte qui palpite peut être touchée maintenant.</string>
     <string name="gloss_toss">Le jeton sous les piles indique la valeur pour laquelle la fenêtre est ouverte.</string>
     <string name="gloss_log">Chaque coup est noté dans cet encadré — jetez-y un œil quand les cartes bougent plus vite que vous ne pouvez lire.</string>
-    <string name="gloss_badge">Le nombre vert compte ce qui reste dans la pioche.</string>
 
     <string name="teach_note">%1$s — vaut %2$s. %3$s.</string>
     <string name="teach_note_plain">%1$s — vaut %2$s, et ne fait rien du tout. Bonne à garder pour l’instant, à échanger avant que quelqu’un n’appelle.</string>

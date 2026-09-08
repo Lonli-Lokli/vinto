@@ -124,7 +124,7 @@
     <string name="settings_language_device">اتبع لغة الجهاز</string>
     <string name="settings_language_current">اللغة: %1$s</string>
     <string name="settings_language_chosen">%1$s، مُختارة</string>
-    <string name="settings_group_privacy">ما يُرسَل من هذا الجهاز</string>
+    <string name="settings_group_privacy">الخصوصية</string>
     <string name="settings_group_about">حول التطبيق</string>
     <string name="settings_support">ادعم اللعبة</string>
     <string name="settings_support_detail">إن كنت استمتعت بها وتودّ قول ذلك. لا يفتح شيئًا — فلا شيء مغلق أصلاً.</string>
@@ -138,7 +138,7 @@
     <string name="settings_group_privacy_summary">ما يُحصى، وكيف تُوقفه.</string>
     <string name="settings_group_about_summary">لمن هذه اللعبة، ومن صنع التطبيق، وكيف تتواصل.</string>
 
-    <string name="settings_privacy">الخصوصية</string>
+    <string name="settings_privacy">سياسة الخصوصية</string>
     <string name="settings_privacy_detail">ما يُحصى، وما لا يُحصى، وكيف تُوقف ذلك.</string>
     <string name="settings_terms">شروط الاستخدام</string>
     <string name="settings_terms_detail">النسخة المختصرة لما يمكنك توقعه، وما هو متوقع منك.</string>
@@ -259,6 +259,8 @@
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">اشترِ لي قهوة</string>
     <string name="header_report">أبلغ عن مشكلة</string>
+    <string name="settings_report_detail">يرسل الجولة التي كنت فيها: التوزيع وكل حركة بالترتيب، دون أي أسماء. هذا ما يجعل الخلل قابلاً لإعادة الإنتاج بدل وصفه.</string>
+    <string name="settings_report_send">إبلاغ</string>
     <string name="header_settings">الإعدادات</string>
     <string name="header_rules">القواعد</string>
     <string name="header_leave">غادر الطاولة</string>
@@ -406,7 +408,6 @@
     <string name="gloss_pulse">البطاقة التي تنبض يمكن لمسها الآن.</string>
     <string name="gloss_toss">الشارة تحت الكومتين تسمّي الرتبة التي فُتحت النافذة من أجلها.</string>
     <string name="gloss_log">كل حركة مسجّلة في هذا الصندوق — ألقِ نظرة عليه حين تتحرك البطاقات أسرع مما يمكنك قراءته.</string>
-    <string name="gloss_badge">الرقم الأخضر يُحصي ما تبقّى في المكدس.</string>
 
     <string name="teach_note">%1$s — بقيمة %2$s. %3$s.</string>
     <string name="teach_note_plain">%1$s — بقيمة %2$s، ولا تفعل شيئًا إطلاقًا. جيدة للاحتفاظ بها الآن، وجديرة بالمبادلة قبل أن ينادي أحد.</string>

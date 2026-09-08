@@ -150,8 +150,6 @@ class HandGapTest {
                                 onMove = {},
                                 onHelp = {},
                                 onSettings = {},
-                                onReport = {},
-                                onDeck = {},
                             )
                         }
                     }

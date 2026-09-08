@@ -262,7 +262,12 @@ fun TeachScreen(
         }
     }
 
-    HelpSheet(open = helpOpen, now = holder.table.help, onDismiss = { helpOpen = false })
+    HelpSheet(
+        open = helpOpen,
+        now = holder.table.help,
+        left = holder.current.drawPileSize,
+        onDismiss = { helpOpen = false },
+    )
 }
 
 /**
@@ -290,9 +295,6 @@ private fun LessonTable(state: TableState, coaching: Coached, room: Room, hooks:
             onMove = hooks.act,
             onHelp = { hooks.onHelp() },
             onSettings = hooks.onSettings,
-            onReport = {},
-            // Nothing to explain in here that the coach is not already explaining.
-            onDeck = {},
             modifier = Modifier.fillMaxSize(),
         )
 

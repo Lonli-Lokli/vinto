@@ -300,7 +300,4 @@ enum class Gloss(val id: String) {
 
     /** Every move is written down in this box. */
     LOG("log"),
-
-    /** The green number counts what is left in the deck. */
-    BADGE("badge"),
 }

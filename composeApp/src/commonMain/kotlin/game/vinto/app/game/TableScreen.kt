@@ -79,10 +79,8 @@ import game.vinto.app.art.card_discarded_live
 import game.vinto.app.art.card_in_hand
 import game.vinto.app.art.card_position
 import game.vinto.app.art.card_thrown_by
-import game.vinto.app.art.header_deck_badge
 import game.vinto.app.art.header_deck_left
 import game.vinto.app.art.header_leave
-import game.vinto.app.art.header_report
 import game.vinto.app.art.header_rules
 import game.vinto.app.art.header_settings
 import game.vinto.app.art.header_support
@@ -267,8 +265,6 @@ fun TableScreen(
     onMove: (Move) -> Unit,
     onHelp: (Rank?) -> Unit,
     onSettings: () -> Unit,
-    onReport: () -> Unit,
-    onDeck: () -> Unit,
     modifier: Modifier = Modifier,
     /**
      * The way back out of the round, or null where the platform already has one.
@@ -306,7 +302,7 @@ fun TableScreen(
                 horizontalArrangement = Arrangement.Center,
             ) {
                 Column(modifier = Modifier.width(layout.feltWidth)) {
-                    TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck, onLeave)
+                    TableHeader(state.view, state.round, onHelp, onSettings, onLeave)
                     FeltTable(
                         state = state,
                         sizes = layout.sizes,
@@ -333,7 +329,7 @@ fun TableScreen(
         }
     } else {
         Column(modifier = modifier.fillMaxSize()) {
-            TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck, onLeave)
+            TableHeader(state.view, state.round, onHelp, onSettings, onLeave)
 
             RehearsalLine()
             FinalRoundLine(state.view, state.table.planSummary, onMove)
@@ -353,6 +349,43 @@ fun TableScreen(
             )
         }
     }
+}
+
+/** The four chairs, clockwise from the viewer's own. */
+private const val NEAR_CHAIR = 0
+private const val LEFT_CHAIR = 1
+private const val TOP_CHAIR = 2
+private const val RIGHT_CHAIR = 3
+
+/** Who is in each of the felt's four chairs. */
+data class Seating<T>(val near: T?, val left: T?, val top: T?, val right: T?)
+
+/**
+ * The four chairs, with [viewer] in the near one and everybody else in dealing order around them.
+ *
+ * **Rotated, not filtered, and that is the whole of this function.** The chairs used to be taken
+ * by index from the seat list with the viewer removed — left was opponent 0, top was 1, right was
+ * 2 — which puts a different player in "the chair on my left" depending on where the viewer
+ * happened to sit in that list. Two people in one room each saw the other on their left, which
+ * cannot be true of one table, and "the one on my left" is how people at a card table point at
+ * each other. A Jack swaps two cards from two different players; a table where the players do not
+ * agree on the seating is a table where nobody can say which two.
+ *
+ * Rotating the dealt order so it starts at the viewer keeps every relationship: whoever the
+ * engine dealt after you is on your left in every client, and you are on their right in theirs.
+ *
+ * A watcher has no seat and loses nothing — the four players still fill the four chairs, because
+ * the felt has exactly four and a player with nowhere to sit vanishes from the game.
+ */
+fun <T : Any> seatingFor(players: List<T>, viewer: T?): Seating<T> {
+    val at = players.indexOf(viewer)
+    val order = if (at < 0) players else players.drop(at) + players.take(at)
+    return Seating(
+        near = order.getOrNull(NEAR_CHAIR),
+        left = order.getOrNull(LEFT_CHAIR),
+        top = order.getOrNull(TOP_CHAIR),
+        right = order.getOrNull(RIGHT_CHAIR),
+    )
 }
 
 /** The felt and its four seats — the part of the table that is the same in both shapes. */
@@ -380,22 +413,19 @@ private fun FeltTable(
     // the bottom of the felt is simply empty. That is a real state — the room decides who is
     // seated — rather than an error to report.
     val mine = view.mySeat
-    val opponents = view.players.filter { it.id != mine?.id }
+    val seating = seatingFor(view.players, mine)
 
     Felt(modifier = modifier) {
         Column(
             modifier = Modifier.fillMaxSize().padding(Gap),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
-            // Seats are dealt in a fixed order, so the same bot is always in the same
-            // chair. The order matches the web table's, which puts the second-dealt
-            // opponent across from you and the first down your left.
-            TopSeat(opponents.getOrNull(1), view, table, sizes, onMove)
+            TopSeat(seating.top, view, table, sizes, onMove)
 
             MiddleRow(
                 modifier = Modifier.weight(1f),
-                left = opponents.getOrNull(0),
-                right = opponents.getOrNull(2),
+                left = seating.left,
+                right = seating.right,
                 view = view,
                 table = table,
                 sizes = sizes,
@@ -403,11 +433,7 @@ private fun FeltTable(
                 onHelp = onHelp,
             )
 
-            // Four chairs and four players. Seated, the bottom one is yours; watching, it is
-            // whoever would otherwise have nowhere to sit — the felt has exactly four places
-            // and a fourth opponent must be in one of them or they vanish from the game.
-            val near = mine ?: opponents.getOrNull(NEAR_CHAIR)
-            near?.let { NearSeat(it, view, table, sizes, onMove, mine = it.id == mine?.id) }
+            seating.near?.let { NearSeat(it, view, table, sizes, onMove, mine = it.id == mine?.id) }
         }
     }
 }
@@ -785,15 +811,11 @@ private fun TableHeader(
     round: Int,
     onHelp: (Rank?) -> Unit,
     onSettings: () -> Unit,
-    onReport: () -> Unit,
-    onDeck: () -> Unit,
     onLeave: (() -> Unit)?,
 ) {
-    val report = stringResource(Res.string.header_report)
     val settings = stringResource(Res.string.header_settings)
     val leave = stringResource(Res.string.header_leave)
     val rules = stringResource(Res.string.header_rules)
-    val deck = stringResource(Res.string.header_deck_badge, view.drawPileSize)
     // Only where the cup is drawn at all, which is the web and the desktop: on a phone its word
     // must not be counted against a header that will never show it.
     val offer = remember { supportOffer() }
@@ -807,7 +829,7 @@ private fun TableHeader(
         // Every word this header would like to say, measured against the room it has. The
         // wordmark and the round counter are what is already spoken for; [WideHeader] stays as a
         // floor so a narrow header never even tries.
-        val words = listOfNotNull(rules, settings, report, leave.takeIf { onLeave != null }, support)
+        val words = listOfNotNull(rules, settings, support, leave.takeIf { onLeave != null })
         val name = stringResource(Res.string.app_name)
         val counter = stringResource(Res.string.table_round_turn, round, view.turnNumber)
         val fits = headerRoom(words, name, counter, maxWidth)
@@ -861,54 +883,20 @@ private fun TableHeader(
                 drawGear(ink)
             }
 
-            // Always reachable, because the moment worth reporting is the moment it goes wrong
-            // and nobody navigates to a menu to capture it.
-            HeaderGlyph(onClick = onReport, description = report, wide = wideHeader) { ink ->
-                drawBug(ink)
-            }
+            SupportGlyph(wide = wideHeader)
 
-            // The way out, where the platform has none of its own.
+            // The way out, last in the row and on the end of it.
             //
             // Android answers the back gesture and is handed no [onLeave] at all; the web, the
             // desktop and iOS answer nothing, and a solo round there could only be left by
             // finishing it — the score sheet's "Quit" was the single exit in the app. Nothing is
             // lost by taking it: the round is saved on every move, and the menu offers it back.
+            //
+            // Rightmost because leaving is where a row of controls ends, and because it is the
+            // one of them a misplaced thumb should be least likely to find.
             onLeave?.let { go ->
                 HeaderGlyph(onClick = go, description = leave, wide = wideHeader) { ink ->
                     drawExit(ink)
-                }
-            }
-
-            SupportGlyph(wide = wideHeader)
-
-            // The deck count, which answers when it is asked. It is the one number on the screen
-            // that decides how a round ends — when it runs out the pile is shuffled back in and
-            // everything anybody remembered about that pile is worthless — and a number nobody
-            // explains is a number nobody reads.
-            //
-            // Named as the control it is rather than as the count it shows: the draw pile on the
-            // felt below already reads out "N cards left in the deck", and when this said the same
-            // words a screen reader heard one screen say it twice without either saying that one
-            // of the two opens an explanation.
-            // Dressed exactly as the three controls beside it — one header, one language.
-            // It was a gold-on-green plaque, which made the row's fourth control a fourth style.
-            Surface(
-                onClick = onDeck,
-                modifier = Modifier.pressable()
-                    .size(HeaderTap)
-                    .markedAs(LocalStage.current, Target.BADGE)
-                    .semantics { contentDescription = deck },
-                shape = HeaderShape,
-                color = Color.Transparent,
-                border = androidx.compose.foundation.BorderStroke(HeaderHair, Rail.line),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        "${view.drawPileSize}",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Rail.inkDim,
-                    )
                 }
             }
         }
@@ -1177,7 +1165,6 @@ private fun Face(name: String, ringed: Boolean, ring: Color = Rail.brand) {
  * Only reached when the viewer has no seat of their own: three opponents fill the top and the
  * two sides, and the fourth takes the chair the viewer's hand would have used.
  */
-private const val NEAR_CHAIR = 3
 
 /** Small enough for a line above the felt, large enough to tell four faces apart. */
 private val FaceSize = 22.dp

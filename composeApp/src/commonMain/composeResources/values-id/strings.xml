@@ -124,7 +124,7 @@
     <string name="settings_language_device">Ikuti perangkat</string>
     <string name="settings_language_current">Bahasa: %1$s</string>
     <string name="settings_language_chosen">%1$s, dipilih</string>
-    <string name="settings_group_privacy">Apa yang keluar dari perangkat ini</string>
+    <string name="settings_group_privacy">Privasi</string>
     <string name="settings_group_about">Tentang</string>
 
     <string name="settings_support">Dukung permainan ini</string>
@@ -138,7 +138,7 @@
     <string name="settings_group_game_summary">Lawan, kecepatan, gerakan, tampilan, bahasa dan rekam jejak Anda.</string>
     <string name="settings_group_privacy_summary">Apa yang dihitung, dan cara mematikannya.</string>
     <string name="settings_group_about_summary">Milik siapa permainan ini, siapa yang membuat aplikasinya, dan cara menghubungi.</string>
-    <string name="settings_privacy">Privasi</string>
+    <string name="settings_privacy">Kebijakan privasi</string>
     <string name="settings_privacy_detail">Apa yang dihitung, apa yang tidak, dan cara mematikannya.</string>
     <string name="settings_terms">Ketentuan penggunaan</string>
     <string name="settings_terms_detail">Versi singkat dari apa yang bisa Anda harapkan, dan apa yang diharapkan dari Anda.</string>
@@ -259,6 +259,8 @@
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">Belikan saya kopi</string>
     <string name="header_report">Laporkan masalah</string>
+    <string name="settings_report_detail">Mengirim ronde yang Anda mainkan: pembagian kartu, setiap langkah berurutan, tanpa nama. Itulah yang membuat bug bisa direproduksi.</string>
+    <string name="settings_report_send">Laporkan</string>
     <string name="header_settings">Pengaturan</string>
     <string name="header_rules">Aturan</string>
     <string name="header_leave">Tinggalkan meja</string>
@@ -407,7 +409,6 @@
     <string name="gloss_pulse">Kartu yang berdenyut bisa disentuh sekarang.</string>
     <string name="gloss_toss">Chip di bawah tumpukan menyebutkan pangkat yang jendelanya sedang terbuka.</string>
     <string name="gloss_log">Setiap langkah dicatat di kotak ini — lihat sekilas saat kartu bergerak lebih cepat dari yang bisa Anda baca.</string>
-    <string name="gloss_badge">Angka hijau menghitung sisa kartu di dek.</string>
 
     <string name="teach_note">%1$s — bernilai %2$s. %3$s.</string>
     <string name="teach_note_plain">%1$s — bernilai %2$s, dan tidak melakukan apa pun. Boleh disimpan untuk sementara, dan sebaiknya ditukar sebelum seseorang memanggil.</string>
