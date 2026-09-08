@@ -71,6 +71,7 @@ import game.vinto.app.art.table_next_round_waiting
 import game.vinto.app.art.table_see_score
 import game.vinto.app.art.toss_clock_moves_on
 import game.vinto.app.art.toss_more_time
+import game.vinto.app.hasSystemBack
 import game.vinto.app.link.inviteLink
 import game.vinto.app.openUrl
 import game.vinto.app.shareText
@@ -620,6 +621,7 @@ private fun RemoteGameScreen(
                     onReport = {},
                     onDeck = {},
                     modifier = Modifier.weight(1f),
+                    onLeave = wayOut(room, onLeft),
                 )
 
                 // The room's toss-in clock, and the one thing a player can do about it.
@@ -684,6 +686,17 @@ private fun RemoteGameScreen(
         )
     }
 }
+
+/**
+ * The table's own way out of a room, where the platform has none.
+ *
+ * The same leave the lobby offers, and null on Android, whose back gesture already does it.
+ * Without it, on every other target there is no way off this screen at all — and a player who
+ * has to stay until the round ends closes the tab instead, which is the same departure with no
+ * `quit` sent and three seats left waiting on a clock.
+ */
+private fun wayOut(room: RemoteRoom, onLeft: () -> Unit): (() -> Unit)? =
+    if (hasSystemBack) null else fun() { room.quit(); onLeft() }
 
 /**
  * The toss-in countdown, with the ask that moves it.

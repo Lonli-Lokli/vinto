@@ -3,7 +3,6 @@
        the stones nobody has to be told the meaning of. Blue, the one elemental colour nobody
        argues about, and already the deck's blue. -->
   <path d="M512 10 A502 502 0 1 0 512 1014 A502 502 0 1 0 512 10 Z" fill="#2A6BB0" stroke="#14181B" stroke-width="20"/>
-  <path d="M512 56 A456 456 0 1 0 512 968 A456 456 0 1 0 512 56 Z" fill="none" stroke="#C9A227" stroke-width="8"/>
   <path d="M300 392 C384 338 440 446 512 392 C584 338 640 446 724 392" fill="none" stroke="#F7F5EF" stroke-width="56" stroke-linecap="round"/>
   <path d="M288 512 C372 458 428 566 500 512 C572 458 628 566 712 512" fill="none" stroke="#F7F5EF" stroke-width="56" stroke-linecap="round"/>
   <path d="M300 632 C384 578 440 686 512 632 C584 578 640 686 724 632" fill="none" stroke="#F7F5EF" stroke-width="56" stroke-linecap="round"/>

@@ -149,7 +149,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — কম ধরে রাখা আর বেশি জানার কার্ড গেম। বিনামূল্যে, ব্রাউজারে, সাইন-আপ ছাড়াই: %1$s</string>
     <string name="settings_back">পেছনে</string>
-    <string name="settings_version">Vinto v%1$s</string>
 
     <string name="settings_bots">বট</string>
     <string name="settings_bots_detail">তিনজন তাদের চাল নিয়ে কতটা ভাবে।</string>
@@ -250,6 +249,7 @@
     <string name="header_support">আমাকে এক কাপ কফি খাওয়ান</string>
     <string name="header_report">সমস্যা জানান</string>
     <string name="header_settings">সেটিংস</string>
+    <string name="header_leave">টেবিল ছেড়ে যান</string>
     <string name="header_deck_left">ডেকে %1$d তাস বাকি</string>
     <string name="header_deck_badge">ডেকে %1$d — এর মানে কী</string>
 

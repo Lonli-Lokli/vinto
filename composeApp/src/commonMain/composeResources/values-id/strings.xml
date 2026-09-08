@@ -157,7 +157,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — permainan kartu memegang lebih sedikit dan tahu lebih banyak. Gratis, di peramban, tanpa pendaftaran: %1$s</string>
     <string name="settings_back">Kembali</string>
-    <string name="settings_version">Vinto v%1$s</string>
 
     <string name="settings_bots">Bot</string>
     <string name="settings_bots_detail">Seberapa keras ketiganya memikirkan langkah mereka.</string>
@@ -260,6 +259,7 @@
     <string name="header_support">Belikan saya kopi</string>
     <string name="header_report">Laporkan masalah</string>
     <string name="header_settings">Pengaturan</string>
+    <string name="header_leave">Tinggalkan meja</string>
     <string name="header_deck_left">%1$d kartu tersisa di dek</string>
     <string name="header_deck_badge">%1$d di dek — apa artinya itu</string>
 

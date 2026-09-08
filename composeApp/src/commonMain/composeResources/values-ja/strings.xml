@@ -159,7 +159,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — 持たずに知るカードゲーム。無料、ブラウザで、登録不要: %1$s</string>
     <string name="settings_back">戻る</string>
-    <string name="settings_version">Vinto v%1$s</string>
 
     <string name="settings_bots">ボット</string>
     <string name="settings_bots_detail">3人のボットがどれだけ深く考えるか。</string>
@@ -262,6 +261,7 @@
     <string name="header_support">コーヒーをおごる</string>
     <string name="header_report">問題を報告</string>
     <string name="header_settings">設定</string>
+    <string name="header_leave">テーブルを退出</string>
     <string name="header_deck_left">山札に残り%1$d枚</string>
     <string name="header_deck_badge">山札に%1$d枚 — その意味</string>
 

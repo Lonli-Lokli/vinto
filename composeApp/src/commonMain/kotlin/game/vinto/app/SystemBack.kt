@@ -13,3 +13,16 @@ import androidx.compose.runtime.Composable
  */
 @Composable
 expect fun SystemBack(enabled: Boolean, onBack: () -> Unit)
+
+/**
+ * Whether [SystemBack] is actually wired to anything on this platform.
+ *
+ * Android is the only true: its actual is a real `BackHandler`, and the gesture is a hardware
+ * promise. Everywhere else the actual is `Unit`, so a screen that offers no exit of its own has
+ * none at all — which is what a solo round on the web was, reachable only until it ended.
+ *
+ * Read by the table, to decide whether to draw a way out in its header. A screen asking "does
+ * this platform go back by itself?" is asking about a capability rather than about a brand,
+ * which is why this sits beside the handler rather than in a `when` on some platform name.
+ */
+expect val hasSystemBack: Boolean

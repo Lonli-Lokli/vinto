@@ -48,6 +48,7 @@ import game.vinto.app.theme.LocalFeedback
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Slate
 import game.vinto.app.theme.onFelt
+import game.vinto.app.theme.pressable
 import game.vinto.app.theme.stamped
 import game.vinto.protocol.AVATAR_ROW
 import game.vinto.protocol.AvatarKind
@@ -296,7 +297,7 @@ private fun RerollButton(onClick: () -> Unit) {
         color = Color.Transparent,
         border = BorderStroke(Edge, Rail.line),
         contentColor = Rail.ink,
-        modifier = Modifier
+        modifier = Modifier.pressable()
             .size(ButtonSize)
             .semantics { contentDescription = another },
     ) {

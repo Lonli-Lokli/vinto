@@ -947,14 +947,28 @@ fun startGame(stateJson: String, nowMs: Double): String {
     val roundSeed = seedForRound(state.seed, state.session.rounds.size)
     val dealt = initializeGame(roundSeed, state.difficulty)
 
-    // The engine's idea of who is human is made to match the room's. A seat with a token is a
-    // person and starts having seen nothing; a seat without one is a bot and keeps its peek.
+    // The engine's idea of who is *at* the table is made to match the room's — both who is
+    // human and what they are called.
+    //
+    // A seat with a token is a person and starts having seen nothing; a seat without one is a
+    // bot and keeps its peek. And every seat takes the room's name for it, because
+    // `initializeGame` deals a SOLO cast: seat zero is called "You" and the other three are the
+    // elements, which is right on a device and meaningless at a table of four. Everything the
+    // client draws a seat with keys off the name it finds here — the plate shows `nickname`,
+    // `LocalFaces` looks a chosen face up by that same string, and `portraitFor` falls back to
+    // the emblem it names. Left alone, four people got a table where nobody was called what they
+    // were called, one seat read "You" and was somebody else, and every chosen face missed its
+    // key. `BOT_NAMES` is written to match `portraitFor` exactly (see the comment on it), which
+    // is only worth anything once the names actually travel.
     val players = dealt.players.mapIndexed { index, player ->
         val seat = state.seats[index]
+        val named = seat.profile?.nickname
+            ?.let { player.copy(name = it, nickname = it) }
+            ?: player
         if (seat.tokenHash != null) {
-            player.copy(isHuman = true, isBot = false, knownCardPositions = emptyList())
+            named.copy(isHuman = true, isBot = false, knownCardPositions = emptyList())
         } else {
-            player.copy(isHuman = false, isBot = true)
+            named.copy(isHuman = false, isBot = true)
         }
     }
 

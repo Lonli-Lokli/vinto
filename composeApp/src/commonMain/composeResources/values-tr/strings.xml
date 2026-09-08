@@ -160,7 +160,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — az tutup çok bilme kart oyunu. Ücretsiz, tarayıcıda, üyelik gerekmez: %1$s</string>
     <string name="settings_back">Geri</string>
-    <string name="settings_version">Vinto s%1$s</string>
 
     <string name="settings_bots">Botlar</string>
     <string name="settings_bots_detail">Üçünün hamlelerini ne kadar düşündüğü.</string>
@@ -263,6 +262,7 @@
     <string name="header_support">Bana bir kahve ısmarla</string>
     <string name="header_report">Sorun bildir</string>
     <string name="header_settings">Ayarlar</string>
+    <string name="header_leave">Masadan ayrıl</string>
     <string name="header_deck_left">Destede %1$d kart kaldı</string>
     <string name="header_deck_badge">Destede %1$d — bunun anlamı</string>
 

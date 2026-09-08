@@ -6,7 +6,6 @@
        #1B5E43, and a green disc on green felt has no edge. The deck's GOLD_DARK, so the disc and
        the brighter gold hairline above it read as one family. -->
   <path d="M512 10 A502 502 0 1 0 512 1014 A502 502 0 1 0 512 10 Z" fill="#8A6D1B" stroke="#14181B" stroke-width="20"/>
-  <path d="M512 56 A456 456 0 1 0 512 968 A456 456 0 1 0 512 56 Z" fill="none" stroke="#C9A227" stroke-width="8"/>
   <path d="M300 392 L724 392" fill="none" stroke="#F7F5EF" stroke-width="56" stroke-linecap="round"/>
   <path d="M276 512 L748 512" fill="none" stroke="#F7F5EF" stroke-width="56" stroke-linecap="round"/>
   <path d="M300 632 L724 632" fill="none" stroke="#F7F5EF" stroke-width="56" stroke-linecap="round"/>

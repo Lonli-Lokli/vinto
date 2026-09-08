@@ -166,7 +166,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — el juego de cartas de recordar más y guardar menos. Gratis, en el navegador, sin registro: %1$s</string>
     <string name="settings_back">Atrás</string>
-    <string name="settings_version">Vinto v%1$s</string>
 
     <string name="settings_bots">Bots</string>
     <string name="settings_bots_detail">Cuánto piensan los tres su jugada.</string>
@@ -269,6 +268,7 @@
     <string name="header_support">Invítame a un café</string>
     <string name="header_report">Informar de un problema</string>
     <string name="header_settings">Ajustes</string>
+    <string name="header_leave">Salir de la mesa</string>
     <string name="header_deck_left">%1$d cartas quedan en el mazo</string>
     <string name="header_deck_badge">%1$d en el mazo — qué significa</string>
 

@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -76,6 +77,7 @@ import game.vinto.app.art.card_position
 import game.vinto.app.art.card_thrown_by
 import game.vinto.app.art.header_deck_badge
 import game.vinto.app.art.header_deck_left
+import game.vinto.app.art.header_leave
 import game.vinto.app.art.header_report
 import game.vinto.app.art.header_settings
 import game.vinto.app.art.header_support
@@ -110,6 +112,7 @@ import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.feltLamp
 import game.vinto.app.theme.feltShade
 import game.vinto.app.theme.onFelt
+import game.vinto.app.theme.pressable
 import game.vinto.app.theme.rememberFeltWeave
 import game.vinto.app.verdictWord
 import game.vinto.client.Anchor
@@ -142,6 +145,15 @@ import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+
+/**
+ * How far apart the middle row's three groups may be pushed — the two side seats and the piles.
+ *
+ * A reach rather than a width: about as far as somebody sitting at a table can put a card from
+ * the seat opposite. Wider than this and the two side seats stop reading as being at the *same*
+ * table, which is what a desktop felt did with `SpaceBetween` and nothing to stop it.
+ */
+private val MiddleReach = 620.dp
 
 private val Gap = 6.dp
 private val Tight = 4.dp
@@ -239,6 +251,16 @@ fun TableScreen(
     onReport: () -> Unit,
     onDeck: () -> Unit,
     modifier: Modifier = Modifier,
+    /**
+     * The way back out of the round, or null where the platform already has one.
+     *
+     * Android answers the back gesture and needs nothing here; every other target's
+     * [game.vinto.app.SystemBack] does nothing at all, so a solo game on the web, the desktop or
+     * iOS had exactly one exit — the score sheet at the end of a round — and a player who wanted
+     * to stop before then had to finish first. The caller decides whether there is anywhere to
+     * go, because leaving a room and leaving a solo game are not the same act.
+     */
+    onLeave: (() -> Unit)? = null,
 ) {
     if (layout.landscape) {
         // Centred, not stretched: the felt column is [TableLayout.feltWidth] wide — the
@@ -251,7 +273,7 @@ fun TableScreen(
             horizontalArrangement = Arrangement.Center,
         ) {
             Column(modifier = Modifier.width(layout.feltWidth)) {
-                TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck)
+                TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck, onLeave)
                 FeltTable(
                     state = state,
                     sizes = layout.sizes,
@@ -277,7 +299,7 @@ fun TableScreen(
         }
     } else {
         Column(modifier = modifier.fillMaxSize()) {
-            TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck)
+            TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck, onLeave)
 
             RehearsalLine()
             FinalRoundLine(state.view, state.table.planSummary, onMove)
@@ -411,7 +433,7 @@ private fun SupportGlyph(wide: Boolean) {
 
     Surface(
         onClick = { openUrl(offer.url) },
-        modifier = Modifier.height(HeaderTap).semantics { contentDescription = label },
+        modifier = Modifier.height(HeaderTap).semantics { contentDescription = label }.pressable(),
         shape = HeaderShape,
         color = Color.Transparent,
         border = androidx.compose.foundation.BorderStroke(HeaderHair, Rail.line),
@@ -485,7 +507,7 @@ private fun HeaderGlyph(
     val ink = Rail.ink
     Surface(
         onClick = onClick,
-        modifier = Modifier.size(HeaderTap).semantics { contentDescription = description },
+        modifier = Modifier.size(HeaderTap).semantics { contentDescription = description }.pressable(),
         shape = HeaderShape,
         color = Color.Transparent,
         border = androidx.compose.foundation.BorderStroke(HeaderHair, Rail.line),
@@ -536,6 +558,54 @@ private fun DrawScope.drawBug(ink: Color) {
     }
 }
 
+/**
+ * A door with an arrow leaving through it — strokes, like every other mark up here.
+ *
+ * Not a cross: a cross on a game screen reads as "close the app", and this closes a round and
+ * goes back to the menu. Not a chevron either, which is what the settings' own back control
+ * wears and would say "up one screen" for something that leaves the game.
+ */
+private fun DrawScope.drawExit(ink: Color) {
+    val w = size.minDimension
+    val pen = Stroke(width = w * EXIT_PEN, cap = StrokeCap.Round)
+
+    // Three sides of the frame: the fourth is the opening the arrow goes through.
+    val frame = Path().apply {
+        moveTo(w * EXIT_MIDDLE, w * EXIT_TOP)
+        lineTo(w * EXIT_LEFT, w * EXIT_TOP)
+        lineTo(w * EXIT_LEFT, w * EXIT_BOTTOM)
+        lineTo(w * EXIT_MIDDLE, w * EXIT_BOTTOM)
+    }
+    drawPath(frame, color = ink, style = pen)
+
+    // The arrow, on its way out to the right.
+    drawLine(
+        ink,
+        Offset(w * EXIT_SHAFT_FROM, w * EXIT_MID_Y),
+        Offset(w * EXIT_RIGHT, w * EXIT_MID_Y),
+        pen.width,
+        StrokeCap.Round,
+    )
+    val head = Path().apply {
+        moveTo(w * EXIT_HEAD_BACK, w * EXIT_HEAD_HIGH)
+        lineTo(w * EXIT_RIGHT, w * EXIT_MID_Y)
+        lineTo(w * EXIT_HEAD_BACK, w * EXIT_HEAD_LOW)
+    }
+    drawPath(head, color = ink, style = pen)
+}
+
+private const val EXIT_PEN = 0.09f
+private const val EXIT_LEFT = 0.16f
+private const val EXIT_MIDDLE = 0.50f
+private const val EXIT_RIGHT = 0.88f
+private const val EXIT_TOP = 0.14f
+private const val EXIT_BOTTOM = 0.86f
+private const val EXIT_MID_Y = 0.50f
+private const val EXIT_SHAFT_FROM = 0.48f
+private const val EXIT_HEAD_BACK = 0.68f
+private const val EXIT_HEAD_HIGH = 0.32f
+private const val EXIT_HEAD_LOW = 0.68f
+
 private const val BUG_BODY = 0.78f
 private const val BUG_SHELL = 0.18f
 private const val BUG_SPLIT = 0.14f
@@ -555,9 +625,11 @@ private fun TableHeader(
     onSettings: () -> Unit,
     onReport: () -> Unit,
     onDeck: () -> Unit,
+    onLeave: (() -> Unit)?,
 ) {
     val report = stringResource(Res.string.header_report)
     val settings = stringResource(Res.string.header_settings)
+    val leave = stringResource(Res.string.header_leave)
     val deck = stringResource(Res.string.header_deck_badge, view.drawPileSize)
     // Measured here rather than from the window: `containerSize` reports the whole surface, and
     // the header is not always the whole surface — a fixed-size preview, a split-screen phone or
@@ -599,7 +671,7 @@ private fun TableHeader(
             // the header, where nothing else changes either.
             Surface(
                 onClick = { onHelp(null) },
-                modifier = Modifier.size(HeaderTap).markedAs(LocalStage.current, Target.HELP),
+                modifier = Modifier.size(HeaderTap).pressable().markedAs(LocalStage.current, Target.HELP),
                 shape = HeaderShape,
                 color = Color.Transparent,
                 border = androidx.compose.foundation.BorderStroke(HeaderHair, Rail.line),
@@ -635,6 +707,18 @@ private fun TableHeader(
                 drawBug(ink)
             }
 
+            // The way out, where the platform has none of its own.
+            //
+            // Android answers the back gesture and is handed no [onLeave] at all; the web, the
+            // desktop and iOS answer nothing, and a solo round there could only be left by
+            // finishing it — the score sheet's "Quit" was the single exit in the app. Nothing is
+            // lost by taking it: the round is saved on every move, and the menu offers it back.
+            onLeave?.let { go ->
+                HeaderGlyph(onClick = go, description = leave) { ink ->
+                    drawExit(ink)
+                }
+            }
+
             SupportGlyph(wide = wideHeader)
 
             // The deck count, which answers when it is asked. It is the one number on the screen
@@ -650,7 +734,7 @@ private fun TableHeader(
             // It was a gold-on-green plaque, which made the row's fourth control a fourth style.
             Surface(
                 onClick = onDeck,
-                modifier = Modifier
+                modifier = Modifier.pressable()
                     .size(HeaderTap)
                     .markedAs(LocalStage.current, Target.BADGE)
                     .semantics { contentDescription = deck },
@@ -976,9 +1060,13 @@ private fun TopSeat(
 ) {
     if (seat == null) return
 
+    // Centred, not started. `weight(fill = false)` lets the hand take only what it needs, and
+    // with the row's default arrangement everything left over piled up on the right — so on a
+    // phone, where the hand fills the width, the seat looked centred, and on a desktop, where it
+    // does not, the whole seat sat against the left rim with the felt empty beside it.
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Gap),
+        horizontalArrangement = Arrangement.spacedBy(Gap, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Hand(seat, view, table, sizes.theirs, onMove, Modifier.weight(1f, fill = false))
@@ -1000,14 +1088,22 @@ private fun MiddleRow(
 ) {
     // Centred rather than top-aligned: the middle row takes whatever height the panel leaves,
     // and top-aligning it pools all the spare felt into one gap under the side seats.
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        SideSeat(left, view, table, sizes, plateFirst = true, onMove = onMove)
-        Piles(view, sizes, onHelp)
-        SideSeat(right, view, table, sizes, plateFirst = false, onMove = onMove)
+    //
+    // And bounded rather than spread. `SpaceBetween` across the whole felt is right on a phone,
+    // where the three groups barely fit; on a desktop felt it turns every spare pixel into
+    // distance and sends the two side seats to opposite horizons with a void between them —
+    // which is the very thing `TABLE_ASPECT` says a table must not do with room. So the row is
+    // capped and centred: past [MiddleReach] the extra width stays cloth.
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Row(
+            modifier = Modifier.widthIn(max = MiddleReach).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SideSeat(left, view, table, sizes, plateFirst = true, onMove = onMove)
+            Piles(view, sizes, onHelp)
+            SideSeat(right, view, table, sizes, plateFirst = false, onMove = onMove)
+        }
     }
 }
 
@@ -1066,9 +1162,11 @@ private fun NearSeat(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Tight),
     ) {
+        // Centred for the same reason [TopSeat] is: your own hand is the thing the eye starts
+        // from, and on a wide table it was landing against the left rim.
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Gap),
+            horizontalArrangement = Arrangement.spacedBy(Gap, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Plate(seat, view, table, sizes, onMove)

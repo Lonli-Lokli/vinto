@@ -37,6 +37,7 @@ import game.vinto.app.art.report_title
 import game.vinto.app.art.table_see_score
 import game.vinto.app.counted
 import game.vinto.app.elapsedMs
+import game.vinto.app.hasSystemBack
 import game.vinto.app.nowIso
 import game.vinto.app.shareText
 import game.vinto.app.theme.ButtonTone
@@ -46,6 +47,7 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Sfx
 import game.vinto.app.theme.VintoDialog
 import game.vinto.client.LocalGame
+import game.vinto.client.LocalGameSession
 import game.vinto.client.Pace
 import game.vinto.client.Question
 import game.vinto.client.RoundResult
@@ -60,6 +62,15 @@ import game.vinto.shapes.Rank
 import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 12.dp
+
+/**
+ * The table's own way back to the menu, where the platform has none.
+ *
+ * The same exit the score sheet offers, available before the round ends — and null on Android,
+ * whose back gesture already does exactly this. Leaving is a pause rather than a forfeit: the
+ * round is saved on every move, so `LocalGame.resume` picks it up where it stood.
+ */
+private fun wayOut(onQuit: () -> Unit): (() -> Unit)? = onQuit.takeIf { !hasSystemBack }
 
 /**
  * A game: rounds, one after another, with the score carried between them.
@@ -160,6 +171,7 @@ fun GameScreen(
                     onReport = { reported = true },
                     onDeck = { deckOpen = true },
                     modifier = Modifier.weight(1f),
+                    onLeave = wayOut(onQuit),
                 )
 
                 // On the shown table, not the live one: the round is over when the player has
@@ -169,25 +181,7 @@ fun GameScreen(
         }
     }
 
-    // Composed whether or not it is showing: `VintoDialog` animates on `open`, and a dialog
-    // that is only composed while visible has nothing to animate *from*.
-    ReportProblem(
-        open = reported,
-        onSend = {
-            val report = session.report(at = nowIso(), label = "reported from the table")
-            val subject = reportSubject
-            if (!shareText(subject, report.toJson())) {
-                clipboard.setText(AnnotatedString(report.toJson()))
-            }
-            reported = false
-        },
-        onCopy = {
-            val report = session.report(at = nowIso(), label = "reported from the table")
-            clipboard.setText(AnnotatedString(report.toJson()))
-            reported = false
-        },
-        onDismiss = { reported = false },
-    )
+    Reporting(session, reportSubject, clipboard, reported) { reported = false }
 
     DeckExplained(
         open = deckOpen,
@@ -265,6 +259,40 @@ private fun SoloScore(
             onQuit = onQuit,
         )
     }
+}
+
+/**
+ * The report offer, lifted out of [GameScreen] rather than written inside it.
+ *
+ * Composed whether or not it is showing: `VintoDialog` animates on `open`, and a dialog that is
+ * only composed while visible has nothing to animate *from*.
+ */
+@Composable
+@Suppress("DEPRECATION")
+private fun Reporting(
+    session: LocalGameSession,
+    subject: String,
+    clipboard: androidx.compose.ui.platform.ClipboardManager,
+    open: Boolean,
+    onDone: () -> Unit,
+) {
+    fun report() = session.report(at = nowIso(), label = "reported from the table")
+
+    ReportProblem(
+        open = open,
+        onSend = {
+            val made = report()
+            if (!shareText(subject, made.toJson())) {
+                clipboard.setText(AnnotatedString(made.toJson()))
+            }
+            onDone()
+        },
+        onCopy = {
+            clipboard.setText(AnnotatedString(report().toJson()))
+            onDone()
+        },
+        onDismiss = onDone,
+    )
 }
 
 /**

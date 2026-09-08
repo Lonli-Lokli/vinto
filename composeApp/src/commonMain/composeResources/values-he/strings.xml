@@ -149,7 +149,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — משחק הקלפים של להחזיק פחות ולדעת יותר. חינם, בדפדפן, בלי הרשמה: %1$s</string>
     <string name="settings_back">חזרה</string>
-    <string name="settings_version">Vinto גרסה %1$s</string>
 
     <string name="settings_bots">בוטים</string>
     <string name="settings_bots_detail">כמה קשה שלושתם חושבים על המהלך שלהם.</string>
@@ -250,6 +249,7 @@
     <string name="header_support">קניית קפה בשבילי</string>
     <string name="header_report">דיווח על בעיה</string>
     <string name="header_settings">הגדרות</string>
+    <string name="header_leave">יציאה מהשולחן</string>
     <string name="header_deck_left">%1$d קלפים נותרו בחפיסה</string>
     <string name="header_deck_badge">%1$d בחפיסה — מה זה אומר</string>
 

@@ -101,7 +101,7 @@ fun GameButton(
             onClick()
         },
         enabled = live,
-        modifier = modifier.heightIn(min = if (compact) CompactTap else MinTap),
+        modifier = modifier.heightIn(min = if (compact) CompactTap else MinTap).pressable(),
         shape = shape,
         color = Color.Transparent,
         contentColor = if (live) tone.ink else tone.ink.copy(alpha = Muted),

@@ -157,7 +157,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — कम पकड़ने और ज़्यादा जानने का ताश का खेल। मुफ़्त, ब्राउज़र में, बिना साइन-अप के: %1$s</string>
     <string name="settings_back">वापस</string>
-    <string name="settings_version">Vinto v%1$s</string>
 
     <string name="settings_bots">बॉट</string>
     <string name="settings_bots_detail">तीनों अपनी चाल के बारे में कितना सोचते हैं।</string>
@@ -260,6 +259,7 @@
     <string name="header_support">मुझे एक कॉफ़ी पिलाएं</string>
     <string name="header_report">समस्या बताएं</string>
     <string name="header_settings">सेटिंग्स</string>
+    <string name="header_leave">मेज़ छोड़ें</string>
     <string name="header_deck_left">डेक में %1$d पत्ते बचे हैं</string>
     <string name="header_deck_badge">डेक में %1$d — इसका मतलब क्या है</string>
 

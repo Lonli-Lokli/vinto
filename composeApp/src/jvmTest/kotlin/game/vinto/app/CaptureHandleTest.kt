@@ -9,6 +9,10 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runComposeUiTest
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.MemoryVault
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -140,35 +144,75 @@ class CaptureHandleTest {
         return seen
     }
 
-    private fun ComposeUiTest.open(marketing: String?) {
+    /**
+     * [settle] is false for a scene that never goes idle, which is the demo: `waitForIdle` waits
+     * for a composition with no work left, and one that is playing a round always has some.
+     */
+    private fun ComposeUiTest.open(marketing: String?, settle: Boolean = true) {
         setContent { VintoTheme { App(seeds = { SEED }, vault = MemoryVault(), marketing = marketing) } }
-        waitForIdle()
+        if (settle) waitForIdle()
     }
 
     /**
-     * The demo scene plays itself, with nobody touching it.
+     * The demo scene opens on a table, which is the half of the claim a screen can answer.
      *
      * This is the one scene that is not a photograph. The App Store preview needs *footage of the
      * game being played*, and every other staged scene is deliberately a frozen moment — `TABLE`
      * deals a position and then waits for a human who, on a capture machine, is never coming. A
      * clip of it is a still with a soundtrack.
      *
-     * So the property worth asserting is the opposite of
-     * [theTableSceneIsTheSameTableTwice]: not that the deal is fixed, but that the round MOVES.
-     * The header's turn counter is what says so — it can only advance if seats are taking turns —
-     * and waiting for it beats comparing screenshots, which would also pass on the opening deal
-     * settling.
+     * **The moving half is asserted one layer down**, in [theDemoRoundPlaysItselfWithNobodyTouchingIt].
+     * This test used to wait here for the header's turn counter to reach a second lap, and that is
+     * where it went wrong: a lap is four seats' worth of choreography, and rendering it headless
+     * cost ten seconds on a developer's machine and over a minute on a CI runner — where it failed,
+     * and nowhere else. It failed as `UncompletedCoroutinesError` too, saying only that the body
+     * had not finished, because its own wait was as long as the whole budget `runComposeUiTest`
+     * allows. `FullGameUiTest` recorded the same lesson: a long wait is a bet on the runner.
+     *
+     * Nothing about "the round moves" is carried by the pixels, so it is claimed where it is cheap
+     * and total — and a round that reaches its ending *on screen* is already `FullGameUiTest`'s.
+     *
+     * `settle = false` because this screen never goes idle by design: it is playing. The beat is
+     * left at the one the app ships, which is what makes this cheap: the loop sleeps between moves,
+     * so the dealt table is on screen and quiet long before the second one lands.
      */
     @Test
-    fun theDemoScenePlaysItselfWithNobodyTouchingIt() = runComposeUiTest {
-        open(marketing = "demo")
+    fun theDemoSceneOpensOnATable() = runComposeUiTest {
+        open(marketing = "demo", settle = false)
 
+        // The rail's two piles, as `theTableSceneOpensOnARoundInProgress` reads them. Waited for
+        // rather than asserted flat: nothing has settled, because nothing here ever will.
         waitUntil(timeoutMillis = DEMO_TIMEOUT_MS) {
-            onAllNodesWithText(DEMO_TURN, substring = true).fetchSemanticsNodes().isNotEmpty()
+            onAllNodesWithText("DRAW", substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        assertTrue(onAllNodesWithText("DISCARD", substring = true).fetchSemanticsNodes().isNotEmpty())
+    }
+
+    /**
+     * The demo round plays itself, with nobody touching it.
+     *
+     * The property worth asserting is the opposite of [theTableSceneIsTheSameTableTwice]: not that
+     * the deal is fixed, but that the round MOVES. The turn counter is what says so — it can only
+     * advance if seats are taking turns — and it is read off the session rather than off the header
+     * because a header is a rendering of it, and rendering is the part that cost a minute.
+     *
+     * At the shipping beat, deliberately: [playOn]'s pauses are what a capture machine films, and a
+     * loop that only worked with them taken out would be a loop the reel never sees. They are real
+     * delays rather than work, so they cost the same on any machine — which is the whole reason
+     * this one can carry a budget honestly.
+     */
+    @Test
+    fun theDemoRoundPlaysItselfWithNobodyTouchingIt() = runBlocking {
+        val game = demoGame(MemoryVault())
+        val played = withTimeoutOrNull(LAP_TIMEOUT_MS) {
+            val loop = launch { playOn(game) }
+            while (game.session.view.value.turnNumber < DEMO_LAP) delay(POLL_MS)
+            loop.cancel()
+            true
         }
         assertTrue(
-            onAllNodesWithText(DEMO_TURN, substring = true).fetchSemanticsNodes().isNotEmpty(),
-            "the demo table never reached $DEMO_TURN, so nothing played itself",
+            played == true,
+            "the demo table never reached lap $DEMO_LAP, so nothing played itself",
         )
     }
 
@@ -179,16 +223,35 @@ class CaptureHandleTest {
         const val SHEET_TIMEOUT_MS = 10_000L
 
         /**
-         * The header's counter reading two, as `table_round_turn` writes it.
+         * Two laps of the table, as the session counts them.
          *
          * It is a LAP counter, not a move counter — `CallVinto.kt` advances it only when play
-         * comes back round to the first seat — so two means the table went all the way round
-         * with nobody touching it, which is exactly the claim. Four would mean four laps, which
-         * is more than a test wants to sit through.
+         * comes back round to the first seat — so two means the table went all the way round with
+         * nobody touching it, which is exactly the claim. Four would mean four laps, which is more
+         * than a test wants to sit through.
          */
-        const val DEMO_TURN = "/ T2"
+        const val DEMO_LAP = 2
 
-        /** A lap at the table's own pace, and a failure rather than a hang if it never comes. */
-        const val DEMO_TIMEOUT_MS = 60_000L
+        /** How often the lap above is looked for. Short enough not to pad the measurement. */
+        const val POLL_MS = 5L
+
+        /**
+         * A lap at the demo's own beat, with room for a slow runner's thinking on top.
+         *
+         * The beats inside it are delays rather than work, so they take the same wall clock
+         * anywhere; what a slower machine adds is the bots' search between them. Generous against
+         * that, and still a failure rather than a hang if the loop stops.
+         */
+        const val LAP_TIMEOUT_MS = 45_000L
+
+        /**
+         * A wedge detector for the screen, not a pace — and deliberately under the budget around it.
+         *
+         * With the beats taken out the table is dealt in a moment, so anything approaching this
+         * means the screen never arrived. It must stay well under the minute `runComposeUiTest`
+         * allows the whole test body: at sixty it could never be the thing that failed, and the
+         * report would say only that the body had not finished.
+         */
+        const val DEMO_TIMEOUT_MS = 20_000L
     }
 }

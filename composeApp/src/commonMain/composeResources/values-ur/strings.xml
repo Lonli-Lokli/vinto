@@ -157,7 +157,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — کم رکھنے اور زیادہ جاننے کا کارڈ گیم۔ مفت، براؤزر میں، بغیر سائن اپ کے: %1$s</string>
     <string name="settings_back">واپس</string>
-    <string name="settings_version">Vinto v%1$s</string>
 
     <string name="settings_bots">بوٹس</string>
     <string name="settings_bots_detail">تینوں اپنی چال کے بارے میں کتنا سوچتے ہیں۔</string>
@@ -260,6 +259,7 @@
     <string name="header_support">مجھے کافی پلائیں</string>
     <string name="header_report">کوئی مسئلہ بتائیں</string>
     <string name="header_settings">ترتیبات</string>
+    <string name="header_leave">میز چھوڑیں</string>
     <string name="header_deck_left">ڈیک میں %1$d پتے باقی ہیں</string>
     <string name="header_deck_badge">ڈیک میں %1$d — اس کا مطلب کیا ہے</string>
 

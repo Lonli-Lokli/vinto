@@ -53,6 +53,7 @@ import game.vinto.app.art.card_q
 import game.vinto.app.theme.LocalFeedback
 import game.vinto.app.theme.Signal
 import game.vinto.app.theme.onFelt
+import game.vinto.app.theme.pressable
 import game.vinto.engine.CardView
 import game.vinto.shapes.Rank
 import org.jetbrains.compose.resources.DrawableResource
@@ -169,7 +170,7 @@ fun CardFace(
                 if (onClick == null) {
                     Modifier
                 } else {
-                    Modifier.clickable(
+                    Modifier.pressable().clickable(
                         role = Role.Button,
                         onClick = {
                             feedback.touch()

@@ -157,7 +157,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — لعبة ورق حمل أقل ومعرفة أكثر. مجانية، في المتصفح، بلا تسجيل: %1$s</string>
     <string name="settings_back">رجوع</string>
-    <string name="settings_version">Vinto الإصدار %1$s</string>
 
     <string name="settings_bots">الروبوتات</string>
     <string name="settings_bots_detail">مدى تفكير الروبوتات الثلاثة في حركتها.</string>
@@ -260,6 +259,7 @@
     <string name="header_support">اشترِ لي قهوة</string>
     <string name="header_report">أبلغ عن مشكلة</string>
     <string name="header_settings">الإعدادات</string>
+    <string name="header_leave">غادر الطاولة</string>
     <string name="header_deck_left">%1$d بطاقة متبقية في المكدس</string>
     <string name="header_deck_badge">%1$d في المكدس — ماذا يعني ذلك</string>
 

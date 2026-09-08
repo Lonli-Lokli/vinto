@@ -86,7 +86,7 @@ fun PickerField(
             // Spoken as one thing — "Language: Русский" — rather than as a label and a value a
             // reader has to put together. The chevron has no name of its own for the same
             // reason: it is a picture of what the row already says it does.
-            modifier = Modifier
+            modifier = Modifier.pressable()
                 .fillMaxWidth()
                 .heightIn(min = MinTap)
                 .semantics { contentDescription = description },
@@ -189,7 +189,7 @@ fun PickerRow(
             feedback.commit()
             onChoose()
         },
-        modifier = Modifier
+        modifier = Modifier.pressable()
             .fillMaxWidth()
             .heightIn(min = MinTap)
             .semantics { contentDescription = description },

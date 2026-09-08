@@ -149,7 +149,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — gra karciana o trzymaniu mniej i wiedzeniu więcej. Za darmo, w przeglądarce, bez rejestracji: %1$s</string>
     <string name="settings_back">Wstecz</string>
-    <string name="settings_version">Vinto v%1$s</string>
 
     <string name="settings_bots">Boty</string>
     <string name="settings_bots_detail">Jak mocno cała trójka zastanawia się nad ruchem.</string>
@@ -250,6 +249,7 @@
     <string name="header_support">Postaw mi kawę</string>
     <string name="header_report">Zgłoś problem</string>
     <string name="header_settings">Ustawienia</string>
+    <string name="header_leave">Opuść stół</string>
     <string name="header_deck_left">%1$d kart w talii</string>
     <string name="header_deck_badge">%1$d w talii — co to znaczy</string>
 

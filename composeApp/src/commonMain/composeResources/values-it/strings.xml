@@ -158,7 +158,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — il gioco di carte del trattenere meno e sapere di più. Gratis, nel browser, senza registrazione: %1$s</string>
     <string name="settings_back">Indietro</string>
-    <string name="settings_version">Vinto v%1$s</string>
 
     <string name="settings_bots">Bot</string>
     <string name="settings_bots_detail">Quanto ci pensano i tre alla loro mossa.</string>
@@ -261,6 +260,7 @@
     <string name="header_support">Offrimi un caffè</string>
     <string name="header_report">Segnala un problema</string>
     <string name="header_settings">Impostazioni</string>
+    <string name="header_leave">Lascia il tavolo</string>
     <string name="header_deck_left">%1$d carte rimaste nel mazzo</string>
     <string name="header_deck_badge">%1$d nel mazzo — cosa significa</string>
 

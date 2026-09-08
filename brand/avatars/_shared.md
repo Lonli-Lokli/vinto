@@ -35,6 +35,20 @@ in the build, and that one field blocks submission.
 
 ## The parts every master shares
 
-A disc in the seat's colour, the deck's ink ring around it, and the court cards' gold hairline
-just inside — the same pair `card_q.xml` draws, so a seat plate and a Queen look like they come
-from one game. Circles are written as arc paths because a vector drawable has no `<circle>`.
+A disc in the seat's colour and the deck's ink ring around it, so a seat plate and a card look
+like they come from one game. Circles are written as arc paths because a vector drawable has no
+`<circle>`.
+
+### The gold hairline that used to be here, and why it went
+
+There was a third ring: the court cards' gold hairline just inside the ink one, at `stroke-width`
+8 on a 1024 viewport, echoing `card_q.xml`. It was removed, and the 44 dp test above is what
+removed it. Eight units of 1024 drawn at 44 dp is **0.34 px** — 0.69 on a retina phone, and 1.03
+at the very largest a plate is ever drawn. A stroke thinner than a pixel is not a hairline; it is
+dithered into a haze, and this one sat a ring-and-a-half in from the rim where the haze had
+nothing to hide behind. Reported as the portraits looking blurry, which is exactly what an
+un-drawable stroke looks like.
+
+A card is drawn many times larger and keeps its hairline, which is the point: the motif was
+borrowed from an object with the room for it. `GeneratedAvatar` carries the same decision, since
+it is the same object drawn in code.

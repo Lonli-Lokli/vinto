@@ -115,31 +115,56 @@ private fun Attention.spoken(): StringResource = when (this) {
  * which matters most to the player who has just been beaten by one and wants to know by what.
  */
 @Composable
-private fun Portrait(name: String, bot: Boolean, edge: Color, size: Dp) {
+private fun Portrait(name: String, bot: Boolean, size: Dp) {
     val chosen = chosenFace(name)
     Box(contentAlignment = Alignment.BottomEnd) {
         // The face its owner picked, when there is one. A bot has no profile and keeps its
         // element's emblem, which is the better answer than a mark it never chose.
+        //
+        // **No ring of our own.** Every face already draws the deck's ink ring at its own rim —
+        // the four masters do, and `GeneratedAvatar` does — so a `border` here landed a second
+        // ring on exactly the same circle, and in the resting state it was a *translucent* ink
+        // over a solid one. Two edges a pixel apart, one of them see-through, is the definition
+        // of a soft edge. The seat's state is carried by the plate's own border around the whole
+        // capsule, which is bigger, further from the art, and the ring the eye actually reads.
         if (chosen != null) {
-            GeneratedAvatar(
-                traits = chosen.traits(),
-                ground = chosen.ground(),
-                size = size,
-                modifier = Modifier.border(Hairline, edge, CircleShape),
-            )
+            GeneratedAvatar(traits = chosen.traits(), ground = chosen.ground(), size = size)
         } else {
             Image(
                 painter = painterResource(portraitFor(name)),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(size)
-                    .clip(CircleShape)
-                    .border(Hairline, edge, CircleShape),
+                modifier = Modifier.size(size).clip(CircleShape),
             )
         }
         if (bot) BotMark(diameter = size * BotShare)
     }
+}
+
+/**
+ * The breath on the seat whose turn it is.
+ *
+ * Its own composable so it is *only* composed by the branch that uses it — the same shape
+ * `CardFace.ringColour` uses, and for the same reason. It was read unconditionally, so all four
+ * plates ran an infinite transition for the life of the table while at most one of them could
+ * ever show it. An infinite transition asks for a frame every vsync, and a composition that
+ * never stops asking for frames is a table that never goes idle: three permanent animations
+ * nobody could see, redrawing the screen forever. On a phone that is battery; on the web it is
+ * the whole reason the page felt slow with nothing happening on it.
+ */
+@Composable
+private fun seatGlow(): Float {
+    val pulse = rememberInfiniteTransition(label = "seat")
+    val glow by pulse.animateFloat(
+        initialValue = GLOW_LOW,
+        targetValue = GLOW_HIGH,
+        animationSpec = infiniteRepeatable(
+            animation = tween(GLOW_MS, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "glow",
+    )
+    return glow
 }
 
 /**
@@ -223,24 +248,13 @@ fun SeatPlate(
 ) {
     val scheme = MaterialTheme.colorScheme
 
-    val pulse = rememberInfiniteTransition(label = "seat")
-    val glow by pulse.animateFloat(
-        initialValue = GLOW_LOW,
-        targetValue = GLOW_HIGH,
-        animationSpec = infiniteRepeatable(
-            animation = tween(GLOW_MS, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "glow",
-    )
-
     val edge by animateColorAsState(
         when {
             // Being pointed at wins over everything: it is the table saying *this* seat, now
             // — the one drawing a penalty, the one who called Vinto, the one leading.
             pointed != null -> pointed.colour()
             onClick != null -> Slate.gold
-            active -> Slate.gold.copy(alpha = glow)
+            active -> Slate.gold.copy(alpha = seatGlow())
             else -> scheme.onFelt().copy(alpha = QUIET)
         },
         label = "edge",
@@ -272,7 +286,7 @@ fun SeatPlate(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(PlateGap),
         ) {
-            Portrait(name = name, bot = bot, edge = edge, size = size)
+            Portrait(name = name, bot = bot, size = size)
             // Capped, and the name gives way before the marks do. A plate that grows with
             // "Vinto · 12" is a plate that pushes the player's own hand onto a second row,
             // which is the one hand that has to stay in one piece.

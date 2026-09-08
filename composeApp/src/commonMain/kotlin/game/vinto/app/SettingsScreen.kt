@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
+import game.vinto.app.art.home_version
 import game.vinto.app.art.settings_analytics
 import game.vinto.app.art.settings_analytics_detail
 import game.vinto.app.art.settings_back
@@ -100,7 +101,6 @@ import game.vinto.app.art.settings_terms_detail
 import game.vinto.app.art.settings_theme
 import game.vinto.app.art.settings_theme_detail
 import game.vinto.app.art.settings_title
-import game.vinto.app.art.settings_version
 import game.vinto.app.art.stats_best
 import game.vinto.app.art.stats_played
 import game.vinto.app.art.stats_separator
@@ -121,6 +121,7 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltGold
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
+import game.vinto.app.theme.pressable
 import game.vinto.app.theme.stamped
 import game.vinto.client.MotionChoice
 import game.vinto.client.Pace
@@ -220,8 +221,15 @@ fun SettingsScreen(
                 pickingLanguage = true
             }
 
+            // The same words as the home screen's corner, from the same two values.
+            //
+            // It said "Vinto v1.0" — the app's own name, to somebody already inside the app,
+            // and no build number. The number a player can read back is the *build*: it is what
+            // a crash report is matched against and what a store listing is checked against,
+            // and the marketing version alone identifies twenty builds at once. One string for
+            // both places, so the two can never disagree about what this build is called.
             Text(
-                text = stringResource(Res.string.settings_version, VERSION),
+                text = stringResource(Res.string.home_version, VERSION, BUILD_NUMBER),
                 fontSize = FootnoteSize,
                 // Below the last panel, so on the felt rather than on paper.
                 color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
@@ -655,6 +663,14 @@ private fun About() {
 @Composable
 private fun SupportRow() {
     val offer = remember { supportOffer() }
+
+    // Not here on the web or the desktop, because the header already carries it.
+    //
+    // `Support.Elsewhere` is exactly the platforms whose table header draws the cup — the same
+    // condition, read from the same seam — so on those a row here is the second copy of one
+    // offer, on the screen a player opened to change a setting. The phones keep it: their offer
+    // is an in-app purchase, it has no header of its own, and this is the only place it lives.
+    if (offer is Support.Elsewhere) return
     var thanked by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val failed = remember { mutableStateOf<String?>(null) }
@@ -888,7 +904,7 @@ private fun Explain(open: Boolean, title: String, onToggle: () -> Unit) {
         color = Color.Transparent,
         border = BorderStroke(1.dp, if (open) Rail.edge else Rail.line),
         contentColor = Rail.inkDim,
-        modifier = Modifier.size(ExplainTap).semantics { contentDescription = label },
+        modifier = Modifier.size(ExplainTap).semantics { contentDescription = label }.pressable(),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
@@ -948,14 +964,24 @@ private fun SwitchLine(
         explain?.let { Explain(open = open, title = title, onToggle = it) }
         // The state and the control are one thing: the word says where it stands and pressing
         // it is what moves it, which is what a switch has always been.
+        // A fixed width, because this is a switch and a switch does not resize as it is thrown.
+        //
+        // It sized itself to its label, so "ON" was narrower than "OFF" and the control moved
+        // under the finger that had just pressed it — and at four points of padding either side
+        // it read as a word set on the panel rather than as something to press. One width, wide
+        // enough for the longer of the two in every language the app is written in.
         GameButton(
             label = stringResource(if (on) Res.string.settings_on else Res.string.settings_off),
             tone = if (on) ButtonTone.PLAY else ButtonTone.NEUTRAL,
             onClick = onToggle,
+            modifier = Modifier.widthIn(min = SwitchWidth),
             compact = true,
         )
     }
 }
+
+/** Wide enough that ON and OFF are the same object, in every locale. */
+private val SwitchWidth = 84.dp
 
 private val ExplainTap = 32.dp
 private val MarkSize = 18.dp

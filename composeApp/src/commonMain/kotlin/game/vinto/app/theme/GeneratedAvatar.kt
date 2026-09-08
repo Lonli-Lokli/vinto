@@ -28,10 +28,9 @@ import kotlin.math.sqrt
  *
  * The counterpart to the SVG masters under `brand/avatars`, and deliberately the same object:
  * a disc in the
- * seat's colour, the deck's ink ring around it, the court cards' gold hairline just inside,
- * and an engraved mark on top. `_shared.md` describes that as what makes a seat plate and a Queen
- * look like they come from one game, and a generated face that ignored it would look like a
- * different app's widget parked on the felt.
+ * seat's colour, the deck's ink ring around it, and an engraved mark on top. `_shared.md`
+ * describes that as what makes a seat plate and a Queen look like they come from one game, and a
+ * generated face that ignored it would look like a different app's widget parked on the felt.
  *
  * **Everything is a fraction of the radius**, because the same face is drawn at 44 dp on the felt
  * and at picker size on this screen, and a stroke width in dp that reads at one is a smudge or a
@@ -67,10 +66,17 @@ fun DrawScope.drawAvatar(traits: AvatarTraits, ground: Color) {
     val r = kotlin.math.min(size.width, size.height) / 2f
     val c = Offset(size.width / 2f, size.height / 2f)
 
-    // The disc, its ink ring and the gold hairline — the three things every master shares.
+    // The disc and its ink ring — the two things every master shares.
+    //
+    // There was a third, the court cards' gold hairline just inside the ring, and it is gone
+    // for the reason the rest of this file is written in fractions: at `HAIRLINE` of the radius
+    // it came to a third of a pixel at 44 dp and about two thirds on a retina phone. A stroke
+    // thinner than a pixel cannot be drawn — it is dithered into a haze — so what it added was
+    // not a hairline but a smear a ring-and-a-half out from the edge, which is what made these
+    // read as blurry at seat size. `brand/avatars/_shared.md` carries the same decision for the
+    // four masters, and its own 44 dp legibility test is what the hairline failed.
     drawCircle(color = ground, radius = r * DISC, center = c)
     drawCircle(color = Ink, radius = r * DISC, center = c, style = Stroke(width = r * RING))
-    drawCircle(color = Gold, radius = r * HAIRLINE_R, center = c, style = Stroke(width = r * HAIRLINE))
 
     val pen = Stroke(width = r * PEN, cap = StrokeCap.Round)
     when (traits) {
@@ -500,14 +506,11 @@ private fun DrawScope.drawWhorl(whorl: AvatarTraits.Whorl, c: Offset, r: Float, 
 // together. Taken as literals rather than through the scheme because the emblems are fixed in
 // both themes exactly as `avatar_*.xml` are — a face is not repainted by a phone's night setting.
 private val Ink = Color(0xFF14181B)
-private val Gold = Color(0xFFC9A227)
 
 private const val TURN_STEPS = 12.0
 
 private const val DISC = 0.98f
 private const val RING = 0.04f
-private const val HAIRLINE_R = 0.89f
-private const val HAIRLINE = 0.016f
 private const val PEN = 0.11f
 
 private const val BAR_SPAN = 0.46f

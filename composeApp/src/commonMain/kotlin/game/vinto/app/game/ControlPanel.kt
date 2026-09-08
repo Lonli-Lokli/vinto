@@ -133,6 +133,15 @@ private val PanelPad = 12.dp
 /** One row of buttons: the room the foot keeps whether or not there is anything to press. */
 private val FootRow = 50.dp
 
+/**
+ * The tallest the control group is ever drawn, however tall the rail holding it.
+ *
+ * Comfortably more than [railHeight] ever returns, so a phone's rail is unaffected and reaches
+ * this only as the thing it already is; and enough for the deepest the panel goes — a King's
+ * fourteen chips over a prompt of two lines — so nothing is ever squeezed by it.
+ */
+private val TallRail = 340.dp
+
 /** The card in play, drawn in the rail: no smaller than a card in your own hand on a phone. */
 private val RailCard = CardScale(56.dp, 78.dp)
 
@@ -293,15 +302,48 @@ private fun RailBody(
 ) {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(PanelPad)) {
         val rail = maxHeight
+        // What the group actually gets, which on a tall rail is [TallRail] rather than the
+        // window: the foot's cap is a share of the room the choices really have.
+        val held = if (rail.isFinite) minOf(rail, TallRail) else rail
         val footCap =
-            if (rail.isFinite) (rail - promptLine - Gap).coerceAtLeast(promptLine) else Dp.Unspecified
+            if (held.isFinite) (held - promptLine - Gap).coerceAtLeast(promptLine) else Dp.Unspecified
 
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(Gap),
-        ) {
-            RailBlock(state, table, inPlay, recent, crowded, twoLines, onMove, modifier = Modifier.weight(1f))
-            RailFoot(table, footCap, onMove)
+        // The controls are one group, and on a tall rail they are a group *in the middle of it*.
+        //
+        // Under a phone's felt the rail is about a third of the screen and the block fills it,
+        // so pinning the choices to the foot puts them where a thumb rests with nothing wasted.
+        // Standing beside a desktop felt the same column is the whole window: the block stretched
+        // to eight hundred points, which put the prompt against the ceiling and the buttons
+        // against the floor with a third of a metre of empty panel between them. That is the
+        // "controls outside the table" reading — not the side rail itself, but a rail whose
+        // contents had been pulled to its two ends.
+        //
+        // So a tall rail holds the same group at a phone's height and centres it on the felt it
+        // stands beside. Nothing inside changes: the block still fills the group and the choices
+        // still sit at its foot, which is what `RailFitsTest` measures.
+        val group = if (rail.isFinite && rail > TallRail) {
+            Modifier.fillMaxWidth().height(TallRail)
+        } else {
+            Modifier.fillMaxSize()
+        }
+
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(
+                modifier = group,
+                verticalArrangement = Arrangement.spacedBy(Gap),
+            ) {
+                RailBlock(
+                    state,
+                    table,
+                    inPlay,
+                    recent,
+                    crowded,
+                    twoLines,
+                    onMove,
+                    modifier = Modifier.weight(1f),
+                )
+                RailFoot(table, footCap, onMove)
+            }
         }
     }
 }

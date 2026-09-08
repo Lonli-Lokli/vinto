@@ -167,7 +167,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — карткова гра про те, як тримати менше і знати більше. Безкоштовно, просто в браузері, без реєстрації: %1$s</string>
     <string name="settings_back">Назад</string>
-    <string name="settings_version">Vinto v%1$s</string>
 
     <string name="settings_bots">Боти</string>
     <string name="settings_bots_detail">Наскільки старанно всі троє обмірковують хід.</string>
@@ -268,6 +267,7 @@
     <string name="header_support">Пригостити кавою</string>
     <string name="header_report">Повідомити про проблему</string>
     <string name="header_settings">Налаштування</string>
+    <string name="header_leave">Залишити стіл</string>
     <string name="header_deck_left">У колоді залишилося: %1$d</string>
     <string name="header_deck_badge">У колоді %1$d — що це означає</string>
 

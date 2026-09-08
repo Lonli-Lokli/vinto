@@ -149,7 +149,6 @@
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — 적게 쥐고 더 많이 아는 카드 게임. 무료, 브라우저에서, 가입 없이: %1$s</string>
     <string name="settings_back">뒤로</string>
-    <string name="settings_version">Vinto v%1$s</string>
 
     <string name="settings_bots">봇</string>
     <string name="settings_bots_detail">셋이 자신의 수를 얼마나 깊이 생각하는지.</string>
@@ -250,6 +249,7 @@
     <string name="header_support">커피 한 잔 사주기</string>
     <string name="header_report">문제 신고</string>
     <string name="header_settings">설정</string>
+    <string name="header_leave">테이블 나가기</string>
     <string name="header_deck_left">덱에 %1$d장 남음</string>
     <string name="header_deck_badge">덱에 %1$d장 — 무슨 뜻인가요</string>
 

@@ -82,9 +82,11 @@ fun ActionTile(
         // Spoken as the title alone. A screen reader reading title *and* sentence for each of
         // three tiles is a paragraph before the first choice; the sentence is there for the
         // eye, and a reader can reach it as the tile's own text.
-        modifier = modifier.fillMaxWidth().heightIn(min = MinHeight).semantics {
-            contentDescription = title
-        },
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = MinHeight)
+            .pressable()
+            .semantics { contentDescription = title },
         shape = shape,
         color = Color.Transparent,
         // The tile's charcoal is fixed in both schemes, so its ink is too — `Rail.ink` here
@@ -148,7 +150,7 @@ fun BackChevron(description: String, onClick: () -> Unit, modifier: Modifier = M
             feedback.touch()
             onClick()
         },
-        modifier = modifier.size(MinTap).semantics { contentDescription = description },
+        modifier = modifier.size(MinTap).semantics { contentDescription = description }.pressable(),
         shape = RoundedCornerShape(Corner),
         color = Color.Transparent,
         // It sits straight on the felt, and the felt is green in both schemes — the light

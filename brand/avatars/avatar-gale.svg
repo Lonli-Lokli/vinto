@@ -5,7 +5,6 @@
        this one inverts: a pale slate disc drawn in the deck's INK. Same reasoning as DUNE's
        darker gold — the family is the shape and the ring, not one fixed pair of colours. -->
   <path d="M512 10 A502 502 0 1 0 512 1014 A502 502 0 1 0 512 10 Z" fill="#B9C6CC" stroke="#14181B" stroke-width="20"/>
-  <path d="M512 56 A456 456 0 1 0 512 968 A456 456 0 1 0 512 56 Z" fill="none" stroke="#C9A227" stroke-width="8"/>
   <path d="M292 392 L616 392 C684 392 684 300 624 316" fill="none" stroke="#14181B" stroke-width="56" stroke-linecap="round"/>
   <path d="M276 512 L648 512" fill="none" stroke="#14181B" stroke-width="56" stroke-linecap="round"/>
   <path d="M292 632 L616 632 C684 632 684 724 624 708" fill="none" stroke="#14181B" stroke-width="56" stroke-linecap="round"/>
