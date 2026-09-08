@@ -6,6 +6,7 @@
   "scripts": {
     "store:auth": "vydanne auth",
     "store:inspect": "vydanne inspect",
+    "store:releases": "vydanne releases",
     "store:diff": "vydanne diff",
     "store:preflight": "vydanne preflight",
     "store:prepare": "vydanne prepare",
@@ -21,6 +22,7 @@
     "store:prerelease": "node tools/check-release-branch.mjs && vydanne prerelease",
     "store:push": "vydanne push",
     "play:inspect": "vydanne inspect --store google",
+    "play:releases": "vydanne releases --store google",
     "play:diff": "vydanne diff --store google",
     "play:preflight": "vydanne preflight --store google",
     "play:fill": "vydanne fill --store google",
@@ -40,7 +42,7 @@
     "release:check": "node tools/check-release-branch.mjs"
   },
   "devDependencies": {
-    "vydanne": "^0.12.0",
+    "vydanne": "^0.13.0",
     "zdymak": "^0.22.0"
   }
 }

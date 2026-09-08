@@ -69,12 +69,32 @@ xcodebuild archive \
 ./gradlew :androidApp:bundleRelease -PversionCode="$(Scripts/build-number.sh)"
 ```
 
-**Tag per platform**, so "what shipped where" is explicit without forcing the two into step:
+**Tag per store, `<store>/<version>+<build>`** — `ios/1.4+129`, `play/1.0+99`. The prefix names
+the STORE rather than the OS, so an Android build ships to `play`; the two sides stay independent,
+which is the point of not forcing them into step. The build number is what makes the tag worth
+having: it resolves to exactly one commit, so a crash report or a store binary leads back to the
+tree it was archived from.
+
+**Tag only what is serving users** — `READY_FOR_SALE` on the App Store, the `production` track on
+Play. A version in review, or one sitting on `alpha`/`internal`, has not shipped, and a tag saying
+it has is worse than no tag. Tag it when it goes live.
+
+**Read the facts from the store, never from a changelog**, and tag the commit the BUILD names — not
+the one that bumped `MARKETING_VERSION`, which is the intuitive place and the wrong one, because the
+archive is cut days later. Three of Niva's tags were once minted that way and were wrong by 9, 3 and
+23 commits. `vydanne releases` lists every version with the build attached to it, resolves each to a
+commit — asserting `rev-list --count` matches, since `rev-list --reverse | sed -n Np` is ordered
+rather than counted and on a merged history the Nth line need not be the Nth commit — and prints the
+exact `git tag -a` line for anything shipped and untagged:
 
 ```sh
-git tag ios-1.0
-git tag android-1.0
+npm run store:releases   # App Store
+npm run play:releases    # Google Play
 ```
+
+Always `git tag -a`: the message carries the state read from the store, and on Play it is the ONLY
+record of it. `edits.tracks` returns what a track serves now and there is no endpoint for a
+superseded production release, so an untagged one is not recoverable later. Tag as you release.
 
 ## The third number: the wire
 
