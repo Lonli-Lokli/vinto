@@ -111,7 +111,7 @@ Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired eith
 
    | Field | Value |
    | --- | --- |
-   | Reference Name (≤ 64) | Supporter tip — consumable, grants nothing. Internal, never shown to a buyer, so it says what the row is rather than what it is called |
+   | Reference Name (≤ 64) | `Vinto supporter tip` |
    | Product ID | `vinto.support.five` — the same string, and also permanent |
    | Display Name (≤ 30) | Support the game |
    | Description (≤ 45) | A tip for the developer. Nothing is locked. |
@@ -121,6 +121,20 @@ Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired eith
 
    Every one of those is the `iaps` entry in `vydanne.config.mjs`, which is where they are kept
    in step; the two length limits are what `vydanne iap` checks.
+
+   **Apple has no purchase option.** One product is one price, so the Play field above has no
+   counterpart here and there is no backward-compatibility flag to get wrong. The two identifiers
+   are the reference name and the product id, and they are opposites:
+
+   * **Reference name** — 64 characters, any of them, **editable at any time without review**.
+     Never shown to a buyer: it labels the row in App Store Connect and in **Sales and Trends**,
+     which is the reason it names the app. The studio has five apps in one account and the report
+     does not say which app a "Supporter tip" belongs to.
+   * **Product ID** — 100 characters, letters, numbers, `-`, `.` and `_`. Unique within the app
+     (an iOS and a macOS app need separate ones — not a question here, since the Mac target is for
+     looking at a UI change and ships nowhere). **Not editable after save**, and once used and
+     deleted it can never be used again in that app. It is the string StoreKit asks with, so it is
+     the one field where a typo costs a product id permanently.
 
    **The screenshot is the only artefact here that had to be made rather than typed**, and it is
    made the way every other store image in this repository is: the app renders the capture
