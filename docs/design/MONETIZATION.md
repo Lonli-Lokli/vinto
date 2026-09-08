@@ -107,16 +107,20 @@ Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired eith
    everywhere a human would look. If the price ever goes missing on Android, that flag is the
    first thing to check.
 
-2. **App Store Connect** → the app → In-App Purchases → Create → **Consumable**.
+2. **App Store Connect** → the app → In-App Purchases (under Monetization) → Create →
+   **Consumable**. Everything below except the two localized fields is in one section on that
+   page, **General Information** — which is why the two image slots are easy to confuse: they sit
+   next to each other, and only one of them is required.
 
    | Field | Value |
    | --- | --- |
-   | Reference Name (≤ 64) | `Vinto supporter tip` |
+   | Reference Name (≤ 64) | `Vinto supporter tip` — Apple lists this one as *optional* |
    | Product ID | `vinto.support.five` — the same string, and also permanent |
    | Display Name (≤ 30) | Support the game |
    | Description (≤ 45) | A tip for the developer. Nothing is locked. |
    | Price | the 4.99 point, availability all territories |
-   | **Review Screenshot** | **required** — `store-assets/iap-review/01-support-review.png` |
+   | **App Review Screenshot** | **required** — `store-assets/iap-review/01-support-review.png`. Note it cannot be *removed* once uploaded, only replaced |
+   | Image (1024×1024) | **left empty** — the promotional slot, and a decision; see below |
    | Review Notes | the `reviewNote` in `vydanne.config.mjs` |
 
    Every one of those is the `iaps` entry in `vydanne.config.mjs`, which is where they are kept
@@ -141,11 +145,12 @@ Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired eith
    (`IapShotTest`), zdymak composes the file a store will accept (the `iap` device group), and
    `npm run capture-iap` is both plus `vydanne iap`'s field check. `IapShotTest` carries the whole
    argument — why it is rendered rather than photographed, and **why there is no price in it**.
-   **The second image slot is left empty, and that is a decision.** App Store Connect also offers
-   a 1024×1024 Promotional Image (JPG/PNG, 72 dpi, RGB, flattened, no rounded corners), and it is
-   required *only if you want to promote the purchase on the app's own product page*. The other
-   thing it is for — win-back offers — is an auto-renewable subscription feature and cannot reach
-   a consumable.
+   **The second image slot is left empty, and that is a decision.** In the same General
+   Information section, above the review screenshot, sits a field called just **Image** —
+   1024×1024, JPG/PNG, 72 dpi, RGB, flattened, no rounded corners. It is required *only if you
+   want to promote the purchase on the app's own product page*, which is what the **Show to all
+   App Store users** checkbox beside it controls. The other thing it is for — win-back offers — is
+   an auto-renewable subscription feature and cannot reach a consumable.
 
    So the choice is whether a free game's store listing should carry "pay me" as a featured item,
    and the answer is no. The tip is offered once, in Settings, to somebody who has already played
