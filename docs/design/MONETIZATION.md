@@ -119,7 +119,7 @@ Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired eith
    | Display Name (≤ 30) | Support the game |
    | Description (≤ 45) | A tip for the developer. Nothing is locked. |
    | Price | the 4.99 point, availability all territories |
-   | **App Review Screenshot** | **required** — `store-assets/iap-review/01-support-review.png`. It must meet *any screenshot specification the app supports*, not a minimum size; 1290×2796 is the iPhone 6.9" slot's second accepted size. Cannot be *removed* once uploaded, only replaced |
+   | **App Review Screenshot** | **required** — `store-assets/iap-review/01-support-review.png`. 1320×2868 — the current 6.9" specification, and not a matter of taste; see below. Cannot be *removed* once uploaded, only replaced |
    | Image (1024×1024) | **left empty** — the promotional slot, and a decision; see below |
    | Review Notes | the `reviewNote` in `vydanne.config.mjs` |
 
@@ -139,6 +139,21 @@ Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired eith
      looking at a UI change and ships nowhere). **Not editable after save**, and once used and
      deleted it can never be used again in that app. It is the string StoreKit asks with, so it is
      the one field where a typo costs a product id permanently.
+
+   **The size is the thing that rejects it, and "documented as accepted" is not the same as
+   accepted.** The first upload was 1290×2796 and App Store Connect answered *"The dimensions of
+   one or more screenshots are wrong."* The file was faultless — 8-bit RGB, no alpha, no ICC
+   profile, 72 dpi, non-interlaced — and 1290×2796 is a size zdymak still lists among the 6.9"
+   slot's accepted three. It is not on **Apple's current screenshot specification**, which now
+   gives one size per display class:
+
+   | 6.9" | **1320 × 2868** | required if the app runs on iPhone |
+   | --- | --- | --- |
+   | 6.5" | **1284 × 2778** | required if 6.9" is not provided |
+
+   The same fault was sitting in the *listing* set, one class down: zdymak's `appstore-iphone-6.5`
+   defaults to 1242×2688, the retired 6.5" size, and it would have been refused on the first
+   listing upload with the same sentence. `zdymak.config.mjs` pins both sizes now and says why.
 
    **The screenshot is the only artefact here that had to be made rather than typed**, and it is
    made the way every other store image in this repository is: the app renders the capture

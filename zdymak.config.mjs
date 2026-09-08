@@ -101,7 +101,12 @@ export default {
       // so the only preview this config makes is the `reel` above, from recorded clips.
       screenshots: [
         { target: 'appstore-iphone-6.9', style: 'framed' },
-        { target: 'appstore-iphone-6.5', style: 'framed' },
+        // `size` pinned, because the target's default is 1242x2688 and Apple's current
+        // specification for the 6.5" class is 1284x2778 — the older size is not on the list any
+        // more. Found the hard way on the IAP review screenshot, which was refused with "The
+        // dimensions of one or more screenshots are wrong" for the equivalent mistake one class
+        // up; this set had the same fault waiting for the first listing upload.
+        { target: 'appstore-iphone-6.5', size: [1284, 2778], style: 'framed' },
       ],
     },
     ipad: {
@@ -151,11 +156,17 @@ export default {
           // `dir` keeps it out of `appstore-iphone-6.9/`, which is the listing set `vydanne
           // bridge` uploads — this must never be mistaken for one of the ten a shopper sees.
           dir: 'iap-review',
-          // Load-bearing, not a preference. Apple's App Review Screenshot must meet "any of the
-          // screenshot specifications your app supports" — a listing size, not a floor — so the
-          // target is a real slot and this is the one of its three accepted sizes the capture is
-          // already rendered at. No resample stands between the app's own pixels and the console.
-          size: [1290, 2796],
+          // NO `size` OVERRIDE — the target's own 1320x2868, and that is the whole lesson here.
+          //
+          // This said `size: [1290, 2796]`, which zdymak lists among the 6.9" slot's accepted
+          // sizes, and App Store Connect answered "The dimensions of one or more screenshots are
+          // wrong." The file was faultless in every other respect. Apple's current screenshot
+          // specification lists ONE size per display class — 6.9" is 1320x2868 — and 1290x2796
+          // (the old 6.7") is not on it any more. An `accepts` list that has not caught up is
+          // exactly how a retired size gets chosen on purpose.
+          //
+          // The rule for a review screenshot is "any of the screenshot specifications your app
+          // supports", and the safest reading of that is the size the listing itself uses.
           style: 'bleed',
           caption: false,
         },
