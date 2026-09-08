@@ -22,6 +22,10 @@
     <string name="online_screen_title">联机对战</string>
     <string name="online_nickname">你在牌桌上的名字</string>
     <string name="online_nickname_detail">其他座位会看到这个名字。点按可换一个。不是账号——本来就没有账号。</string>
+    <string name="online_avatar_name">换一个名字</string>
+    <string name="online_avatar_pick">换一张脸</string>
+    <string name="online_avatar_ground">背景颜色</string>
+    <string name="online_avatar_another">换一批候选</string>
     <string name="online_code">房间代码</string>
     <string name="online_code_detail">开房人提供的六位字符。</string>
     <string name="online_join">加入房间</string>
@@ -47,6 +51,8 @@
     <string name="online_open_detail">四个座位，一个可分享的代码，没到场的座位由电脑补上。</string>
     <string name="online_join_detail">开房人提供的六位字符。</string>
     <string name="online_browse_detail">房主选择公开的房间，任何人都可以入座。</string>
+    <string name="online_return_title">回到你的房间</string>
+    <string name="online_return_detail">你退出了 %1$s，你的座位仍然保留。按下“离开”后才会放弃。</string>
     <string name="online_open_title">开一个房间</string>
     <string name="online_join_title">用代码加入</string>
     <string name="online_open_screen">开一个房间</string>
@@ -112,6 +118,17 @@
     <string name="settings_group_privacy">会发送出去的内容</string>
     <string name="settings_group_about">关于</string>
 
+    <string name="settings_support">支持这个游戏</string>
+    <string name="settings_support_detail">如果你玩得开心，想以这种方式表示一下。它不会解锁任何东西——因为本来就没有什么是被锁住的。</string>
+    <string name="settings_support_buy">表达谢意——%1$s</string>
+    <string name="settings_support_link">表达谢意</string>
+    <string name="settings_support_link_detail">会打开一个可以自选金额的页面。手机版做不到这一点——那里由应用商店处理付款，价格也由它的规则决定。</string>
+    <string name="settings_support_unavailable">这里暂时还不能用。这个页面无法解决——需要先有应用商店，而手机版会先支持。</string>
+    <string name="settings_support_thanks">谢谢你，真心的。</string>
+    <string name="settings_explain">了解更多关于 %1$s 的信息</string>
+    <string name="settings_group_game_summary">对手、节奏、动效、外观、语言，以及你的战绩。</string>
+    <string name="settings_group_privacy_summary">统计了什么，以及如何关闭它。</string>
+    <string name="settings_group_about_summary">这个游戏属于谁，这个应用是谁做的，以及如何联系。</string>
     <string name="settings_privacy">隐私</string>
     <string name="settings_privacy_detail">我们统计什么、不统计什么，以及如何关闭它。</string>
     <string name="settings_terms">使用条款</string>
@@ -230,6 +247,7 @@
     <string name="table_final_versus">对</string>
     <string name="table_see_score">查看得分</string>
 
+    <string name="header_support">请我喝杯咖啡</string>
     <string name="header_report">反馈问题</string>
     <string name="header_settings">设置</string>
     <string name="header_deck_left">牌堆还剩 %1$d 张</string>
@@ -576,6 +594,10 @@
     <string name="log_made_you_draw">%1$s 让你摸了一张牌</string>
     <string name="log_made_draw_they">%1$s 让 %2$s 摸了一张牌</string>
     <string name="log_round_begins">本局开始</string>
+
+    <string name="help_rules_title">完整规则</string>
+    <string name="help_rules_body">这份说明讲的是卡牌在这里的用法。完整规则在游戏官方网站上，由制作者提供。</string>
+    <string name="help_rules_action">查看规则</string>
 
     <string name="help_counts_title">这个应用统计了什么</string>
     <string name="help_counts_body">仅统计匿名数据：有多少局游戏被玩、玩家进行到了哪一步、牌桌是否卡住，以及运营一个房间要花多少成本。绝不包含你的名字、房间代码、你手上的牌，或任何能追溯到你或你的设备的信息——发送的数据里根本没有存放这些的地方。可以在设置里关闭，浏览器如果要求不被追踪，也会自动为你关闭它。</string>

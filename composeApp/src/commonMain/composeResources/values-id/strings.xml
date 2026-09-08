@@ -25,6 +25,10 @@
     <string name="online_screen_title">Main online</string>
     <string name="online_nickname">Nama Anda di meja</string>
     <string name="online_nickname_detail">Yang terlihat oleh kursi lain. Ketuk untuk mengganti. Bukan akun — memang tidak ada akun.</string>
+    <string name="online_avatar_name">Beri saya nama lain</string>
+    <string name="online_avatar_pick">Pilih wajah yang berbeda</string>
+    <string name="online_avatar_ground">Warnanya</string>
+    <string name="online_avatar_another">Tunjukkan set yang lain</string>
     <string name="online_code">Kode ruangan</string>
     <string name="online_code_detail">Enam karakter dari orang yang membuka ruangan.</string>
     <string name="online_join">Gabung ke ruangan</string>
@@ -50,6 +54,8 @@
     <string name="online_open_detail">Empat kursi, kode untuk dibagikan, dan bot untuk yang belum datang.</string>
     <string name="online_join_detail">Enam karakter, dari orang yang membuka ruangan.</string>
     <string name="online_browse_detail">Ruangan yang tuan rumahnya memilih untuk terdaftar. Siapa saja boleh duduk.</string>
+    <string name="online_return_title">Kembali ke ruangan Anda</string>
+    <string name="online_return_detail">Anda keluar dari %1$s dan kursi Anda masih di sana. Kursi itu dilepas saat Anda menekan Tinggalkan.</string>
     <string name="online_open_title">Buka ruangan</string>
     <string name="online_join_title">Gabung dengan kode</string>
     <string name="online_open_screen">Buka ruangan</string>
@@ -120,6 +126,17 @@
     <string name="settings_group_privacy">Apa yang keluar dari perangkat ini</string>
     <string name="settings_group_about">Tentang</string>
 
+    <string name="settings_support">Dukung permainan ini</string>
+    <string name="settings_support_detail">Jika Anda menikmatinya dan ingin mengatakannya. Ini tidak membuka apa pun — tidak ada yang terkunci.</string>
+    <string name="settings_support_buy">Ucapkan terima kasih — %1$s</string>
+    <string name="settings_support_link">Ucapkan terima kasih</string>
+    <string name="settings_support_link_detail">Membuka halaman tempat Anda memilih jumlahnya. Versi ponsel tidak bisa melakukan itu — pembayaran di sana diambil alih toko aplikasi, dan aturannya yang menetapkan harga.</string>
+    <string name="settings_support_unavailable">Belum tersedia di sini. Tidak ada yang bisa dilakukan dari layar ini; ini butuh toko aplikasi, dan ponsel akan mendapatkannya lebih dulu.</string>
+    <string name="settings_support_thanks">Terima kasih. Sungguh.</string>
+    <string name="settings_explain">Lebih lanjut tentang %1$s</string>
+    <string name="settings_group_game_summary">Lawan, kecepatan, gerakan, tampilan, bahasa dan rekam jejak Anda.</string>
+    <string name="settings_group_privacy_summary">Apa yang dihitung, dan cara mematikannya.</string>
+    <string name="settings_group_about_summary">Milik siapa permainan ini, siapa yang membuat aplikasinya, dan cara menghubungi.</string>
     <string name="settings_privacy">Privasi</string>
     <string name="settings_privacy_detail">Apa yang dihitung, apa yang tidak, dan cara mematikannya.</string>
     <string name="settings_terms">Ketentuan penggunaan</string>
@@ -240,6 +257,7 @@
     <string name="table_see_score">Lihat skor</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_support">Belikan saya kopi</string>
     <string name="header_report">Laporkan masalah</string>
     <string name="header_settings">Pengaturan</string>
     <string name="header_deck_left">%1$d kartu tersisa di dek</string>
@@ -599,6 +617,10 @@
     <string name="log_made_you_draw">%1$s membuat Anda mengambil kartu</string>
     <string name="log_made_draw_they">%1$s membuat %2$s mengambil kartu</string>
     <string name="log_round_begins">ronde dimulai</string>
+
+    <string name="help_rules_title">Aturan lengkap</string>
+    <string name="help_rules_body">Lembar ini menjelaskan apa yang dilakukan sebuah kartu di sini. Aturan lengkapnya ada di situs resmi permainan ini, dari orang-orang yang membuatnya.</string>
+    <string name="help_rules_action">Buka aturan</string>
 
     <string name="help_counts_title">Apa yang dihitung aplikasi ini</string>
     <string name="help_counts_body">Hanya hitungan anonim: berapa banyak ronde yang dimainkan, sejauh mana orang bermain, apakah sebuah meja terhenti, dan berapa biaya menjalankan sebuah ruangan. Tidak pernah nama Anda, kode ruangan Anda, apa yang ada di tangan Anda, atau apa pun yang bisa dilacak kembali ke Anda atau perangkat Anda — tidak ada tempat dalam yang dikirim untuk menaruhnya. Bisa dimatikan di Pengaturan, dan peramban yang meminta untuk tidak dilacak akan mematikannya untuk Anda.</string>

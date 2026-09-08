@@ -25,6 +25,10 @@
     <string name="online_screen_title">Jogar online</string>
     <string name="online_nickname">O teu nome à mesa</string>
     <string name="online_nickname_detail">O que os outros lugares veem. Toca para escolher outro. Não é uma conta — não existem contas.</string>
+    <string name="online_avatar_name">Dá-me outro nome</string>
+    <string name="online_avatar_pick">Escolhe outra cara</string>
+    <string name="online_avatar_ground">A sua cor</string>
+    <string name="online_avatar_another">Mostra-me outro conjunto</string>
     <string name="online_code">Código da sala</string>
     <string name="online_code_detail">Seis caracteres, dados por quem abriu a sala.</string>
     <string name="online_join">Entrar na sala</string>
@@ -50,6 +54,8 @@
     <string name="online_open_detail">Quatro lugares, um código para partilhar, e bots para quem não chegar.</string>
     <string name="online_join_detail">Seis caracteres, dados por quem abriu a sala.</string>
     <string name="online_browse_detail">Salas cujos anfitriões escolheram ser listados. Qualquer pessoa se pode sentar.</string>
+    <string name="online_return_title">Voltar à tua sala</string>
+    <string name="online_return_detail">Saíste de %1$s e o teu lugar ainda está lá. Só é cedido quando carregas em Sair.</string>
     <string name="online_open_title">Abrir uma sala</string>
     <string name="online_join_title">Entrar com um código</string>
     <string name="online_open_screen">Abrir uma sala</string>
@@ -120,6 +126,17 @@
     <string name="settings_group_privacy">O que sai deste dispositivo</string>
     <string name="settings_group_about">Sobre</string>
 
+    <string name="settings_support">Apoiar o jogo</string>
+    <string name="settings_support_detail">Se gostaste e queres dizê-lo. Não desbloqueia nada — não há nada bloqueado.</string>
+    <string name="settings_support_buy">Dizer obrigado — %1$s</string>
+    <string name="settings_support_link">Dizer obrigado</string>
+    <string name="settings_support_link_detail">Abre uma página onde escolhes o valor. As versões para telemóvel não conseguem fazer isso — aí é uma loja que trata dos pagamentos, e são as suas regras que definem o preço.</string>
+    <string name="settings_support_unavailable">Ainda não disponível aqui. Nada a fazer a partir deste ecrã; precisa de uma loja, e os telemóveis vão ter uma primeiro.</string>
+    <string name="settings_support_thanks">Obrigado. A sério.</string>
+    <string name="settings_explain">Mais sobre %1$s</string>
+    <string name="settings_group_game_summary">Adversários, ritmo, movimento, aparência, idioma e o teu registo.</string>
+    <string name="settings_group_privacy_summary">O que é contabilizado, e como desativar.</string>
+    <string name="settings_group_about_summary">De quem é este jogo, quem fez a aplicação, e como entrar em contacto.</string>
     <string name="settings_privacy">Privacidade</string>
     <string name="settings_privacy_detail">O que é contabilizado, o que não é, e como desativar.</string>
     <string name="settings_terms">Termos de utilização</string>
@@ -240,6 +257,7 @@
     <string name="table_see_score">Ver a pontuação</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_support">Oferece-me um café</string>
     <string name="header_report">Reportar um problema</string>
     <string name="header_settings">Definições</string>
     <string name="header_deck_left">%1$d cartas restantes no baralho</string>
@@ -596,6 +614,10 @@
     <string name="log_made_you_draw">%1$s fez-te tirar uma carta</string>
     <string name="log_made_draw_they">%1$s fez %2$s tirar uma carta</string>
     <string name="log_round_begins">a ronda começa</string>
+
+    <string name="help_rules_title">As regras completas</string>
+    <string name="help_rules_body">Esta ficha diz o que uma carta faz aqui. As regras completas estão no site do jogo, feitas por quem o criou.</string>
+    <string name="help_rules_action">Abrir as regras</string>
 
     <string name="help_counts_title">O que esta aplicação contabiliza</string>
     <string name="help_counts_body">Só contagens anónimas: quantas rondas são jogadas, até onde as pessoas chegam, se uma mesa ficou parada, e quanto custa manter uma sala. Nunca o teu nome, o código da tua sala, o que tens na mão, ou algo que te possa identificar a ti ou ao teu dispositivo — não há onde os colocar no que é enviado. Pode ser desativado nas Definições, e um navegador que pede para não ser rastreado desativa-o automaticamente.</string>

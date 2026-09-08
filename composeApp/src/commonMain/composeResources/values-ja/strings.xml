@@ -26,6 +26,10 @@
     <string name="online_screen_title">オンラインで遊ぶ</string>
     <string name="online_nickname">テーブルでの名前</string>
     <string name="online_nickname_detail">他の席から見える名前です。タップすると変更できます。アカウントではありません — そもそも存在しません。</string>
+    <string name="online_avatar_name">別の名前にする</string>
+    <string name="online_avatar_pick">別の顔を選ぶ</string>
+    <string name="online_avatar_ground">背景の色</string>
+    <string name="online_avatar_another">別の候補を見る</string>
     <string name="online_code">ルームコード</string>
     <string name="online_code_detail">ルームを開いた人からもらう6文字です。</string>
     <string name="online_join">ルームに参加</string>
@@ -52,6 +56,8 @@
     <string name="online_open_detail">4席、共有するコード、来ない人の分はボットが埋めます。</string>
     <string name="online_join_detail">ルームを開いた人からもらう6文字です。</string>
     <string name="online_browse_detail">公開を選んだホストのルームです。誰でも参加できます。</string>
+    <string name="online_return_title">ルームに戻る</string>
+    <string name="online_return_detail">%1$sから抜けましたが、席はまだ残っています。「退出」を押すと手放されます。</string>
     <string name="online_open_title">ルームを開く</string>
     <string name="online_join_title">コードで参加</string>
     <string name="online_open_screen">ルームを開く</string>
@@ -122,6 +128,17 @@
     <string name="settings_group_privacy">送信される情報</string>
     <string name="settings_group_about">このアプリについて</string>
 
+    <string name="settings_support">ゲームを支援する</string>
+    <string name="settings_support_detail">楽しんでいただけたなら、その気持ちを形にする方法です。何かが解放されるわけではありません — そもそも何も制限されていません。</string>
+    <string name="settings_support_buy">感謝を伝える — %1$s</string>
+    <string name="settings_support_link">感謝を伝える</string>
+    <string name="settings_support_link_detail">金額を選べるページを開きます。スマートフォン版ではこれができません — ストアが決済を扱い、価格もその規約に従うためです。</string>
+    <string name="settings_support_unavailable">ここではまだ利用できません。この画面でできることはありません — ストアが必要で、まずスマートフォン版から対応します。</string>
+    <string name="settings_support_thanks">ありがとうございます。心から。</string>
+    <string name="settings_explain">%1$sについて詳しく</string>
+    <string name="settings_group_game_summary">対戦相手、テンポ、モーション、見た目、言語、あなたの記録。</string>
+    <string name="settings_group_privacy_summary">何が計測されるか、そしてオフにする方法。</string>
+    <string name="settings_group_about_summary">このゲームが誰のものか、アプリを作ったのは誰か、連絡方法。</string>
     <string name="settings_privacy">プライバシー</string>
     <string name="settings_privacy_detail">何が計測され、何がされないか、そしてオフにする方法。</string>
     <string name="settings_terms">利用規約</string>
@@ -242,6 +259,7 @@
     <string name="table_see_score">スコアを見る</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_support">コーヒーをおごる</string>
     <string name="header_report">問題を報告</string>
     <string name="header_settings">設定</string>
     <string name="header_deck_left">山札に残り%1$d枚</string>
@@ -608,6 +626,10 @@
     <string name="log_made_you_draw">%1$sにカードを引かされました</string>
     <string name="log_made_draw_they">%1$sが%2$sにカードを引かせました</string>
     <string name="log_round_begins">ラウンド開始</string>
+
+    <string name="help_rules_title">完全なルール</string>
+    <string name="help_rules_body">このシートはこのアプリでのカードの働きを説明するものです。完全なルールは、制作者による本家サイトにあります。</string>
+    <string name="help_rules_action">ルールを開く</string>
 
     <string name="help_counts_title">このアプリが計測すること</string>
     <string name="help_counts_body">匿名の統計のみです。プレイされたラウンド数、どこまで進んだか、テーブルが止まったかどうか、ルームの運用コストなど。名前もルームコードも、手札の中身も、あなたや端末を特定できるものは一切含まれません — 送信するデータにそもそも入れる場所がありません。設定でオフにでき、追跡拒否を求めるブラウザでは自動的にオフになります。</string>

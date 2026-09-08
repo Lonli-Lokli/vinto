@@ -25,6 +25,10 @@
     <string name="online_screen_title">آن لائن کھیلیں</string>
     <string name="online_nickname">میز پر آپ کا نام</string>
     <string name="online_nickname_detail">دوسری نشستیں یہی دیکھتی ہیں۔ مختلف نام کے لیے تھپتھپائیں۔ یہ اکاؤنٹ نہیں ہے — کوئی اکاؤنٹ نہیں ہے۔</string>
+    <string name="online_avatar_name">کوئی اور نام دیں</string>
+    <string name="online_avatar_pick">مختلف چہرہ منتخب کریں</string>
+    <string name="online_avatar_ground">اس کا رنگ</string>
+    <string name="online_avatar_another">کوئی اور سیٹ دکھائیں</string>
     <string name="online_code">روم کوڈ</string>
     <string name="online_code_detail">جس نے روم کھولا اس سے چھ حروف لیں۔</string>
     <string name="online_join">روم میں شامل ہوں</string>
@@ -50,6 +54,8 @@
     <string name="online_open_detail">چار نشستیں، بانٹنے کے لیے ایک کوڈ، اور جو نہ آئے اس کی جگہ بوٹس۔</string>
     <string name="online_join_detail">چھ حروف، جس نے روم کھولا اس سے۔</string>
     <string name="online_browse_detail">وہ رومز جن کے میزبانوں نے درج ہونا چنا۔ کوئی بھی بیٹھ سکتا ہے۔</string>
+    <string name="online_return_title">اپنے روم میں واپس جائیں</string>
+    <string name="online_return_detail">آپ %1$s سے باہر نکلے تھے، اور آپ کی نشست اب بھی موجود ہے۔ 'روم چھوڑیں' دبانے پر یہ ختم ہو جاتی ہے۔</string>
     <string name="online_open_title">روم کھولیں</string>
     <string name="online_join_title">کوڈ سے شامل ہوں</string>
     <string name="online_open_screen">روم کھولیں</string>
@@ -119,6 +125,17 @@
     <string name="settings_language_chosen">%1$s، منتخب شدہ</string>
     <string name="settings_group_privacy">اس ڈیوائس سے کیا باہر جاتا ہے</string>
     <string name="settings_group_about">بارے میں</string>
+    <string name="settings_support">گیم کی حمایت کریں</string>
+    <string name="settings_support_detail">اگر آپ نے لطف اٹھایا اور یہ بتانا چاہتے ہیں۔ اس سے کچھ کھلتا نہیں — کچھ بند بھی نہیں ہے۔</string>
+    <string name="settings_support_buy">شکریہ کہیں — %1$s</string>
+    <string name="settings_support_link">شکریہ کہیں</string>
+    <string name="settings_support_link_detail">ایک صفحہ کھلتا ہے جہاں آپ رقم منتخب کرتے ہیں۔ فون ورژنز ایسا نہیں کر سکتے — وہاں ادائیگی اسٹور کے ذریعے ہوتی ہے، اور قیمت اس کے قواعد طے کرتے ہیں۔</string>
+    <string name="settings_support_unavailable">یہاں ابھی دستیاب نہیں۔ اس اسکرین سے کچھ نہیں کیا جا سکتا؛ اس کے لیے اسٹور درکار ہے، اور فونز کو یہ پہلے ملے گا۔</string>
+    <string name="settings_support_thanks">شکریہ۔ دل سے۔</string>
+    <string name="settings_explain">%1$s کے بارے میں مزید</string>
+    <string name="settings_group_game_summary">حریف، رفتار، حرکت، ظاہری شکل، زبان، اور آپ کا ریکارڈ۔</string>
+    <string name="settings_group_privacy_summary">کیا شمار ہوتا ہے، اور اسے کیسے بند کریں۔</string>
+    <string name="settings_group_about_summary">یہ کس کا گیم ہے، ایپ کس نے بنائی، اور رابطہ کیسے کریں۔</string>
 
     <string name="settings_privacy">رازداری</string>
     <string name="settings_privacy_detail">کیا شمار ہوتا ہے، کیا نہیں، اور اسے کیسے بند کریں۔</string>
@@ -240,6 +257,7 @@
     <string name="table_see_score">اسکور دیکھیں</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_support">مجھے کافی پلائیں</string>
     <string name="header_report">کوئی مسئلہ بتائیں</string>
     <string name="header_settings">ترتیبات</string>
     <string name="header_deck_left">ڈیک میں %1$d پتے باقی ہیں</string>
@@ -592,6 +610,10 @@
     <string name="log_made_you_draw">%1$s نے آپ کو پتہ نکالنے پر مجبور کیا</string>
     <string name="log_made_draw_they">%1$s نے %2$s کو پتہ نکالنے پر مجبور کیا</string>
     <string name="log_round_begins">دور شروع ہوتا ہے</string>
+
+    <string name="help_rules_title">مکمل اصول</string>
+    <string name="help_rules_body">یہ ورقہ بتاتا ہے کہ یہاں ہر کارڈ کیا کرتا ہے۔ مکمل اصول گیم کی اپنی سائٹ پر، اسے بنانے والوں کی طرف سے موجود ہیں۔</string>
+    <string name="help_rules_action">اصول کھولیں</string>
 
     <string name="help_counts_title">یہ ایپ کیا شمار کرتی ہے</string>
     <string name="help_counts_body">صرف گمنام شمار: کتنے دور کھیلے جاتے ہیں، لوگ کہاں تک پہنچتے ہیں، آیا کوئی میز رک گئی، اور روم چلانے میں کتنا خرچ آتا ہے۔ کبھی آپ کا نام، آپ کا روم کوڈ، آپ کے ہاتھ میں کیا ہے، یا کوئی ایسی چیز نہیں جو آپ یا آپ کی ڈیوائس تک واپس لے جائے — بھیجی گئی چیز میں انہیں رکھنے کی کوئی جگہ ہی نہیں۔ اسے ترتیبات میں بند کیا جا سکتا ہے، اور ایسا براؤزر جو ٹریک نہ کیے جانے کی درخواست کرے وہ آپ کے لیے خود بخود بند کر دیتا ہے۔</string>

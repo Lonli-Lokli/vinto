@@ -25,6 +25,10 @@
     <string name="online_screen_title">ऑनलाइन खेलें</string>
     <string name="online_nickname">मेज़ पर आपका नाम</string>
     <string name="online_nickname_detail">बाकी सीटें यही देखती हैं। अलग नाम के लिए टैप करें। यह खाता नहीं है — कोई खाते नहीं हैं।</string>
+    <string name="online_avatar_name">मुझे कोई और नाम दें</string>
+    <string name="online_avatar_pick">अलग चेहरा चुनें</string>
+    <string name="online_avatar_ground">इसका रंग</string>
+    <string name="online_avatar_another">मुझे एक और सेट दिखाएं</string>
     <string name="online_code">रूम कोड</string>
     <string name="online_code_detail">रूम खोलने वाले से मिले छह अक्षर।</string>
     <string name="online_join">रूम में शामिल हों</string>
@@ -50,6 +54,8 @@
     <string name="online_open_detail">चार सीटें, साझा करने के लिए एक कोड, और जो न आए उसके लिए बॉट।</string>
     <string name="online_join_detail">छह अक्षर, रूम खोलने वाले से।</string>
     <string name="online_browse_detail">वे रूम जिनके मेज़बानों ने सूचीबद्ध होना चुना। कोई भी बैठ सकता है।</string>
+    <string name="online_return_title">अपने रूम में लौटें</string>
+    <string name="online_return_detail">आप %1$s से बाहर निकल गए थे और आपकी सीट अभी भी वहां है। Leave दबाने पर यह छोड़ दी जाती है।</string>
     <string name="online_open_title">रूम खोलें</string>
     <string name="online_join_title">कोड से शामिल हों</string>
     <string name="online_open_screen">रूम खोलें</string>
@@ -120,6 +126,17 @@
     <string name="settings_group_privacy">इस डिवाइस से क्या बाहर जाता है</string>
     <string name="settings_group_about">बारे में</string>
 
+    <string name="settings_support">खेल का समर्थन करें</string>
+    <string name="settings_support_detail">अगर आपने इसे पसंद किया और यह बताना चाहते हैं। इससे कुछ भी अनलॉक नहीं होता — यहां कुछ भी लॉक नहीं है।</string>
+    <string name="settings_support_buy">धन्यवाद कहें — %1$s</string>
+    <string name="settings_support_link">धन्यवाद कहें</string>
+    <string name="settings_support_link_detail">एक पेज खुलता है जहां आप रकम चुनते हैं। फ़ोन वाले संस्करण यह नहीं कर सकते — वहां भुगतान एक स्टोर लेता है, और कीमत उसके नियम तय करते हैं।</string>
+    <string name="settings_support_unavailable">अभी यहां उपलब्ध नहीं है। इस स्क्रीन से इस बारे में कुछ नहीं किया जा सकता; इसके लिए एक स्टोर चाहिए, और फ़ोन को यह पहले मिलेगा।</string>
+    <string name="settings_support_thanks">धन्यवाद। सच में।</string>
+    <string name="settings_explain">%1$s के बारे में और जानें</string>
+    <string name="settings_group_game_summary">प्रतिद्वंद्वी, गति, गति-प्रभाव, रूप, भाषा और आपका रिकॉर्ड।</string>
+    <string name="settings_group_privacy_summary">क्या गिना जाता है, और इसे कैसे बंद करें।</string>
+    <string name="settings_group_about_summary">यह किसका खेल है, इस ऐप को किसने बनाया, और कैसे संपर्क करें।</string>
     <string name="settings_privacy">निजता</string>
     <string name="settings_privacy_detail">क्या गिना जाता है, क्या नहीं, और इसे कैसे बंद करें।</string>
     <string name="settings_terms">इस्तेमाल की शर्तें</string>
@@ -240,6 +257,7 @@
     <string name="table_see_score">स्कोर देखें</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_support">मुझे एक कॉफ़ी पिलाएं</string>
     <string name="header_report">समस्या बताएं</string>
     <string name="header_settings">सेटिंग्स</string>
     <string name="header_deck_left">डेक में %1$d पत्ते बचे हैं</string>
@@ -600,6 +618,10 @@
     <string name="log_made_you_draw">%1$s ने आपको पत्ता उठवाया</string>
     <string name="log_made_draw_they">%1$s ने %2$s को पत्ता उठवाया</string>
     <string name="log_round_begins">दौर शुरू होता है</string>
+
+    <string name="help_rules_title">पूरे नियम</string>
+    <string name="help_rules_body">यह शीट बताती है कि यहां एक पत्ता क्या करता है। पूरे नियम खेल की अपनी वेबसाइट पर हैं, उन लोगों की तरफ़ से जिन्होंने इसे बनाया।</string>
+    <string name="help_rules_action">नियम खोलें</string>
 
     <string name="help_counts_title">यह ऐप क्या गिनता है</string>
     <string name="help_counts_body">सिर्फ़ गुमनाम गिनती: कितने दौर खेले जाते हैं, लोग कहां तक पहुंचते हैं, कोई मेज़ अटकी या नहीं, और एक रूम चलाने की क्या कीमत है। कभी आपका नाम, आपका रूम कोड, आपके हाथ में क्या है, या कुछ भी जो आप तक या आपके डिवाइस तक पहुंचाया जा सके नहीं — जो भेजा जाता है उसमें उनके लिए कोई जगह नहीं है। इसे सेटिंग्स में बंद किया जा सकता है, और जो ब्राउज़र ट्रैक न करने के लिए कहता है वह इसे आपके लिए खुद बंद कर देता है।</string>

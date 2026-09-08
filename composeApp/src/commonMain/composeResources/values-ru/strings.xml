@@ -36,6 +36,10 @@
     <string name="online_screen_title">Игра по сети</string>
     <string name="online_nickname">Ваше имя за столом</string>
     <string name="online_nickname_detail">Его видят остальные. Нажмите, чтобы взять другое. Это не аккаунт — аккаунтов здесь нет.</string>
+    <string name="online_avatar_name">Дать мне другое имя</string>
+    <string name="online_avatar_pick">Выбрать другое лицо</string>
+    <string name="online_avatar_ground">Его цвет</string>
+    <string name="online_avatar_another">Показать другой набор</string>
     <string name="online_code">Код комнаты</string>
     <string name="online_code_detail">Шесть символов от того, кто открыл комнату.</string>
     <string name="online_join">Войти в комнату</string>
@@ -61,6 +65,8 @@
     <string name="online_open_detail">Четыре места, код для друзей и боты на всех, кто не пришёл.</string>
     <string name="online_join_detail">Шесть символов от того, кто открыл комнату.</string>
     <string name="online_browse_detail">Комнаты, чьи хозяева попали в список. Сесть может любой.</string>
+    <string name="online_return_title">Вернуться в свою комнату</string>
+    <string name="online_return_detail">Вы вышли из %1$s, и место всё ещё за вами. Оно освобождается, если нажать «Выйти из комнаты».</string>
     <string name="online_open_title">Открыть комнату</string>
     <string name="online_join_title">Войти по коду</string>
     <string name="online_open_screen">Открыть комнату</string>
@@ -126,6 +132,17 @@
     <string name="settings_group_privacy">Что уходит с устройства</string>
     <string name="settings_group_about">О приложении</string>
 
+    <string name="settings_support">Поддержать игру</string>
+    <string name="settings_support_detail">Если она понравилась и хочется об этом сказать. Это ничего не открывает — открывать нечего.</string>
+    <string name="settings_support_buy">Сказать спасибо — %1$s</string>
+    <string name="settings_support_link">Сказать спасибо</string>
+    <string name="settings_support_link_detail">Откроется страница, где можно выбрать сумму. На телефонах так нельзя — там платежи проходят через магазин, и цену задаёт он.</string>
+    <string name="settings_support_unavailable">Здесь это пока недоступно. С этого экрана ничего не сделать — нужен магазин, а он появится сначала на телефонах.</string>
+    <string name="settings_support_thanks">Спасибо. Правда.</string>
+    <string name="settings_explain">Подробнее — %1$s</string>
+    <string name="settings_group_game_summary">Соперники, темп, движение, вид, язык и ваша статистика.</string>
+    <string name="settings_group_privacy_summary">Что считается и как это отключить.</string>
+    <string name="settings_group_about_summary">Чья это игра, кто сделал приложение, и как с ними связаться.</string>
     <string name="settings_privacy">Конфиденциальность</string>
     <string name="settings_privacy_detail">Что считается, что нет и как это выключить.</string>
     <string name="settings_terms">Условия использования</string>
@@ -244,6 +261,7 @@
     <string name="table_final_versus">против</string>
     <string name="table_see_score">Посмотреть счёт</string>
 
+    <string name="header_support">Угостить кофе</string>
     <string name="header_report">Сообщить о проблеме</string>
     <string name="header_settings">Настройки</string>
     <string name="header_deck_left">В колоде осталось: %1$d</string>
@@ -590,6 +608,10 @@
     <string name="log_made_you_draw">%1$s заставил вас взять карту</string>
     <string name="log_made_draw_they">%1$s заставил %2$s взять карту</string>
     <string name="log_round_begins">раунд начинается</string>
+
+    <string name="help_rules_title">Полные правила</string>
+    <string name="help_rules_body">Эта карточка объясняет, что делает каждая карта здесь. Полные правила — на сайте самой игры, у тех, кто её придумал.</string>
+    <string name="help_rules_action">Открыть правила</string>
 
     <string name="help_counts_title">Что считает это приложение</string>
     <string name="help_counts_body">Только анонимный счёт: сколько раундов сыграно, как далеко люди доходят, застревал ли стол и во что обходится комната. Никогда — ваше имя, код комнаты, содержимое вашей руки или что-то, что можно возвести к вам или вашему устройству: в том, что уходит, для этого просто нет места. Это выключается в настройках, а браузеру, который просит себя не отслеживать, выключать ничего не нужно — мы послушаемся сами.</string>

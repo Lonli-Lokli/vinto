@@ -37,6 +37,10 @@
     <string name="online_screen_title">Гульня анлайн</string>
     <string name="online_nickname">Ваша імя за сталом</string>
     <string name="online_nickname_detail">Яго бачаць астатнія месцы. Націсніце, каб узяць іншае. Гэта не акаунт — акаунтаў тут няма.</string>
+    <string name="online_avatar_name">Даць мне іншае імя</string>
+    <string name="online_avatar_pick">Абраць іншы твар</string>
+    <string name="online_avatar_ground">Яго колер</string>
+    <string name="online_avatar_another">Паказаць іншы набор</string>
     <string name="online_code">Код пакоя</string>
     <string name="online_code_detail">Шэсць сімвалаў ад таго, хто адкрыў пакой.</string>
     <string name="online_join">Увайсці ў пакой</string>
@@ -63,6 +67,8 @@
     <string name="online_open_detail">Чатыры месцы, код, каб падзяліцца, і боты на ўсіх, хто не прыйдзе.</string>
     <string name="online_join_detail">Шэсць сімвалаў ад таго, хто адкрыў пакой.</string>
     <string name="online_browse_detail">Пакоі, чые гаспадары трапілі ў спіс. Сесці можа кожны.</string>
+    <string name="online_return_title">Вярнуцца ў свой пакой</string>
+    <string name="online_return_detail">Вы выйшлі з %1$s, і месца ўсё яшчэ за вамі. Яно вызваляецца, калі націснуць «Пакінуць пакой».</string>
     <string name="online_open_title">Адкрыць пакой</string>
     <string name="online_join_title">Увайсці па кодзе</string>
     <string name="online_open_screen">Адкрыць пакой</string>
@@ -128,6 +134,17 @@
     <string name="settings_group_privacy">Што сыходзіць з прылады</string>
     <string name="settings_group_about">Пра дадатак</string>
 
+    <string name="settings_support">Падтрымаць гульню</string>
+    <string name="settings_support_detail">Калі яна спадабалася і хочацца пра гэта сказаць. Гэта нічога не адкрывае — адкрываць няма чаго.</string>
+    <string name="settings_support_buy">Сказаць дзякуй — %1$s</string>
+    <string name="settings_support_link">Сказаць дзякуй</string>
+    <string name="settings_support_link_detail">Адкрыецца старонка, дзе можна выбраць суму. На тэлефонах так нельга — там плацяжы праходзяць праз краму, і цану вызначае яна.</string>
+    <string name="settings_support_unavailable">Тут гэта пакуль недаступна. З гэтага экрана нічога не зрабіць — патрэбна крама, а яна з'явіцца спачатку на тэлефонах.</string>
+    <string name="settings_support_thanks">Дзякуй. Сапраўды.</string>
+    <string name="settings_explain">Падрабязней — %1$s</string>
+    <string name="settings_group_game_summary">Супернікі, тэмп, рух, выгляд, мова і ваша статыстыка.</string>
+    <string name="settings_group_privacy_summary">Што ўлічваецца і як гэта выключыць.</string>
+    <string name="settings_group_about_summary">Чыя гэта гульня, хто зрабіў дадатак, і як з імі звязацца.</string>
     <string name="settings_privacy">Прыватнасць</string>
     <string name="settings_privacy_detail">Што лічыцца, што не, і як гэта выключыць.</string>
     <string name="settings_terms">Умовы карыстання</string>
@@ -246,6 +263,7 @@
     <string name="table_final_versus">супраць</string>
     <string name="table_see_score">Паглядзець лік</string>
 
+    <string name="header_support">Пачаставаць кавай</string>
     <string name="header_report">Паведаміць пра праблему</string>
     <string name="header_settings">Налады</string>
     <string name="header_deck_left">У калодзе засталося: %1$d</string>
@@ -592,6 +610,10 @@
     <string name="log_made_you_draw">%1$s прымушае вас узяць картку</string>
     <string name="log_made_draw_they">%1$s прымушае %2$s узяць картку</string>
     <string name="log_round_begins">раунд пачынаецца</string>
+
+    <string name="help_rules_title">Поўныя правілы</string>
+    <string name="help_rules_body">Гэтая картка тлумачыць, што робіць кожная карта тут. Поўныя правілы — на сайце самой гульні, у тых, хто яе прыдумаў.</string>
+    <string name="help_rules_action">Адкрыць правілы</string>
 
     <string name="help_counts_title">Што лічыць гэты дадатак</string>
     <string name="help_counts_body">Толькі ананімны падлік: колькі раундаў сыграна, як далёка людзі даходзяць, ці затрымліваўся стол і колькі каштуе ўтрыманне пакоя. Ніколі — ваша імя, код пакоя, змест вашай рукі ці нешта, што можна звязаць з вамі ці вашай прыладай: у тым, што адпраўляецца, для гэтага проста няма месца. Гэта можна выключыць у наладах, а браўзер, які просіць яго не адсочваць, выключае гэта сам.</string>

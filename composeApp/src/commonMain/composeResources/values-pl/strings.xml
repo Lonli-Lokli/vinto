@@ -22,6 +22,10 @@
     <string name="online_screen_title">Graj online</string>
     <string name="online_nickname">Twoje imię przy stole</string>
     <string name="online_nickname_detail">To widzą inne miejsca przy stole. Stuknij, aby zmienić. To nie jest konto — kont tu nie ma.</string>
+    <string name="online_avatar_name">Daj mi inne imię</string>
+    <string name="online_avatar_pick">Wybierz inną twarz</string>
+    <string name="online_avatar_ground">Jego kolor</string>
+    <string name="online_avatar_another">Pokaż inny zestaw</string>
     <string name="online_code">Kod pokoju</string>
     <string name="online_code_detail">Sześć znaków od osoby, która otworzyła pokój.</string>
     <string name="online_join">Dołącz do pokoju</string>
@@ -47,6 +51,8 @@
     <string name="online_open_detail">Cztery miejsca, kod do udostępnienia i boty dla tych, którzy nie dołączą.</string>
     <string name="online_join_detail">Sześć znaków od osoby, która otworzyła pokój.</string>
     <string name="online_browse_detail">Pokoje, których gospodarze zdecydowali się na widoczność. Może dosiąść się każdy.</string>
+    <string name="online_return_title">Wróć do swojego pokoju</string>
+    <string name="online_return_detail">Miejsce w %1$s wciąż na ciebie czeka. Rezygnujesz z niego, naciskając „Opuść pokój”.</string>
     <string name="online_open_title">Otwórz pokój</string>
     <string name="online_join_title">Dołącz z kodem</string>
     <string name="online_open_screen">Otwórz pokój</string>
@@ -112,6 +118,17 @@
     <string name="settings_group_privacy">Co opuszcza to urządzenie</string>
     <string name="settings_group_about">O aplikacji</string>
 
+    <string name="settings_support">Wesprzyj grę</string>
+    <string name="settings_support_detail">Jeśli podobała się i chcesz to powiedzieć. Nic to nie odblokowuje — nie ma niczego zablokowanego.</string>
+    <string name="settings_support_buy">Podziękuj — %1$s</string>
+    <string name="settings_support_link">Podziękuj</string>
+    <string name="settings_support_link_detail">Otworzy się strona, na której można wybrać kwotę. Wersje telefoniczne tego nie umożliwiają — tam płatności obsługuje sklep i to on ustala cenę.</string>
+    <string name="settings_support_unavailable">Tutaj jeszcze niedostępne. Nic z tego poziomu nie da się zrobić — potrzebny jest sklep, a najpierw pojawi się on w telefonach.</string>
+    <string name="settings_support_thanks">Dziękujemy. Naprawdę.</string>
+    <string name="settings_explain">Więcej o %1$s</string>
+    <string name="settings_group_game_summary">Przeciwnicy, tempo, ruch, wygląd, język i twoje wyniki.</string>
+    <string name="settings_group_privacy_summary">Co jest liczone i jak to wyłączyć.</string>
+    <string name="settings_group_about_summary">Czyja to gra, kto stworzył aplikację, i jak się skontaktować.</string>
     <string name="settings_privacy">Prywatność</string>
     <string name="settings_privacy_detail">Co jest liczone, co nie, i jak to wyłączyć.</string>
     <string name="settings_terms">Warunki korzystania</string>
@@ -230,6 +247,7 @@
     <string name="table_final_versus">vs</string>
     <string name="table_see_score">Zobacz wynik</string>
 
+    <string name="header_support">Postaw mi kawę</string>
     <string name="header_report">Zgłoś problem</string>
     <string name="header_settings">Ustawienia</string>
     <string name="header_deck_left">%1$d kart w talii</string>
@@ -576,6 +594,10 @@
     <string name="log_made_you_draw">%1$s zmusza cię do dobrania karty</string>
     <string name="log_made_draw_they">%1$s zmusza %2$s do dobrania karty</string>
     <string name="log_round_begins">runda się zaczyna</string>
+
+    <string name="help_rules_title">Pełne zasady</string>
+    <string name="help_rules_body">Ta karta wyjaśnia, co robi każda karta w tej wersji. Pełne zasady są na stronie samej gry, u jej twórców.</string>
+    <string name="help_rules_action">Otwórz zasady</string>
 
     <string name="help_counts_title">Co liczy ta aplikacja</string>
     <string name="help_counts_body">Tylko anonimowe statystyki: ile rund jest rozgrywanych, jak daleko dochodzą gracze, czy stół się zatrzymał, i ile kosztuje utrzymanie pokoju. Nigdy imię, kod pokoju, zawartość ręki ani nic, co mogłoby wskazać na ciebie lub twoje urządzenie — nie ma na to miejsca w tym, co wysyłane. Można to wyłączyć w Ustawieniach, a przeglądarka z prośbą o brak śledzenia wyłącza to automatycznie.</string>

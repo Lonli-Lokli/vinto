@@ -22,6 +22,10 @@
     <string name="online_screen_title">অনলাইনে খেলুন</string>
     <string name="online_nickname">টেবিলে আপনার নাম</string>
     <string name="online_nickname_detail">অন্য আসনগুলো এটাই দেখে। ভিন্ন একটি নামের জন্য চাপুন। এটা কোনো অ্যাকাউন্ট নয় — এখানে কোনো অ্যাকাউন্ট নেই।</string>
+    <string name="online_avatar_name">আমাকে অন্য একটি নাম দিন</string>
+    <string name="online_avatar_pick">ভিন্ন একটি মুখ বেছে নিন</string>
+    <string name="online_avatar_ground">এর রং</string>
+    <string name="online_avatar_another">আমাকে আরেকটি সেট দেখান</string>
     <string name="online_code">রুম কোড</string>
     <string name="online_code_detail">যিনি রুম খুলেছেন তার দেওয়া ছয়টি অক্ষর।</string>
     <string name="online_join">রুমে যোগ দিন</string>
@@ -47,6 +51,8 @@
     <string name="online_open_detail">চারটি আসন, শেয়ার করার একটি কোড, আর যারা আসবেন না তাদের জায়গায় বট।</string>
     <string name="online_join_detail">যিনি রুম খুলেছেন তার দেওয়া ছয়টি অক্ষর।</string>
     <string name="online_browse_detail">যেসব রুমের হোস্ট তালিকাভুক্ত হতে বেছে নিয়েছেন। যে কেউ বসতে পারেন।</string>
+    <string name="online_return_title">আপনার রুমে ফিরে যান</string>
+    <string name="online_return_detail">আপনি %1$s থেকে বেরিয়ে এসেছিলেন আর আপনার আসনটি এখনও সেখানে আছে। Leave চাপলে সেটি ছেড়ে দেওয়া হয়।</string>
     <string name="online_open_title">রুম খুলুন</string>
     <string name="online_join_title">কোড দিয়ে যোগ দিন</string>
     <string name="online_open_screen">রুম খুলুন</string>
@@ -112,6 +118,17 @@
     <string name="settings_group_privacy">এই ডিভাইস থেকে কী পাঠানো হয়</string>
     <string name="settings_group_about">সম্পর্কে</string>
 
+    <string name="settings_support">খেলাটিকে সহায়তা করুন</string>
+    <string name="settings_support_detail">যদি আপনি এটি উপভোগ করে থাকেন আর তা জানাতে চান। এতে কিছুই আনলক হয় না — এখানে লক করা কিছুই নেই।</string>
+    <string name="settings_support_buy">ধন্যবাদ জানান — %1$s</string>
+    <string name="settings_support_link">ধন্যবাদ জানান</string>
+    <string name="settings_support_link_detail">একটি পাতা খোলে যেখানে আপনি অঙ্কটি বেছে নেন। ফোন সংস্করণগুলো তা করতে পারে না — সেখানে একটি স্টোর পেমেন্ট নেয়, আর তার নিয়ম দাম ঠিক করে।</string>
+    <string name="settings_support_unavailable">এখনো এখানে পাওয়া যাচ্ছে না। এই স্ক্রিন থেকে এ নিয়ে কিছু করার নেই; এর জন্য একটি স্টোর দরকার, আর ফোনগুলো সেটা আগে পাবে।</string>
+    <string name="settings_support_thanks">ধন্যবাদ। সত্যিই।</string>
+    <string name="settings_explain">%1$s সম্পর্কে আরও</string>
+    <string name="settings_group_game_summary">প্রতিপক্ষ, গতি, নড়াচড়া, দেখতে কেমন, ভাষা আর আপনার রেকর্ড।</string>
+    <string name="settings_group_privacy_summary">কী গোনা হয়, আর কীভাবে তা বন্ধ করবেন।</string>
+    <string name="settings_group_about_summary">এটা কার খেলা, অ্যাপটি কে তৈরি করেছেন, আর কীভাবে যোগাযোগ করবেন।</string>
     <string name="settings_privacy">গোপনীয়তা</string>
     <string name="settings_privacy_detail">কী গোনা হয়, কী হয় না, আর কীভাবে তা বন্ধ করবেন।</string>
     <string name="settings_terms">ব্যবহারের শর্তাবলী</string>
@@ -230,6 +247,7 @@
     <string name="table_final_versus">বনাম</string>
     <string name="table_see_score">স্কোর দেখুন</string>
 
+    <string name="header_support">আমাকে এক কাপ কফি খাওয়ান</string>
     <string name="header_report">সমস্যা জানান</string>
     <string name="header_settings">সেটিংস</string>
     <string name="header_deck_left">ডেকে %1$d তাস বাকি</string>
@@ -575,6 +593,10 @@
     <string name="log_made_you_draw">%1$s আপনাকে একটি তাস তুলতে বাধ্য করেছেন</string>
     <string name="log_made_draw_they">%1$s %2$s-কে একটি তাস তুলতে বাধ্য করেছেন</string>
     <string name="log_round_begins">রাউন্ড শুরু হয়</string>
+
+    <string name="help_rules_title">সম্পূর্ণ নিয়মাবলী</string>
+    <string name="help_rules_body">এই শিটটি বলে দেয় এখানে একটি তাস কী করে। সম্পূর্ণ নিয়মাবলী আছে খেলাটির নিজস্ব সাইটে, যারা এটি তৈরি করেছেন তাদের কাছ থেকে।</string>
+    <string name="help_rules_action">নিয়মাবলী খুলুন</string>
 
     <string name="help_counts_title">এই অ্যাপ কী গণনা করে</string>
     <string name="help_counts_body">শুধু নামহীন গণনা: কতগুলো রাউন্ড খেলা হয়, মানুষ কতদূর পৌঁছায়, কোনো টেবিল আটকে গিয়েছিল কিনা, আর একটি রুম চালাতে কী খরচ হয়। কখনোই আপনার নাম, রুম কোড, আপনার হাতে কী আছে, বা এমন কিছু নয় যা আপনার বা আপনার ডিভাইসের দিকে ফিরে যেতে পারে — যা পাঠানো হয় তাতে সেগুলো রাখার কোনো জায়গাই নেই। এটা সেটিংসে বন্ধ করা যায়, আর যে ব্রাউজার ট্র্যাক না করার অনুরোধ জানায় তার জন্য এটা নিজে থেকেই বন্ধ হয়ে যায়।</string>

@@ -39,6 +39,10 @@
     <string name="online_screen_title">Гра онлайн</string>
     <string name="online_nickname">Ваше ім'я за столом</string>
     <string name="online_nickname_detail">Його бачать інші місця за столом. Торкніться, щоб узяти інше. Це не акаунт — акаунтів тут немає.</string>
+    <string name="online_avatar_name">Дати мені інше ім'я</string>
+    <string name="online_avatar_pick">Обрати інше обличчя</string>
+    <string name="online_avatar_ground">Його колір</string>
+    <string name="online_avatar_another">Показати інший набір</string>
     <string name="online_code">Код кімнати</string>
     <string name="online_code_detail">Шість символів від того, хто відкрив кімнату.</string>
     <string name="online_join">Увійти в кімнату</string>
@@ -65,6 +69,8 @@
     <string name="online_open_detail">Чотири місця, код, яким можна поділитися, і боти на всіх, хто не прийшов.</string>
     <string name="online_join_detail">Шість символів від того, хто відкрив кімнату.</string>
     <string name="online_browse_detail">Кімнати, чиї господарі обрали список. Сісти може будь-хто.</string>
+    <string name="online_return_title">Повернутися до своєї кімнати</string>
+    <string name="online_return_detail">Ви вийшли з %1$s, і місце досі за вами. Воно звільняється, якщо натиснути «Залишити кімнату».</string>
     <string name="online_open_title">Відкрити кімнату</string>
     <string name="online_join_title">Увійти за кодом</string>
     <string name="online_open_screen">Відкрити кімнату</string>
@@ -130,6 +136,17 @@
     <string name="settings_group_privacy">Що залишає цей пристрій</string>
     <string name="settings_group_about">Про застосунок</string>
 
+    <string name="settings_support">Підтримати гру</string>
+    <string name="settings_support_detail">Якщо вона сподобалась і хочеться про це сказати. Це нічого не відкриває — відкривати нема чого.</string>
+    <string name="settings_support_buy">Сказати дякую — %1$s</string>
+    <string name="settings_support_link">Сказати дякую</string>
+    <string name="settings_support_link_detail">Відкриється сторінка, де можна обрати суму. На телефонах так не можна — там платежі проходять через магазин, і ціну визначає він.</string>
+    <string name="settings_support_unavailable">Тут це поки недоступне. З цього екрана нічого не зробити — потрібен магазин, а він з'явиться спершу на телефонах.</string>
+    <string name="settings_support_thanks">Дякую. Справді.</string>
+    <string name="settings_explain">Детальніше — %1$s</string>
+    <string name="settings_group_game_summary">Суперники, темп, рух, вигляд, мова і ваша статистика.</string>
+    <string name="settings_group_privacy_summary">Що враховується і як це вимкнути.</string>
+    <string name="settings_group_about_summary">Чия це гра, хто зробив застосунок, і як з ними зв'язатися.</string>
     <string name="settings_privacy">Конфіденційність</string>
     <string name="settings_privacy_detail">Що рахується, що ні, і як це вимкнути.</string>
     <string name="settings_terms">Умови використання</string>
@@ -248,6 +265,7 @@
     <string name="table_final_versus">проти</string>
     <string name="table_see_score">Переглянути рахунок</string>
 
+    <string name="header_support">Пригостити кавою</string>
     <string name="header_report">Повідомити про проблему</string>
     <string name="header_settings">Налаштування</string>
     <string name="header_deck_left">У колоді залишилося: %1$d</string>
@@ -593,6 +611,10 @@
     <string name="log_made_you_draw">%1$s змушує вас взяти карту</string>
     <string name="log_made_draw_they">%1$s змушує %2$s взяти карту</string>
     <string name="log_round_begins">раунд починається</string>
+
+    <string name="help_rules_title">Повні правила</string>
+    <string name="help_rules_body">Ця картка пояснює, що робить кожна карта тут. Повні правила — на сайті самої гри, у тих, хто її придумав.</string>
+    <string name="help_rules_action">Відкрити правила</string>
 
     <string name="help_counts_title">Що рахує цей застосунок</string>
     <string name="help_counts_body">Лише анонімна статистика: скільки раундів зіграно, як далеко доходять гравці, чи зависав стіл і скільки коштує утримання кімнати. Ніколи — ваше ім'я, код кімнати, вміст вашої руки чи щось таке, що можна пов'язати з вами або вашим пристроєм: у тому, що надсилається, для цього просто немає місця. Це можна вимкнути в налаштуваннях, а браузеру, який просить не відстежувати його, вимикати нічого не потрібно — це врахують самі.</string>

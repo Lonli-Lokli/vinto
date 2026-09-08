@@ -22,6 +22,10 @@
     <string name="online_screen_title">Online spielen</string>
     <string name="online_nickname">Ihr Name am Tisch</string>
     <string name="online_nickname_detail">Das sehen die anderen Plätze. Tippen für einen anderen. Kein Konto — es gibt keine.</string>
+    <string name="online_avatar_name">Einen anderen Namen vorschlagen</string>
+    <string name="online_avatar_pick">Ein anderes Gesicht wählen</string>
+    <string name="online_avatar_ground">Seine Farbe</string>
+    <string name="online_avatar_another">Eine andere Auswahl zeigen</string>
     <string name="online_code">Raumcode</string>
     <string name="online_code_detail">Sechs Zeichen von der Person, die den Raum eröffnet hat.</string>
     <string name="online_join">Dem Raum beitreten</string>
@@ -47,6 +51,8 @@
     <string name="online_open_detail">Vier Plätze, ein Code zum Teilen, und Bots für alle, die nicht dazukommen.</string>
     <string name="online_join_detail">Sechs Zeichen, von der Person, die den Raum eröffnet hat.</string>
     <string name="online_browse_detail">Räume, die auf Wunsch gelistet wurden. Jeder kann sich setzen.</string>
+    <string name="online_return_title">Zurück zu Ihrem Raum</string>
+    <string name="online_return_detail">Sie haben %1$s verlassen, und Ihr Platz ist noch reserviert. Aufgegeben wird er erst, wenn Sie auf Verlassen tippen.</string>
     <string name="online_open_title">Raum eröffnen</string>
     <string name="online_join_title">Mit Code beitreten</string>
     <string name="online_open_screen">Raum eröffnen</string>
@@ -112,6 +118,17 @@
     <string name="settings_group_privacy">Was dieses Gerät verlässt</string>
     <string name="settings_group_about">Über</string>
 
+    <string name="settings_support">Das Spiel unterstützen</string>
+    <string name="settings_support_detail">Wenn es Ihnen gefallen hat und Sie das zeigen möchten. Es schaltet nichts frei — es gibt nichts Gesperrtes.</string>
+    <string name="settings_support_buy">Danke sagen — %1$s</string>
+    <string name="settings_support_link">Danke sagen</string>
+    <string name="settings_support_link_detail">Öffnet eine Seite, auf der Sie den Betrag wählen. Die Telefonversionen können das nicht — dort übernimmt ein Store die Zahlung, und dessen Regeln setzen den Preis.</string>
+    <string name="settings_support_unavailable">Hier noch nicht verfügbar. Von diesem Bildschirm aus lässt sich nichts daran ändern; es braucht einen Store, und die Telefone bekommen zuerst einen.</string>
+    <string name="settings_support_thanks">Danke. Wirklich.</string>
+    <string name="settings_explain">Mehr über %1$s</string>
+    <string name="settings_group_game_summary">Gegner, Tempo, Bewegung, Aussehen, Sprache und Ihre Bilanz.</string>
+    <string name="settings_group_privacy_summary">Was gezählt wird, und wie man es abschaltet.</string>
+    <string name="settings_group_about_summary">Wessen Spiel das ist, wer die App gemacht hat, und wie man Kontakt aufnimmt.</string>
     <string name="settings_privacy">Datenschutz</string>
     <string name="settings_privacy_detail">Was gezählt wird, was nicht, und wie man es abschaltet.</string>
     <string name="settings_terms">Nutzungsbedingungen</string>
@@ -230,6 +247,7 @@
     <string name="table_final_versus">gegen</string>
     <string name="table_see_score">Punktestand ansehen</string>
 
+    <string name="header_support">Einen Kaffee spendieren</string>
     <string name="header_report">Problem melden</string>
     <string name="header_settings">Einstellungen</string>
     <string name="header_deck_left">%1$d Karten übrig im Stapel</string>
@@ -578,6 +596,10 @@
     <string name="log_made_you_draw">%1$s hat Sie eine Karte ziehen lassen</string>
     <string name="log_made_draw_they">%1$s hat %2$s eine Karte ziehen lassen</string>
     <string name="log_round_begins">die Runde beginnt</string>
+
+    <string name="help_rules_title">Die vollständigen Regeln</string>
+    <string name="help_rules_body">Dieses Blatt sagt, was eine Karte hier tut. Die vollständigen Regeln stehen auf der eigenen Seite des Spiels, von den Menschen, die es gemacht haben.</string>
+    <string name="help_rules_action">Regeln öffnen</string>
 
     <string name="help_counts_title">Was diese App zählt</string>
     <string name="help_counts_body">Nur anonyme Zählungen: wie viele Runden gespielt werden, wie weit Menschen kommen, ob ein Tisch stockte, und was ein Raum im Betrieb kostet. Nie Ihr Name, Ihr Raumcode, was in Ihrer Hand liegt, oder irgendetwas, das auf Sie oder Ihr Gerät zurückgeführt werden könnte — dafür gibt es im Gesendeten keinen Platz. Lässt sich in den Einstellungen abschalten, und ein Browser, der um Nicht-Tracking bittet, schaltet es automatisch ab.</string>

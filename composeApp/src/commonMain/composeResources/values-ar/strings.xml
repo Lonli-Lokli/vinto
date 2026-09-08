@@ -25,6 +25,10 @@
     <string name="online_screen_title">العب عبر الإنترنت</string>
     <string name="online_nickname">اسمك على الطاولة</string>
     <string name="online_nickname_detail">ما يراه بقية اللاعبين. اضغط لاختيار اسم آخر. ليس حسابًا — لا توجد حسابات.</string>
+    <string name="online_avatar_name">أعطني اسمًا آخر</string>
+    <string name="online_avatar_pick">اختر وجهًا مختلفًا</string>
+    <string name="online_avatar_ground">لونه</string>
+    <string name="online_avatar_another">أرني مجموعة أخرى</string>
     <string name="online_code">رمز الغرفة</string>
     <string name="online_code_detail">ستة أحرف ممن فتح الغرفة.</string>
     <string name="online_join">انضم إلى الغرفة</string>
@@ -50,6 +54,8 @@
     <string name="online_open_detail">أربعة مقاعد، ورمز للمشاركة، وروبوتات لمن لم يصل بعد.</string>
     <string name="online_join_detail">ستة أحرف، ممن فتح الغرفة.</string>
     <string name="online_browse_detail">غرف اختار أصحابها إدراجها للعامة. يمكن لأي أحد الانضمام إليها.</string>
+    <string name="online_return_title">العودة إلى غرفتك</string>
+    <string name="online_return_detail">غادرت %1$s ومقعدك ما يزال موجودًا. يُتخلّى عنه عند الضغط على «غادر الغرفة».</string>
     <string name="online_open_title">افتح غرفة</string>
     <string name="online_join_title">انضم برمز</string>
     <string name="online_open_screen">افتح غرفة</string>
@@ -119,6 +125,17 @@
     <string name="settings_language_chosen">%1$s، مُختارة</string>
     <string name="settings_group_privacy">ما يُرسَل من هذا الجهاز</string>
     <string name="settings_group_about">حول التطبيق</string>
+    <string name="settings_support">ادعم اللعبة</string>
+    <string name="settings_support_detail">إن كنت استمتعت بها وتودّ قول ذلك. لا يفتح شيئًا — فلا شيء مغلق أصلاً.</string>
+    <string name="settings_support_buy">قل شكرًا — %1$s</string>
+    <string name="settings_support_link">قل شكرًا</string>
+    <string name="settings_support_link_detail">يفتح صفحة تختار فيها المبلغ. لا يمكن للنسختين على الهاتف فعل ذلك — يتولى المتجر الدفع هناك، وقواعده تحدد السعر.</string>
+    <string name="settings_support_unavailable">غير متاح هنا بعد. لا شيء يمكن فعله بخصوص ذلك من هذه الشاشة؛ يحتاج الأمر إلى متجر، وستحصل الهواتف عليه أولاً.</string>
+    <string name="settings_support_thanks">شكرًا لك. بصدق.</string>
+    <string name="settings_explain">المزيد عن %1$s</string>
+    <string name="settings_group_game_summary">الخصوم، الإيقاع، الحركة، المظهر، اللغة، وسجلّك.</string>
+    <string name="settings_group_privacy_summary">ما يُحصى، وكيف تُوقفه.</string>
+    <string name="settings_group_about_summary">لمن هذه اللعبة، ومن صنع التطبيق، وكيف تتواصل.</string>
 
     <string name="settings_privacy">الخصوصية</string>
     <string name="settings_privacy_detail">ما يُحصى، وما لا يُحصى، وكيف تُوقف ذلك.</string>
@@ -240,6 +257,7 @@
     <string name="table_see_score">شاهد النتيجة</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_support">اشترِ لي قهوة</string>
     <string name="header_report">أبلغ عن مشكلة</string>
     <string name="header_settings">الإعدادات</string>
     <string name="header_deck_left">%1$d بطاقة متبقية في المكدس</string>
@@ -598,6 +616,10 @@
     <string name="log_made_you_draw">%1$s جعلك تسحب بطاقة</string>
     <string name="log_made_draw_they">%1$s جعل %2$s يسحب بطاقة</string>
     <string name="log_round_begins">تبدأ الجولة</string>
+
+    <string name="help_rules_title">القواعد الكاملة</string>
+    <string name="help_rules_body">هذه الورقة تشرح ما تفعله كل بطاقة هنا. القواعد الكاملة موجودة على موقع اللعبة نفسها، من صانعيها.</string>
+    <string name="help_rules_action">افتح القواعد</string>
 
     <string name="help_counts_title">ما يحصيه هذا التطبيق</string>
     <string name="help_counts_body">إحصاءات مجهولة فقط: كم جولة تُلعب، وإلى أين يصل اللاعبون، وهل توقفت طاولة، وكم تكلّف الغرفة لتشغيلها. لا اسمك أبدًا، ولا رمز غرفتك، ولا محتوى يدك، ولا أي شيء قد يُعاد تتبّعه إليك أو إلى جهازك — فلا مكان فيما يُرسَل لوضع ذلك. يمكن إيقافه من الإعدادات، والمتصفح الذي يطلب عدم التتبع يوقفه تلقائيًا لك.</string>

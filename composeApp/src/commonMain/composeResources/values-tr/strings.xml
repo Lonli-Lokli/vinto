@@ -28,6 +28,10 @@
     <string name="online_screen_title">Çevrimiçi oyna</string>
     <string name="online_nickname">Masadaki adın</string>
     <string name="online_nickname_detail">Diğer koltukların gördüğü şey. Farklı biri için dokun. Hesap değil — hiç yok.</string>
+    <string name="online_avatar_name">Başka bir isim ver</string>
+    <string name="online_avatar_pick">Farklı bir yüz seç</string>
+    <string name="online_avatar_ground">Rengi</string>
+    <string name="online_avatar_another">Başka bir set göster</string>
     <string name="online_code">Oda kodu</string>
     <string name="online_code_detail">Odayı açan kişiden aldığın altı karakter.</string>
     <string name="online_join">Odaya katıl</string>
@@ -53,6 +57,8 @@
     <string name="online_open_detail">Dört koltuk, paylaşılacak bir kod ve gelmeyenler için botlar.</string>
     <string name="online_join_detail">Odayı açan kişiden aldığın altı karakter.</string>
     <string name="online_browse_detail">Sahiplerinin listelenmeyi seçtiği odalar. Herkes oturabilir.</string>
+    <string name="online_return_title">Odana dön</string>
+    <string name="online_return_detail">%1$s'ten çıktın ve koltuğun hâlâ orada duruyor. Ayrıl'a bastığında bırakılır.</string>
     <string name="online_open_title">Oda aç</string>
     <string name="online_join_title">Kodla katıl</string>
     <string name="online_open_screen">Oda aç</string>
@@ -122,6 +128,17 @@
     <string name="settings_language_chosen">%1$s, seçildi</string>
     <string name="settings_group_privacy">Bu cihazdan ne çıkar</string>
     <string name="settings_group_about">Hakkında</string>
+    <string name="settings_support">Oyunu destekle</string>
+    <string name="settings_support_detail">Beğendiysen ve bunu belirtmek istersen. Hiçbir şeyin kilidini açmaz — zaten kilitli bir şey yok.</string>
+    <string name="settings_support_buy">Teşekkür et — %1$s</string>
+    <string name="settings_support_link">Teşekkür et</string>
+    <string name="settings_support_link_detail">Tutarı seçtiğin bir sayfa açılır. Telefon sürümleri bunu yapamaz — orada ödemeyi bir mağaza alır, ve fiyatı onun kuralları belirler.</string>
+    <string name="settings_support_unavailable">Burada henüz yok. Bu ekrandan yapılabilecek bir şey yok; bunun için bir mağaza gerekiyor, ve onu önce telefonlar alacak.</string>
+    <string name="settings_support_thanks">Teşekkürler. Gerçekten.</string>
+    <string name="settings_explain">%1$s hakkında daha fazla</string>
+    <string name="settings_group_game_summary">Rakipler, tempo, hareket, görünüm, dil ve senin kayıtların.</string>
+    <string name="settings_group_privacy_summary">Neyin sayıldığı ve nasıl kapatılacağı.</string>
+    <string name="settings_group_about_summary">Bu oyunun kime ait olduğu, uygulamayı kimin yaptığı ve nasıl ulaşılacağı.</string>
 
     <string name="settings_privacy">Gizlilik</string>
     <string name="settings_privacy_detail">Neyin sayıldığı, neyin sayılmadığı ve nasıl kapatılacağı.</string>
@@ -243,6 +260,7 @@
     <string name="table_see_score">Skoru gör</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_support">Bana bir kahve ısmarla</string>
     <string name="header_report">Sorun bildir</string>
     <string name="header_settings">Ayarlar</string>
     <string name="header_deck_left">Destede %1$d kart kaldı</string>
@@ -606,6 +624,10 @@
     <string name="log_made_you_draw">%1$s seni kart çekmeye zorladı</string>
     <string name="log_made_draw_they">%1$s %2$s'i kart çekmeye zorladı</string>
     <string name="log_round_begins">tur başlıyor</string>
+
+    <string name="help_rules_title">Tüm kurallar</string>
+    <string name="help_rules_body">Bu sayfa burada bir kartın ne yaptığını anlatır. Tüm kurallar, oyunu yapanların kendi sitesinde.</string>
+    <string name="help_rules_action">Kuralları aç</string>
 
     <string name="help_counts_title">Bu uygulama neyi sayar</string>
     <string name="help_counts_body">Yalnızca anonim sayımlar: kaç tur oynandığı, insanların ne kadar ilerlediği, bir masanın takılıp takılmadığı, ve bir odayı çalıştırmanın maliyeti. Asla adın, oda kodun, elinde ne olduğu, ya da seni ya da cihazını işaret edebilecek hiçbir şey — gönderilende bunlar için yer yok. Ayarlar'dan kapatılabilir, ve izlenmemeyi isteyen bir tarayıcı bunu senin için kapatır.</string>

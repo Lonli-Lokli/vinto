@@ -22,6 +22,10 @@
     <string name="online_screen_title">לשחק אונליין</string>
     <string name="online_nickname">השם שלכם בשולחן</string>
     <string name="online_nickname_detail">מה שהמושבים האחרים רואים. אפשר להקיש לקבלת שם אחר. זה לא חשבון — אין כאלה.</string>
+    <string name="online_avatar_name">קבלת שם אחר</string>
+    <string name="online_avatar_pick">בחירת פנים אחרות</string>
+    <string name="online_avatar_ground">הצבע</string>
+    <string name="online_avatar_another">הצגת קבוצה אחרת</string>
     <string name="online_code">קוד חדר</string>
     <string name="online_code_detail">שישה תווים ממי שפתח את החדר.</string>
     <string name="online_join">הצטרפות לחדר</string>
@@ -47,6 +51,8 @@
     <string name="online_open_detail">ארבעה מושבים, קוד לשיתוף, ובוטים למי שלא מגיע.</string>
     <string name="online_join_detail">שישה תווים, ממי שפתח את החדר.</string>
     <string name="online_browse_detail">חדרים שהמארחים שלהם בחרו להיות רשומים. כל אחד יכול להצטרף.</string>
+    <string name="online_return_title">חזרה לחדר שלכם</string>
+    <string name="online_return_detail">יצאתם מ־%1$s והמושב שלכם עדיין שמור. הוא מתבטל בלחיצה על 'יציאה מהחדר'.</string>
     <string name="online_open_title">פתיחת חדר</string>
     <string name="online_join_title">הצטרפות עם קוד</string>
     <string name="online_open_screen">פתיחת חדר</string>
@@ -111,6 +117,17 @@
     <string name="settings_language_chosen">%1$s, נבחרה</string>
     <string name="settings_group_privacy">מה יוצא מהמכשיר</string>
     <string name="settings_group_about">אודות</string>
+    <string name="settings_support">תמיכה במשחק</string>
+    <string name="settings_support_detail">אם נהניתם ורוצים לומר את זה. זה לא פותח כלום — אין כאן שום דבר נעול.</string>
+    <string name="settings_support_buy">אמירת תודה — %1$s</string>
+    <string name="settings_support_link">אמירת תודה</string>
+    <string name="settings_support_link_detail">פותח דף שבו בוחרים את הסכום. גרסאות הטלפון לא יכולות לעשות זאת — שם החנות מטפלת בתשלומים, והכללים שלה קובעים את המחיר.</string>
+    <string name="settings_support_unavailable">עדיין לא זמין כאן. אין מה לעשות בעניין הזה מהמסך הזה; זה דורש חנות, והטלפונים יקבלו אותה קודם.</string>
+    <string name="settings_support_thanks">תודה. באמת.</string>
+    <string name="settings_explain">עוד על %1$s</string>
+    <string name="settings_group_game_summary">יריבים, קצב, תנועה, מראה, שפה והשיא שלכם.</string>
+    <string name="settings_group_privacy_summary">מה נספר, ואיך מכבים את זה.</string>
+    <string name="settings_group_about_summary">למי שייך המשחק, מי יצר את האפליקציה, ואיך יוצרים קשר.</string>
 
     <string name="settings_privacy">פרטיות</string>
     <string name="settings_privacy_detail">מה נספר, מה לא, ואיך לכבות את זה.</string>
@@ -230,6 +247,7 @@
     <string name="table_final_versus">נגד</string>
     <string name="table_see_score">צפייה בניקוד</string>
 
+    <string name="header_support">קניית קפה בשבילי</string>
     <string name="header_report">דיווח על בעיה</string>
     <string name="header_settings">הגדרות</string>
     <string name="header_deck_left">%1$d קלפים נותרו בחפיסה</string>
@@ -576,6 +594,10 @@
     <string name="log_made_you_draw">קלף נמשך על ידכם, בעקבות המהלך של %1$s</string>
     <string name="log_made_draw_they">קלף נמשך בידי %2$s, בעקבות המהלך של %1$s</string>
     <string name="log_round_begins">הסיבוב מתחיל</string>
+
+    <string name="help_rules_title">הכללים המלאים</string>
+    <string name="help_rules_body">הדף הזה מסביר מה כל קלף עושה כאן. הכללים המלאים נמצאים באתר של המשחק עצמו, אצל מי שיצר אותו.</string>
+    <string name="help_rules_action">פתיחת הכללים</string>
 
     <string name="help_counts_title">מה האפליקציה הזו סופרת</string>
     <string name="help_counts_body">ספירות אנונימיות בלבד: כמה סיבובים משוחקים, עד כמה רחוק אנשים מגיעים, האם שולחן נתקע, ומה עולה להפעיל חדר. לעולם לא השם שלכם, קוד החדר שלכם, מה יש ביד שלכם, או כל דבר שיכול להיות מתחקה בחזרה אליכם או אל המכשיר שלכם — אין איפה בשליחה לשים את אלה. אפשר לכבות זאת בהגדרות, ודפדפן שמבקש לא להיות עוקב מכבה זאת עבורכם.</string>

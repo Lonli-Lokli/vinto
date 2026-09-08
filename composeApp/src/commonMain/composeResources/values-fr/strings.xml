@@ -25,6 +25,10 @@
     <string name="online_screen_title">Jouer en ligne</string>
     <string name="online_nickname">Votre nom à la table</string>
     <string name="online_nickname_detail">Ce que voient les autres places. Touchez pour en changer. Ce n’est pas un compte — il n’y en a pas.</string>
+    <string name="online_avatar_name">Proposer un autre nom</string>
+    <string name="online_avatar_pick">Choisir un autre visage</string>
+    <string name="online_avatar_ground">Sa couleur</string>
+    <string name="online_avatar_another">Afficher une autre sélection</string>
     <string name="online_code">Code de la salle</string>
     <string name="online_code_detail">Six caractères donnés par la personne qui a ouvert la salle.</string>
     <string name="online_join">Rejoindre la salle</string>
@@ -51,6 +55,8 @@
     <string name="online_open_detail">Quatre places, un code à partager, et des bots pour celles et ceux qui ne viennent pas.</string>
     <string name="online_join_detail">Six caractères, donnés par la personne qui a ouvert la salle.</string>
     <string name="online_browse_detail">Les salles dont les hôtes ont choisi d’être répertoriés. Tout le monde peut s’installer.</string>
+    <string name="online_return_title">Retourner dans votre salle</string>
+    <string name="online_return_detail">Vous avez quitté %1$s et votre place est toujours là. Elle n’est libérée qu’en appuyant sur Quitter.</string>
     <string name="online_open_title">Ouvrir une salle</string>
     <string name="online_join_title">Rejoindre avec un code</string>
     <string name="online_open_screen">Ouvrir une salle</string>
@@ -121,6 +127,17 @@
     <string name="settings_group_privacy">Ce qui quitte cet appareil</string>
     <string name="settings_group_about">À propos</string>
 
+    <string name="settings_support">Soutenir le jeu</string>
+    <string name="settings_support_detail">Si vous l’avez apprécié et souhaitez le faire savoir. Cela ne débloque rien — il n’y a rien à débloquer.</string>
+    <string name="settings_support_buy">Dire merci — %1$s</string>
+    <string name="settings_support_link">Dire merci</string>
+    <string name="settings_support_link_detail">Ouvre une page où vous choisissez le montant. Les versions mobiles ne peuvent pas le faire — une boutique y gère les paiements, et ce sont ses règles qui fixent le prix.</string>
+    <string name="settings_support_unavailable">Pas encore disponible ici. Rien à faire depuis cet écran ; il faut une boutique, et les téléphones en auront une en premier.</string>
+    <string name="settings_support_thanks">Merci. Sincèrement.</string>
+    <string name="settings_explain">En savoir plus sur %1$s</string>
+    <string name="settings_group_game_summary">Adversaires, rythme, mouvement, apparence, langue et votre bilan.</string>
+    <string name="settings_group_privacy_summary">Ce qui est compté, et comment le désactiver.</string>
+    <string name="settings_group_about_summary">À qui appartient ce jeu, qui a fait l’application, et comment nous contacter.</string>
     <string name="settings_privacy">Confidentialité</string>
     <string name="settings_privacy_detail">Ce qui est compté, ce qui ne l’est pas, et comment le désactiver.</string>
     <string name="settings_terms">Conditions d’utilisation</string>
@@ -241,6 +258,7 @@
     <string name="table_see_score">Voir le score</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
+    <string name="header_support">M’offrir un café</string>
     <string name="header_report">Signaler un problème</string>
     <string name="header_settings">Paramètres</string>
     <string name="header_deck_left">%1$d cartes restantes dans la pioche</string>
@@ -601,6 +619,10 @@
     <string name="log_made_you_draw">%1$s vous a fait piocher une carte</string>
     <string name="log_made_draw_they">%1$s a fait piocher %2$s</string>
     <string name="log_round_begins">la manche commence</string>
+
+    <string name="help_rules_title">Les règles complètes</string>
+    <string name="help_rules_body">Cette fiche explique ce que fait une carte ici. Les règles complètes sont sur le site du jeu, chez les personnes qui l’ont créé.</string>
+    <string name="help_rules_action">Ouvrir les règles</string>
 
     <string name="help_counts_title">Ce que cette application compte</string>
     <string name="help_counts_body">Uniquement des statistiques anonymes : combien de manches sont jouées, jusqu’où les gens vont, si une table s’est bloquée, et ce que coûte une salle à faire tourner. Jamais votre nom, votre code de salle, le contenu de votre main, ni rien qui pourrait remonter jusqu’à vous ou votre appareil — il n’y a nulle part où les placer dans ce qui est envoyé. Ça peut être désactivé dans les Paramètres, et un navigateur qui demande à ne pas être suivi le désactive pour vous.</string>

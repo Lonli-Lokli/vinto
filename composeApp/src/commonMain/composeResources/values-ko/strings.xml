@@ -22,6 +22,10 @@
     <string name="online_screen_title">온라인 플레이</string>
     <string name="online_nickname">테이블에서 쓸 이름</string>
     <string name="online_nickname_detail">다른 좌석에게 보이는 이름이에요. 탭하면 다른 이름으로 바꿀 수 있어요. 계정이 아니에요 — 계정은 아예 없어요.</string>
+    <string name="online_avatar_name">다른 이름 주세요</string>
+    <string name="online_avatar_pick">다른 얼굴 고르기</string>
+    <string name="online_avatar_ground">배경 색</string>
+    <string name="online_avatar_another">다른 후보 보기</string>
     <string name="online_code">방 코드</string>
     <string name="online_code_detail">방을 연 사람이 알려주는 여섯 자리예요.</string>
     <string name="online_join">방 참가하기</string>
@@ -47,6 +51,8 @@
     <string name="online_open_detail">네 자리, 공유할 코드, 그리고 오지 않은 자리는 봇이 채워요.</string>
     <string name="online_join_detail">방을 연 사람이 알려주는 여섯 자리예요.</string>
     <string name="online_browse_detail">호스트가 공개하기로 한 방들이에요. 누구나 앉을 수 있어요.</string>
+    <string name="online_return_title">방으로 돌아가기</string>
+    <string name="online_return_detail">%1$s에서 나갔지만 자리는 아직 남아 있어요. '나가기'를 누르면 자리를 포기하게 돼요.</string>
     <string name="online_open_title">방 열기</string>
     <string name="online_join_title">코드로 참가하기</string>
     <string name="online_open_screen">방 열기</string>
@@ -112,6 +118,17 @@
     <string name="settings_group_privacy">이 기기 밖으로 나가는 것</string>
     <string name="settings_group_about">정보</string>
 
+    <string name="settings_support">게임 후원하기</string>
+    <string name="settings_support_detail">즐겁게 플레이하셨고, 그 마음을 표현하고 싶으시다면요. 무엇도 잠금 해제되지 않아요 — 애초에 잠긴 게 없어요.</string>
+    <string name="settings_support_buy">고맙다고 전하기 — %1$s</string>
+    <string name="settings_support_link">고맙다고 전하기</string>
+    <string name="settings_support_link_detail">금액을 직접 정할 수 있는 페이지가 열려요. 폰 버전에서는 이럴 수 없어요 — 스토어가 결제를 처리하고, 가격도 그 규정을 따르거든요.</string>
+    <string name="settings_support_unavailable">여기서는 아직 이용할 수 없어요. 이 화면에서 할 수 있는 건 없고, 스토어가 필요하며, 폰 버전이 먼저 지원될 거예요.</string>
+    <string name="settings_support_thanks">고맙습니다. 진심으로요.</string>
+    <string name="settings_explain">%1$s에 대해 더 알아보기</string>
+    <string name="settings_group_game_summary">상대, 속도, 움직임, 화면, 언어, 그리고 당신의 기록.</string>
+    <string name="settings_group_privacy_summary">무엇이 집계되는지, 그리고 끄는 방법.</string>
+    <string name="settings_group_about_summary">이 게임이 누구의 것인지, 앱은 누가 만들었는지, 연락하는 방법.</string>
     <string name="settings_privacy">개인정보 보호</string>
     <string name="settings_privacy_detail">무엇이 집계되고 무엇이 아닌지, 그리고 끄는 방법.</string>
     <string name="settings_terms">이용약관</string>
@@ -230,6 +247,7 @@
     <string name="table_final_versus">vs</string>
     <string name="table_see_score">점수 보기</string>
 
+    <string name="header_support">커피 한 잔 사주기</string>
     <string name="header_report">문제 신고</string>
     <string name="header_settings">설정</string>
     <string name="header_deck_left">덱에 %1$d장 남음</string>
@@ -575,6 +593,10 @@
     <string name="log_made_you_draw">%1$s가 카드를 뽑게 만들었어요</string>
     <string name="log_made_draw_they">%1$s가 %2$s를 카드 뽑게 만들었어요</string>
     <string name="log_round_begins">라운드 시작</string>
+
+    <string name="help_rules_title">전체 규칙</string>
+    <string name="help_rules_body">이 시트는 여기서 카드가 하는 일을 설명해요. 완전한 규칙은 게임을 만든 분들의 공식 사이트에 있어요.</string>
+    <string name="help_rules_action">규칙 열기</string>
 
     <string name="help_counts_title">이 앱이 집계하는 것</string>
     <string name="help_counts_body">익명 집계뿐이에요 — 몇 라운드가 진행됐는지, 사람들이 얼마나 진행했는지, 테이블이 멈춘 적이 있는지, 방을 운영하는 데 드는 비용이에요. 이름도, 방 코드도, 손에 무엇이 있는지도, 당신이나 기기를 추적할 수 있는 어떤 것도 없어요 — 보내는 데이터엔 그걸 담을 자리 자체가 없어요. 설정에서 끌 수 있고, 추적 거부를 요청한 브라우저는 자동으로 꺼져요.</string>
