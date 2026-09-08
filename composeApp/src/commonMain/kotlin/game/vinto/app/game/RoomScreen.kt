@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -66,7 +68,8 @@ import game.vinto.app.art.net_closed
 import game.vinto.app.art.net_connected
 import game.vinto.app.art.net_connecting
 import game.vinto.app.art.net_reconnecting
-import game.vinto.app.art.online_session_over
+import game.vinto.app.art.online_session_over_home
+import game.vinto.app.art.online_session_over_title
 import game.vinto.app.art.table_next_round_waiting
 import game.vinto.app.art.table_see_score
 import game.vinto.app.art.toss_clock_moves_on
@@ -479,15 +482,35 @@ private fun LobbyLine(word: LobbyWord, msUntilStart: Double?) {
 
 /** The room's closing line, when the session has finished but the screen is still here. */
 @Composable
-private fun SessionOver(reason: String?) {
+private fun SessionOver(reason: String?, onHome: () -> Unit) {
     if (reason == null) return
-    Surface(modifier = Modifier.fillMaxWidth(), color = Rail.fill) {
-        Text(
-            text = stringResource(Res.string.online_session_over, reason),
-            modifier = Modifier.padding(Gap),
-            color = Rail.inkDim,
-        )
-    }
+
+    // Modal, and with the only move left on it.
+    //
+    // This was a strip of text under the felt, which is the wrong shape for what it says. A
+    // finished session is not a notice about the table; it is the end of the table. Nothing on
+    // the screen behind it does anything any more — there are no turns left to take and no round
+    // to be dealt — so a player who read "the session is over: not enough players" was left on a
+    // dead board with no way off it, which reads as the app having hung rather than as the room
+    // having closed.
+    //
+    // No dismiss, for the same reason: dismissing it would return them to the dead board. One
+    // way out, and it is the way out.
+    AlertDialog(
+        onDismissRequest = onHome,
+        title = {
+            Text(
+                text = stringResource(Res.string.online_session_over_title),
+                style = MaterialTheme.typography.titleMedium,
+            )
+        },
+        text = { Text(reason) },
+        confirmButton = {
+            TextButton(onClick = onHome) {
+                Text(stringResource(Res.string.online_session_over_home))
+            }
+        },
+    )
 }
 
 /**
@@ -647,7 +670,12 @@ private fun RemoteGameScreen(
 
     HelpSheet(open = helpOpen, now = holder.table.help, onDismiss = { helpOpen = false })
 
-    SessionOver(endedReason)
+    // The room is finished, so leaving is the whole of what is left: `quit` tells it so, and
+    // `onLeft` is the same door the lobby's own Leave uses.
+    SessionOver(endedReason) {
+        room.quit()
+        onLeft()
+    }
 
     // The just-finished round, from public facts: the wire delivered the scoring view; what
     // it paid is derived by the tested rule in `roundPoints`. The room's own standings feed

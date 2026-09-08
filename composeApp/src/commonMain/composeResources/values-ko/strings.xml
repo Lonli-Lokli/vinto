@@ -88,6 +88,8 @@
     <string name="lobby_add_bot">봇 추가</string>
     <string name="lobby_remove_bot">%1$d번 자리의 봇 제거</string>
     <string name="lobby_leave">방 나가기</string>
+    <string name="online_session_over_title">세션이 종료되었습니다</string>
+    <string name="online_session_over_home">메뉴로 돌아가기</string>
     <string name="lobby_connecting">방에 연결하는 중…</string>
     <string name="lobby_needs_human">게임엔 최소 두 사람이 필요해요. 코드를 공유하세요 — 나머지 자리는 봇이 채울 수 있어요.</string>
     <string name="lobby_fill_seats">모든 자리가 참여해요. 빈 자리를 사람이나 봇으로 채우면 카드 분배 카운트다운이 시작돼요.</string>
@@ -104,7 +106,6 @@
     <string name="net_closed">연결 끊김</string>
     <string name="table_sending">내 수를 보내는 중…</string>
     <string name="table_next_round_waiting">다른 사람들의 동의를 기다리는 중…</string>
-    <string name="online_session_over">세션이 종료됐어요: %1$s</string>
 
     <string name="settings_title">설정</string>
 

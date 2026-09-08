@@ -88,6 +88,8 @@
     <string name="lobby_add_bot">Bot hinzufügen</string>
     <string name="lobby_remove_bot">Bot auf Platz %1$d entfernen</string>
     <string name="lobby_leave">Raum verlassen</string>
+    <string name="online_session_over_title">Die Sitzung ist beendet</string>
+    <string name="online_session_over_home">Zurück zum Menü</string>
     <string name="lobby_connecting">Verbindung zum Raum…</string>
     <string name="lobby_needs_human">Ein Spiel braucht zwei Menschen. Code teilen — Bots füllen den Rest des Tisches.</string>
     <string name="lobby_fill_seats">Jeder Platz spielt mit. Die freien mit Menschen oder Bots füllen, dann zählt der Countdown von selbst herunter.</string>
@@ -104,7 +106,6 @@
     <string name="net_closed">Getrennt</string>
     <string name="table_sending">Zug wird gesendet…</string>
     <string name="table_next_round_waiting">Warten, bis die anderen zustimmen…</string>
-    <string name="online_session_over">Die Sitzung ist beendet: %1$s</string>
 
     <string name="settings_title">Einstellungen</string>
 

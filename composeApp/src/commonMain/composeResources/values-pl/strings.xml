@@ -88,6 +88,8 @@
     <string name="lobby_add_bot">Dodaj bota</string>
     <string name="lobby_remove_bot">Usuń bota z miejsca %1$d</string>
     <string name="lobby_leave">Opuść pokój</string>
+    <string name="online_session_over_title">Sesja zakończona</string>
+    <string name="online_session_over_home">Powrót do menu</string>
     <string name="lobby_connecting">Łączenie z pokojem…</string>
     <string name="lobby_needs_human">Gra potrzebuje dwóch osób. Udostępnij kod — resztę stołu mogą wypełnić boty.</string>
     <string name="lobby_fill_seats">Grają wszystkie miejsca. Wypełnij puste osobami lub botami, a rozdanie samo odliczy czas.</string>
@@ -104,7 +106,6 @@
     <string name="net_closed">Rozłączono</string>
     <string name="table_sending">Wysyłanie ruchu…</string>
     <string name="table_next_round_waiting">Czekanie, aż inni się zgodzą…</string>
-    <string name="online_session_over">Sesja zakończona: %1$s</string>
 
     <string name="settings_title">Ustawienia</string>
 

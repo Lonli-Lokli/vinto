@@ -94,6 +94,8 @@
     <string name="lobby_add_bot">बॉट जोड़ें</string>
     <string name="lobby_remove_bot">सीट %1$d का बॉट हटाएं</string>
     <string name="lobby_leave">रूम छोड़ें</string>
+    <string name="online_session_over_title">सत्र समाप्त हो गया</string>
+    <string name="online_session_over_home">मेनू पर वापस</string>
     <string name="lobby_connecting">रूम से जुड़ा जा रहा है…</string>
     <string name="lobby_needs_human">खेल के लिए दो लोग चाहिए। कोड साझा करें — बाकी मेज़ बॉट भर सकते हैं।</string>
     <string name="lobby_fill_seats">हर सीट खेलती है। खाली सीटें लोगों या बॉट से भरें, और पत्ते बंटने की उलटी गिनती खुद शुरू हो जाती है।</string>
@@ -111,7 +113,6 @@
     <string name="net_closed">जुड़ाव टूट गया</string>
     <string name="table_sending">आपकी चाल भेजी जा रही है…</string>
     <string name="table_next_round_waiting">बाकियों के सहमत होने का इंतज़ार…</string>
-    <string name="online_session_over">सत्र समाप्त हो गया: %1$s</string>
 
     <!-- ================================================================ settings -->
     <string name="settings_title">सेटिंग्स</string>

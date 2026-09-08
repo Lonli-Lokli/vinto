@@ -88,6 +88,8 @@
     <string name="lobby_add_bot">הוספת בוט</string>
     <string name="lobby_remove_bot">הסרת הבוט במושב %1$d</string>
     <string name="lobby_leave">יציאה מהחדר</string>
+    <string name="online_session_over_title">המפגש הסתיים</string>
+    <string name="online_session_over_home">חזרה לתפריט</string>
     <string name="lobby_connecting">מתחברים לחדר…</string>
     <string name="lobby_needs_human">למשחק דרושים שני אנשים לפחות. שתפו את הקוד — בוטים יכולים למלא את שאר השולחן.</string>
     <string name="lobby_fill_seats">כל מושב משחק. מלאו את המושבים הפנויים באנשים או בבוטים, והחלוקה נספרת לאחור מעצמה.</string>
@@ -104,7 +106,6 @@
     <string name="net_closed">מנותק</string>
     <string name="table_sending">שולח את המהלך שלכם…</string>
     <string name="table_next_round_waiting">ממתינים שכולם יסכימו…</string>
-    <string name="online_session_over">החיבור הסתיים: %1$s</string>
 
     <string name="settings_title">הגדרות</string>
 

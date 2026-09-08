@@ -94,6 +94,8 @@
     <string name="lobby_add_bot">أضف روبوتًا</string>
     <string name="lobby_remove_bot">أزل الروبوت من المقعد %1$d</string>
     <string name="lobby_leave">غادر الغرفة</string>
+    <string name="online_session_over_title">انتهت الجلسة</string>
+    <string name="online_session_over_home">العودة إلى القائمة</string>
     <string name="lobby_connecting">جارٍ الوصول إلى الغرفة…</string>
     <string name="lobby_needs_human">اللعبة تحتاج إلى شخصين. شارك الرمز — يمكن للروبوتات ملء بقية الطاولة.</string>
     <string name="lobby_fill_seats">كل مقعد يلعب. املأ المقاعد الشاغرة بأشخاص أو روبوتات، والتوزيع يُعَدّ تنازليًا من تلقاء نفسه.</string>
@@ -111,7 +113,6 @@
     <string name="net_closed">غير متصل</string>
     <string name="table_sending">جارٍ إرسال حركتك…</string>
     <string name="table_next_round_waiting">في انتظار موافقة البقية…</string>
-    <string name="online_session_over">انتهت الجلسة: %1$s</string>
 
     <!-- ================================================================ settings -->
     <string name="settings_title">الإعدادات</string>

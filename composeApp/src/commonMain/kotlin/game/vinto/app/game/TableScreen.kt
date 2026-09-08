@@ -268,33 +268,48 @@ fun TableScreen(
         // the rail hugs it, so on a big screen the pair sits together in the middle of the
         // app's dark surround rather than the controls drifting to one horizon and the
         // seats to the other.
-        Row(
-            modifier = modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Column(modifier = Modifier.width(layout.feltWidth)) {
-                TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck, onLeave)
-                FeltTable(
-                    state = state,
-                    sizes = layout.sizes,
-                    onMove = onMove,
-                    onHelp = onHelp,
-                    modifier = Modifier.weight(1f).padding(start = Edge, end = Edge, bottom = Edge),
-                )
-            }
+        //
+        // The table and its rail are one object, and on a window taller than a table it sits in
+        // the middle of that window rather than being stretched down it. The band is the header
+        // plus the felt's own capped depth; what is left over is surround, above and below,
+        // exactly as the leftover width already is either side.
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (layout.feltHeight > 0.dp) {
+                            Modifier.height(HeaderHeight + layout.feltHeight)
+                        } else {
+                            Modifier.fillMaxHeight()
+                        },
+                    ),
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Column(modifier = Modifier.width(layout.feltWidth)) {
+                    TableHeader(state.view, state.round, onHelp, onSettings, onReport, onDeck, onLeave)
+                    FeltTable(
+                        state = state,
+                        sizes = layout.sizes,
+                        onMove = onMove,
+                        onHelp = onHelp,
+                        modifier = Modifier.weight(1f).padding(start = Edge, end = Edge, bottom = Edge),
+                    )
+                }
 
-            // The rail, standing at the side. The final-round line sits at its head — in
-            // landscape the felt has no height to spare for a banner, and "who plays for
-            // whom" is read next to the controls that ask what to do about it anyway.
-            Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
-                RehearsalLine()
-                FinalRoundLine(state.view, state.table.planSummary, onMove)
-                ControlPanel(
-                    state = state,
-                    onMove = onMove,
-                    side = true,
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                )
+                // The rail, standing at the side. The final-round line sits at its head — in
+                // landscape the felt has no height to spare for a banner, and "who plays for
+                // whom" is read next to the controls that ask what to do about it anyway.
+                Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
+                    RehearsalLine()
+                    FinalRoundLine(state.view, state.table.planSummary, onMove)
+                    ControlPanel(
+                        state = state,
+                        onMove = onMove,
+                        side = true,
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                    )
+                }
             }
         }
     } else {

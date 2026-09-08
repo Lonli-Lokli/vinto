@@ -142,7 +142,8 @@
     <string name="net_closed">Disconnected</string>
     <string name="table_sending">Sending your move…</string>
     <string name="table_next_round_waiting">Waiting for the others to agree…</string>
-    <string name="online_session_over">The session is over: %1$s</string>
+    <string name="online_session_over_title">The session is over</string>
+    <string name="online_session_over_home">Back to the menu</string>
 
     <!-- ================================================================ settings -->
     <string name="settings_title">Settings</string>

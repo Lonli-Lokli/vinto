@@ -88,6 +88,8 @@
     <string name="lobby_add_bot">添加电脑玩家</string>
     <string name="lobby_remove_bot">移除 %1$d 号座位的电脑玩家</string>
     <string name="lobby_leave">离开房间</string>
+    <string name="online_session_over_title">本场对局已结束</string>
+    <string name="online_session_over_home">返回菜单</string>
     <string name="lobby_connecting">正在连接房间…</string>
     <string name="lobby_needs_human">至少需要两个人才能开局。分享代码吧——空位可以由电脑玩家补上。</string>
     <string name="lobby_fill_seats">每个座位都要有人玩。用真人或电脑填满空位，发牌倒计时就会开始。</string>
@@ -104,7 +106,6 @@
     <string name="net_closed">已断开</string>
     <string name="table_sending">正在发送你的操作…</string>
     <string name="table_next_round_waiting">等待其他人确认…</string>
-    <string name="online_session_over">对局已结束：%1$s</string>
 
     <string name="settings_title">设置</string>
 

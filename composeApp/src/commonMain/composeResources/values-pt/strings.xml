@@ -94,6 +94,8 @@
     <string name="lobby_add_bot">Adicionar um bot</string>
     <string name="lobby_remove_bot">Remover o bot do lugar %1$d</string>
     <string name="lobby_leave">Sair da sala</string>
+    <string name="online_session_over_title">A sessão terminou</string>
+    <string name="online_session_over_home">Voltar ao menu</string>
     <string name="lobby_connecting">A contactar a sala…</string>
     <string name="lobby_needs_human">Um jogo precisa de duas pessoas. Partilha o código — os bots preenchem o resto da mesa.</string>
     <string name="lobby_fill_seats">Todos os lugares jogam. Preenche os vazios com pessoas ou bots, e a distribuição começa a contagem sozinha.</string>
@@ -111,7 +113,6 @@
     <string name="net_closed">Desligado</string>
     <string name="table_sending">A enviar a tua jogada…</string>
     <string name="table_next_round_waiting">À espera que os outros concordem…</string>
-    <string name="online_session_over">A sessão terminou: %1$s</string>
 
     <!-- ================================================================ settings -->
     <string name="settings_title">Definições</string>

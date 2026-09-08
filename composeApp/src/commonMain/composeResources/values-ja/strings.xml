@@ -96,6 +96,8 @@
     <string name="lobby_add_bot">ボットを追加</string>
     <string name="lobby_remove_bot">%1$d番席のボットを削除</string>
     <string name="lobby_leave">ルームを退出</string>
+    <string name="online_session_over_title">セッションが終了しました</string>
+    <string name="online_session_over_home">メニューに戻る</string>
     <string name="lobby_connecting">ルームに接続しています…</string>
     <string name="lobby_needs_human">ゲームには2人以上必要です。コードを共有してください — 残りの席はボットが埋められます。</string>
     <string name="lobby_fill_seats">全員が席についてプレイします。空いている席は人かボットで埋めてください。埋まると配り始めるまでの秒数が表示されます。</string>
@@ -113,7 +115,6 @@
     <string name="net_closed">切断されました</string>
     <string name="table_sending">手を送信しています…</string>
     <string name="table_next_round_waiting">他の人の同意を待っています…</string>
-    <string name="online_session_over">セッションは終了しました: %1$s</string>
 
     <!-- ================================================================ settings -->
     <string name="settings_title">設定</string>

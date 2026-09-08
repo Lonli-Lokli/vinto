@@ -102,6 +102,8 @@
     <string name="lobby_add_bot">Добавить бота</string>
     <string name="lobby_remove_bot">Убрать бота с места %1$d</string>
     <string name="lobby_leave">Выйти из комнаты</string>
+    <string name="online_session_over_title">Сессия завершена</string>
+    <string name="online_session_over_home">Вернуться в меню</string>
     <string name="lobby_connecting">Связываемся с комнатой…</string>
     <string name="lobby_needs_human">Для игры нужны двое. Поделитесь кодом — остальные места закроют боты.</string>
     <string name="lobby_fill_seats">Играют все четыре места. Займите свободные людьми или ботами — и пойдёт отсчёт до раздачи.</string>
@@ -118,7 +120,6 @@
     <string name="net_closed">Связь потеряна</string>
     <string name="table_sending">Отправляем ваш ход…</string>
     <string name="table_next_round_waiting">Ждём согласия остальных…</string>
-    <string name="online_session_over">Сессия окончена: %1$s</string>
 
     <string name="settings_title">Настройки</string>
 

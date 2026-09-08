@@ -95,6 +95,8 @@
     <string name="lobby_add_bot">Ajouter un bot</string>
     <string name="lobby_remove_bot">Retirer le bot de la place %1$d</string>
     <string name="lobby_leave">Quitter la salle</string>
+    <string name="online_session_over_title">La session est terminée</string>
+    <string name="online_session_over_home">Retour au menu</string>
     <string name="lobby_connecting">Connexion à la salle…</string>
     <string name="lobby_needs_human">Une partie a besoin de deux personnes. Partagez le code — des bots peuvent compléter la table.</string>
     <string name="lobby_fill_seats">Chaque place compte. Remplissez les places vides avec des personnes ou des bots, et la distribution se lance d’elle-même.</string>
@@ -112,7 +114,6 @@
     <string name="net_closed">Déconnecté</string>
     <string name="table_sending">Envoi de votre coup…</string>
     <string name="table_next_round_waiting">En attente de l’accord des autres…</string>
-    <string name="online_session_over">La partie est terminée : %1$s</string>
 
     <!-- ================================================================ settings -->
     <string name="settings_title">Paramètres</string>

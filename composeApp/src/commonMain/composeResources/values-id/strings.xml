@@ -94,6 +94,8 @@
     <string name="lobby_add_bot">Tambah bot</string>
     <string name="lobby_remove_bot">Hapus bot di kursi %1$d</string>
     <string name="lobby_leave">Tinggalkan ruangan</string>
+    <string name="online_session_over_title">Sesi telah berakhir</string>
+    <string name="online_session_over_home">Kembali ke menu</string>
     <string name="lobby_connecting">Menghubungi ruangan…</string>
     <string name="lobby_needs_human">Permainan butuh dua orang. Bagikan kodenya — bot bisa mengisi sisa meja.</string>
     <string name="lobby_fill_seats">Setiap kursi ikut bermain. Isi yang kosong dengan orang atau bot, dan hitung mundur pembagian kartu akan dimulai sendiri.</string>
@@ -111,7 +113,6 @@
     <string name="net_closed">Terputus</string>
     <string name="table_sending">Mengirim langkah Anda…</string>
     <string name="table_next_round_waiting">Menunggu yang lain setuju…</string>
-    <string name="online_session_over">Sesi telah berakhir: %1$s</string>
 
     <!-- ================================================================ settings -->
     <string name="settings_title">Pengaturan</string>

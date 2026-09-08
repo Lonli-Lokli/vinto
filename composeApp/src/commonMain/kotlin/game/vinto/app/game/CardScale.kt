@@ -182,6 +182,16 @@ data class TableLayout(
     val railWidth: Dp = 0.dp,
     /** How wide the felt column is — capped, so a desktop table keeps a table's shape. */
     val feltWidth: Dp = 0.dp,
+    /**
+     * How deep the felt is drawn, or zero to take whatever height it is given.
+     *
+     * The other half of [feltWidth]'s cap, and it was missing. Width was held to a table's
+     * proportions and height was not, so a tall window produced a felt 980 wide and 1036 deep —
+     * a *portrait* card table, with every bit of the spare height pooled into two enormous gaps
+     * above and below the middle row. Capped, the leftover height becomes surround like the
+     * leftover width already does, and the whole table sits in the middle of the window.
+     */
+    val feltHeight: Dp = 0.dp,
 ) {
     companion object {
         /** The portrait arrangement, from the height alone — what every phone test uses. */
@@ -190,15 +200,20 @@ data class TableLayout(
 
         /** The arrangement for a screen of this shape: portrait tall, landscape wide. */
         fun forScreen(width: Dp, height: Dp): TableLayout = if (width > height) {
-            // The felt has the whole height minus the header; no rail stands on it.
-            val feltHeight = height - HeaderHeight
+            // What there is to play on, before the table is cut out of it.
+            val available = height - HeaderHeight
             val rail = railWidth(width)
+            val wide = minOf(width - rail, available * TABLE_ASPECT, TABLE_MAX_WIDTH)
+            // And never deeper than a table is: the two caps together hold the felt's shape
+            // between [TABLE_DEEPEST] and [TABLE_ASPECT], whatever shape the window is.
+            val deep = minOf(available, wide / TABLE_DEEPEST)
             TableLayout(
-                sizes = TableSizes.forHeight(feltHeight),
+                sizes = TableSizes.forHeight(deep),
                 railHeight = 0.dp,
                 landscape = true,
                 railWidth = rail,
-                feltWidth = minOf(width - rail, feltHeight * TABLE_ASPECT, TABLE_MAX_WIDTH),
+                feltWidth = wide,
+                feltHeight = deep,
             )
         } else {
             forScreen(height)
@@ -212,6 +227,16 @@ data class TableLayout(
  * seats, which is the one thing a table must not do with room.
  */
 private const val TABLE_ASPECT = 1.4f
+
+/**
+ * And the *squarest* it may be: a table is wider than it is deep, always.
+ *
+ * The pair of them pin the felt's shape into a narrow band whatever the window does — a rotated
+ * phone lands on 1.4 and is unchanged, a tall desktop window lands here instead of on the
+ * portrait rectangle it used to produce. Chosen so that the deepest felt a capped width allows
+ * is still a grand table rather than a roomy one, which a slightly stronger cap would have cost.
+ */
+private const val TABLE_DEEPEST = 1.25f
 
 /**
  * And the widest it may be at all: even the aspect cap, given a tall desktop window, allows

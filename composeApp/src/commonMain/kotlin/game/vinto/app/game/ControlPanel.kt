@@ -98,6 +98,7 @@ import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.GeneratedAvatar
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.feltEdge
+import game.vinto.app.theme.roomForLabels
 import game.vinto.client.Aim
 import game.vinto.client.AimedCard
 import game.vinto.client.Board
@@ -283,7 +284,7 @@ fun ControlPanel(
         val twoLines = promptLine + with(density) { (DetailSize * LogLineFactor).toDp() }
         val inPlay = railCard(state.view, table)
 
-        RailBody(state, table, inPlay, recent, crowded, promptLine, twoLines, onMove)
+        RailBody(state, table, inPlay, recent, crowded, promptLine, twoLines, side, onMove)
     }
 }
 
@@ -298,6 +299,7 @@ private fun RailBody(
     crowded: Boolean,
     promptLine: Dp,
     twoLines: Dp,
+    side: Boolean,
     onMove: (Move) -> Unit,
 ) {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(PanelPad)) {
@@ -342,7 +344,7 @@ private fun RailBody(
                     onMove,
                     modifier = Modifier.weight(1f),
                 )
-                RailFoot(table, footCap, onMove)
+                RailFoot(table, footCap, side, onMove)
             }
         }
     }
@@ -439,7 +441,7 @@ private fun RailBlock(
  * a rank; an Ace and the coalition name a player.
  */
 @Composable
-private fun RailFoot(table: Table, footCap: Dp, onMove: (Move) -> Unit) {
+private fun RailFoot(table: Table, footCap: Dp, side: Boolean, onMove: (Move) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -449,7 +451,7 @@ private fun RailFoot(table: Table, footCap: Dp, onMove: (Move) -> Unit) {
     ) {
         RankGrid(table.ranks, LocalStage.current, onMove)
         SeatGrid(table.seats, onMove)
-        Choices(table, onMove)
+        Choices(table, side, onMove)
     }
 }
 
@@ -786,21 +788,61 @@ private fun SwapMark() {
  * turn. A lone choice keeps the whole row, so the one thing to press is the biggest.
  */
 @Composable
-private fun Choices(table: Table, onMove: (Move) -> Unit) {
+private fun Choices(table: Table, side: Boolean, onMove: (Move) -> Unit) {
     val choices = table.choices
     if (choices.isEmpty()) return
 
-    if (choices.size > 1) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Half),
-        ) {
-            choices.forEach { choice ->
-                ChoiceButton(choice, onMove, Modifier.weight(1f))
+    if (choices.size == 1) {
+        ChoiceButton(choices.single(), onMove)
+        return
+    }
+
+    // Side by side while the words fit, stacked when they do not — and *measured*, in this
+    // language, for these buttons, at this width.
+    //
+    // Splitting the width evenly is right under a phone's felt, where three choices get about
+    // 119 dp each. Beside a desktop felt the same three share a rail and get 89, and
+    // `GameButton`'s two-line allowance then breaks the longest *word* across them: the discard
+    // button read "DISCAR / D". A word split in half is worse than any layout that could have
+    // avoided it.
+    //
+    // The threshold is not a number. Three things move independently — the locale (nineteen of
+    // them, and "DISCARD" is "VERWERFEN" in one of them), the choice set (whatever the turn is
+    // asking), and the room available — so `roomForLabels` asks the button itself how much width
+    // *these* words need, and the answer follows a translation without anybody editing it.
+    //
+    // Stacked, each is the full width of the rail, which also makes them the same size as each
+    // other: three buttons of three different widths was the other half of the report.
+    // **Only where the rail stands at the side**, which is the other half of the rule and the
+    // half `RailFitsTest` insisted on. Under a phone's felt the rail is wide and *short*: there
+    // is width to share and no height to stack into, so four buttons in a column at a doubled
+    // system font walk straight off the bottom of the screen — which is the exact regression
+    // that test was written for, three screenshots of a button half under the edge. Beside the
+    // felt the scarcity is the other way round, and stacking is the answer rather than the
+    // problem. So the arrangement follows the rail's own shape, and the measurement below only
+    // decides whether the side rail needs it.
+    val room = roomForLabels(choices.map { labelled(it.label) })
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val each = (maxWidth - Half * (choices.size - 1)) / choices.size
+        if (!side || each >= room) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Half),
+            ) {
+                choices.forEach { choice ->
+                    ChoiceButton(choice, onMove, Modifier.weight(1f))
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(Half),
+            ) {
+                choices.forEach { choice ->
+                    ChoiceButton(choice, onMove, Modifier.fillMaxWidth())
+                }
             }
         }
-    } else {
-        ChoiceButton(choices.single(), onMove)
     }
 }
 

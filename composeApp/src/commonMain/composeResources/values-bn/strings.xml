@@ -88,6 +88,8 @@
     <string name="lobby_add_bot">একটি বট যোগ করুন</string>
     <string name="lobby_remove_bot">%1$d নম্বর আসনের বট সরান</string>
     <string name="lobby_leave">রুম ছেড়ে যান</string>
+    <string name="online_session_over_title">সেশন শেষ হয়েছে</string>
+    <string name="online_session_over_home">মেনুতে ফিরে যান</string>
     <string name="lobby_connecting">রুমে পৌঁছানো হচ্ছে…</string>
     <string name="lobby_needs_human">একটি খেলার জন্য দুজন মানুষ দরকার। কোড শেয়ার করুন — বাকি টেবিল বট দিয়ে পূরণ করা যাবে।</string>
     <string name="lobby_fill_seats">প্রতিটি আসনই খেলে। খালি আসনগুলো মানুষ বা বট দিয়ে পূরণ করুন, তাস বিলির কাউন্টডাউন এমনিতেই শুরু হয়ে যাবে।</string>
@@ -104,7 +106,6 @@
     <string name="net_closed">সংযোগ বিচ্ছিন্ন</string>
     <string name="table_sending">আপনার চাল পাঠানো হচ্ছে…</string>
     <string name="table_next_round_waiting">অন্যদের সম্মতির অপেক্ষায়…</string>
-    <string name="online_session_over">সেশন শেষ: %1$s</string>
 
     <string name="settings_title">সেটিংস</string>
 

@@ -309,8 +309,8 @@ private fun LessonTable(state: TableState, coaching: Coached, room: Room, hooks:
             onDone = hooks.onDone,
             modifier = when (slot) {
                 is Slot.Band -> Modifier.inBand(slot.room)
-                is Slot.Top -> overFelt(top = true, room.layout)
-                is Slot.Bottom -> overFelt(top = false, room.layout)
+                is Slot.Top -> overFelt(top = true, room)
+                is Slot.Bottom -> overFelt(top = false, room)
             },
         )
     }
@@ -340,11 +340,34 @@ private class Hooks(
 
 /** The shape of the screen, and what follows from it for a coach lying on the felt. */
 private class Room(val layout: TableLayout, screen: Dp) {
-    /** Where the felt begins: under the header. */
-    val feltTop: Dp = HeaderHeight
+    /**
+     * How far down the window the table's band starts.
+     *
+     * Zero in portrait and on any landscape screen the felt fills. Above that, the felt is
+     * capped at a table's depth and the band — header and felt together — is centred in what is
+     * left, so the coach has to come down with it. It was pinned to the top of the *window*,
+     * which put it in the surround above the table on a tall desktop.
+     */
+    private val bandTop: Dp =
+        if (layout.landscape && layout.feltHeight > 0.dp) {
+            ((screen - HeaderHeight - layout.feltHeight) / 2).coerceAtLeast(0.dp)
+        } else {
+            0.dp
+        }
 
-    /** And ends: at the rail in portrait, at the foot of the screen with the rail beside it. */
-    val feltBottom: Dp = screen - if (layout.landscape) 0.dp else layout.railHeight
+    /** Where the felt begins: under the header, wherever the band put it. */
+    val feltTop: Dp = bandTop + HeaderHeight
+
+    /** And ends: at the rail in portrait, at the foot of the band with the rail beside it. */
+    val feltBottom: Dp = if (layout.landscape) {
+        if (layout.feltHeight > 0.dp) feltTop + layout.feltHeight else screen
+    } else {
+        screen - layout.railHeight
+    }
+
+    /** What the coach must clear at the top and bottom of the window to lie on the felt. */
+    val clearAbove: Dp = feltTop
+    val clearBelow: Dp = screen - feltBottom
 
     /**
      * The talking coach fits the felt it lies on: on a short phone, or a phone on its side,
@@ -550,14 +573,13 @@ private fun bandOf(stage: Stage, view: PlayerView, depth: Float): Rect? {
  * felt is most of a metre wide, and a line of coaching stretched across all of it is
  * unreadable in the way a newspaper set as one column would be.
  */
-private fun BoxScope.overFelt(top: Boolean, layout: TableLayout): Modifier = Modifier
+private fun BoxScope.overFelt(top: Boolean, room: Room): Modifier = Modifier
     .align(if (top) Alignment.TopCenter else Alignment.BottomCenter)
     .padding(horizontal = Pad)
-    .padding(end = if (layout.landscape) layout.railWidth else 0.dp)
-    .padding(
-        top = HeaderHeight + Pad,
-        bottom = Pad + if (layout.landscape) 0.dp else layout.railHeight,
-    )
+    .padding(end = if (room.layout.landscape) room.layout.railWidth else 0.dp)
+    // Measured off the felt rather than off the window, because since the felt is capped at a
+    // table's depth the two are no longer the same rectangle on a tall screen.
+    .padding(top = room.clearAbove + Pad, bottom = room.clearBelow + Pad)
     .widthIn(max = CoachWidth)
 
 /**

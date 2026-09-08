@@ -97,6 +97,8 @@
     <string name="lobby_add_bot">Bot ekle</string>
     <string name="lobby_remove_bot">%1$d. koltuktaki botu çıkar</string>
     <string name="lobby_leave">Odadan ayrıl</string>
+    <string name="online_session_over_title">Oturum sona erdi</string>
+    <string name="online_session_over_home">Menüye dön</string>
     <string name="lobby_connecting">Odaya ulaşılıyor…</string>
     <string name="lobby_needs_human">Bir oyun için iki kişi gerekir. Kodu paylaş — masanın geri kalanını botlar doldurabilir.</string>
     <string name="lobby_fill_seats">Her koltuk oynar. Boşları insanlarla ya da botlarla doldur, dağıtım geri sayıma başlar.</string>
@@ -114,7 +116,6 @@
     <string name="net_closed">Bağlantı kesildi</string>
     <string name="table_sending">Hamlen gönderiliyor…</string>
     <string name="table_next_round_waiting">Diğerlerinin onayı bekleniyor…</string>
-    <string name="online_session_over">Oturum sona erdi: %1$s</string>
 
     <!-- ================================================================ settings -->
     <string name="settings_title">Ayarlar</string>

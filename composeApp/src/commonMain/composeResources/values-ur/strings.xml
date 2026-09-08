@@ -94,6 +94,8 @@
     <string name="lobby_add_bot">بوٹ شامل کریں</string>
     <string name="lobby_remove_bot">نشست %1$d سے بوٹ ہٹائیں</string>
     <string name="lobby_leave">روم چھوڑیں</string>
+    <string name="online_session_over_title">سیشن ختم ہو گیا</string>
+    <string name="online_session_over_home">مینو پر واپس</string>
     <string name="lobby_connecting">روم سے رابطہ ہو رہا ہے…</string>
     <string name="lobby_needs_human">کھیل کے لیے دو لوگ درکار ہیں۔ کوڈ شیئر کریں — باقی میز بوٹس بھر سکتے ہیں۔</string>
     <string name="lobby_fill_seats">ہر نشست کھیلتی ہے۔ خالی نشستیں لوگوں یا بوٹس سے بھریں، اور پتے بٹنے کی گنتی خود بخود شروع ہو جائے گی۔</string>
@@ -111,7 +113,6 @@
     <string name="net_closed">منقطع</string>
     <string name="table_sending">آپ کی چال بھیجی جا رہی ہے…</string>
     <string name="table_next_round_waiting">باقی افراد کی رضامندی کا انتظار…</string>
-    <string name="online_session_over">نشست ختم ہو گئی: %1$s</string>
 
     <!-- ================================================================ settings -->
     <string name="settings_title">ترتیبات</string>

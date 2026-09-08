@@ -98,6 +98,8 @@
     <string name="lobby_add_bot">Añadir un bot</string>
     <string name="lobby_remove_bot">Quitar el bot del asiento %1$d</string>
     <string name="lobby_leave">Salir de la sala</string>
+    <string name="online_session_over_title">La sesión ha terminado</string>
+    <string name="online_session_over_home">Volver al menú</string>
     <string name="lobby_connecting">Conectando con la sala…</string>
     <string name="lobby_needs_human">Una partida necesita dos personas. Comparte el código: los bots pueden llenar el resto de la mesa.</string>
     <string name="lobby_fill_seats">Todos los asientos juegan. Llena los vacíos con personas o bots, y la cuenta atrás del reparto empieza sola.</string>
@@ -115,7 +117,6 @@
     <string name="net_closed">Desconectado</string>
     <string name="table_sending">Enviando tu jugada…</string>
     <string name="table_next_round_waiting">Esperando a que los demás acuerden…</string>
-    <string name="online_session_over">La sesión ha terminado: %1$s</string>
 
     <!-- ================================================================ settings -->
     <string name="settings_title">Ajustes</string>

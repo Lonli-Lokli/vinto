@@ -22,10 +22,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -184,6 +189,38 @@ fun GameButton(
             }
         }
     }
+}
+
+/**
+ * How much width a [GameButton] needs before its label starts breaking *words* in half.
+ *
+ * Measured, never guessed at in points. The three things that decide it all move independently:
+ * the language (a locale picker offers nineteen, and "DISCARD" is "VERWERFEN", "ОТБОЙ",
+ * "捨てる"), the choice set (which is whatever the turn is asking, from two buttons to four),
+ * and the width available (a phone's rail, a side rail, a resized window). Any constant tuned
+ * against one of those is wrong for the other two the day somebody changes them.
+ *
+ * **The longest word, not the longest label.** `GameButton` allows two lines, so "SWAP CARDS"
+ * wrapping between its words is the layout working. What is not is a single word wider than the
+ * button, which the line breaker then splits mid-word — "DISCAR / D". So the question is only
+ * ever whether the widest word fits, and a label with no spaces in it is one word.
+ *
+ * Callers compare this against the width each button would actually get. It is deliberately the
+ * *button's* own arithmetic — its type, its tracking, its padding — so it cannot drift from the
+ * thing it is measuring.
+ */
+@Composable
+fun roomForLabels(labels: List<String>): Dp {
+    val measurer = rememberTextMeasurer()
+    val style = remember {
+        TextStyle(fontSize = LabelSize, fontWeight = FontWeight.Bold, letterSpacing = Tracking)
+    }
+    val widest = labels
+        .flatMap { it.uppercase().split(' ', '\n', '\t') }
+        .filter { it.isNotBlank() }
+        .maxOfOrNull { measurer.measure(AnnotatedString(it), style).size.width }
+        ?: 0
+    return with(LocalDensity.current) { widest.toDp() } + PadH * 2
 }
 
 /**

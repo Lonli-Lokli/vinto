@@ -95,6 +95,8 @@
     <string name="lobby_add_bot">Aggiungi un bot</string>
     <string name="lobby_remove_bot">Rimuovi il bot dal posto %1$d</string>
     <string name="lobby_leave">Lascia la stanza</string>
+    <string name="online_session_over_title">La sessione è finita</string>
+    <string name="online_session_over_home">Torna al menu</string>
     <string name="lobby_connecting">Connessione alla stanza…</string>
     <string name="lobby_needs_human">Una partita richiede due persone. Condividi il codice — i bot possono riempire il resto del tavolo.</string>
     <string name="lobby_fill_seats">Ogni posto gioca. Riempi quelli vuoti con persone o bot, e il conto alla rovescia per la distribuzione parte da sé.</string>
@@ -112,7 +114,6 @@
     <string name="net_closed">Disconnesso</string>
     <string name="table_sending">Invio della mossa…</string>
     <string name="table_next_round_waiting">In attesa che gli altri siano d'accordo…</string>
-    <string name="online_session_over">La sessione è finita: %1$s</string>
 
     <!-- ================================================================ settings -->
     <string name="settings_title">Impostazioni</string>
