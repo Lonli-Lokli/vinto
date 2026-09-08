@@ -56,21 +56,76 @@ a thing that does not exist. Consuming it immediately is what makes it repeatabl
 only honest *because* nothing is unlocked. A repeatable purchase that did grant something would
 be a currency, and this document is the reason there is no currency.
 
+### It is a tip, and it must never be called a donation
+
+The wording is a store rule, not a preference. **Apple's Guideline 3.2.2 reserves the word for
+registered nonprofits**: an app that collects *donations* must be a charity, or must collect them
+outside in-app purchase entirely. A tip jar for the developer of a free app is the ordinary,
+approved shape — thousands of apps ship one — and the only thing that turns the second into the
+first is the label on it.
+
+So "Support the game", "Say thanks", "a tip jar" in the review note, and **the word "donation"
+appears in no store field on either console**. Play is less pointed about it (charitable
+donations are merely exempt from Play billing rather than forbidden it), but one vocabulary
+across both stores is one thing to remember, and Apple is the one that reviews.
+
 ### What has to exist before the button can work
 
 Neither store is set up, and the code reports that honestly rather than pretending
-(`Support.Unavailable` → "Not available here yet"). What is outstanding:
+(`Support.Unavailable` → "Not available here yet"). What is outstanding — the first two are
+console work, because **neither tool can create a product**: vydanne never calls App Store
+Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired either. `vydanne iap`
+(`npm run store:iap`) validates the declaration and prints the fields to type.
 
-1. **Play Console** — create the in-app product `vinto.support.five`, set the 4.99 tier, activate
-   it. It will not appear to a build that is not on a track, so an `alpha` upload comes first.
-2. **App Store Connect** — create a Consumable with the same id, set the 4.99 price point, and fill
-   the review screenshot and description an IAP requires before it can be submitted.
-   `vydanne.config.mjs`'s `iaps` array is where that is declared and pushed from.
+1. **Play Console** → Monetise → Products → In-app products → Create.
+
+   | Field | Value |
+   | --- | --- |
+   | Product ID | `vinto.support.five` — **permanent**, and Play never lets it be reused |
+   | Name (≤ 55) | Support the game |
+   | Description (≤ 200) | A thank you to the developer. It unlocks nothing — there is nothing locked. |
+   | Price | the 4.99 tier, with "set prices in other currencies" left to Play's conversion |
+   | Status | **Active**. A product left inactive answers exactly like one that does not exist |
+
+   No screenshot: Play asks for none, and there is no review step for an in-app product.
+   It will not appear to a build that is not on a track, so an `alpha` upload comes first.
+
+2. **App Store Connect** → the app → In-App Purchases → Create → **Consumable**.
+
+   | Field | Value |
+   | --- | --- |
+   | Reference Name (≤ 64) | Support the game — internal, never shown to a buyer |
+   | Product ID | `vinto.support.five` — the same string, and also permanent |
+   | Display Name (≤ 30) | Support the game |
+   | Description (≤ 45) | A thank you. Unlocks nothing. |
+   | Price | the 4.99 point, availability all territories |
+   | **Review Screenshot** | **required** — `marketing/captures/iap/support-review-iap.png` |
+   | Review Notes | the `reviewNote` in `vydanne.config.mjs` |
+
+   Every one of those is the `iaps` entry in `vydanne.config.mjs`, which is where they are kept
+   in step; the two length limits are what `vydanne iap` checks.
+
+   **The screenshot is the only artefact here that had to be made rather than typed**, and it is
+   made by the app: `npm run capture-iap` renders the real settings screen with the offer the
+   console is about to make and flattens it to RGB, because App Store Connect rejects an alpha
+   channel. `IapShotTest` carries the whole argument, including why a device screenshot is not
+   available until after the thing it is required for has been submitted. There is a second,
+   **optional** slot — a 1024×1024 Promotional Image, used only to promote the purchase on the
+   App Store page itself; it is not needed to submit.
+
+   The purchase is reviewed **with an app version**, not on its own: attach it to the 1.0
+   submission, or it sits at "Ready to Submit" indefinitely.
+
 3. **Agreements** — Apple's Paid Applications agreement and Play's merchant account, both with
    tax and banking details. Nothing sells before these are active, on either store.
 4. **A signed build on a track.** Play Billing answers `queryProductDetails` only for a build
    signed with the upload key and published to at least one track; a debug APK always sees
    nothing, which is the correct behaviour and not a bug to chase.
+
+**One id, and nothing may drift from it.** `SupportProductTest` fails if `vydanne.config.mjs`
+stops naming `SUPPORT_PRODUCT`, or if this document stops naming it — because the Play record is
+typed from here by hand, and a mismatch is invisible: the store answers "no such product", the
+app reports `Unavailable`, and that is the same sentence a player sees with no network.
 
 ## How it fits the architecture
 

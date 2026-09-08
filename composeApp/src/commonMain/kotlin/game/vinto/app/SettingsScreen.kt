@@ -730,7 +730,10 @@ private fun About() {
  */
 @Composable
 private fun SupportRow() {
-    val offer = remember { supportOffer() }
+    // `LocalSupport` is null in every build a player runs; it is the store-capture handle, and
+    // `Support.kt` says which artefact needs it and why the picture cannot be taken any other way.
+    val platform = remember { supportOffer() }
+    val offer = LocalSupport.current ?: platform
 
     // Not here on the web or the desktop, because the header already carries it.
     //

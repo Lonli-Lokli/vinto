@@ -115,8 +115,21 @@ export default {
         'A tip jar. Consumable, repeatable, and grants no content, feature or advantage — ' +
         'the game is free and has nothing locked. No account is needed; the reviewer can ' +
         'reach it from Settings, first screen, and test it through the StoreKit sandbox.',
+      // The word "donation" is deliberately absent from every field above. Apple's 3.2.2 reserves
+      // it for registered nonprofits; a tip to the developer of a free app is the ordinary shape,
+      // and the only thing that turns one into the other is the label. MONETIZATION.md carries it.
     },
   ],
+
+  // **vydanne does not create these.** It has no `inAppPurchases` call — `vydanne iap`
+  // (`npm run store:iap`) validates the two length limits and prints the fields, and a person
+  // types them into both consoles. MONETIZATION.md has the field-by-field runbook.
+  //
+  // The one field that is not typed is Apple's REQUIRED review screenshot, and the app makes it:
+  // `npm run capture-iap` renders the real settings screen with this offer in it and flattens the
+  // alpha Compose leaves behind, because App Store Connect rejects an alpha channel. The upload is
+  // `marketing/captures/iap/support-review-iap.png`; `IapShotTest` says why it is rendered rather
+  // than photographed. Play asks for no screenshot at all.
 
   /**
    * 4+, and every content question below is genuinely NONE.

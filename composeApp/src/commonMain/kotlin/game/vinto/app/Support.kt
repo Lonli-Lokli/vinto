@@ -1,5 +1,7 @@
 package game.vinto.app
 
+import androidx.compose.runtime.staticCompositionLocalOf
+
 /**
  * Buying the one thing this app sells: a way to say thanks.
  *
@@ -87,3 +89,24 @@ expect suspend fun buySupport(): Boolean
 
 /** The one product id, shared by both consoles so a single string names it everywhere. */
 const val SUPPORT_PRODUCT: String = "vinto.support.five"
+
+/**
+ * The offer to draw, when something other than this platform is answering.
+ *
+ * Null everywhere a player ever runs the app, and the settings fall back to [supportOffer] —
+ * so nothing here changes what any of the four builds can actually do.
+ *
+ * It exists for one artefact. **App Store Connect will not accept an in-app purchase without a
+ * review screenshot of it**, and the screenshot has to show the purchase as it appears in the
+ * app — which on a desktop render is [Support.Elsewhere], the web's link, and on a phone before
+ * the product exists in the console is [Support.Unavailable]. Both are honest answers and
+ * neither is the picture Apple is asking for, so the shot would have to be taken by hand off a
+ * TestFlight build that cannot exist until the product does. This is the handle that renders it
+ * instead, from the real `SettingsScreen` (`IapShotTest`) — the same reasoning as `LocalPacing`,
+ * which exists so a caller with nobody watching can drop the dwells.
+ *
+ * Staging a price is not staging a claim: the figure comes from the same `iaps` block in
+ * `vydanne.config.mjs` that sets it in the console, and `SupportProductTest` fails if the two
+ * drift apart.
+ */
+val LocalSupport = staticCompositionLocalOf<Support?> { null }

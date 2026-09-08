@@ -18,6 +18,8 @@
     "store:review-contact": "vydanne review-contact",
     "store:accessibility": "vydanne accessibility",
     "store:privacy": "vydanne privacy",
+    "store:iap": "vydanne iap",
+    "store:withdraw": "vydanne withdraw",
     "store:compliance": "vydanne compliance",
     "store:prerelease": "node tools/check-release-branch.mjs && vydanne prerelease",
     "store:push": "vydanne push",
@@ -38,7 +40,8 @@
     "capture-ios": "node ../zdymak/bin/zdymak.mjs capture --platform ios --device \"iPhone 17 Pro Max\" --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby,plan --settle 45 --out ./marketing/captures/ios",
     "capture-ipad": "node ../zdymak/bin/zdymak.mjs capture --platform ios --device \"iPad Pro 13-inch (M5)\" --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby,plan --settle 45 --out ./marketing/captures/ios-ipad",
     "capture-android": "node ../zdymak/bin/zdymak.mjs capture --platform android --component app.kupalinka.vinto/game.vinto.app.MainActivity --arg vinto.capture --states home,teach,table,score,lobby,plan --settle 90 --out ./marketing/captures/android",
-    "capture-headless": "./gradlew :composeApp:jvmTest --tests \"*StoreShotsTest*\" -PstoreShots --rerun",
+    "capture-headless": "./gradlew :composeApp:jvmTest --tests \"*StoreShotsTest*\" --tests \"*IapShotTest*\" -PstoreShots --rerun",
+    "capture-iap": "npm run capture-headless && VYDANNE_FLATTEN=marketing/captures/iap/support-review.png vydanne iap",
     "release:check": "node tools/check-release-branch.mjs"
   },
   "devDependencies": {
