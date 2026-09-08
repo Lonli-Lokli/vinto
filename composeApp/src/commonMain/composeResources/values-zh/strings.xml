@@ -213,6 +213,7 @@
     <string name="seat_badge_vinto">叫了 Vinto</string>
     <string name="seat_badge_coalition">在联盟中</string>
     <string name="seat_badge_away">暂时离开</string>
+    <string name="seat_badge_barred">不能再垫牌</string>
     <string name="seat_pointed_vinto">%1$s 喊了 Vinto</string>
     <string name="seat_pointed_penalty">%1$s 正在从牌堆抽罚牌</string>
     <string name="seat_pointed_coalition">%1$s 是联盟的代表</string>
@@ -611,14 +612,12 @@
     <string name="help_counts_title">这个应用统计了什么</string>
     <string name="help_counts_body">仅统计匿名数据：有多少局游戏被玩、玩家进行到了哪一步、牌桌是否卡住，以及运营一个房间要花多少成本。绝不包含你的名字、房间代码、你手上的牌，或任何能追溯到你或你的设备的信息——发送的数据里根本没有存放这些的地方。可以在设置里关闭，浏览器如果要求不被追踪，也会自动为你关闭它。</string>
 
-    <string name="signal_turn">座位上的绿色光环</string>
-    <string name="signal_turn_meaning">表示轮到谁了。轮到的瞬间会闪烁，因为三个电脑玩家能在你两次点按之间就轮完各自的回合。</string>
-    <string name="signal_vinto">金色光环</string>
-    <string name="signal_vinto_meaning">那名玩家喊了 Vinto。本局余下时间谁都不能碰他们的牌。</string>
+    <string name="signal_turn">座位上的金色圆环</string>
+    <string name="signal_turn_meaning">轮到谁了。轮次到来时会呼吸，因为两次点击之间三个机器人就打完了。</string>
+    <string name="signal_pick">座位上的绿色圆环</string>
+    <string name="signal_pick_meaning">你可以选这位玩家。绿色在座位上和在牌上意思一样：现在可以触碰。</string>
     <string name="signal_penalty">红色光环，还有一只瑟缩的手</string>
     <string name="signal_penalty_meaning">那里刚落下一张罚牌——猜错了，或者跟打错了。</string>
-    <string name="signal_coalition">蓝色光环</string>
-    <string name="signal_coalition_meaning">联盟：除喊牌者外的所有人，正一起打他们的最后一回合，共同对抗那一手牌。</string>
     <string name="signal_live">弃牌上的金色光环</string>
     <string name="signal_live_meaning">那张牌被放下时动作还没用过，所以下一位玩家可以直接拿走并使用它，而不用摸牌。已经用过动作的牌不会有光环。</string>
     <string name="signal_tappable">一张在呼吸闪动的牌</string>

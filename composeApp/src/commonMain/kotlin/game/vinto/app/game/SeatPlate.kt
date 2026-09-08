@@ -49,6 +49,7 @@ import game.vinto.app.art.avatar_ember
 import game.vinto.app.art.avatar_gale
 import game.vinto.app.art.avatar_tide
 import game.vinto.app.art.seat_badge_away
+import game.vinto.app.art.seat_badge_barred
 import game.vinto.app.art.seat_badge_coalition
 import game.vinto.app.art.seat_badge_vinto
 import game.vinto.app.art.seat_badge_waiting
@@ -252,6 +253,16 @@ enum class SeatBadge {
 
     /** Nobody is behind this seat at the moment. */
     AWAY,
+
+    /**
+     * This seat guessed wrong on a toss-in and may not try again.
+     *
+     * The engine has always known it for *every* seat — `PlayerView.barredFromTossIn` is a list
+     * — and the table only ever read it for the viewer, to word their own prompt. So whether an
+     * opponent could still throw in was a fact the client held and never drew. It matters most
+     * in the final round, where the bar lasts the whole round rather than the one window.
+     */
+    BARRED,
 }
 
 /** One mark, drawn at a size that follows the portrait beside it. */
@@ -264,6 +275,7 @@ private fun Badge(badge: SeatBadge, portrait: Dp) {
         SeatBadge.COALITION -> Signal.coalition
         SeatBadge.AWAY -> Slate.ink.copy(alpha = QUIET)
         SeatBadge.BOT -> Slate.ink.copy(alpha = QUIET)
+        SeatBadge.BARRED -> Signal.penalty
     }
     Canvas(
         modifier = Modifier
@@ -276,6 +288,7 @@ private fun Badge(badge: SeatBadge, portrait: Dp) {
             SeatBadge.VINTO -> drawCrown(ink)
             SeatBadge.COALITION -> drawLink(ink)
             SeatBadge.AWAY -> drawAway(ink)
+            SeatBadge.BARRED -> drawBarred(ink)
         }
     }
 }
@@ -286,6 +299,7 @@ private fun SeatBadge.spoken(): StringResource = when (this) {
     SeatBadge.VINTO -> Res.string.seat_badge_vinto
     SeatBadge.COALITION -> Res.string.seat_badge_coalition
     SeatBadge.AWAY -> Res.string.seat_badge_away
+    SeatBadge.BARRED -> Res.string.seat_badge_barred
 }
 
 /**
@@ -350,6 +364,20 @@ private fun DrawScope.drawLink(ink: Color) {
     }
 }
 
+/** A circle with a bar through it: this seat may not throw in again. */
+private fun DrawScope.drawBarred(ink: Color) {
+    val w = size.minDimension
+    val pen = Stroke(width = w * BADGE_PEN, cap = StrokeCap.Round)
+    drawCircle(ink, radius = w * BARRED_R, center = Offset(w * MIDDLE, w * MIDDLE), style = pen)
+    drawLine(
+        ink,
+        Offset(w * BARRED_FROM, w * BARRED_TO),
+        Offset(w * BARRED_TO, w * BARRED_FROM),
+        strokeWidth = w * BADGE_PEN,
+        cap = StrokeCap.Round,
+    )
+}
+
 /** An open circle with a gap where somebody should be. */
 private fun DrawScope.drawAway(ink: Color) {
     val w = size.minDimension
@@ -408,6 +436,10 @@ private const val CROWN_PEAK = 0.24f
 private const val LINK_LEFT_X = 0.36f
 private const val LINK_RIGHT_X = 0.64f
 private const val LINK_R = 0.20f
+
+private const val BARRED_R = 0.30f
+private const val BARRED_FROM = 0.28f
+private const val BARRED_TO = 0.72f
 
 private const val AWAY_FROM = 40f
 private const val AWAY_SWEEP = 280f
@@ -512,14 +544,12 @@ fun SeatPlate(
             // Being pointed at wins over everything: it is the table saying *this* seat, now.
             pointed?.colour() != null -> pointed.colour()!!
 
-            // Gold means "you may pick this one", and it outranks whose turn it is because it
-            // is the only one of the three that is a *question being asked of you*.
-            //
-            // This was gold too when it was merely somebody's turn, so an Ace asking you to
-            // choose a player lit the same colour on the seat you had to pick and on the seat
-            // whose turn it happened to be. Two meanings, one colour, in the one moment the
-            // colour is load-bearing.
-            onClick != null -> Slate.gold
+            // Green means "you may touch this", here and on a card, and it outranks whose turn
+            // it is because it is the only one of the three that is a *question being asked of
+            // you*. A card you can play breathes green; a seat you may choose does the same,
+            // because it is the same question — and the answer should not depend on whether the
+            // thing being asked about is a card or a person.
+            onClick != null -> Signal.pick
             active -> Signal.turn.copy(alpha = seatGlow())
             else -> scheme.onFelt().copy(alpha = QUIET)
         },

@@ -213,6 +213,7 @@
     <string name="seat_badge_vinto">הכריז וינטו</string>
     <string name="seat_badge_coalition">בקואליציה</string>
     <string name="seat_badge_away">מחוץ לשולחן</string>
+    <string name="seat_badge_barred">לא יכול להשליך שוב</string>
     <string name="seat_pointed_vinto">הכרזת Vinto מאת %1$s</string>
     <string name="seat_pointed_penalty">לקיחת קלף עונש בידי %1$s</string>
     <string name="seat_pointed_coalition">הובלת הקואליציה בידי %1$s</string>
@@ -611,14 +612,12 @@
     <string name="help_counts_title">מה האפליקציה הזו סופרת</string>
     <string name="help_counts_body">ספירות אנונימיות בלבד: כמה סיבובים משוחקים, עד כמה רחוק אנשים מגיעים, האם שולחן נתקע, ומה עולה להפעיל חדר. לעולם לא השם שלכם, קוד החדר שלכם, מה יש ביד שלכם, או כל דבר שיכול להיות מתחקה בחזרה אליכם או אל המכשיר שלכם — אין איפה בשליחה לשים את אלה. אפשר לכבות זאת בהגדרות, ודפדפן שמבקש לא להיות עוקב מכבה זאת עבורכם.</string>
 
-    <string name="signal_turn">טבעת ירוקה על מושב</string>
-    <string name="signal_turn_meaning">התור של מי. היא מהבהבת כשהתור מגיע, כי שלושה בוטים יכולים לשחק את שלהם בין הקשה אחת לבאה.</string>
-    <string name="signal_vinto">טבעת זהובה</string>
-    <string name="signal_vinto_meaning">אותו שחקן הכריז Vinto. אף אחד לא יכול לגעת בקלפים שלו עד סוף הסיבוב.</string>
+    <string name="signal_turn">טבעת זהב סביב מושב</string>
+    <string name="signal_turn_meaning">תורו של מי. היא נושמת כשהתור מגיע, כי שלושה בוטים משחקים בין נגיעה לנגיעה.</string>
+    <string name="signal_pick">טבעת ירוקה סביב מושב</string>
+    <string name="signal_pick_meaning">אפשר לבחור בשחקן הזה. ירוק אומר במושב את מה שהוא אומר בקלף: אפשר לגעת בזה עכשיו.</string>
     <string name="signal_penalty">טבעת אדומה, ויד שמזדעזעת</string>
     <string name="signal_penalty_meaning">קלף עונש נחת שם עכשיו — ניחוש שגוי, או זריקה פנימה שגויה.</string>
-    <string name="signal_coalition">טבעת כחולה</string>
-    <string name="signal_coalition_meaning">הקואליציה: כולם חוץ ממי שהכריז Vinto, משחקים את התור האחרון שלהם יחד נגד היד ההיא.</string>
     <string name="signal_live">טבעת זהובה על ההשלכה</string>
     <string name="signal_live_meaning">הקלף ההוא הונח בלי שהפעולה שלו שוחקה, אז השחקן הבא יכול לקחת אותו ולשחק אותו במקום למשוך. קלף שהפעולה שלו כן שוחקה נטול טבעת.</string>
     <string name="signal_tappable">קלף שנושם</string>

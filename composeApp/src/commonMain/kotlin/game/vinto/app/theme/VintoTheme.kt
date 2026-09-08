@@ -249,10 +249,21 @@ private fun pick(dark: Color, light: Color): Color =
  * which it can only do if they live somewhere it can see.
  */
 object Signal {
-    /** Rings round a seat plate. Drawn against [Slate.fill] on the inside, felt on the out. */
-    val turn = Color(0xFF6FD3A6)
-    val vinto = Color(0xFFE0A32A)
+    /**
+     * Rings round a seat plate. Drawn against [Slate.fill] on the inside, felt on the out.
+     *
+     * Three, and the green is not the turn any more.
+     *
+     * **Green means "you may touch this", on a seat exactly as on a card.** A card you can play
+     * breathes green ([tappable]); a seat you may choose when an Ace or a Jack asks you to pick
+     * one now does the same, because it is the same question — and one colour answering it
+     * everywhere is one fewer thing to learn. The turn takes the gold it left behind.
+     */
+    val pick = Color(0xFF6FD3A6)
+    val turn = Color(0xFFE0A32A)
     val penalty = Color(0xFFEF4444)
+
+    /** Not a ring any more — the mark on a coalition seat is drawn in it. */
     val coalition = Color(0xFF5A94F0)
 
     /**

@@ -223,6 +223,7 @@
     <string name="seat_badge_vinto">ha chiamato Vinto</string>
     <string name="seat_badge_coalition">nella coalizione</string>
     <string name="seat_badge_away">lontano dal tavolo</string>
+    <string name="seat_badge_barred">non può più scartare</string>
     <string name="seat_pointed_vinto">%1$s ha chiamato Vinto</string>
     <string name="seat_pointed_penalty">%1$s sta pescando una carta dal mazzo</string>
     <string name="seat_pointed_coalition">%1$s guida la coalizione</string>
@@ -638,14 +639,12 @@
     <string name="help_counts_title">Cosa conta quest'app</string>
     <string name="help_counts_body">Solo conteggi anonimi: quanti round vengono giocati, quanto lontano arrivano le persone, se un tavolo si è bloccato, e quanto costa gestire una stanza. Mai il tuo nome, il codice della tua stanza, cosa hai in mano, o qualsiasi cosa possa essere ricondotta a te o al tuo dispositivo — non c'è spazio in quello che viene inviato per metterli. Si può disattivare nelle Impostazioni, e un browser che chiede di non essere tracciato lo disattiva per te.</string>
 
-    <string name="signal_turn">Un anello verde su un posto</string>
-    <string name="signal_turn_meaning">Di chi è il turno. Lampeggia quando il turno arriva, perché tre bot possono giocare il proprio tra un tocco e l'altro.</string>
-    <string name="signal_vinto">Un anello dorato</string>
-    <string name="signal_vinto_meaning">Quel giocatore ha chiamato Vinto. Nessuno può toccare le sue carte per il resto del round.</string>
+    <string name="signal_turn">Un anello dorato su un posto</string>
+    <string name="signal_turn_meaning">Di chi è il turno. Respira quando il turno arriva, perché tre bot giocano il loro fra un tocco e l'altro.</string>
+    <string name="signal_pick">Un anello verde su un posto</string>
+    <string name="signal_pick_meaning">Puoi scegliere questo giocatore. Il verde vuol dire su un posto quello che vuol dire su una carta: questo si può toccare ora.</string>
     <string name="signal_penalty">Un anello rosso, e una mano che sussulta</string>
     <string name="signal_penalty_meaning">Una carta di penalità è appena atterrata lì — un'ipotesi sbagliata, o un tentativo di buttare dentro sbagliato.</string>
-    <string name="signal_coalition">Un anello blu</string>
-    <string name="signal_coalition_meaning">La coalizione: tutti tranne chi ha chiamato Vinto, che giocano il loro ultimo turno insieme contro quella singola mano.</string>
     <string name="signal_live">Un anello dorato sullo scarto</string>
     <string name="signal_live_meaning">Quella carta è stata messa giù senza usarne l'azione, quindi il prossimo giocatore può prenderla e giocarla invece di pescare. Una carta la cui azione *è stata* giocata non ha alcun anello.</string>
     <string name="signal_tappable">Una carta che respira</string>

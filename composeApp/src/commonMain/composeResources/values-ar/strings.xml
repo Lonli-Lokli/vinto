@@ -222,6 +222,7 @@
     <string name="seat_badge_vinto">أعلن فينتو</string>
     <string name="seat_badge_coalition">في التحالف</string>
     <string name="seat_badge_away">بعيد عن الطاولة</string>
+    <string name="seat_badge_barred">لا يمكنه الرمي مجدداً</string>
     <string name="seat_pointed_vinto">%1$s نادى بـ Vinto</string>
     <string name="seat_pointed_penalty">%1$s يأخذ بطاقة من المكدس</string>
     <string name="seat_pointed_coalition">%1$s يقود التحالف</string>
@@ -633,14 +634,12 @@
     <string name="help_counts_title">ما يحصيه هذا التطبيق</string>
     <string name="help_counts_body">إحصاءات مجهولة فقط: كم جولة تُلعب، وإلى أين يصل اللاعبون، وهل توقفت طاولة، وكم تكلّف الغرفة لتشغيلها. لا اسمك أبدًا، ولا رمز غرفتك، ولا محتوى يدك، ولا أي شيء قد يُعاد تتبّعه إليك أو إلى جهازك — فلا مكان فيما يُرسَل لوضع ذلك. يمكن إيقافه من الإعدادات، والمتصفح الذي يطلب عدم التتبع يوقفه تلقائيًا لك.</string>
 
-    <string name="signal_turn">حلقة خضراء على مقعد</string>
-    <string name="signal_turn_meaning">دور من يلعب الآن. تومض عند وصول الدور، لأن ثلاثة روبوتات قد تلعب أدوارها بين لمسة وأخرى.</string>
-    <string name="signal_vinto">حلقة ذهبية</string>
-    <string name="signal_vinto_meaning">نادى ذلك اللاعب بـ Vinto. لا يمكن لأحد لمس بطاقاته لبقية الجولة.</string>
+    <string name="signal_turn">حلقة ذهبية حول مقعد</string>
+    <string name="signal_turn_meaning">دور مَن هو. تنبض عند وصول الدور، لأن ثلاثة روبوتات قد تلعب أدوارها بين نقرة وأخرى.</string>
+    <string name="signal_pick">حلقة خضراء حول مقعد</string>
+    <string name="signal_pick_meaning">يمكنك اختيار هذا اللاعب. الأخضر يعني الشيء نفسه على المقعد وعلى الورقة: يمكن لمسه الآن.</string>
     <string name="signal_penalty">حلقة حمراء، ويد ترتعش</string>
     <string name="signal_penalty_meaning">بطاقة عقوبة نزلت هناك للتو — تخمين خاطئ، أو رمي مطابق خاطئ.</string>
-    <string name="signal_coalition">حلقة زرقاء</string>
-    <string name="signal_coalition_meaning">التحالف: الجميع باستثناء منادي Vinto، يلعبون دورهم الأخير معًا في مواجهة تلك اليد الواحدة.</string>
     <string name="signal_live">حلقة ذهبية على كومة التخلص</string>
     <string name="signal_live_meaning">وُضعت تلك البطاقة دون استخدام فعلها، فيمكن للاعب التالي أخذها ولعبها بدلًا من السحب. البطاقة التي *لُعب* فعلها لا حلقة لها.</string>
     <string name="signal_tappable">بطاقة تنبض</string>

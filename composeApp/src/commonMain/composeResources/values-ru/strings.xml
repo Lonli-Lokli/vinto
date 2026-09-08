@@ -227,6 +227,7 @@
     <string name="seat_badge_vinto">объявил Vinto</string>
     <string name="seat_badge_coalition">в коалиции</string>
     <string name="seat_badge_away">отошёл от стола</string>
+    <string name="seat_badge_barred">больше не может подкидывать</string>
     <string name="seat_pointed_vinto">%1$s объявил(а) Винто</string>
     <string name="seat_pointed_penalty">%1$s берёт карту из колоды</string>
     <string name="seat_pointed_coalition">%1$s ведёт коалицию</string>
@@ -625,14 +626,12 @@
     <string name="help_counts_title">Что считает это приложение</string>
     <string name="help_counts_body">Только анонимный счёт: сколько раундов сыграно, как далеко люди доходят, застревал ли стол и во что обходится комната. Никогда — ваше имя, код комнаты, содержимое вашей руки или что-то, что можно возвести к вам или вашему устройству: в том, что уходит, для этого просто нет места. Это выключается в настройках, а браузеру, который просит себя не отслеживать, выключать ничего не нужно — мы послушаемся сами.</string>
 
-    <string name="signal_turn">Зелёное кольцо на месте</string>
-    <string name="signal_turn_meaning">Чей сейчас ход. Оно вспыхивает в начале хода, потому что три бота успевают сходить между двумя вашими касаниями.</string>
-    <string name="signal_vinto">Золотое кольцо</string>
-    <string name="signal_vinto_meaning">Этот игрок объявил Винто. До конца раунда его карты трогать нельзя.</string>
+    <string name="signal_turn">Золотое кольцо вокруг места</string>
+    <string name="signal_turn_meaning">Чей ход. Оно дышит, когда ход приходит, потому что три бота успевают сходить между двумя касаниями.</string>
+    <string name="signal_pick">Зелёное кольцо вокруг места</string>
+    <string name="signal_pick_meaning">Этого игрока можно выбрать. Зелёный значит на месте то же, что и на карте: к этому можно прикоснуться сейчас.</string>
     <string name="signal_penalty">Красное кольцо и рука, которая вздрагивает</string>
     <string name="signal_penalty_meaning">Туда только что легла штрафная карта — за неверную догадку или неверное подкидывание.</string>
-    <string name="signal_coalition">Синее кольцо</string>
-    <string name="signal_coalition_meaning">Коалиция: все, кроме объявившего Винто, играют последний ход вместе против той одной руки.</string>
     <string name="signal_live">Золотое кольцо на сбросе</string>
     <string name="signal_live_meaning">Эту карту положили, не разыграв её действие, так что следующий игрок может взять её и сыграть вместо того, чтобы тянуть из колоды. У карты, чьё действие уже сыграли, кольца нет.</string>
     <string name="signal_tappable">Карта, которая дышит</string>

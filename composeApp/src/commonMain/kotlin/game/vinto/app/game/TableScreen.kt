@@ -1528,7 +1528,8 @@ private const val MIN_SHOWING = 0.55f
  * and whoever's turn it is — which is a bot thinking as much as a person deciding.
  *
  * The rest are facts rather than alarms: a machine plays this seat, this seat called Vinto, this
- * seat is in the coalition, nobody is behind it at the moment.
+ * seat is in the coalition, nobody is behind it, this seat guessed wrong and may not throw in
+ * again — which the client has always known for every seat and only ever read for the viewer.
  */
 private fun badgesFor(
     seat: PlayerSeatView,
@@ -1547,6 +1548,7 @@ private fun badgesFor(
     if (seat.isVintoCaller) add(SeatBadge.VINTO)
     if (seat.coalitionWith.isNotEmpty()) add(SeatBadge.COALITION)
     if (seat.id in table.away) add(SeatBadge.AWAY)
+    if (seat.id in view.barredFromTossIn) add(SeatBadge.BARRED)
 }
 
 /** The two cards the rules tell every player to look at before the round starts. */

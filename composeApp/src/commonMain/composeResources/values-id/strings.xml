@@ -222,6 +222,7 @@
     <string name="seat_badge_vinto">menyebut Vinto</string>
     <string name="seat_badge_coalition">dalam koalisi</string>
     <string name="seat_badge_away">sedang pergi</string>
+    <string name="seat_badge_barred">tidak bisa toss-in lagi</string>
     <string name="seat_pointed_vinto">%1$s memanggil Vinto</string>
     <string name="seat_pointed_penalty">%1$s mengambil kartu penalti dari dek</string>
     <string name="seat_pointed_coalition">%1$s memimpin koalisi</string>
@@ -634,14 +635,12 @@
     <string name="help_counts_title">Apa yang dihitung aplikasi ini</string>
     <string name="help_counts_body">Hanya hitungan anonim: berapa banyak ronde yang dimainkan, sejauh mana orang bermain, apakah sebuah meja terhenti, dan berapa biaya menjalankan sebuah ruangan. Tidak pernah nama Anda, kode ruangan Anda, apa yang ada di tangan Anda, atau apa pun yang bisa dilacak kembali ke Anda atau perangkat Anda — tidak ada tempat dalam yang dikirim untuk menaruhnya. Bisa dimatikan di Pengaturan, dan peramban yang meminta untuk tidak dilacak akan mematikannya untuk Anda.</string>
 
-    <string name="signal_turn">Cincin hijau pada kursi</string>
-    <string name="signal_turn_meaning">Giliran siapa yang sedang berjalan. Ia berkedip saat gilirannya tiba, karena tiga bot bisa mengambil giliran mereka di antara satu ketukan dan berikutnya.</string>
-    <string name="signal_vinto">Cincin emas</string>
-    <string name="signal_vinto_meaning">Pemain itu telah memanggil Vinto. Tidak ada yang boleh menyentuh kartu mereka untuk sisa ronde.</string>
+    <string name="signal_turn">Cincin emas pada kursi</string>
+    <string name="signal_turn_meaning">Giliran siapa. Ia berdenyut saat giliran tiba, karena tiga bot bermain di antara dua ketukan.</string>
+    <string name="signal_pick">Cincin hijau pada kursi</string>
+    <string name="signal_pick_meaning">Anda boleh memilih pemain ini. Hijau berarti sama pada kursi seperti pada kartu: ini bisa disentuh sekarang.</string>
     <string name="signal_penalty">Cincin merah, dan tangan yang tersentak</string>
     <string name="signal_penalty_meaning">Kartu penalti baru saja mendarat di sana — tebakan salah, atau lempar masuk yang salah.</string>
-    <string name="signal_coalition">Cincin biru</string>
-    <string name="signal_coalition_meaning">Koalisi: semua orang kecuali pemanggil Vinto, memainkan giliran terakhir mereka bersama melawan satu tangan itu.</string>
     <string name="signal_live">Cincin emas pada tumpukan buangan</string>
     <string name="signal_live_meaning">Kartu itu diletakkan tanpa aksinya digunakan, jadi pemain berikutnya boleh mengambilnya dan memainkannya alih-alih mengambil dari dek. Kartu yang aksinya *sudah* dimainkan tidak memiliki cincin.</string>
     <string name="signal_tappable">Kartu yang berdenyut</string>

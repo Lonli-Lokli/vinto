@@ -229,6 +229,7 @@
     <string name="seat_badge_vinto">абвясціў Vinto</string>
     <string name="seat_badge_coalition">у кааліцыі</string>
     <string name="seat_badge_away">адышоў ад стала</string>
+    <string name="seat_badge_barred">больш не можа падкідаць</string>
     <string name="seat_pointed_vinto">%1$s абвяшчае Vinto</string>
     <string name="seat_pointed_penalty">%1$s бярэ картку з калоды</string>
     <string name="seat_pointed_coalition">%1$s вядзе каалiцыю</string>
@@ -627,14 +628,12 @@
     <string name="help_counts_title">Што лічыць гэты дадатак</string>
     <string name="help_counts_body">Толькі ананімны падлік: колькі раундаў сыграна, як далёка людзі даходзяць, ці затрымліваўся стол і колькі каштуе ўтрыманне пакоя. Ніколі — ваша імя, код пакоя, змест вашай рукі ці нешта, што можна звязаць з вамі ці вашай прыладай: у тым, што адпраўляецца, для гэтага проста няма месца. Гэта можна выключыць у наладах, а браўзер, які просіць яго не адсочваць, выключае гэта сам.</string>
 
-    <string name="signal_turn">Зялёнае кольца на месцы</string>
-    <string name="signal_turn_meaning">Чый зараз ход. Яно ўспыхвае ў пачатку хода, бо тры боты паспяваюць схадзіць паміж дзвюма вашымі дакрананнямі.</string>
-    <string name="signal_vinto">Залатое кольца</string>
-    <string name="signal_vinto_meaning">Гэты гулец абвяшчае Vinto. Да канца раунда карткі гэтага гульца чапаць нельга.</string>
+    <string name="signal_turn">залатое кольца вакол месца</string>
+    <string name="signal_turn_meaning">чый ход. Яно дыхае, калі ход прыходзіць, бо тры боты паспяваюць схадзіць паміж двума націскамі.</string>
+    <string name="signal_pick">зялёнае кольца вакол месца</string>
+    <string name="signal_pick_meaning">вы можаце выбраць гэтага гульца. Зялёны азначае тое ж на месцы, што і на карце: гэта можна крануць зараз.</string>
     <string name="signal_penalty">Чырвонае кольца і рука, якая здрыгваецца</string>
     <string name="signal_penalty_meaning">Туды толькі што лягла штрафная картка — за няправільную здагадку або няправільнае падкіданне.</string>
-    <string name="signal_coalition">Сіняе кольца</string>
-    <string name="signal_coalition_meaning">Каалiцыя: усе, акрамя таго, хто заклікаў Vinto, гуляюць апошні ход разам супраць той адной рукі.</string>
     <string name="signal_live">Залатое кольца на скідзе</string>
     <string name="signal_live_meaning">Гэтую картку паклалі, не разыграўшы яе дзеянне, так што наступны гулец можа ўзяць яе і разыграць замест таго, каб цягнуць з калоды. У карткі, чыё дзеянне ўжо разыгралі, кольца няма.</string>
     <string name="signal_tappable">Картка, якая дыхае</string>

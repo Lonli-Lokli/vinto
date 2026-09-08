@@ -222,6 +222,7 @@
     <string name="seat_badge_vinto">ونٹو بولا</string>
     <string name="seat_badge_coalition">اتحاد میں</string>
     <string name="seat_badge_away">میز سے دور</string>
+    <string name="seat_badge_barred">دوبارہ ٹاس اِن نہیں کر سکتا</string>
     <string name="seat_pointed_vinto">%1$s نے Vinto کہا</string>
     <string name="seat_pointed_penalty">%1$s ڈیک سے پتہ لے رہا ہے</string>
     <string name="seat_pointed_coalition">%1$s اتحاد کی قیادت کر رہا ہے</string>
@@ -627,14 +628,12 @@
     <string name="help_counts_title">یہ ایپ کیا شمار کرتی ہے</string>
     <string name="help_counts_body">صرف گمنام شمار: کتنے دور کھیلے جاتے ہیں، لوگ کہاں تک پہنچتے ہیں، آیا کوئی میز رک گئی، اور روم چلانے میں کتنا خرچ آتا ہے۔ کبھی آپ کا نام، آپ کا روم کوڈ، آپ کے ہاتھ میں کیا ہے، یا کوئی ایسی چیز نہیں جو آپ یا آپ کی ڈیوائس تک واپس لے جائے — بھیجی گئی چیز میں انہیں رکھنے کی کوئی جگہ ہی نہیں۔ اسے ترتیبات میں بند کیا جا سکتا ہے، اور ایسا براؤزر جو ٹریک نہ کیے جانے کی درخواست کرے وہ آپ کے لیے خود بخود بند کر دیتا ہے۔</string>
 
-    <string name="signal_turn">نشست پر سبز رِنگ</string>
-    <string name="signal_turn_meaning">کس کی باری ہے۔ باری آنے پر یہ چمکتا ہے، کیونکہ تین بوٹس ایک تھپتھپاہٹ اور اگلی کے درمیان اپنی چالیں چلتے ہیں۔</string>
-    <string name="signal_vinto">سنہری رِنگ</string>
-    <string name="signal_vinto_meaning">اس کھلاڑی نے Vinto کہا ہے۔ باقی دور میں کوئی ان کے پتوں کو نہیں چھو سکتا۔</string>
+    <string name="signal_turn">نشست پر سنہری حلقہ</string>
+    <string name="signal_turn_meaning">کس کی باری ہے۔ باری آنے پر یہ سانس لیتا ہے، کیونکہ دو ٹیپ کے درمیان تین بوٹ اپنی باری لے لیتے ہیں۔</string>
+    <string name="signal_pick">نشست پر سبز حلقہ</string>
+    <string name="signal_pick_meaning">آپ اس کھلاڑی کو چن سکتے ہیں۔ سبز کا مطلب نشست پر وہی ہے جو کارڈ پر: اسے ابھی چھوا جا سکتا ہے۔</string>
     <string name="signal_penalty">سرخ رِنگ، اور ہاتھ جو کانپتا ہے</string>
     <string name="signal_penalty_meaning">وہاں ابھی ایک جرمانے کا پتہ آیا ہے — غلط اندازہ، یا غلط ٹاس اِن۔</string>
-    <string name="signal_coalition">نیلا رِنگ</string>
-    <string name="signal_coalition_meaning">اتحاد: Vinto کہنے والے کے سوا سب، آخری چال اس ایک ہاتھ کے خلاف مل کر کھیل رہے ہیں۔</string>
     <string name="signal_live">ڈسکارڈ پر سنہری رِنگ</string>
     <string name="signal_live_meaning">وہ پتہ اپنا عمل استعمال کیے بغیر نیچے رکھا گیا، تو اگلا کھلاڑی نکالنے کے بجائے اسے لے کر کھیل سکتا ہے۔ جس پتے کا عمل *استعمال ہو چکا ہو* اس پر کوئی رِنگ نہیں ہوتی۔</string>
     <string name="signal_tappable">پتہ جو سانس لیتا ہے</string>

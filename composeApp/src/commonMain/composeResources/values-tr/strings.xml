@@ -225,6 +225,7 @@
     <string name="seat_badge_vinto">Vinto dedi</string>
     <string name="seat_badge_coalition">koalisyonda</string>
     <string name="seat_badge_away">masadan uzakta</string>
+    <string name="seat_badge_barred">bir daha atamaz</string>
     <string name="seat_pointed_vinto">%1$s Vinto dedi</string>
     <string name="seat_pointed_penalty">%1$s desteden kart alıyor</string>
     <string name="seat_pointed_coalition">%1$s koalisyona öncülük ediyor</string>
@@ -641,14 +642,12 @@
     <string name="help_counts_title">Bu uygulama neyi sayar</string>
     <string name="help_counts_body">Yalnızca anonim sayımlar: kaç tur oynandığı, insanların ne kadar ilerlediği, bir masanın takılıp takılmadığı, ve bir odayı çalıştırmanın maliyeti. Asla adın, oda kodun, elinde ne olduğu, ya da seni ya da cihazını işaret edebilecek hiçbir şey — gönderilende bunlar için yer yok. Ayarlar'dan kapatılabilir, ve izlenmemeyi isteyen bir tarayıcı bunu senin için kapatır.</string>
 
-    <string name="signal_turn">Bir koltukta yeşil bir halka</string>
-    <string name="signal_turn_meaning">Sıranın kimde olduğu. Sıra geldikçe yanıp söner, çünkü üç bot sırasını bir dokunuşla bir sonraki arasında alabilir.</string>
-    <string name="signal_vinto">Altın bir halka</string>
-    <string name="signal_vinto_meaning">O oyuncu Vinto çağırdı. Turun geri kalanında kimse kartlarına dokunamaz.</string>
+    <string name="signal_turn">Koltukta altın bir halka</string>
+    <string name="signal_turn_meaning">Sıranın kimde olduğu. Sıra gelince nefes alır, çünkü iki dokunuş arasında üç bot oynar.</string>
+    <string name="signal_pick">Koltukta yeşil bir halka</string>
+    <string name="signal_pick_meaning">Bu oyuncuyu seçebilirsiniz. Yeşil, koltukta da kartta da aynı şeyi söyler: buna şimdi dokunulabilir.</string>
     <string name="signal_penalty">Kırmızı bir halka, ve ürperen bir el</string>
     <string name="signal_penalty_meaning">Az önce oraya bir ceza kartı indi — yanlış bir tahmin, ya da yanlış bir katılım.</string>
-    <string name="signal_coalition">Mavi bir halka</string>
-    <string name="signal_coalition_meaning">Koalisyon: Vinto çağıran hariç herkes, son ellerini o tek ele karşı birlikte oynuyor.</string>
     <string name="signal_live">Atım yığınında altın bir halka</string>
     <string name="signal_live_meaning">O kart, eylemi kullanılmadan bırakıldı, o yüzden bir sonraki oyuncu çekmek yerine onu alıp oynayabilir. Eylemi *oynanmış* bir kartın halkası yoktur.</string>
     <string name="signal_tappable">Nefes alan bir kart</string>

@@ -120,10 +120,12 @@ class ContrastTest {
     fun everySeatRingHasANeighbourItStandsOutAgainst() = bothSchemes { scheme ->
         val felt = MaterialTheme.colorScheme.feltGradient()
         listOf(
+            // The three the table still draws. Vinto and the coalition are marks now, and a
+            // mark is ink on a plate rather than a ring against felt — `ScreenContrastTest`
+            // measures those where they are actually drawn.
             "your turn" to Signal.turn,
-            "Vinto called" to Signal.vinto,
+            "you may pick this seat" to Signal.pick,
             "a penalty landed" to Signal.penalty,
-            "the coalition" to Signal.coalition,
         ).forEach { (meaning, ring) ->
             val best = (felt + Slate.fill).maxOf { Wcag.contrast(ring, it) }
             assertTrue(

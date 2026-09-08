@@ -223,6 +223,7 @@
     <string name="seat_badge_vinto">a annoncé Vinto</string>
     <string name="seat_badge_coalition">dans la coalition</string>
     <string name="seat_badge_away">absent de la table</string>
+    <string name="seat_badge_barred">ne peut plus se défausser</string>
     <string name="seat_pointed_vinto">%1$s a appelé Vinto</string>
     <string name="seat_pointed_penalty">%1$s prend une carte dans la pioche</string>
     <string name="seat_pointed_coalition">%1$s mène la coalition</string>
@@ -636,14 +637,12 @@
     <string name="help_counts_title">Ce que cette application compte</string>
     <string name="help_counts_body">Uniquement des statistiques anonymes : combien de manches sont jouées, jusqu’où les gens vont, si une table s’est bloquée, et ce que coûte une salle à faire tourner. Jamais votre nom, votre code de salle, le contenu de votre main, ni rien qui pourrait remonter jusqu’à vous ou votre appareil — il n’y a nulle part où les placer dans ce qui est envoyé. Ça peut être désactivé dans les Paramètres, et un navigateur qui demande à ne pas être suivi le désactive pour vous.</string>
 
-    <string name="signal_turn">Un anneau vert sur une place</string>
-    <string name="signal_turn_meaning">À qui c’est le tour. Il clignote quand le tour arrive, car trois bots peuvent jouer le leur entre deux appuis.</string>
-    <string name="signal_vinto">Un anneau doré</string>
-    <string name="signal_vinto_meaning">Ce joueur a appelé Vinto. Personne ne peut toucher à ses cartes pour le reste de la manche.</string>
+    <string name="signal_turn">Un anneau doré sur un siège</string>
+    <string name="signal_turn_meaning">À qui le tour. Il respire à l'arrivée du tour, car trois bots jouent le leur entre deux touches.</string>
+    <string name="signal_pick">Un anneau vert sur un siège</string>
+    <string name="signal_pick_meaning">Vous pouvez choisir ce joueur. Le vert veut dire la même chose sur un siège que sur une carte : on peut y toucher maintenant.</string>
     <string name="signal_penalty">Un anneau rouge, et une main qui tressaille</string>
     <string name="signal_penalty_meaning">Une carte de pénalité vient d’y atterrir — une mauvaise supposition, ou une mauvaise riposte.</string>
-    <string name="signal_coalition">Un anneau bleu</string>
-    <string name="signal_coalition_meaning">La coalition : tout le monde sauf celui qui a appelé Vinto, jouant leur dernier tour ensemble contre cette main unique.</string>
     <string name="signal_live">Un anneau doré sur la défausse</string>
     <string name="signal_live_meaning">Cette carte a été posée sans que son action soit utilisée, le prochain joueur peut donc la prendre et la jouer au lieu de piocher. Une carte dont l’action *a été* jouée n’a pas d’anneau.</string>
     <string name="signal_tappable">Une carte qui palpite</string>

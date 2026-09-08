@@ -213,6 +213,7 @@
     <string name="seat_badge_vinto">ogłosił Vinto</string>
     <string name="seat_badge_coalition">w koalicji</string>
     <string name="seat_badge_away">poza stołem</string>
+    <string name="seat_badge_barred">nie może już dorzucić</string>
     <string name="seat_pointed_vinto">%1$s ogłasza Vinto</string>
     <string name="seat_pointed_penalty">%1$s bierze kartę z talii</string>
     <string name="seat_pointed_coalition">%1$s prowadzi koalicję</string>
@@ -611,14 +612,12 @@
     <string name="help_counts_title">Co liczy ta aplikacja</string>
     <string name="help_counts_body">Tylko anonimowe statystyki: ile rund jest rozgrywanych, jak daleko dochodzą gracze, czy stół się zatrzymał, i ile kosztuje utrzymanie pokoju. Nigdy imię, kod pokoju, zawartość ręki ani nic, co mogłoby wskazać na ciebie lub twoje urządzenie — nie ma na to miejsca w tym, co wysyłane. Można to wyłączyć w Ustawieniach, a przeglądarka z prośbą o brak śledzenia wyłącza to automatycznie.</string>
 
-    <string name="signal_turn">Zielony pierścień na miejscu</string>
-    <string name="signal_turn_meaning">Pokazuje, czyja jest tura. Błyska w chwili jej nadejścia, bo trzy boty mogą wykonać swoje ruchy między jednym stuknięciem a następnym.</string>
-    <string name="signal_vinto">Złoty pierścień</string>
-    <string name="signal_vinto_meaning">Tu ogłoszono Vinto. Nikt nie może już dotknąć tych kart do końca rundy.</string>
+    <string name="signal_turn">Złoty pierścień wokół miejsca</string>
+    <string name="signal_turn_meaning">Czyja kolej. Oddycha, gdy kolej nadchodzi, bo trzy boty grają swoje między dwoma dotknięciami.</string>
+    <string name="signal_pick">Zielony pierścień wokół miejsca</string>
+    <string name="signal_pick_meaning">Możesz wybrać tego gracza. Zielony znaczy na miejscu to samo co na karcie: tego można teraz dotknąć.</string>
     <string name="signal_penalty">Czerwony pierścień i ręka, która się wzdryga</string>
     <string name="signal_penalty_meaning">Właśnie wylądowała tam karta karna — błędne zgadywanie albo błędny dorzut.</string>
-    <string name="signal_coalition">Niebieski pierścień</string>
-    <string name="signal_coalition_meaning">Koalicja: wszyscy oprócz wołającego Vinto, rozgrywający ostatnią turę razem przeciw tej jednej ręce.</string>
     <string name="signal_live">Złoty pierścień na stosie odrzuconych</string>
     <string name="signal_live_meaning">Ta karta została odłożona bez wykorzystania akcji, więc następny gracz może ją wziąć i rozegrać zamiast dobierać. Karta, której akcja *została* rozegrana, nie ma pierścienia.</string>
     <string name="signal_tappable">Karta, która pulsuje</string>

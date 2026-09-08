@@ -267,6 +267,7 @@
     <string name="seat_badge_vinto">called Vinto</string>
     <string name="seat_badge_coalition">in the coalition</string>
     <string name="seat_badge_away">away from the table</string>
+    <string name="seat_badge_barred">cannot toss in again</string>
     <string name="seat_pointed_vinto">%1$s called Vinto</string>
     <string name="seat_pointed_penalty">%1$s is taking a card from the deck</string>
     <string name="seat_pointed_coalition">%1$s leads the coalition</string>
@@ -761,14 +762,12 @@
     <string name="help_counts_title">What this app counts</string>
     <string name="help_counts_body">Anonymous counts only: how many rounds are played, how far people get, whether a table stalled, and what a room costs to run. Never your name, your room code, what is in your hand, or anything that could be traced back to you or your device — there is nowhere in what is sent to put those. It can be switched off in Settings, and a browser that asks not to be tracked switches it off for you.</string>
 
-    <string name="signal_turn">A green ring on a seat</string>
-    <string name="signal_turn_meaning">Whose turn it is. It flashes as the turn arrives, because three bots can take theirs between one tap and the next.</string>
-    <string name="signal_vinto">A gold ring</string>
-    <string name="signal_vinto_meaning">That player has called Vinto. Nobody may touch their cards for the rest of the round.</string>
+    <string name="signal_turn">A gold ring on a seat</string>
+    <string name="signal_turn_meaning">Whose turn it is. It breathes as the turn arrives, because three bots can take theirs between one tap and the next.</string>
+    <string name="signal_pick">A green ring on a seat</string>
+    <string name="signal_pick_meaning">You may choose this player. Green means the same on a seat as on a card: this one can be touched right now.</string>
     <string name="signal_penalty">A red ring, and a hand that flinches</string>
     <string name="signal_penalty_meaning">A penalty card just landed there — a wrong guess, or a wrong toss-in.</string>
-    <string name="signal_coalition">A blue ring</string>
-    <string name="signal_coalition_meaning">The coalition: everybody except the Vinto caller, playing their last turn together against that one hand.</string>
     <string name="signal_live">A gold ring on the discard</string>
     <string name="signal_live_meaning">That card was put down without its action being used, so the next player may take it and play it instead of drawing. A card whose action *was* played has no ring.</string>
     <string name="signal_tappable">A card that breathes</string>

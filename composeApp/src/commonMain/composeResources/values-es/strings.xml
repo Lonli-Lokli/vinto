@@ -231,6 +231,7 @@
     <string name="seat_badge_vinto">cantó Vinto</string>
     <string name="seat_badge_coalition">en la coalición</string>
     <string name="seat_badge_away">ausente de la mesa</string>
+    <string name="seat_badge_barred">no puede volver a tirar</string>
     <string name="seat_pointed_vinto">%1$s cantó Vinto</string>
     <string name="seat_pointed_penalty">%1$s está tomando una carta del mazo</string>
     <string name="seat_pointed_coalition">%1$s lidera la coalición</string>
@@ -651,14 +652,12 @@
     <string name="help_counts_title">Qué cuenta esta app</string>
     <string name="help_counts_body">Solo recuentos anónimos: cuántas rondas se juegan, hasta dónde llega la gente, si una mesa se atascó, y cuánto cuesta mantener una sala. Nunca tu nombre, el código de tu sala, lo que hay en tu mano, ni nada que pueda rastrearse hasta ti o tu dispositivo — no hay dónde ponerlo en lo que se envía. Se puede desactivar en Ajustes, y un navegador que pida no ser rastreado lo desactiva por ti.</string>
 
-    <string name="signal_turn">Un aro verde en un asiento</string>
-    <string name="signal_turn_meaning">De quién es el turno. Parpadea al llegar, porque tres bots pueden jugar el suyo entre un toque y el siguiente.</string>
-    <string name="signal_vinto">Un aro dorado</string>
-    <string name="signal_vinto_meaning">Ese jugador ha cantado Vinto. Nadie puede tocar sus cartas durante el resto de la ronda.</string>
+    <string name="signal_turn">Un anillo dorado en un asiento</string>
+    <string name="signal_turn_meaning">De quién es el turno. Respira cuando llega, porque tres bots juegan el suyo entre un toque y el siguiente.</string>
+    <string name="signal_pick">Un anillo verde en un asiento</string>
+    <string name="signal_pick_meaning">Puedes elegir a este jugador. El verde significa lo mismo en un asiento que en una carta: esto se puede tocar ahora.</string>
     <string name="signal_penalty">Un aro rojo, y una mano que se estremece</string>
     <string name="signal_penalty_meaning">Una carta de penalización acaba de llegar ahí — una apuesta fallida, o un lanzamiento equivocado.</string>
-    <string name="signal_coalition">Un aro azul</string>
-    <string name="signal_coalition_meaning">La coalición: todos menos quien cantó Vinto, jugando su último turno juntos contra esa única mano.</string>
     <string name="signal_live">Un aro dorado en el descarte</string>
     <string name="signal_live_meaning">Esa carta se soltó sin usar su acción, así que el siguiente jugador puede tomarla y jugarla en vez de robar. Una carta cuya acción *sí* se jugó no tiene aro.</string>
     <string name="signal_tappable">Una carta que respira</string>

@@ -231,6 +231,7 @@
     <string name="seat_badge_vinto">оголосив Vinto</string>
     <string name="seat_badge_coalition">у коаліції</string>
     <string name="seat_badge_away">відійшов від столу</string>
+    <string name="seat_badge_barred">більше не може підкидати</string>
     <string name="seat_pointed_vinto">%1$s оголошує Вінто</string>
     <string name="seat_pointed_penalty">%1$s бере карту з колоди</string>
     <string name="seat_pointed_coalition">%1$s веде коаліцію</string>
@@ -628,14 +629,12 @@
     <string name="help_counts_title">Що рахує цей застосунок</string>
     <string name="help_counts_body">Лише анонімна статистика: скільки раундів зіграно, як далеко доходять гравці, чи зависав стіл і скільки коштує утримання кімнати. Ніколи — ваше ім'я, код кімнати, вміст вашої руки чи щось таке, що можна пов'язати з вами або вашим пристроєм: у тому, що надсилається, для цього просто немає місця. Це можна вимкнути в налаштуваннях, а браузеру, який просить не відстежувати його, вимикати нічого не потрібно — це врахують самі.</string>
 
-    <string name="signal_turn">Зелене кільце на місці</string>
-    <string name="signal_turn_meaning">Чий зараз хід. Воно спалахує на початку ходу, бо три боти встигають зробити хід між двома вашими дотиками.</string>
-    <string name="signal_vinto">Золоте кільце</string>
-    <string name="signal_vinto_meaning">Тут оголошено Вінто. До кінця раунду ці карти торкатися не можна.</string>
+    <string name="signal_turn">Золоте кільце навколо місця</string>
+    <string name="signal_turn_meaning">Чий хід. Воно дихає, коли хід приходить, бо три боти встигають походити між двома дотиками.</string>
+    <string name="signal_pick">Зелене кільце навколо місця</string>
+    <string name="signal_pick_meaning">Цього гравця можна обрати. Зелений означає на місці те саме, що й на карті: цього можна торкнутися зараз.</string>
     <string name="signal_penalty">Червоне кільце і рука, що здригається</string>
     <string name="signal_penalty_meaning">Сюди щойно лягла штрафна карта — за неправильну здогадку або невдале підкидання.</string>
-    <string name="signal_coalition">Синє кільце</string>
-    <string name="signal_coalition_meaning">Коаліція: усі, крім того, хто оголосив Вінто, грають останній хід разом проти цієї однієї руки.</string>
     <string name="signal_live">Золоте кільце на скиді</string>
     <string name="signal_live_meaning">Цю карту поклали, не розігравши дію, тож наступний гравець може взяти її і зіграти замість того, щоб тягнути з колоди. У карти, чию дію вже зіграно, кільця немає.</string>
     <string name="signal_tappable">Карта, яка дихає</string>

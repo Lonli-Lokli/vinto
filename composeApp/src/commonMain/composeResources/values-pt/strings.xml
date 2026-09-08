@@ -222,6 +222,7 @@
     <string name="seat_badge_vinto">chamou Vinto</string>
     <string name="seat_badge_coalition">na coligação</string>
     <string name="seat_badge_away">ausente da mesa</string>
+    <string name="seat_badge_barred">já não pode descartar</string>
     <string name="seat_pointed_vinto">%1$s chamou Vinto</string>
     <string name="seat_pointed_penalty">%1$s está a tirar uma carta do baralho</string>
     <string name="seat_pointed_coalition">%1$s lidera a coligação</string>
@@ -631,14 +632,12 @@
     <string name="help_counts_title">O que esta aplicação contabiliza</string>
     <string name="help_counts_body">Só contagens anónimas: quantas rondas são jogadas, até onde as pessoas chegam, se uma mesa ficou parada, e quanto custa manter uma sala. Nunca o teu nome, o código da tua sala, o que tens na mão, ou algo que te possa identificar a ti ou ao teu dispositivo — não há onde os colocar no que é enviado. Pode ser desativado nas Definições, e um navegador que pede para não ser rastreado desativa-o automaticamente.</string>
 
-    <string name="signal_turn">Um anel verde num lugar</string>
-    <string name="signal_turn_meaning">De quem é a vez. Pisca quando a vez chega, porque os três bots podem jogar a deles entre um toque e o seguinte.</string>
-    <string name="signal_vinto">Um anel dourado</string>
-    <string name="signal_vinto_meaning">Esse jogador chamou Vinto. Ninguém pode tocar nas suas cartas pelo resto da ronda.</string>
+    <string name="signal_turn">Um anel dourado num lugar</string>
+    <string name="signal_turn_meaning">De quem é a vez. Respira quando a vez chega, porque três bots jogam a sua entre dois toques.</string>
+    <string name="signal_pick">Um anel verde num lugar</string>
+    <string name="signal_pick_meaning">Pode escolher este jogador. O verde quer dizer num lugar o mesmo que numa carta: isto pode ser tocado agora.</string>
     <string name="signal_penalty">Um anel vermelho, e uma mão que estremece</string>
     <string name="signal_penalty_meaning">Uma carta de penalização acabou de pousar ali — um palpite errado, ou um atirar errado.</string>
-    <string name="signal_coalition">Um anel azul</string>
-    <string name="signal_coalition_meaning">A coligação: todos exceto quem chamou Vinto, a jogar a última jogada juntos contra essa mão.</string>
     <string name="signal_live">Um anel dourado na pilha de descarte</string>
     <string name="signal_live_meaning">Essa carta foi colocada sem a sua ação ser usada, por isso o próximo jogador pode apanhá-la e jogá-la em vez de tirar do baralho. Uma carta cuja ação *foi* jogada não tem anel.</string>
     <string name="signal_tappable">Uma carta que pulsa</string>

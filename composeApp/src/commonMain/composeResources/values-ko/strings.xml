@@ -213,6 +213,7 @@
     <string name="seat_badge_vinto">빈토를 선언함</string>
     <string name="seat_badge_coalition">연합에 속함</string>
     <string name="seat_badge_away">자리를 비움</string>
+    <string name="seat_badge_barred">더는 토스인할 수 없음</string>
     <string name="seat_pointed_vinto">%1$s가 Vinto를 외쳤어요</string>
     <string name="seat_pointed_penalty">%1$s가 덱에서 카드를 가져가는 중이에요</string>
     <string name="seat_pointed_coalition">%1$s가 연합을 이끌어요</string>
@@ -610,14 +611,12 @@
     <string name="help_counts_title">이 앱이 집계하는 것</string>
     <string name="help_counts_body">익명 집계뿐이에요 — 몇 라운드가 진행됐는지, 사람들이 얼마나 진행했는지, 테이블이 멈춘 적이 있는지, 방을 운영하는 데 드는 비용이에요. 이름도, 방 코드도, 손에 무엇이 있는지도, 당신이나 기기를 추적할 수 있는 어떤 것도 없어요 — 보내는 데이터엔 그걸 담을 자리 자체가 없어요. 설정에서 끌 수 있고, 추적 거부를 요청한 브라우저는 자동으로 꺼져요.</string>
 
-    <string name="signal_turn">자리에 뜬 초록 링</string>
-    <string name="signal_turn_meaning">누구 차례인지 알려줘요. 세 봇은 한 번의 탭과 다음 탭 사이에 자기 차례를 마칠 수 있어서, 차례가 오면 깜빡여요.</string>
-    <string name="signal_vinto">금색 링</string>
-    <string name="signal_vinto_meaning">그 플레이어가 Vinto를 외쳤어요. 남은 라운드 동안 누구도 그 카드를 건드릴 수 없어요.</string>
+    <string name="signal_turn">자리의 금색 링</string>
+    <string name="signal_turn_meaning">누구 차례인지. 차례가 오면 숨을 쉽니다. 한 번의 탭 사이에 봇 셋이 차례를 마치기 때문입니다.</string>
+    <string name="signal_pick">자리의 초록색 링</string>
+    <string name="signal_pick_meaning">이 플레이어를 고를 수 있습니다. 초록은 자리에서도 카드에서와 같은 뜻입니다. 지금 만질 수 있다는 뜻.</string>
     <string name="signal_penalty">빨간 링과 움찔하는 손</string>
     <string name="signal_penalty_meaning">방금 페널티 카드가 놓였어요 — 잘못된 추측이거나 잘못된 던지기예요.</string>
-    <string name="signal_coalition">파란 링</string>
-    <string name="signal_coalition_meaning">연합이에요 — Vinto를 외친 사람을 뺀 모두가 마지막 턴을 그 한 손에 맞서 함께 둬요.</string>
     <string name="signal_live">버림 더미의 금색 링</string>
     <string name="signal_live_meaning">그 카드는 능력이 쓰이지 않은 채 놓였어요, 그래서 다음 사람이 뽑는 대신 그걸 가져와 쓸 수 있어요. 능력이 이미 쓰인 카드에는 링이 없어요.</string>
     <string name="signal_tappable">숨 쉬듯 빛나는 카드</string>

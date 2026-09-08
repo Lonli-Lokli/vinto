@@ -38,22 +38,20 @@ import game.vinto.app.art.help_rules_body
 import game.vinto.app.art.help_rules_title
 import game.vinto.app.art.help_signals
 import game.vinto.app.art.help_the_cards
-import game.vinto.app.art.signal_coalition
-import game.vinto.app.art.signal_coalition_meaning
 import game.vinto.app.art.signal_live
 import game.vinto.app.art.signal_live_meaning
 import game.vinto.app.art.signal_peek
 import game.vinto.app.art.signal_peek_meaning
 import game.vinto.app.art.signal_penalty
 import game.vinto.app.art.signal_penalty_meaning
+import game.vinto.app.art.signal_pick
+import game.vinto.app.art.signal_pick_meaning
 import game.vinto.app.art.signal_reshuffle
 import game.vinto.app.art.signal_reshuffle_meaning
 import game.vinto.app.art.signal_tappable
 import game.vinto.app.art.signal_tappable_meaning
 import game.vinto.app.art.signal_turn
 import game.vinto.app.art.signal_turn_meaning
-import game.vinto.app.art.signal_vinto
-import game.vinto.app.art.signal_vinto_meaning
 import game.vinto.app.cardLong
 import game.vinto.app.cardName
 import game.vinto.app.explained
@@ -309,16 +307,17 @@ private data class Cue(
     val meaning: StringResource,
 )
 
+/**
+ * The colours the table still uses, and only those.
+ *
+ * Vinto and the coalition were rings once and are marks now, so they left this list — a legend
+ * that names a colour the table has stopped drawing is worse than no legend, because the one
+ * person reading it is the one person trying to learn the table.
+ */
 private val SIGNALS = listOf(
     Cue(Signal.turn, Slate.fill, Res.string.signal_turn, Res.string.signal_turn_meaning),
-    Cue(Signal.vinto, Slate.fill, Res.string.signal_vinto, Res.string.signal_vinto_meaning),
+    Cue(Signal.pick, Slate.fill, Res.string.signal_pick, Res.string.signal_pick_meaning),
     Cue(Signal.penalty, Slate.fill, Res.string.signal_penalty, Res.string.signal_penalty_meaning),
-    Cue(
-        Signal.coalition,
-        Slate.fill,
-        Res.string.signal_coalition,
-        Res.string.signal_coalition_meaning,
-    ),
     Cue(Signal.live, CardWhite, Res.string.signal_live, Res.string.signal_live_meaning),
     Cue(Signal.tappable, CardWhite, Res.string.signal_tappable, Res.string.signal_tappable_meaning),
     Cue(Signal.peeked, CardWhite, Res.string.signal_peek, Res.string.signal_peek_meaning),

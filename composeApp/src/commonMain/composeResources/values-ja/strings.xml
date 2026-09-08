@@ -224,6 +224,7 @@
     <string name="seat_badge_vinto">ヴィントを宣言</string>
     <string name="seat_badge_coalition">連合の一員</string>
     <string name="seat_badge_away">席を外している</string>
+    <string name="seat_badge_barred">もうトスインできません</string>
     <string name="seat_pointed_vinto">%1$sがVintoを宣言しました</string>
     <string name="seat_pointed_penalty">%1$sが山札からカードを引いています</string>
     <string name="seat_pointed_coalition">%1$sが連合を率いています</string>
@@ -643,14 +644,12 @@
     <string name="help_counts_title">このアプリが計測すること</string>
     <string name="help_counts_body">匿名の統計のみです。プレイされたラウンド数、どこまで進んだか、テーブルが止まったかどうか、ルームの運用コストなど。名前もルームコードも、手札の中身も、あなたや端末を特定できるものは一切含まれません — 送信するデータにそもそも入れる場所がありません。設定でオフにでき、追跡拒否を求めるブラウザでは自動的にオフになります。</string>
 
-    <string name="signal_turn">席の緑のリング</string>
-    <string name="signal_turn_meaning">誰の番かを示します。3人のボットは一度のタップの間に手番を終えるので、番が来ると点滅します。</string>
-    <string name="signal_vinto">金色のリング</string>
-    <string name="signal_vinto_meaning">そのプレイヤーがVintoを宣言しました。ラウンドが終わるまで誰もそのカードに触れられません。</string>
+    <string name="signal_turn">席の金色のリング</string>
+    <string name="signal_turn_meaning">誰の番か。番が来ると脈打ちます。1回のタップの間に3体のボットが手番を終えるからです。</string>
+    <string name="signal_pick">席の緑色のリング</string>
+    <string name="signal_pick_meaning">このプレイヤーを選べます。緑は席でもカードでも同じ意味です。いま触れられる、ということ。</string>
     <string name="signal_penalty">赤いリングと震える手</string>
     <string name="signal_penalty_meaning">ペナルティカードがたった今そこに置かれました — 推測を外したか、投げ込みを誤ったかです。</string>
-    <string name="signal_coalition">青いリング</string>
-    <string name="signal_coalition_meaning">連合です。Vintoを宣言した人以外の全員が、最後の手番をその一つの手に対して共にプレイします。</string>
     <string name="signal_live">捨て札の金色のリング</string>
     <string name="signal_live_meaning">そのカードはアクションが使われないまま置かれたので、次のプレイヤーは引く代わりにそれを取ってプレイできます。アクションが使われたカードにはリングがありません。</string>
     <string name="signal_tappable">呼吸するカード</string>

@@ -213,6 +213,7 @@
     <string name="seat_badge_vinto">ভিন্টো ডেকেছে</string>
     <string name="seat_badge_coalition">জোটে আছে</string>
     <string name="seat_badge_away">টেবিল থেকে দূরে</string>
+    <string name="seat_badge_barred">আর টস-ইন করতে পারবে না</string>
     <string name="seat_pointed_vinto">%1$s Vinto ডেকেছেন</string>
     <string name="seat_pointed_penalty">%1$s ডেক থেকে তাস নিচ্ছেন</string>
     <string name="seat_pointed_coalition">%1$s কোয়ালিশনের নেতৃত্ব দিচ্ছেন</string>
@@ -610,14 +611,12 @@
     <string name="help_counts_title">এই অ্যাপ কী গণনা করে</string>
     <string name="help_counts_body">শুধু নামহীন গণনা: কতগুলো রাউন্ড খেলা হয়, মানুষ কতদূর পৌঁছায়, কোনো টেবিল আটকে গিয়েছিল কিনা, আর একটি রুম চালাতে কী খরচ হয়। কখনোই আপনার নাম, রুম কোড, আপনার হাতে কী আছে, বা এমন কিছু নয় যা আপনার বা আপনার ডিভাইসের দিকে ফিরে যেতে পারে — যা পাঠানো হয় তাতে সেগুলো রাখার কোনো জায়গাই নেই। এটা সেটিংসে বন্ধ করা যায়, আর যে ব্রাউজার ট্র্যাক না করার অনুরোধ জানায় তার জন্য এটা নিজে থেকেই বন্ধ হয়ে যায়।</string>
 
-    <string name="signal_turn">একটি আসনের চারপাশে সবুজ রিং</string>
-    <string name="signal_turn_meaning">কার পালা তা বোঝায়। পালা এলে এটা জ্বলে ওঠে, কারণ তিনটি বট এক ট্যাপ থেকে পরের ট্যাপের মধ্যে তাদের পালা নিতে পারে।</string>
-    <string name="signal_vinto">একটি সোনালি রিং</string>
-    <string name="signal_vinto_meaning">ওই খেলোয়াড় Vinto ডেকেছেন। বাকি রাউন্ডে কেউ তার তাস স্পর্শ করতে পারবেন না।</string>
+    <string name="signal_turn">আসনের চারপাশে সোনালি বলয়</string>
+    <string name="signal_turn_meaning">কার পালা। পালা এলে এটি স্পন্দিত হয়, কারণ দুই ট্যাপের মাঝে তিনটি বট নিজেদের পালা নিতে পারে।</string>
+    <string name="signal_pick">আসনের চারপাশে সবুজ বলয়</string>
+    <string name="signal_pick_meaning">আপনি এই খেলোয়াড়কে বেছে নিতে পারেন। আসনে ও কার্ডে সবুজের অর্থ একই: এটি এখন স্পর্শ করা যায়।</string>
     <string name="signal_penalty">একটি লাল রিং, আর একটি কাঁপা হাত</string>
     <string name="signal_penalty_meaning">এইমাত্র সেখানে একটি জরিমানার তাস নেমেছে — একটি ভুল অনুমান, বা একটি ভুল টস-ইন।</string>
-    <string name="signal_coalition">একটি নীল রিং</string>
-    <string name="signal_coalition_meaning">কোয়ালিশন: Vinto ডাককারী ছাড়া বাকি সবাই, তাদের শেষ পালা একসাথে খেলছেন সেই একটি হাতের বিরুদ্ধে।</string>
     <string name="signal_live">বাতিল স্তূপে একটি সোনালি রিং</string>
     <string name="signal_live_meaning">সেই তাসটি তার কার্যক্রম ব্যবহার না করেই রাখা হয়েছিল, তাই পরের খেলোয়াড় তাস তোলার বদলে এটা নিয়ে খেলতে পারেন। যে তাসের কার্যক্রম *খেলা হয়ে গেছে* তার কোনো রিং নেই।</string>
     <string name="signal_tappable">একটি স্পন্দিত তাস</string>

@@ -222,6 +222,7 @@
     <string name="seat_badge_vinto">विंटो बोला</string>
     <string name="seat_badge_coalition">गठबंधन में</string>
     <string name="seat_badge_away">टेबल से दूर</string>
+    <string name="seat_badge_barred">दोबारा टॉस-इन नहीं कर सकता</string>
     <string name="seat_pointed_vinto">%1$s ने Vinto बोला</string>
     <string name="seat_pointed_penalty">%1$s डेक से पत्ता ले रहे हैं</string>
     <string name="seat_pointed_coalition">%1$s गठबंधन का नेतृत्व कर रहे हैं</string>
@@ -635,14 +636,12 @@
     <string name="help_counts_title">यह ऐप क्या गिनता है</string>
     <string name="help_counts_body">सिर्फ़ गुमनाम गिनती: कितने दौर खेले जाते हैं, लोग कहां तक पहुंचते हैं, कोई मेज़ अटकी या नहीं, और एक रूम चलाने की क्या कीमत है। कभी आपका नाम, आपका रूम कोड, आपके हाथ में क्या है, या कुछ भी जो आप तक या आपके डिवाइस तक पहुंचाया जा सके नहीं — जो भेजा जाता है उसमें उनके लिए कोई जगह नहीं है। इसे सेटिंग्स में बंद किया जा सकता है, और जो ब्राउज़र ट्रैक न करने के लिए कहता है वह इसे आपके लिए खुद बंद कर देता है।</string>
 
-    <string name="signal_turn">सीट पर हरा घेरा</string>
-    <string name="signal_turn_meaning">किसकी बारी है। बारी आते ही यह चमकता है, क्योंकि तीन बॉट एक टैप और अगले टैप के बीच अपनी बारी ले सकते हैं।</string>
-    <string name="signal_vinto">सुनहरा घेरा</string>
-    <string name="signal_vinto_meaning">उस खिलाड़ी ने Vinto पुकारा है। बाकी दौर के लिए कोई उनके पत्तों को छू नहीं सकता।</string>
+    <string name="signal_turn">सीट पर सुनहरा छल्ला</string>
+    <string name="signal_turn_meaning">किसकी बारी है। बारी आते ही यह साँस लेता है, क्योंकि दो टैप के बीच तीन बॉट अपनी बारी ले लेते हैं।</string>
+    <string name="signal_pick">सीट पर हरा छल्ला</string>
+    <string name="signal_pick_meaning">आप इस खिलाड़ी को चुन सकते हैं। सीट पर हरा वही कहता है जो कार्ड पर: इसे अभी छुआ जा सकता है।</string>
     <string name="signal_penalty">लाल घेरा, और हाथ का हिचकना</string>
     <string name="signal_penalty_meaning">अभी वहां एक दंड पत्ता उतरा है — गलत अंदाज़ा, या गलत टॉस-इन।</string>
-    <string name="signal_coalition">नीला घेरा</string>
-    <string name="signal_coalition_meaning">गठबंधन: Vinto पुकारने वाले को छोड़कर बाकी सब, उस एक हाथ के खिलाफ़ अपनी आखिरी बारी साथ में खेल रहे हैं।</string>
     <string name="signal_live">छोड़े गए ढेर पर सुनहरा घेरा</string>
     <string name="signal_live_meaning">उस पत्ते की कार्रवाई इस्तेमाल किए बिना ही इसे नीचे रखा गया, तो अगला खिलाड़ी उठाने की बजाय इसे ले और खेल सकता है। जिस पत्ते की कार्रवाई खेली जा चुकी है उस पर कोई घेरा नहीं होता।</string>
     <string name="signal_tappable">जो पत्ता सांस लेता है</string>

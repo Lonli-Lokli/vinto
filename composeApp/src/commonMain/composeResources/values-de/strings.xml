@@ -213,6 +213,7 @@
     <string name="seat_badge_vinto">hat Vinto gerufen</string>
     <string name="seat_badge_coalition">in der Koalition</string>
     <string name="seat_badge_away">nicht am Tisch</string>
+    <string name="seat_badge_barred">darf nicht mehr einwerfen</string>
     <string name="seat_pointed_vinto">%1$s hat Vinto gerufen</string>
     <string name="seat_pointed_penalty">%1$s nimmt eine Karte vom Stapel</string>
     <string name="seat_pointed_coalition">%1$s führt die Koalition an</string>
@@ -613,14 +614,12 @@
     <string name="help_counts_title">Was diese App zählt</string>
     <string name="help_counts_body">Nur anonyme Zählungen: wie viele Runden gespielt werden, wie weit Menschen kommen, ob ein Tisch stockte, und was ein Raum im Betrieb kostet. Nie Ihr Name, Ihr Raumcode, was in Ihrer Hand liegt, oder irgendetwas, das auf Sie oder Ihr Gerät zurückgeführt werden könnte — dafür gibt es im Gesendeten keinen Platz. Lässt sich in den Einstellungen abschalten, und ein Browser, der um Nicht-Tracking bittet, schaltet es automatisch ab.</string>
 
-    <string name="signal_turn">Ein grüner Ring an einem Platz</string>
-    <string name="signal_turn_meaning">Wer am Zug ist. Er blinkt, wenn der Zug beginnt, weil drei Bots ihren Zug zwischen einem Tipp und dem nächsten machen können.</string>
-    <string name="signal_vinto">Ein goldener Ring</string>
-    <string name="signal_vinto_meaning">Diese Person hat Vinto gerufen. Niemand darf für den Rest der Runde ihre Karten berühren.</string>
+    <string name="signal_turn">Ein goldener Ring um einen Platz</string>
+    <string name="signal_turn_meaning">Wer am Zug ist. Er atmet, wenn der Zug kommt, denn drei Bots ziehen zwischen zwei Tipps.</string>
+    <string name="signal_pick">Ein grüner Ring um einen Platz</string>
+    <string name="signal_pick_meaning">Diesen Spieler dürfen Sie wählen. Grün heißt am Platz dasselbe wie auf einer Karte: das hier lässt sich jetzt antippen.</string>
     <string name="signal_penalty">Ein roter Ring, und eine Hand, die zuckt</string>
     <string name="signal_penalty_meaning">Dort ist gerade eine Strafkarte gelandet — eine falsche Vermutung oder ein falscher Einwurf.</string>
-    <string name="signal_coalition">Ein blauer Ring</string>
-    <string name="signal_coalition_meaning">Die Koalition: alle außer der rufenden Person, die gemeinsam ihren letzten Zug gegen diese eine Hand spielen.</string>
     <string name="signal_live">Ein goldener Ring auf der Ablage</string>
     <string name="signal_live_meaning">Diese Karte wurde abgelegt, ohne dass ihre Aktion genutzt wurde, also darf die nächste Person sie statt zu ziehen nehmen und spielen. Eine Karte, deren Aktion *bereits* gespielt wurde, hat keinen Ring.</string>
     <string name="signal_tappable">Eine Karte, die pulsiert</string>
