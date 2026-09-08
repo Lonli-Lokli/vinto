@@ -95,10 +95,20 @@ function open() {
   };
 }
 
+/**
+ * An address of its own, for the reason `gate-ratelimit` and `gate-bruteforce` have one.
+ *
+ * Rooms are capped per source, and every gate in a CI run shares one — so a gate that mints
+ * from the common address spends an allowance the gates beside it need, and whichever runs
+ * last is refused a room and fails for a reason that has nothing to do with what it tests.
+ * This one runs last, and did. TEST-NET-3, never a real host.
+ */
+const MINE = { 'cf-connecting-ip': '203.0.113.30' };
+
 async function mintRoom() {
   const response = await fetch(`${BASE}/rooms`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...MINE },
     body: JSON.stringify({ isPublic: false, difficulty: 'easy', nickname: 'Ada' }),
   });
   const body = await response.json();
