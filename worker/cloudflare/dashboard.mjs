@@ -1,5 +1,11 @@
 /**
- * The dashboard: six questions, answered from Workers Analytics Engine, rendered here.
+ * The dashboard: six questions about the audience, answered from Workers Analytics Engine.
+ *
+ * The questions are "how much was played, by how many people at once, for how long, and did
+ * they finish" — offline and online kept apart, because they are different products with
+ * different costs. Nothing here counts *people*: there is no identifier to count them with and
+ * deliberately so (`AnalyticsPrivacyTest`), so every row is plays rather than players, and the
+ * closest thing to an audience number is [together] — how many humans sat at one table.
  *
  * Server-side by design (§A6). The API token that can read the account's analytics never
  * reaches a browser, there is no client-side querying, and there is no second app to deploy —
@@ -47,42 +53,73 @@ const WEIGHT = '_sample_interval * double1';
  */
 export const QUERIES = [
   {
-    id: 'acquisition',
-    title: 'People opening the app',
-    note: 'One row per day. Counts the app being opened, not a device — nothing here can tell a returning player from a new one, which is the trade HOSTING.md §6c makes on purpose.',
-    sql: `SELECT toDate(timestamp) AS day, sum(${WEIGHT}) AS opens
+    id: 'solo_daily',
+    title: 'Games played offline, per day',
+    note: 'One row per day. A solo round is one game of Vinto against three bots; `finished` is the ones played through to the score sheet. Thirty played and none finished is a worse sign than thirty not played.',
+    sql: `SELECT toDate(timestamp) AS day,
+                 sum(${WEIGHT}) AS games,
+                 sum(${WEIGHT} * double2) AS finished,
+                 avg(double4) / 60000 AS avg_minutes
           FROM ${DATASET}
-          WHERE index1 = 'funnel' AND blob1 = 'APP_OPENED'
+          WHERE index1 = 'solo_round'
             AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
           GROUP BY day ORDER BY day DESC`,
   },
   {
-    id: 'activation',
-    title: 'Rounds actually finished',
-    note: 'A round played to the score sheet, against one walked out of. The ratio is the activation number: an app people open and abandon mid-round is a different problem from one they do not open.',
+    id: 'online_daily',
+    title: 'Games played online, per day',
+    note: 'One row per day. A round the room dealt and finished, its length on the clock, and what it cost the Durable Object to host — the number that decides whether online play can stay free.',
+    sql: `SELECT toDate(timestamp) AS day,
+                 sum(${WEIGHT}) AS rounds,
+                 avg(double3) / 60000 AS avg_minutes,
+                 avg(double5) / 1000 AS avg_cpu_seconds,
+                 avg(double6) AS avg_requests
+          FROM ${DATASET}
+          WHERE index1 = 'round_end'
+            AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
+          GROUP BY day ORDER BY day DESC`,
+  },
+  {
+    id: 'together',
+    title: 'How many people played online together',
+    note: 'Every dealt round by the size of the table it was dealt to: four people, or two people and two bots, and so on. This is the one number that says whether online play is doing what it exists for, and no identity is involved — the room counts the seats in front of it.',
+    sql: `SELECT double2 AS humans, double3 AS bots, sum(${WEIGHT}) AS rounds
+          FROM ${DATASET}
+          WHERE index1 = 'round_start'
+            AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
+          GROUP BY humans, bots ORDER BY rounds DESC`,
+  },
+  {
+    id: 'sessions_daily',
+    title: 'Online sessions per day, and how long they last',
+    note: 'A session is one room from its first deal to its last round, so this is the count of games-with-friends rather than of rounds. Rounds per session is how many they stayed for.',
+    sql: `SELECT toDate(timestamp) AS day,
+                 sum(${WEIGHT}) AS sessions,
+                 avg(double2) AS avg_rounds,
+                 avg(double3) / 60000 AS avg_minutes
+          FROM ${DATASET}
+          WHERE index1 = 'session_ended'
+            AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
+          GROUP BY day ORDER BY day DESC`,
+  },
+  {
+    id: 'solo_finishing',
+    title: 'Offline: finished against walked away from',
+    note: 'The whole window rather than per day, split by difficulty, because the ratio is the point and a day is too few games to read one from. A difficulty people start and never finish is a difficulty that is wrong.',
     sql: `SELECT blob1 AS difficulty,
+                 sum(${WEIGHT}) AS games,
                  sum(${WEIGHT} * double2) AS finished,
                  sum(${WEIGHT} * (1 - double2)) AS abandoned,
-                 avg(double4) / 1000 AS avg_seconds
+                 avg(double4) / 60000 AS avg_minutes
           FROM ${DATASET}
           WHERE index1 = 'solo_round'
             AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
-          GROUP BY difficulty ORDER BY finished DESC`,
+          GROUP BY difficulty ORDER BY games DESC`,
   },
   {
-    id: 'funnel',
-    title: 'The online funnel',
-    note: 'Opened → pressed Online → asked for a room → shared the invite → somebody joined. The step that loses the most people is the one worth working on, and the invite step is why deep links are next.',
-    sql: `SELECT blob1 AS step, sum(${WEIGHT}) AS reached
-          FROM ${DATASET}
-          WHERE index1 = 'funnel'
-            AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
-          GROUP BY step ORDER BY reached DESC`,
-  },
-  {
-    id: 'sessions',
-    title: 'Rounds per online session, and how sessions end',
-    note: 'A session is a room from its deal to its last round. How it ended matters as much as how long it was: played out is success, everybody-left at round one is not.',
+    id: 'session_endings',
+    title: 'Online: how sessions end',
+    note: 'Played out is success. Too-few-humans and everybody-left at round one are not, and they are different problems: one is nobody arriving, the other is people arriving and leaving.',
     sql: `SELECT blob1 AS ended_by,
                  sum(${WEIGHT}) AS sessions,
                  avg(double2) AS avg_rounds,
@@ -91,29 +128,6 @@ export const QUERIES = [
           WHERE index1 = 'session_ended'
             AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
           GROUP BY ended_by ORDER BY sessions DESC`,
-  },
-  {
-    id: 'failures',
-    title: 'What broke, and where',
-    note: 'Only the client reports these: a stalled stage, a lost socket, a refused move. The room cannot see any of them, and each is something a player experienced and nobody would otherwise hear about.',
-    sql: `SELECT blob1 AS kind, blob2 AS surface, sum(${WEIGHT}) AS failures
-          FROM ${DATASET}
-          WHERE index1 = 'failure'
-            AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
-          GROUP BY kind, surface ORDER BY failures DESC`,
-  },
-  {
-    id: 'cost',
-    title: 'What a round of online play costs',
-    note: 'Durable Object wall time and requests, stamped on every round the room finished. This is the number that decides whether online play can stay free, and it is measured rather than estimated.',
-    sql: `SELECT toDate(timestamp) AS day,
-                 sum(${WEIGHT}) AS rounds,
-                 avg(double5) / 1000 AS avg_cpu_seconds,
-                 avg(double6) AS avg_requests
-          FROM ${DATASET}
-          WHERE index1 = 'round_end'
-            AND timestamp > now() - INTERVAL '${WINDOW_DAYS}' DAY
-          GROUP BY day ORDER BY day DESC`,
   },
 ];
 

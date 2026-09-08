@@ -20,8 +20,13 @@ import kotlinx.serialization.json.Json
  *
  * The split between what the server sends and what a client sends is by *who can know*
  * (design §A3): the room is authoritative, so it already holds every fact about an online
- * game and clients are never asked to report one back. Clients report only what the room
- * cannot see — solo play, the lesson, the menu before a room exists, and their own failures.
+ * game and clients are never asked to report one back. A client reports **only its own offline
+ * play** — a solo round and the lesson — and nothing else at all.
+ *
+ * It used to report two other things, and both are gone. The *menu funnel* was a client's guess
+ * at intent before a room existed; it is not play, and what it measured is not worth a second
+ * channel. *Failures* were counted here and are now Sentry's, because a stalled stage is a
+ * defect with a stack trace rather than a number on a chart — see [FailureKind].
  */
 @Serializable
 public sealed interface AnalyticsEvent {
@@ -101,14 +106,7 @@ public sealed interface AnalyticsEvent {
         override val name: String get() = "session_ended"
     }
 
-    // --- what only a client can know -------------------------------------------------------
-
-    /** A step of the menu funnel, before a room exists for the server to see one. */
-    @Serializable
-    @SerialName("funnel")
-    public data class Funnel(val step: FunnelStep, val surface: Surface) : AnalyticsEvent {
-        override val name: String get() = "funnel"
-    }
+    // --- what only a client can know, which is its own offline play and nothing else --------
 
     @Serializable
     @SerialName("solo_round")
@@ -127,13 +125,6 @@ public sealed interface AnalyticsEvent {
         AnalyticsEvent {
         override val name: String get() = "lesson"
     }
-
-    /** Something the player experienced and nobody would otherwise hear about. */
-    @Serializable
-    @SerialName("failure")
-    public data class Failure(val kind: FailureKind, val surface: Surface) : AnalyticsEvent {
-        override val name: String get() = "failure"
-    }
 }
 
 @Serializable
@@ -145,19 +136,26 @@ public enum class RoundEnding { VINTO_CALLED, DECK_EXHAUSTED, ABANDONED }
 @Serializable
 public enum class SessionEnding { PLAYED_OUT, TOO_FEW_HUMANS, TIMED_OUT, EVERYBODY_LEFT }
 
-@Serializable
-public enum class FunnelStep {
-    APP_OPENED,
-    PLAY_PRESSED,
-    ONLINE_PRESSED,
-    ROOM_REQUESTED,
-    INVITE_SHARED,
-    ROOM_JOINED,
-}
-
+/**
+ * Which part of the app something happened in.
+ *
+ * Not an analytics field any more — it rides along on a Sentry report, which is where the
+ * things that use it went. Kept here because it is still shared vocabulary between the client
+ * and the room, and because moving it would be churn for a rename.
+ */
 @Serializable
 public enum class Surface { SOLO, ONLINE, LESSON, MENU }
 
+/**
+ * The four ways the app fails a player without crashing.
+ *
+ * **These are reported to Sentry, not counted here.** They were an analytics event, which put
+ * them in a store that answers "how many" and cannot answer "which one, and what was it doing"
+ * — and a stalled stage or a refused move is a defect to be *fixed*, not a rate to be watched.
+ * Sentry already takes a non-fatal from `Crashes.report`, with the breadcrumbs and the deal's
+ * address attached, and the room already has its own pipe in `worker/cloudflare/sentry.mjs`.
+ * One place for what broke, one for what people did.
+ */
 @Serializable
 public enum class FailureKind {
     /** The animation queue stopped draining and the round could not be finished on screen. */
@@ -229,13 +227,11 @@ public fun AnalyticsEvent.toDataPoint(cost: Cost? = null, sampleRate: Double = 1
             blobs += reason.name
             doubles += listOf(rounds.toDouble(), durationMs)
         }
-        is AnalyticsEvent.Funnel -> blobs += listOf(step.name, surface.name)
         is AnalyticsEvent.SoloRound -> {
             blobs += difficulty.name
             doubles += listOf(flag(finished), turns.toDouble(), durationMs)
         }
         is AnalyticsEvent.Lesson -> doubles += listOf(flag(finished), reachedStage.toDouble(), durationMs)
-        is AnalyticsEvent.Failure -> blobs += listOf(kind.name, surface.name)
     }
 
     if (cost != null) doubles += listOf(cost.wallMs, cost.requests)

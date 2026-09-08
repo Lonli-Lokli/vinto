@@ -1,8 +1,7 @@
 package game.vinto.client
 
 import game.vinto.protocol.AnalyticsEvent
-import game.vinto.protocol.FunnelStep
-import game.vinto.protocol.Surface
+import game.vinto.protocol.Difficulty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -23,9 +22,12 @@ import kotlin.test.assertTrue
  */
 class AnalyticsTest {
 
-    private fun step(n: Int) = AnalyticsEvent.Funnel(
-        step = FunnelStep.entries[n % FunnelStep.entries.size],
-        surface = Surface.MENU,
+    /** A distinguishable event per call: the sink's rules are about volume, not about content. */
+    private fun step(n: Int) = AnalyticsEvent.SoloRound(
+        finished = n % 2 == 0,
+        difficulty = Difficulty.entries[n % Difficulty.entries.size],
+        turns = n,
+        durationMs = n.toDouble(),
     )
 
     private class Collecting : AnalyticsTransport {
@@ -145,7 +147,7 @@ class AnalyticsTest {
         testScheduler.advanceUntilIdle()
 
         assertEquals(1, transport.payloads.size, "five events should batch, not send five times")
-        assertTrue(transport.payloads.single().contains("funnel"), "the payload does not name the event")
+        assertTrue(transport.payloads.single().contains("solo_round"), "the payload does not name the event")
         assertFalse(transport.payloads.single().contains("null"), "a null leaked into the payload")
         draining.cancel()
     }

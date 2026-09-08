@@ -10,7 +10,7 @@ import game.vinto.protocol.looksLikeRoomCode
  * it. What neither did was *open the app*: an invite arrived as six characters and a hostname,
  * and the person on the other end had to install the game, find the online screen and type
  * them in. Every step of that is somewhere to lose them, and the funnel this measures
- * (`FunnelStep.INVITE_SHARED` → `ROOM_JOINED`) is exactly the one it was built to show.
+ * — an invitation that is shared and then joined — is exactly the one it was built to serve.
  *
  * Everything here is pure, so the parsing is the same on all four platforms and testable
  * without any of them. The platform half is only ever "here is a URL somebody opened".

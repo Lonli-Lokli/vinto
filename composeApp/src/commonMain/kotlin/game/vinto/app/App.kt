@@ -55,8 +55,6 @@ import game.vinto.client.loadGame
 import game.vinto.client.loadSettings
 import game.vinto.client.rememberRoom
 import game.vinto.client.saveSettings
-import game.vinto.protocol.AnalyticsEvent
-import game.vinto.protocol.FunnelStep
 import game.vinto.protocol.Surface
 import kotlinx.coroutines.Dispatchers
 
@@ -153,7 +151,7 @@ fun App(
     fun enterRoom(code: String, nickname: String): Screen =
         roomScreen(connector, vault, appScope, code, nickname)
 
-    Startup(vault, sink, count, seeds, marketing, ::enterRoom) { loaded, where ->
+    Startup(vault, sink, seeds, marketing, ::enterRoom) { loaded, where ->
         settings = loaded
         screen = where
     }
@@ -215,7 +213,7 @@ fun App(
                                     is Screen.Home -> HomeScreen(
                                         settings = settings,
                                         canContinue = here.canContinue,
-                                        go = homeActions(vault, seeds, settings, count) { screen = it },
+                                        go = homeActions(vault, seeds, settings) { screen = it },
                                     )
 
                                     is Screen.Settings -> SettingsScreen(
@@ -276,15 +274,12 @@ private fun homeActions(
     vault: Vault,
     seeds: () -> Long,
     settings: Settings,
-    counting: Counting,
     go: (Screen) -> Unit,
 ): HomeActions = HomeActions(
     continueGame = {
-        counting.record(AnalyticsEvent.Funnel(FunnelStep.PLAY_PRESSED, Surface.SOLO))
         LocalGame.resume(vault, Dispatchers.Default)?.let { go(Screen.Playing(it)) }
     },
     newGame = {
-        counting.record(AnalyticsEvent.Funnel(FunnelStep.PLAY_PRESSED, Surface.SOLO))
         go(
             Screen.Playing(
                 LocalGame.start(vault, seeds(), settings.difficulty, Dispatchers.Default),
@@ -292,11 +287,9 @@ private fun homeActions(
         )
     },
     teach = {
-        counting.record(AnalyticsEvent.Funnel(FunnelStep.PLAY_PRESSED, Surface.LESSON))
         go(Screen.Teaching)
     },
     online = {
-        counting.record(AnalyticsEvent.Funnel(FunnelStep.ONLINE_PRESSED, Surface.ONLINE))
         go(Screen.Online)
     },
     settings = { go(Screen.Settings(back = Screen.Home(canContinue = vault.loadGame() != null))) },
@@ -560,7 +553,6 @@ private fun roomScreen(
 private fun Startup(
     vault: Vault,
     sink: Analytics,
-    count: Counting,
     seeds: () -> Long,
     marketing: String?,
     enterRoom: (String, String) -> Screen,
@@ -569,7 +561,6 @@ private fun Startup(
     LaunchedEffect(Unit) {
         val settings = vault.loadSettings()
         sink.consentChanged(consentFrom(settings))
-        count.record(AnalyticsEvent.Funnel(FunnelStep.APP_OPENED, Surface.MENU))
 
         val invited = roomCodeFrom(takeOpenedLink())
         val staged = MarketingScene.named(marketing)
@@ -580,7 +571,6 @@ private fun Startup(
                 stagedScreen(staged, vault)
             }
             invited != null -> {
-                count.record(AnalyticsEvent.Funnel(FunnelStep.ROOM_JOINED, Surface.ONLINE))
                 enterRoom(invited, vault.identity { seeds() }.nickname)
             }
             else -> {

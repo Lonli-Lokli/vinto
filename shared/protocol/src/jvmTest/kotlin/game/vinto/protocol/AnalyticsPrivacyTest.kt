@@ -79,10 +79,8 @@ class AnalyticsPrivacyTest {
                 callerWon = true,
             ),
             AnalyticsEvent.SessionEnded(reason = SessionEnding.PLAYED_OUT, rounds = 3, durationMs = 600_000.0),
-            AnalyticsEvent.Funnel(step = FunnelStep.INVITE_SHARED, surface = Surface.ONLINE),
             AnalyticsEvent.SoloRound(finished = true, difficulty = Difficulty.EASY, turns = 30, durationMs = 60_000.0),
             AnalyticsEvent.Lesson(finished = false, reachedStage = 7, durationMs = 120_000.0),
-            AnalyticsEvent.Failure(kind = FailureKind.STAGE_STALLED, surface = Surface.SOLO),
         )
 
         // Every case is covered, so adding one without a sample here fails rather than
@@ -96,9 +94,6 @@ class AnalyticsPrivacyTest {
             addAll(Difficulty.entries.map { it.name })
             addAll(RoundEnding.entries.map { it.name })
             addAll(SessionEnding.entries.map { it.name })
-            addAll(FunnelStep.entries.map { it.name })
-            addAll(Surface.entries.map { it.name })
-            addAll(FailureKind.entries.map { it.name })
         }
 
         for (sample in samples) {
@@ -118,9 +113,12 @@ class AnalyticsPrivacyTest {
     fun costIsCarriedWhenItIsKnown() {
         val withCost = AnalyticsEvent.RoundEnd(30, 60_000.0, RoundEnding.DECK_EXHAUSTED, false)
             .toDataPoint(Cost(wallMs = 1_600.0, requests = 12.0))
-        val without = AnalyticsEvent.Funnel(FunnelStep.APP_OPENED, Surface.MENU).toDataPoint()
+        val without = AnalyticsEvent.SoloRound(true, Difficulty.EASY, 30, 60_000.0).toDataPoint()
 
         assertTrue(withCost.doubles.takeLast(2) == listOf(1_600.0, 12.0), "cost is not on the point: $withCost")
-        assertTrue(without.doubles.size == 1, "a client event should carry only its sample rate: $without")
+        assertTrue(
+            without.doubles.first() == 1.0 && without.doubles.size == 4,
+            "a client event should carry its sample rate and its own three numbers, no cost: $without",
+        )
     }
 }

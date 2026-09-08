@@ -10,9 +10,6 @@ import game.vinto.client.AnalyticsConsent
 import game.vinto.client.AnalyticsTransport
 import game.vinto.client.MemoryVault
 import game.vinto.protocol.Difficulty
-import game.vinto.protocol.FailureKind
-import game.vinto.protocol.FunnelStep
-import game.vinto.protocol.Surface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -89,10 +86,7 @@ class AnalyticsPrivacyUiTest {
         // vocabulary. Stripping what is *allowed* and then looking at the remainder is the
         // version that can only fail on something unexpected, which is the point.
         val vocabulary = buildList {
-            addAll(FunnelStep.entries.map { it.name })
-            addAll(Surface.entries.map { it.name })
             addAll(Difficulty.entries.map { it.name })
-            addAll(FailureKind.entries.map { it.name })
         }
         val remainder = vocabulary.fold(everything) { text, word -> text.replace(word, "") }
         assertFalse(

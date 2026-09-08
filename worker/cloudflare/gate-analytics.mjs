@@ -75,16 +75,20 @@ console.log('\nanalytics: what a client may post');
 
 // The sealed type is the filter. Anything not declared there decodes to nothing, so a field
 // nobody wrote cannot reach the store and a client-supplied timestamp is not believed.
-const good = clientEventPoint(JSON.stringify({ type: 'funnel', step: 'INVITE_SHARED', surface: 'ONLINE' }));
+// A solo round is the *only* thing a client may post now: the funnel is gone and failures went
+// to Sentry, so what a client can say about itself is its own offline play and nothing else.
+const good = clientEventPoint(JSON.stringify({
+  type: 'solo_round', finished: true, difficulty: 'EASY', turns: 30, durationMs: 60000,
+}));
 check('a known client event renders', good !== null && good !== undefined);
 check(
   'and carries no cost, because a client cannot know one',
-  good ? JSON.parse(good).doubles.length === 1 : false,
+  good ? JSON.parse(good).doubles.length === 4 : false,
   good ?? 'null',
 );
 
 const smuggled = clientEventPoint(JSON.stringify({
-  type: 'funnel', step: 'APP_OPENED', surface: 'MENU',
+  type: 'solo_round', finished: false, difficulty: 'HARD', turns: 12, durationMs: 5000,
   roomCode: '7KQ2MP', nickname: 'Raph', token: 'secret', ip: '203.0.113.9',
 }));
 const rendered = smuggled ?? '';

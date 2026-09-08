@@ -7,8 +7,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
+import game.vinto.app.crash.Crashes
 import game.vinto.client.ConnectionState
-import game.vinto.protocol.AnalyticsEvent
 import game.vinto.protocol.FailureKind
 import game.vinto.protocol.Surface
 import kotlinx.coroutines.delay
@@ -54,14 +54,13 @@ fun ConnectionState.looksLost(): Boolean =
  */
 @Composable
 fun CountConnectionTrouble(connection: ConnectionState) {
-    val counting = LocalCounting.current
     val surface = LocalSurface.current
     val reported = remember { mutableStateOf(false) }
 
     LaunchedEffect(connection.looksLost()) {
         if (connection.looksLost() && !reported.value) {
             reported.value = true
-            counting.record(AnalyticsEvent.Failure(FailureKind.SOCKET_LOST, surface))
+            reportTrouble(FailureKind.SOCKET_LOST, surface)
         }
     }
 }
@@ -78,11 +77,10 @@ fun CountConnectionTrouble(connection: ConnectionState) {
  */
 @Composable
 fun CountRefusals(refusal: String?) {
-    val counting = LocalCounting.current
     val surface = LocalSurface.current
 
     LaunchedEffect(refusal) {
-        if (refusal != null) counting.record(AnalyticsEvent.Failure(FailureKind.MOVE_REFUSED, surface))
+        if (refusal != null) reportTrouble(FailureKind.MOVE_REFUSED, surface)
     }
 }
 
@@ -128,13 +126,34 @@ suspend fun reportStalls(
 /** Wires [reportStalls] to the app's counter, for the stage to call with what it is doing. */
 @Composable
 fun CountStalls(draining: Boolean, progress: Int) {
-    val counting = LocalCounting.current
     val surface = LocalSurface.current
     val now = rememberUpdatedState(StageActivity(draining, progress))
 
-    LaunchedEffect(counting, surface) {
+    LaunchedEffect(surface) {
         reportStalls(snapshotFlow { now.value }) {
-            counting.record(AnalyticsEvent.Failure(FailureKind.STAGE_STALLED, surface))
+            reportTrouble(FailureKind.STAGE_STALLED, surface)
         }
     }
+}
+
+/**
+ * One of the four ways the app fails a player without crashing, sent where defects go.
+ *
+ * These used to be counted as analytics, which is a store that answers "how many" and cannot
+ * answer "which one, and what was the app doing" — and every one of them is a *defect*: a
+ * refused move means the controls and the validator disagreed, a stalled stage means the queue
+ * wedged. A rate on a chart is not what fixes any of that. Sentry already has the breadcrumbs
+ * and the deal's address attached (`Crashes`), so this is the same report a crash gets, minus
+ * the process dying.
+ *
+ * A thrown-and-caught exception rather than a message, because that is what Sentry groups on,
+ * and the message is two enums — four kinds across four surfaces, so the whole cardinality of
+ * this is sixteen issues and no free text.
+ */
+private class TableTrouble(kind: FailureKind, surface: Surface) :
+    RuntimeException("$kind in $surface")
+
+/** Raised and caught on the spot: the stack is where it happened, which is the point. */
+private fun reportTrouble(kind: FailureKind, surface: Surface) {
+    Crashes.report(runCatching { throw TableTrouble(kind, surface) }.exceptionOrNull()!!)
 }
