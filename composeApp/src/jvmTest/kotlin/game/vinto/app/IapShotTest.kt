@@ -53,8 +53,13 @@ import kotlin.test.assertTrue
  * accept" for every other image in this repository. The upload is
  * `store-assets/iap-review/01-support-review.png`, not this file.
  *
- * [WIDE] x [HIGH] is the size the listing shots use, and far past the 640x920 an IAP screenshot
- * has to clear.
+ * ## The size is not a minimum
+ *
+ * The App Review Screenshot slot asks for "a screenshot that meets **any of the screenshot
+ * specifications your app supports**" — one of Apple's own listing sizes, not merely something
+ * big enough. So a render at some comfortable-looking size is not a valid file however large it
+ * is, and [WIDE] x [HIGH] is chosen for exactly that reason: it is the iPhone 6.9" slot's second
+ * accepted size, so it is a screenshot spec this app supports rather than a picture of one.
  */
 class IapShotTest {
 
@@ -99,7 +104,7 @@ class IapShotTest {
     }
 
     private companion object {
-        /** App Store 6.9", well past the 640x920 floor an IAP screenshot has to clear. */
+        /** An accepted App Store 6.9" size, which is what makes it a valid review screenshot. */
         const val WIDE = 1290
         const val HIGH = 2796
         const val DENSITY = 3f

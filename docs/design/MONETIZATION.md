@@ -119,7 +119,7 @@ Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired eith
    | Display Name (≤ 30) | Support the game |
    | Description (≤ 45) | A tip for the developer. Nothing is locked. |
    | Price | the 4.99 point, availability all territories |
-   | **App Review Screenshot** | **required** — `store-assets/iap-review/01-support-review.png`. Note it cannot be *removed* once uploaded, only replaced |
+   | **App Review Screenshot** | **required** — `store-assets/iap-review/01-support-review.png`. It must meet *any screenshot specification the app supports*, not a minimum size; 1290×2796 is the iPhone 6.9" slot's second accepted size. Cannot be *removed* once uploaded, only replaced |
    | Image (1024×1024) | **left empty** — the promotional slot, and a decision; see below |
    | Review Notes | the `reviewNote` in `vydanne.config.mjs` |
 

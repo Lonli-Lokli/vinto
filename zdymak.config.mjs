@@ -151,8 +151,10 @@ export default {
           // `dir` keeps it out of `appstore-iphone-6.9/`, which is the listing set `vydanne
           // bridge` uploads — this must never be mistaken for one of the ten a shopper sees.
           dir: 'iap-review',
-          // The slot takes three sizes and this is the one the capture is rendered at, so no
-          // resample stands between the app's own pixels and the console.
+          // Load-bearing, not a preference. Apple's App Review Screenshot must meet "any of the
+          // screenshot specifications your app supports" — a listing size, not a floor — so the
+          // target is a real slot and this is the one of its three accepted sizes the capture is
+          // already rendered at. No resample stands between the app's own pixels and the console.
           size: [1290, 2796],
           style: 'bleed',
           caption: false,
