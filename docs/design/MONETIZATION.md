@@ -141,8 +141,17 @@ Connect's `inAppPurchases` API, and Play's `inappproducts` API is not wired eith
    (`IapShotTest`), zdymak composes the file a store will accept (the `iap` device group), and
    `npm run capture-iap` is both plus `vydanne iap`'s field check. `IapShotTest` carries the whole
    argument — why it is rendered rather than photographed, and **why there is no price in it**.
-   There is a second, **optional** slot — a 1024×1024 Promotional Image, used only to promote the
-   purchase on the App Store page itself; it is not needed to submit.
+   **The second image slot is left empty, and that is a decision.** App Store Connect also offers
+   a 1024×1024 Promotional Image (JPG/PNG, 72 dpi, RGB, flattened, no rounded corners), and it is
+   required *only if you want to promote the purchase on the app's own product page*. The other
+   thing it is for — win-back offers — is an auto-renewable subscription feature and cannot reach
+   a consumable.
+
+   So the choice is whether a free game's store listing should carry "pay me" as a featured item,
+   and the answer is no. The tip is offered once, in Settings, to somebody who has already played
+   and enjoyed it; on the product page it would be the first thing a stranger sees about a game
+   that has nothing locked. Nothing is blocked by leaving it out: the purchase submits with the
+   review screenshot alone.
 
    The purchase is reviewed **with an app version**, not on its own: attach it to the 1.0
    submission, or it sits at "Ready to Submit" indefinitely.
