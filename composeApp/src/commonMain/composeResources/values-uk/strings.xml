@@ -618,6 +618,10 @@
     <string name="log_made_you_draw">%1$s змушує вас взяти карту</string>
     <string name="log_made_draw_they">%1$s змушує %2$s взяти карту</string>
     <string name="log_round_begins">раунд починається</string>
+    <string name="log_seat_covered">Місце %1$s займає бот</string>
+    <string name="log_seat_covered_you">Поки вас не було, за вашим місцем грає бот</string>
+    <string name="log_seat_back">%1$s знову за столом</string>
+    <string name="log_seat_back_you">Ви знову за столом</string>
 
     <string name="help_rules_title">Повні правила</string>
     <string name="help_rules_body">Ця картка пояснює, що робить кожна карта тут. Повні правила — на сайті самої гри, у тих, хто її придумав.</string>

@@ -603,6 +603,10 @@
     <string name="log_made_you_draw">%1$s hat Sie eine Karte ziehen lassen</string>
     <string name="log_made_draw_they">%1$s hat %2$s eine Karte ziehen lassen</string>
     <string name="log_round_begins">die Runde beginnt</string>
+    <string name="log_seat_covered">%1$s ist weg — ein Bot spielt den Platz</string>
+    <string name="log_seat_covered_you">Ein Bot hat Ihren Platz gespielt, während Sie weg waren</string>
+    <string name="log_seat_back">%1$s ist zurück</string>
+    <string name="log_seat_back_you">Sie sind zurück am Tisch</string>
 
     <string name="help_rules_title">Die vollständigen Regeln</string>
     <string name="help_rules_body">Dieses Blatt sagt, was eine Karte hier tut. Die vollständigen Regeln stehen auf der eigenen Seite des Spiels, von den Menschen, die es gemacht haben.</string>

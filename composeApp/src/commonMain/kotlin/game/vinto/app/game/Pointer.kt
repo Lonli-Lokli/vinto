@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import game.vinto.app.LocalReducedMotion
 import game.vinto.app.keyOf
 import game.vinto.client.Target
 import kotlin.math.roundToInt
@@ -39,6 +40,12 @@ import kotlin.math.roundToInt
  * turn it is, gold is the caller and what you have chosen, red is a penalty, blue is the
  * coalition, and the breathing ring means "this can be touched". A coach that borrowed any of
  * them would be adding to the confusion it exists to remove.
+ *
+ * Which puts the whole weight of *being seen* on the outline and the bob, and both were
+ * measured in the wrong units. The outline was in raw pixels, so it was chunky on the desktop
+ * it was drawn on and a hairline on a 3× phone — a white hand outlined in nothing, over a
+ * white card. And the bob was four points, which at arm's length is not a movement. Both are
+ * in points now, and `CoachHandTest` weighs the hand at two densities and watches it travel.
  *
  * Drawn rather than written: an emoji hand is a different shape, size and colour on every
  * platform, and this one has to sit at a known distance from the edge of a card.
@@ -66,12 +73,10 @@ fun Pointer(stage: Stage, target: Target?) {
     // in the next row down and names the wrong card.
     val above = rect.top - reach > 0f
 
-    val bob by rememberInfiniteTransition(label = "point").animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(BobMs), RepeatMode.Reverse),
-        label = "bob",
-    )
+    // No movement, same information: the hand still points at the same thing, from the same
+    // place, and the outline is what has to carry it. Its own composable so the frame clock is
+    // not started at all for a player who asked for stillness — the shape `seatGlow` uses.
+    val bob = if (LocalReducedMotion.current) 0f else bobbing()
 
     Box(
         modifier = Modifier
@@ -111,12 +116,29 @@ fun Pointer(stage: Stage, target: Target?) {
     }
 }
 
+/** How far through its beckon the hand is, from resting against the target to furthest away. */
+@Composable
+private fun bobbing(): Float {
+    val point = rememberInfiniteTransition(label = "point")
+    val bob by point.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(BobMs), RepeatMode.Reverse),
+        label = "bob",
+    )
+    return bob
+}
+
 /**
  * A blunt, chunky arrow.
  *
  * Not a cursor: it is being looked at across a phone, past a table full of cards, by somebody
  * who has never seen this screen before. Big head, short tail, and its own shadow so it
  * survives being drawn over both the felt and the rail.
+ *
+ * Everything here is in points, converted at the size the hand is actually being drawn at. A
+ * `DrawScope` is a `Density`, and a drawing whose body scales with the screen while its edges
+ * do not is a different drawing on every phone.
  */
 private fun DrawScope.arrow() {
     val w = size.width
@@ -134,12 +156,13 @@ private fun DrawScope.arrow() {
         close()
     }
 
-    translate(ShadowDrop, ShadowDrop) { drawPath(shape, Shadow) }
+    val drop = ShadowDrop.toPx()
+    translate(drop, drop) { drawPath(shape, Shadow) }
     drawPath(shape, Color.White)
 
     // A white hand over a white card is not a hand. The outline is what makes it read on the
     // felt, on the rail and on a card face — the three things it is ever drawn over.
-    drawPath(shape, Outline, style = Stroke(width = OutlineWidth))
+    drawPath(shape, Outline, style = Stroke(width = OutlineWeight.toPx()))
 }
 
 /** The name the stage files this target under; see `Stage.mark`. */
@@ -156,10 +179,24 @@ fun Target.key(): String = when (this) {
 
 private val Hand = 24.dp
 
-/** How much room the hand needs above a target before it will point down at it. */
-private val Reach = 34.dp
-private val Bob = 4.dp
+/**
+ * How far the hand beckons.
+ *
+ * It was four points, which is under a card's corner radius: the hand read as still, and a
+ * still white arrow on a white card is one nobody finds.
+ */
+private val Bob = 10.dp
 private val Clearance = 5.dp
+
+/**
+ * How much room the hand needs above a target before it will point down at it.
+ *
+ * A whole hand, its clearance and a full beckon — plus a point, so the furthest reach of the
+ * bob is inside the screen rather than exactly on its edge. Derived rather than typed, because
+ * it was typed once and then [Bob] grew, which is how a hand ends up beckoning off the top of
+ * the felt.
+ */
+private val Reach = Hand + Clearance + Bob + 1.dp
 private const val PointerZ = 100f
 
 private const val BobMs = 620
@@ -171,9 +208,10 @@ private const val WIDE = 0.5f
 private const val HEAD = 0.55f
 private const val TAIL_OUT = 0.68f
 private const val TAIL_IN = 0.32f
-private const val ShadowDrop = 2f
+
+private val ShadowDrop = 1.5.dp
 private val Shadow = Color(0x66000000)
 
 /** The rail's own colour: dark enough to hold an edge against a white card. */
 private val Outline = Color(0xFF1B2430)
-private const val OutlineWidth = 4f
+private val OutlineWeight = 2.5.dp

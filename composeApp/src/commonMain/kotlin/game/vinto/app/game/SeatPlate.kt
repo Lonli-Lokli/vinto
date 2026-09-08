@@ -2,6 +2,7 @@ package game.vinto.app.game
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import game.vinto.app.LocalReducedMotion
 import game.vinto.app.art.Res
 import game.vinto.app.art.avatar_dune
 import game.vinto.app.art.avatar_ember
@@ -67,6 +69,9 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.floor
 
 private val PlatePad = 4.dp
 private val PlateGap = 8.dp
@@ -277,20 +282,63 @@ private fun Badge(badge: SeatBadge, portrait: Dp) {
         SeatBadge.BOT -> Slate.ink.copy(alpha = QUIET)
         SeatBadge.BARRED -> Signal.penalty
     }
-    Canvas(
-        modifier = Modifier
-            .size(maxOf(portrait * BadgeShare, BadgeLeast))
-            .semantics { contentDescription = said },
-    ) {
-        when (badge) {
-            SeatBadge.WAITING -> drawThought(ink)
-            SeatBadge.BOT -> drawRobot(ink)
-            SeatBadge.VINTO -> drawCrown(ink)
-            SeatBadge.COALITION -> drawLink(ink)
-            SeatBadge.AWAY -> drawAway(ink)
-            SeatBadge.BARRED -> drawBarred(ink)
-        }
+    val marked = Modifier
+        .size(maxOf(portrait * BadgeShare, BadgeLeast))
+        .semantics { contentDescription = said }
+
+    // One branch per mark rather than one Canvas over a `when`, because the waiting mark is
+    // the only one that is *about right now* and the only one that moves — and an animation
+    // has to be composed, not drawn.
+    when (badge) {
+        SeatBadge.WAITING -> Thinking(ink, marked)
+        SeatBadge.BOT -> Canvas(marked) { drawRobot(ink) }
+        SeatBadge.VINTO -> Canvas(marked) { drawCrown(ink) }
+        SeatBadge.COALITION -> Canvas(marked) { drawLink(ink) }
+        SeatBadge.AWAY -> Canvas(marked) { drawAway(ink) }
+        SeatBadge.BARRED -> Canvas(marked) { drawBarred(ink) }
     }
+}
+
+/**
+ * The thought cloud, thinking.
+ *
+ * Every other mark on a plate is a *fact* — a machine plays this seat, this seat called Vinto
+ * — and a fact is a still drawing. This one is the only thing on the felt that says something
+ * is happening **now**: a bot deciding, or a player who has not peeked yet. Drawn still, it
+ * said that just as well when nothing was happening at all, so a table that had hung and a
+ * table that was thinking looked exactly alike, and the only way to tell was to wait and see.
+ *
+ * So the puffs brighten in turn, bottom to top, the way a thought rises in a comic. It is the
+ * progress this moment gets: there is no percentage to show — the search does not know how far
+ * through it is — and what a player needs is not a number but the knowledge that the seat is
+ * still working.
+ *
+ * Its own composable so the frame clock is started only by the seats actually being waited on,
+ * which is the same reason `seatGlow` is one: an infinite transition asks for a frame every
+ * vsync, and plates that never stop asking are a table that never goes idle.
+ */
+@Composable
+private fun Thinking(ink: Color, modifier: Modifier) {
+    // No movement, same information — and the still cloud is the *whole* cloud at full
+    // strength rather than one frame of the wave, exactly as `VintoSpinner` stands still.
+    if (LocalReducedMotion.current) {
+        Canvas(modifier) { drawThought(ink, phase = null) }
+        return
+    }
+
+    val thought = rememberInfiniteTransition(label = "thinking")
+    val phase by thought.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            // Linear and restarting: the wave below is continuous across the seam, so a turn
+            // that eased would read as the cloud hesitating rather than as it thinking.
+            animation = tween(ThinkMs, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "puffs",
+    )
+    Canvas(modifier) { drawThought(ink, phase) }
 }
 
 private fun SeatBadge.spoken(): StringResource = when (this) {
@@ -310,14 +358,66 @@ private fun SeatBadge.spoken(): StringResource = when (this) {
  * Filled shapes keep their silhouette at any size, which is the only thing a mark this small
  * has. The trailing bubbles went from two to one and moved up: two of them hung below the
  * cloud's mass and dragged its optical centre off the line the other marks sit on.
+ *
+ * [phase] is how far through the wave the cloud is, or null for the still one. Each puff
+ * brightens and swells as its own turn comes round, and never goes out: at a mark this size a
+ * puff that vanished would be a cloud changing shape rather than a cloud thinking.
  */
-private fun DrawScope.drawThought(ink: Color) {
+private fun DrawScope.drawThought(ink: Color, phase: Float?) {
     val w = size.minDimension
-    drawCircle(ink, radius = w * PUFF_BIG, center = Offset(w * PUFF_BIG_X, w * PUFF_BIG_Y))
-    drawCircle(ink, radius = w * PUFF_MID, center = Offset(w * PUFF_MID_X, w * PUFF_MID_Y))
-    drawCircle(ink, radius = w * PUFF_LOW, center = Offset(w * PUFF_LOW_X, w * PUFF_LOW_Y))
-    drawCircle(ink, radius = w * TRAIL_NEAR, center = Offset(w * TRAIL_NEAR_X, w * TRAIL_NEAR_Y))
+    Puffs.forEachIndexed { i, puff ->
+        val lit = phase?.let { rising(it - i * PUFF_STEP) } ?: 1f
+        drawCircle(
+            color = ink.copy(alpha = ink.alpha * (PUFF_REST + (1f - PUFF_REST) * lit)),
+            radius = w * puff.size * (PUFF_SMALL + (1f - PUFF_SMALL) * lit),
+            center = Offset(w * puff.x, w * puff.y),
+        )
+    }
 }
+
+/**
+ * One turn of the wave: dark, up to full, and back down again.
+ *
+ * A raised cosine rather than a ramp, because it has to be continuous *at both ends* — the
+ * transition driving it restarts from zero, and a wave that did not meet itself there would
+ * put a visible tick in the cloud once a second.
+ */
+private fun rising(at: Float): Float = (1f - cos(TWO_PI * (at - floor(at)))) / 2f
+
+/** One circle of the cloud: where it sits, and how big it is at full brightness. */
+private data class Puff(val x: Float, val y: Float, val size: Float)
+
+/** Bottom to top, which is the order the eye reads a thought rising in. */
+private val Puffs = listOf(
+    Puff(TRAIL_NEAR_X, TRAIL_NEAR_Y, TRAIL_NEAR),
+    Puff(PUFF_LOW_X, PUFF_LOW_Y, PUFF_LOW),
+    Puff(PUFF_BIG_X, PUFF_BIG_Y, PUFF_BIG),
+    Puff(PUFF_MID_X, PUFF_MID_Y, PUFF_MID),
+)
+
+/** How far apart the puffs' turns are: one whole wave, shared out between them. */
+private val PUFF_STEP = 1f / Puffs.size
+
+/**
+ * How dim a puff goes between its turns, and how small.
+ *
+ * Dim rather than out, and 0.45 is [QUIET] — the same weight this file already draws a durable
+ * fact at. The size barely moves: the silhouette is the whole of what a 17-point mark has, and
+ * a cloud whose puffs deflate is one that looks like it is losing its shape.
+ */
+private const val PUFF_REST = QUIET
+private const val PUFF_SMALL = 0.88f
+
+/**
+ * One turn of the whole cloud.
+ *
+ * Four puffs over a second and a half is about a third of a second each, which is the rate a
+ * person reads as *working* — the same reasoning as the spinner's turn, which is a little over
+ * a second and reads as an error when it is faster.
+ */
+private const val ThinkMs = 1500
+
+private val TWO_PI = (2 * PI).toFloat()
 
 /** A square head with two eyes and a stub either side — the shape people draw for a robot. */
 private fun DrawScope.drawRobot(ink: Color) {

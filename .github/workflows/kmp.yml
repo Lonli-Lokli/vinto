@@ -413,6 +413,7 @@ jobs:
           # a secret because it only ever exists on this runner, for these three steps.
           npx --yes "wrangler@${WRANGLER_VERSION}" dev --port 8787 \
             --var ROOM_OPEN:true --var ROOM_DEBUG_KEY:local-harness \
+            --var RECORDINGS_KEY:local-harness \
             > "${RUNNER_TEMP}/wrangler-dev.log" 2>&1 &
           echo $! > "${RUNNER_TEMP}/wrangler.pid"
 
@@ -454,6 +455,14 @@ jobs:
       - name: 'Gate: room codes over HTTP'
         working-directory: worker/cloudflare
         run: node gate-room-codes.mjs
+
+      # The archive a letter arriving next week is answered from. Its door is the whole of what
+      # runs here — a recording is every hand at one table, so "is it behind a key, and is a
+      # wrong key told exactly what a missing one is" are the questions that matter most and the
+      # ones a runner can ask without playing a game out.
+      - name: 'Gate: the round archive'
+        working-directory: worker/cloudflare
+        run: node gate-archive.mjs
 
       - name: 'Gate: the corpus replayed through workerd'
         working-directory: worker/cloudflare

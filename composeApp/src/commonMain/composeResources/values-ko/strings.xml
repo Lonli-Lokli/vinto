@@ -600,6 +600,10 @@
     <string name="log_made_you_draw">%1$s가 카드를 뽑게 만들었어요</string>
     <string name="log_made_draw_they">%1$s가 %2$s를 카드 뽑게 만들었어요</string>
     <string name="log_round_begins">라운드 시작</string>
+    <string name="log_seat_covered">%1$s가 자리를 비워서 봇이 대신 플레이해요</string>
+    <string name="log_seat_covered_you">자리를 비운 동안 봇이 대신 플레이했어요</string>
+    <string name="log_seat_back">%1$s가 돌아왔어요</string>
+    <string name="log_seat_back_you">다시 테이블로 돌아왔어요</string>
 
     <string name="help_rules_title">전체 규칙</string>
     <string name="help_rules_body">이 시트는 여기서 카드가 하는 일을 설명해요. 완전한 규칙은 게임을 만든 분들의 공식 사이트에 있어요.</string>

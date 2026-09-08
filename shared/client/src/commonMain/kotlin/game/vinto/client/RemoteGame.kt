@@ -340,6 +340,7 @@ class RemoteRoom(
                 when (val answer = connector.connect(code)) {
                     is RoomAnswer.Failed -> {
                         if (permanent(answer.trouble)) {
+                            forgetIfGone(answer.trouble)
                             _connection.value = ConnectionState.Closed(answer.reason, answer.trouble)
                             return
                         }
@@ -519,6 +520,25 @@ class RemoteRoom(
 
     private fun token(): String? = vault.seatToken(code)
 
+    /**
+     * A room that is not there any more stops being offered on the front door.
+     *
+     * The door keeps a way back into the room this device stepped out of, and offers it from
+     * the vault rather than by asking the service first — so that it works on a bad network,
+     * and so a refusal is handled here, on the way in, like every other refusal. This is the
+     * half that was missing: nothing ever wrote the refusal down, so a deleted room went on
+     * being offered for ever, "return to your room" pointing at a table that no longer exists.
+     *
+     * Narrow on purpose. Only the two answers that mean *the table is not there* forget it;
+     * offline, busy and a build below the room's floor all leave the seat alone, because in
+     * each of those the seat may well still be waiting. And only this room's own entry, so a
+     * device that has since walked into another room is untouched.
+     */
+    private fun forgetIfGone(trouble: RoomTrouble) {
+        val gone = trouble == RoomTrouble.NO_SUCH_ROOM || trouble == RoomTrouble.CLOSED
+        if (gone && vault.currentRoom().equals(code, ignoreCase = true)) vault.forgetRoom()
+    }
+
     private fun fire(message: ClientMessage) {
         sender.launch {
             try {
@@ -677,6 +697,21 @@ class RemoteGameSession internal constructor(
     }
 
     /**
+     * Who a bot is covering, and the table told when that changes.
+     *
+     * The room sends the whole set on every batch, so the news is in the *difference*. Both
+     * directions are worth a line: a seat being taken over is the largest thing that can
+     * happen to a table without a card moving, and it used to arrive as nothing but one small
+     * mark on a plate — which is how a machine playing somebody's seat read, from every other
+     * seat, as that person playing at machine speed.
+     */
+    private fun noteWhoIsCovered(now: Set<String>) {
+        val lines = awayChanges(_away.value, now, _view.value)
+        _away.value = now
+        if (lines.isNotEmpty()) _log.value = (_log.value + lines).takeLast(LOG_LENGTH)
+    }
+
+    /**
      * One sentence off the socket.
      *
      * Into the **log** as well as the flow, because the log is the strip a screen already
@@ -738,7 +773,7 @@ class RemoteGameSession internal constructor(
     // ------------------------------------------------------------------ fed by RemoteRoom
 
     internal fun applyEvents(message: ServerMessage.Events) {
-        _away.value = message.away.toSet()
+        noteWhoIsCovered(message.away.toSet())
         _plan.value = message.plan
         // What the bots said while making these moves, in step with the moves it comments on.
         message.said.forEach(::heard)
@@ -782,7 +817,7 @@ class RemoteGameSession internal constructor(
     }
 
     internal fun applySync(message: ServerMessage.Sync) {
-        _away.value = message.away.toSet()
+        noteWhoIsCovered(message.away.toSet())
         _plan.value = message.plan
         cursor = maxOf(cursor, message.nextIndex)
         val landing = message.view ?: return

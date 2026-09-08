@@ -623,6 +623,10 @@
     <string name="log_made_you_draw">%1$s جعلك تسحب بطاقة</string>
     <string name="log_made_draw_they">%1$s جعل %2$s يسحب بطاقة</string>
     <string name="log_round_begins">تبدأ الجولة</string>
+    <string name="log_seat_covered">انقطع اتصال %1$s — روبوت يلعب هذا المقعد الآن</string>
+    <string name="log_seat_covered_you">لعب روبوت مقعدك أثناء غيابك</string>
+    <string name="log_seat_back">%1$s في الطاولة مجددًا</string>
+    <string name="log_seat_back_you">عدتم إلى الطاولة</string>
 
     <string name="help_rules_title">القواعد الكاملة</string>
     <string name="help_rules_body">هذه الورقة تشرح ما تفعله كل بطاقة هنا. القواعد الكاملة موجودة على موقع اللعبة نفسها، من صانعيها.</string>

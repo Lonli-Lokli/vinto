@@ -633,6 +633,10 @@
     <string name="log_made_you_draw">%1$sにカードを引かされました</string>
     <string name="log_made_draw_they">%1$sが%2$sにカードを引かせました</string>
     <string name="log_round_begins">ラウンド開始</string>
+    <string name="log_seat_covered">%1$sが退席中です。ボットが代わりに操作しています</string>
+    <string name="log_seat_covered_you">離席中、ボットがあなたの席を担当しました</string>
+    <string name="log_seat_back">%1$sが戻りました</string>
+    <string name="log_seat_back_you">テーブルに戻りました</string>
 
     <string name="help_rules_title">完全なルール</string>
     <string name="help_rules_body">このシートはこのアプリでのカードの働きを説明するものです。完全なルールは、制作者による本家サイトにあります。</string>

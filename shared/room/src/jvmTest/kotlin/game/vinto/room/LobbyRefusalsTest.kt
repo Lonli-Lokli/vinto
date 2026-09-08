@@ -3,6 +3,7 @@ package game.vinto.room
 import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.PlayerProfile
 import game.vinto.protocol.RoomPhase
+import game.vinto.protocol.botName
 import game.vinto.protocol.looksMinted
 import game.vinto.shapes.Sha256
 import kotlin.test.Test

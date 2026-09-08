@@ -601,6 +601,10 @@
     <string name="log_made_you_draw">%1$s zmusza cię do dobrania karty</string>
     <string name="log_made_draw_they">%1$s zmusza %2$s do dobrania karty</string>
     <string name="log_round_begins">runda się zaczyna</string>
+    <string name="log_seat_covered">Bot gra za %1$s — brak połączenia</string>
+    <string name="log_seat_covered_you">Bot grał zamiast Ciebie podczas Twojej nieobecności</string>
+    <string name="log_seat_back">%1$s wraca</string>
+    <string name="log_seat_back_you">Wracasz do stołu</string>
 
     <string name="help_rules_title">Pełne zasady</string>
     <string name="help_rules_body">Ta karta wyjaśnia, co robi każda karta w tej wersji. Pełne zasady są na stronie samej gry, u jej twórców.</string>

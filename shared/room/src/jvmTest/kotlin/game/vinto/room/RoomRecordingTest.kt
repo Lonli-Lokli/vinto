@@ -104,12 +104,28 @@ class RoomRecordingTest {
         assertEquals("no round has been dealt", result.error)
     }
 
+    /**
+     * A round that has not ended records where it has got to, and says which it is.
+     *
+     * This used to assert the opposite — "the round has not ended", no recording — and the
+     * reversal is deliberate: the round a crash report points at is by definition one that was
+     * interrupted, so refusing to build a recording for it withheld the replay in exactly the
+     * case somebody needed it. `InterruptedRoundReplaysTest` carries the argument and replays a
+     * half-played round through the engine; this keeps the simplest instance of it beside the
+     * finished one, where a reader comparing the two will find it.
+     */
     @Test
-    fun anUnfinishedRoundHasNoRecordingYet() {
+    fun aDealtRoundRecordsTheDealItIsPartWayThrough() {
         val dealt = roundRecording(dealtRoom(), recordedAt = "2026-08-26T00:00:00Z")
         val result = VintoJson.decodeFromString(RecordingResult.serializer(), dealt)
-        assertNull(result.recording)
-        assertEquals("the round has not ended", result.error)
+        val recording = assertNotNull(result.recording, "a dealt round has nothing to replay")
+
+        assertNull(result.error)
+        assertTrue(recording.actions.isEmpty(), "nothing has been played yet")
+        assertTrue(
+            recording.meta.label?.contains("in progress") == true,
+            "the recording does not say it is unfinished: ${recording.meta.label}",
+        )
     }
 
     // ------------------------------------------------------------------ plumbing

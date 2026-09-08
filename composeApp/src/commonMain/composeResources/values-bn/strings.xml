@@ -600,6 +600,10 @@
     <string name="log_made_you_draw">%1$s আপনাকে একটি তাস তুলতে বাধ্য করেছেন</string>
     <string name="log_made_draw_they">%1$s %2$s-কে একটি তাস তুলতে বাধ্য করেছেন</string>
     <string name="log_round_begins">রাউন্ড শুরু হয়</string>
+    <string name="log_seat_covered">%1$s চলে গেছেন — এখন তার আসনে একটি বট খেলছে</string>
+    <string name="log_seat_covered_you">আপনি না থাকাকালীন একটি বট আপনার আসনে খেলেছে</string>
+    <string name="log_seat_back">%1$s ফিরে এসেছেন</string>
+    <string name="log_seat_back_you">আপনি টেবিলে ফিরে এসেছেন</string>
 
     <string name="help_rules_title">সম্পূর্ণ নিয়মাবলী</string>
     <string name="help_rules_body">এই শিটটি বলে দেয় এখানে একটি তাস কী করে। সম্পূর্ণ নিয়মাবলী আছে খেলাটির নিজস্ব সাইটে, যারা এটি তৈরি করেছেন তাদের কাছ থেকে।</string>

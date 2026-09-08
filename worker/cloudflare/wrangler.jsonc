@@ -82,6 +82,68 @@
   // It used to be `vinto_events`, read by a page this Worker served at `/counts?key=…` — a per-game
   // dashboard, with per-game SQL, that every other game would have needed a copy of.
 
+  "observability": { "enabled": true },
+
+  // --- The round archive ---------------------------------------------------------------------
+  //
+  // Every round played, kept where it outlives the room that played it.
+  //
+  // A room's recordings used to live in the room's own Durable Object, under `recording:<n>`,
+  // and a room deletes its storage when its clock runs out — two minutes after the last person
+  // leaves, ten after a session ends. So a recording survived its game by minutes, and the one
+  // question anybody actually asks of one ("somebody wrote in about a King that took no penalty,
+  // some time on Tuesday evening — can you look?") could not be answered at all. Not answered
+  // badly: there was nothing left to look at.
+  //
+  // R2 rather than the object's storage, because the question is asked by *time* and across
+  // rooms. The key is the clock — `2026/09/08/22/S3C9Z6-3.json` — so a time range is a prefix
+  // list rather than a search, and the document is the same `GameRecording` `POST /replay`
+  // already runs through the real engine. Nothing new has to learn how to read one.
+  //
+  // **Thirty days**, set as a bucket lifecycle rule rather than swept in code:
+  //
+  //   npx wrangler r2 bucket create vinto-rounds
+  //   npx wrangler r2 bucket lifecycle add vinto-rounds --name expire-30d --expire-days 30
+  //
+  // Expiry belongs to the bucket because it must happen whether or not this Worker is running,
+  // and a sweep in an alarm is a thing that stops when the room does. Thirty days answers "last
+  // week" and stops the app becoming a permanent record of what every player held.
+  //
+  // Absent-safe, like every other binding: with this block removed the room plays identically
+  // and archives nothing, which is what keeps every gate script runnable with no account.
+  "r2_buckets": [{ "binding": "ARCHIVE", "bucket_name": "vinto-rounds" }],
+
+  // --- Volume, at the door (design R6) ------------------------------------------------------
+  //
+  // Everything else in this service bounds a *total*: the registry's global and per-source
+  // room caps, the per-seat action budget, the socket cap, the message size cap, the guess
+  // limiter in front of a private room's code. None of them bounds a *rate*, and the cheapest
+  // request here is the most amplifying one — `GET /rooms` wakes the single registry Durable
+  // Object, which is single-threaded, so a flood of the one request that costs a stranger
+  // nothing serialises through the one object every real player also needs.
+  //
+  // 120 a minute per address. Two orders of magnitude above anybody browsing a lobby (a
+  // player refreshing hard does five), and far enough below a flood to make one host useless.
+  // Deliberately generous rather than tight, because the key is an address and a school, an
+  // office or a mobile carrier is one address to us — throttling real players in a group is a
+  // worse failure than serving a slow scan.
+  //
+  // **This is now expressible here, and it was not when the note below was written.** That
+  // note said edge rate limiting was a zone-level dashboard rule that could not go in this
+  // file and could not be exercised by `wrangler dev`, so a config block would be a claim
+  // nothing verifies. `ratelimits` is a first-class binding in wrangler 4.x, workerd emulates
+  // it locally, and `gate-ratelimit.mjs` exercises it — so it is a claim something verifies.
+  //
+  // Absent-safe like every other binding: with this block removed the Worker runs identically
+  // and limits nothing — which is exactly how it came to be missing. Rewriting the analytics
+  // section next door (cffc972) took this key and `observability` out with it, and because
+  // absent means *unlimited* rather than *broken*, nothing said so but the gate. That is the
+  // gate earning its place: the same silent-defence failure this file already tells the story
+  // of, caught by a test this time instead of by months of unmetered traffic.
+  "ratelimits": [
+    { "name": "DOOR", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } }
+  ],
+
   // --- Edge rate limiting (design R6, task 5.3) --------------------------------------------
   //
   // **Superseded by the `ratelimits` binding above, and the reasoning is worth keeping.**

@@ -290,7 +290,7 @@ fun agreePlanEnvelopes(stateJson: String, token: String, agree: Boolean, nowMs: 
 
     val closedTheWindow = conferring(state) && !conferring(said.state)
     val played = if (closedTheWindow) playBotsTracked(said.state) else PlayedOut(said.state, emptyList())
-    val settled = withPacing(played.state, nowMs)
+    val settled = withPacing(played.state, nowMs, watching = played.steps.size)
     return VintoJson.encodeToString(
         Envelopes(settled, messages = eventsPerSeat(settled, played.steps, nowMs, played.said)),
     )
@@ -354,7 +354,7 @@ fun sayEnvelopes(stateJson: String, token: String, talkJson: String, nowMs: Doub
     // so a person talking to a bot gets the same game whichever session they are in.
     val answered = (spoken.talk as? TableTalk.Proposal)?.let { answerFromBots(spoken.state, it) }
     if (answered != null && (answered.steps.isNotEmpty() || answered.said.isNotEmpty())) {
-        val settled = withPacing(answered.state, nowMs)
+        val settled = withPacing(answered.state, nowMs, watching = answered.steps.size)
         // One message per seat, so the suggestion travels in the same `said` list as the
         // answer and the moves rather than as a second message the events would overwrite.
         return VintoJson.encodeToString(
@@ -404,7 +404,7 @@ fun doneConferringEnvelopes(stateJson: String, token: String, nowMs: Double): St
     }
 
     val played = playBotsTracked(said.state)
-    val settled = withPacing(played.state, nowMs)
+    val settled = withPacing(played.state, nowMs, watching = played.steps.size)
     return VintoJson.encodeToString(
         Envelopes(settled, messages = eventsPerSeat(settled, played.steps, nowMs, played.said)),
     )

@@ -750,6 +750,14 @@
     <string name="log_made_draw_they">%1$s made %2$s draw a card</string>
     <string name="log_round_begins">the round begins</string>
 
+    <!-- A seat a bot has taken over, and the seat handed back. The room gives a seat to a bot
+         when its person has been gone for half a minute; the table hears about it, because
+         otherwise a machine plays on under somebody else's name and nothing says so. -->
+    <string name="log_seat_covered">%1$s has gone — a bot is playing their seat</string>
+    <string name="log_seat_covered_you">A bot played your seat while you were away</string>
+    <string name="log_seat_back">%1$s is back</string>
+    <string name="log_seat_back_you">You are back at the table</string>
+
     <!-- The rulebook lives with the people whose game it is; the sheet answers the mid-turn
          question and points at the rest. -->
     <string name="help_rules_title">The full rules</string>

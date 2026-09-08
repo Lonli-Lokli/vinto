@@ -628,6 +628,10 @@
     <string name="log_made_you_draw">%1$s ti ha fatto pescare una carta</string>
     <string name="log_made_draw_they">%1$s ha fatto pescare una carta a %2$s</string>
     <string name="log_round_begins">il round inizia</string>
+    <string name="log_seat_covered">%1$s ha perso la connessione — un bot gioca al suo posto</string>
+    <string name="log_seat_covered_you">Un bot ha giocato al tuo posto mentre eri assente</string>
+    <string name="log_seat_back">%1$s è di nuovo al tavolo</string>
+    <string name="log_seat_back_you">Sei di nuovo al tavolo</string>
 
     <string name="help_rules_title">Le regole complete</string>
     <string name="help_rules_body">Questa scheda spiega cosa fa una carta qui. Le regole complete sono sul sito del gioco, fatte da chi lo ha creato.</string>

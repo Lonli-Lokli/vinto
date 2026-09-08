@@ -617,6 +617,10 @@
     <string name="log_made_you_draw">%1$s نے آپ کو پتہ نکالنے پر مجبور کیا</string>
     <string name="log_made_draw_they">%1$s نے %2$s کو پتہ نکالنے پر مجبور کیا</string>
     <string name="log_round_begins">دور شروع ہوتا ہے</string>
+    <string name="log_seat_covered">%1$s جا چکے ہیں — ان کی نشست ایک بوٹ سنبھال رہا ہے</string>
+    <string name="log_seat_covered_you">آپ کی غیر موجودگی میں بوٹ نے آپ کی نشست کھیلی</string>
+    <string name="log_seat_back">%1$s واپس آ گئے ہیں</string>
+    <string name="log_seat_back_you">آپ میز پر واپس آ گئے ہیں</string>
 
     <string name="help_rules_title">مکمل اصول</string>
     <string name="help_rules_body">یہ ورقہ بتاتا ہے کہ یہاں ہر کارڈ کیا کرتا ہے۔ مکمل اصول گیم کی اپنی سائٹ پر، اسے بنانے والوں کی طرف سے موجود ہیں۔</string>

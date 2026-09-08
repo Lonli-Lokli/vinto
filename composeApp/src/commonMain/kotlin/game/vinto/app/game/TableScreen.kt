@@ -127,6 +127,8 @@ import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Verdict
 import game.vinto.client.finalRoundTurnsLeft
+import game.vinto.client.isPlayedByAMachine
+import game.vinto.client.seatName
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
@@ -234,6 +236,7 @@ private const val CUP_STEAM_OUT = 0.12f
 private const val CUP_STEAM_TOP = 0.10f
 private const val CUP_STEAM_FOOT = 0.28f
 private val WordmarkSize = 19.sp
+private val WordmarkTracking = 2.sp
 
 /**
  * The table, laid out as the web app lays it out on a phone.
@@ -641,7 +644,7 @@ private fun HeaderChip(
 private fun headerRoom(labels: List<String>, wordmark: String, counter: String, room: Dp): HeaderRoom {
     val measurer = rememberTextMeasurer()
     val words = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-    val brand = TextStyle(fontFamily = Wordmark, fontSize = WordmarkSize, fontWeight = FontWeight.Bold)
+    val brand = wordmarkStyle()
     val density = LocalDensity.current
     val widthOf: (String, TextStyle) -> Dp = { text, style ->
         with(density) { measurer.measure(AnnotatedString(text), style, maxLines = 1).size.width.toDp() }
@@ -667,7 +670,7 @@ private fun headerRoom(labels: List<String>, wordmark: String, counter: String, 
 }
 
 /** Which of the header's three optional pieces there is room for. */
-private data class HeaderRoom(val wide: Boolean, val wordmark: Boolean, val counter: Boolean)
+internal data class HeaderRoom(val wide: Boolean, val wordmark: Boolean, val counter: Boolean)
 
 /** A gear: the ring, eight teeth, and the hub, all strokes. */
 private fun DrawScope.drawGear(ink: Color) {
@@ -775,36 +778,73 @@ private const val BUG_LOW_SPOT = 0.30f
  * being the thing that gave way.
  */
 @Composable
-private fun HeaderName(name: String, counter: String, fits: HeaderRoom, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(Gap),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (fits.wordmark) {
+internal fun HeaderName(name: String, counter: String, fits: HeaderRoom, modifier: Modifier = Modifier) {
+    // Measured against the room this group *actually has*, in the style the words are
+    // *actually drawn in*. [headerRoom] estimates from the other side — the controls' words,
+    // their chrome, the row's padding — and an estimate is all it can be, so the group carries
+    // the row's weight and a wrong one is paid for by clipping rather than by a control
+    // shrinking. This is what stops the clipping being visible: whatever the estimate said,
+    // nothing is drawn here that does not fit here.
+    //
+    // Which matters most where the estimate is least reliable. A web font arrives *after* the
+    // first frames, so a header measured while the fallback was in place can be measuring a
+    // narrower alphabet than the one it goes on to draw — and a phone reported exactly that:
+    // "VINT" under a wordmark, with the round counter beside it cut to one letter. Here the
+    // font resolving is a recomposition, so the answer is remeasured with it.
+    BoxWithConstraints(modifier = modifier) {
+        val room = maxWidth
+        val brand = wordmarkStyle()
+        val label = MaterialTheme.typography.labelLarge
+        val nameNeeds = widthOf(name, brand)
+        val counterNeeds = widthOf(counter, label)
+        val showName = fits.wordmark && nameNeeds <= room
+        val showCounter = fits.counter &&
+            counterNeeds + (if (showName) nameNeeds + Gap else 0.dp) <= room
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(Gap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             // On the rail, so the rail's own ink — not the theme's, which is a page colour and
             // reads as dark-on-dark here.
-            Text(
-                name,
-                fontFamily = Wordmark,
-                fontSize = WordmarkSize,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 2.sp,
-                color = Rail.brand,
-                maxLines = 1,
-            )
-        }
-        if (fits.counter) {
+            if (showName) Text(name, style = brand, color = Rail.brand, maxLines = 1)
+
             // The *game's* round, not the deal's. The engine counts rounds within one deal — it
             // is a turn counter that wraps — while the player is counting hands played.
-            Text(counter, style = MaterialTheme.typography.labelLarge, color = Rail.inkDim, maxLines = 1)
+            if (showCounter) Text(counter, style = label, color = Rail.inkDim, maxLines = 1)
         }
+    }
+}
+
+/**
+ * The wordmark's style, in one place.
+ *
+ * It was written twice — once to measure with and once to draw with — and the two disagreed:
+ * the drawing tracks every glyph by two points and the measuring did not, which is a dozen
+ * points of "Vinto!" that the header never counted. Two copies of a style is the kind of drift
+ * nothing catches, because both halves look right on their own.
+ */
+@Composable
+private fun wordmarkStyle(): TextStyle = TextStyle(
+    fontFamily = Wordmark,
+    fontSize = WordmarkSize,
+    fontWeight = FontWeight.Bold,
+    letterSpacing = WordmarkTracking,
+)
+
+/** How wide a string is in a style, in points, for a caller deciding whether it fits. */
+@Composable
+private fun widthOf(text: String, style: TextStyle): Dp {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    return with(density) {
+        measurer.measure(AnnotatedString(text), style, maxLines = 1).size.width.toDp()
     }
 }
 
 /** Where the round is up to, and how much deck is left. */
 @Composable
-private fun TableHeader(
+internal fun TableHeader(
     view: PlayerView,
     round: Int,
     onHelp: (Rank?) -> Unit,
@@ -1544,7 +1584,11 @@ private fun badgesFor(
         else -> active
     }
     if (waiting) add(SeatBadge.WAITING)
-    if (seat.isBot) add(SeatBadge.BOT)
+    // Or being played by one: a seat a bot has taken over is a machine at the table, and the
+    // takeover cannot be written into the game state (`isBot` is inside the canonical hash),
+    // so `away` is the only place the fact exists. Drawn as a bot, it stops reading as the
+    // person whose name it used to wear.
+    if (isPlayedByAMachine(seat, table.away)) add(SeatBadge.BOT)
     if (seat.isVintoCaller) add(SeatBadge.VINTO)
     if (seat.coalitionWith.isNotEmpty()) add(SeatBadge.COALITION)
     if (seat.id in table.away) add(SeatBadge.AWAY)
@@ -1594,7 +1638,9 @@ private fun Plate(
         }
 
         SeatPlate(
-            name = seat.nickname,
+            // Not `seat.nickname`: while a bot covers this seat it is drawn as that bot, and
+            // the portrait follows the name. See `seatName`.
+            name = seatName(view, seat.id, table.away),
             active = active,
             modifier = Modifier.markedAs(stage, "seat:${seat.id}"),
             pointed = pointed,

@@ -621,6 +621,10 @@
     <string name="log_made_you_draw">%1$s fez-te tirar uma carta</string>
     <string name="log_made_draw_they">%1$s fez %2$s tirar uma carta</string>
     <string name="log_round_begins">a ronda começa</string>
+    <string name="log_seat_covered">%1$s desligou-se — um bot está a jogar no seu lugar</string>
+    <string name="log_seat_covered_you">Um bot jogou no teu lugar enquanto estiveste ausente</string>
+    <string name="log_seat_back">%1$s voltou</string>
+    <string name="log_seat_back_you">Estás de volta à mesa</string>
 
     <string name="help_rules_title">As regras completas</string>
     <string name="help_rules_body">Esta ficha diz o que uma carta faz aqui. As regras completas estão no site do jogo, feitas por quem o criou.</string>

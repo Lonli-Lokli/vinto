@@ -216,6 +216,10 @@ import game.vinto.app.art.log_play_unknown_they
 import game.vinto.app.art.log_play_unknown_you
 import game.vinto.app.art.log_play_you
 import game.vinto.app.art.log_round_begins
+import game.vinto.app.art.log_seat_back
+import game.vinto.app.art.log_seat_back_you
+import game.vinto.app.art.log_seat_covered
+import game.vinto.app.art.log_seat_covered_you
 import game.vinto.app.art.log_swap_dropping_they
 import game.vinto.app.art.log_swap_dropping_you
 import game.vinto.app.art.log_swap_they
@@ -373,6 +377,18 @@ fun said(say: Say): String {
             say.victim == Speaker.You -> stringResource(Res.string.log_made_you_draw, name)
             else -> stringResource(Res.string.log_made_draw_they, name, speakerName(say.victim))
         }
+        is Say.SeatCovered -> if (you) {
+            stringResource(Res.string.log_seat_covered_you)
+        } else {
+            stringResource(Res.string.log_seat_covered, name)
+        }
+
+        is Say.SeatBack -> if (you) {
+            stringResource(Res.string.log_seat_back_you)
+        } else {
+            stringResource(Res.string.log_seat_back, name)
+        }
+
         Say.RoundBegins -> stringResource(Res.string.log_round_begins)
     }
 }

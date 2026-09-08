@@ -1,5 +1,6 @@
 package game.vinto.app.game
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -36,6 +38,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.CountConnectionTrouble
@@ -83,6 +86,7 @@ import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.SeatSize
+import game.vinto.app.theme.Signal
 import game.vinto.app.theme.VintoSpinner
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
@@ -618,6 +622,9 @@ private fun RemoteGameScreen(
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val layout = TableLayout.forScreen(maxWidth, maxHeight)
+        // Captured here because the clock below is composed inside `CardStage`'s content
+        // lambda, where this scope's receiver is no longer the one in reach.
+        val roomWidth = maxWidth
 
         CardStage(
             frames = holder.frames,
@@ -644,11 +651,9 @@ private fun RemoteGameScreen(
                     onLeave = wayOut(room, onLeft),
                 )
 
-                // The room's toss-in clock, and the one thing a player can do about it.
-                // Reads the *live* view rather than the animated one: the clock is the
-                // room's pacing, and a countdown that waited for the cards to finish
-                // flying would show time the room has already spent.
-                TossClock(room, holder.current)
+                // The *live* view rather than the animated one: the clock is the room's
+                // pacing, and one that waited for the cards to land would show time spent.
+                TossClock(holder.current, roomWidth >= WideEnoughForWords) { room.moreTime() }
 
                 // A refused lobby op — a next round the room would not start — belongs where
                 // the tap was, not in a log. `agreed` above would otherwise sit true for ever
@@ -727,37 +732,93 @@ private fun wayOut(room: RemoteRoom, onLeft: () -> Unit): () -> Unit =
  * The toss-in countdown, with the ask that moves it.
  *
  * Shown only to a seat the window is still waiting on: everybody sees the seconds on the
- * felt's toss-in corner, but the strip is a call to act — throw, pass, or ask for more
- * time — and showing it to the seats that have already answered would be a countdown to
- * somebody else's decision. "More time" is fire-and-forget: a granted extension comes back
- * as a refreshed clock on the view, and a spent allowance comes back as a notice, both
- * already rendered by the surfaces beside this one.
+ * felt's toss-in corner, but this is a call to act — throw, pass, or ask for more time — and
+ * showing it to the seats that have already answered would be a countdown to somebody else's
+ * decision. "More time" is fire-and-forget: a granted extension comes back as a refreshed
+ * clock on the view, and a spent allowance comes back as a notice, both already rendered by
+ * the surfaces beside this one.
+ *
+ * **The row is always here, counting or not.** It used to be composed only while a window was
+ * open, in a column whose table takes `weight(1f)` — so the felt jumped up the moment a
+ * toss-in opened and dropped back when it closed, which is the worst moment it could pick: a
+ * window opens on a card that is still flying to the pile the jump has just moved. Reserving
+ * the space costs one row and removes the movement entirely.
+ *
+ * And what sits in the row follows the screen. A desktop has width to spare under its
+ * controls, so it gets the sentence and the button, on the right where the eye already is
+ * after a move. A phone does not: it gets one tappable circle with the seconds in it, which
+ * is the smallest thing that can carry a countdown and is still a 44-point target.
+ *
+ * [wide] is the screen rather than the orientation: a phone held sideways is still a phone,
+ * and what decides between a sentence and a circle is how much width there is under the
+ * controls to put one in.
  */
 @Composable
-private fun TossClock(room: RemoteRoom, view: PlayerView) {
+internal fun TossClock(view: PlayerView, wide: Boolean, onMoreTime: () -> Unit) {
     val toss = view.activeTossIn
     val waitedOn = view.mySeat != null &&
         toss != null &&
         toss.waitingForInput &&
         view.viewerId !in toss.playersReadyForNextTurn
-    val seconds = rememberCountdownSeconds(view.tossInMsRemaining.takeIf { waitedOn }) ?: return
+    val seconds = rememberCountdownSeconds(view.tossInMsRemaining.takeIf { waitedOn })
 
     Surface(modifier = Modifier.fillMaxWidth(), color = Rail.fill) {
         Row(
-            modifier = Modifier.padding(horizontal = Gap, vertical = TossClockPad).fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .padding(horizontal = Gap)
+                .fillMaxWidth()
+                .height(TossClockHeight),
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (seconds == null) return@Row
+            if (wide) {
+                Text(
+                    stringResource(Res.string.toss_clock_moves_on, seconds),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Rail.ink,
+                    modifier = Modifier.padding(end = Gap),
+                )
+                GameButton(
+                    label = stringResource(Res.string.toss_more_time),
+                    tone = ButtonTone.NEUTRAL,
+                    compact = true,
+                    onClick = onMoreTime,
+                )
+            } else {
+                SecondsBadge(seconds, onMoreTime)
+            }
+        }
+    }
+}
+
+/**
+ * The seconds, in a circle, on a screen with no room for a sentence.
+ *
+ * Tappable, and what it does is the same thing the desktop's button does — ask the room for
+ * more time — because a countdown a player can do nothing about is a countdown that only
+ * makes them hurry. It says both halves out loud for a screen reader, since the circle is a
+ * numeral and a numeral alone does not say what it is counting or what tapping it would do.
+ */
+@Composable
+private fun SecondsBadge(seconds: Int, onMoreTime: () -> Unit) {
+    val counting = stringResource(Res.string.toss_clock_moves_on, seconds)
+    val ask = stringResource(Res.string.toss_more_time)
+    Surface(
+        onClick = onMoreTime,
+        shape = CircleShape,
+        color = Rail.fill,
+        border = BorderStroke(TossBadgeRing, Signal.turn),
+        modifier = Modifier
+            .size(TossBadge)
+            .semantics { contentDescription = "$counting. $ask" },
+    ) {
+        Box(contentAlignment = Alignment.Center) {
             Text(
-                stringResource(Res.string.toss_clock_moves_on, seconds),
-                style = MaterialTheme.typography.bodyMedium,
+                "$seconds",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
                 color = Rail.ink,
-            )
-            GameButton(
-                label = stringResource(Res.string.toss_more_time),
-                tone = ButtonTone.NEUTRAL,
-                compact = true,
-                onClick = { room.moreTime() },
             )
         }
     }
@@ -808,7 +869,26 @@ private fun BelowTheFelt(
 
 private val Pad = 24.dp
 private val Gap = 10.dp
-private val TossClockPad = 6.dp
+
+/**
+ * The row the clock always occupies, and the circle a phone puts in it.
+ *
+ * Sized from the target rather than from the text: 44 points is the floor every tappable
+ * thing in this app clears (`TouchTargetTest`), and the row is that plus enough not to sit
+ * flush against the controls above it.
+ */
+private val TossBadge = 44.dp
+private val TossBadgeRing = 2.dp
+private val TossClockHeight = 52.dp
+
+/**
+ * Wide enough for the clock to say what it is counting.
+ *
+ * The usual compact/medium line, and it is the right one here for once rather than by habit:
+ * below it the row shares its width with a rail of translated buttons, and a sentence in
+ * nineteen languages is the thing that wraps.
+ */
+private val WideEnoughForWords = 600.dp
 private val LobbyMax = 420.dp
 private val StripMax = 420.dp
 

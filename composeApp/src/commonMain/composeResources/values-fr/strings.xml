@@ -626,6 +626,10 @@
     <string name="log_made_you_draw">%1$s vous a fait piocher une carte</string>
     <string name="log_made_draw_they">%1$s a fait piocher %2$s</string>
     <string name="log_round_begins">la manche commence</string>
+    <string name="log_seat_covered">%1$s est parti — un bot joue à sa place</string>
+    <string name="log_seat_covered_you">Un bot a joué à votre place pendant votre absence</string>
+    <string name="log_seat_back">%1$s est de retour</string>
+    <string name="log_seat_back_you">Vous êtes de retour à la table</string>
 
     <string name="help_rules_title">Les règles complètes</string>
     <string name="help_rules_body">Cette fiche explique ce que fait une carte ici. Les règles complètes sont sur le site du jeu, chez les personnes qui l’ont créé.</string>

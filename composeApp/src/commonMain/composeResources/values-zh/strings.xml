@@ -601,6 +601,10 @@
     <string name="log_made_you_draw">%1$s 让你摸了一张牌</string>
     <string name="log_made_draw_they">%1$s 让 %2$s 摸了一张牌</string>
     <string name="log_round_begins">本局开始</string>
+    <string name="log_seat_covered">%1$s离线了——电脑代打这个座位</string>
+    <string name="log_seat_covered_you">你不在时，电脑代打了你的座位</string>
+    <string name="log_seat_back">%1$s回来了</string>
+    <string name="log_seat_back_you">你回到了牌桌</string>
 
     <string name="help_rules_title">完整规则</string>
     <string name="help_rules_body">这份说明讲的是卡牌在这里的用法。完整规则在游戏官方网站上，由制作者提供。</string>

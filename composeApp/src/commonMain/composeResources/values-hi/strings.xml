@@ -625,6 +625,10 @@
     <string name="log_made_you_draw">%1$s ने आपको पत्ता उठवाया</string>
     <string name="log_made_draw_they">%1$s ने %2$s को पत्ता उठवाया</string>
     <string name="log_round_begins">दौर शुरू होता है</string>
+    <string name="log_seat_covered">%1$s अनुपस्थित — बॉट सीट संभाल रहा है</string>
+    <string name="log_seat_covered_you">आपकी अनुपस्थिति में बॉट ने आपकी सीट पर खेला</string>
+    <string name="log_seat_back">%1$s वापस आ गए हैं</string>
+    <string name="log_seat_back_you">आप मेज़ पर वापस आ गए हैं</string>
 
     <string name="help_rules_title">पूरे नियम</string>
     <string name="help_rules_body">यह शीट बताती है कि यहां एक पत्ता क्या करता है। पूरे नियम खेल की अपनी वेबसाइट पर हैं, उन लोगों की तरफ़ से जिन्होंने इसे बनाया।</string>

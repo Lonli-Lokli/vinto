@@ -631,6 +631,10 @@
     <string name="log_made_you_draw">%1$s seni kart çekmeye zorladı</string>
     <string name="log_made_draw_they">%1$s %2$s'i kart çekmeye zorladı</string>
     <string name="log_round_begins">tur başlıyor</string>
+    <string name="log_seat_covered">%1$s ayrıldı — koltuğunu bir bot oynuyor</string>
+    <string name="log_seat_covered_you">Siz yokken koltuğunuzu bir bot oynadı</string>
+    <string name="log_seat_back">%1$s geri döndü</string>
+    <string name="log_seat_back_you">Masaya geri döndünüz</string>
 
     <string name="help_rules_title">Tüm kurallar</string>
     <string name="help_rules_body">Bu sayfa burada bir kartın ne yaptığını anlatır. Tüm kurallar, oyunu yapanların kendi sitesinde.</string>

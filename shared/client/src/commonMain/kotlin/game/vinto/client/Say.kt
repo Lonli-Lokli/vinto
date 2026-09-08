@@ -90,6 +90,17 @@ sealed interface Say {
     /** An Ace, pointed: [victim] draws a card they did not want. */
     data class MadeDraw(override val who: Speaker, val victim: Speaker) : Say
 
+    /**
+     * A bot has taken this seat over, because its person has been gone too long.
+     *
+     * The person is named rather than the bot: that the seat now reads as an element is on the
+     * felt already, and what a table needs told is whose seat it was.
+     */
+    data class SeatCovered(override val who: Speaker) : Say
+
+    /** And they are back — the seat is theirs again, and stops being drawn as a bot. */
+    data class SeatBack(override val who: Speaker) : Say
+
     /** The deal is over and play starts. Nobody's move, so nobody's name. */
     data object RoundBegins : Say {
         override val who: Speaker get() = Speaker.Nobody

@@ -96,6 +96,15 @@ const ROOM_KEY = 'room';
 const MAX_REPLAY_BYTES = 1_000_000;
 
 /**
+ * How many archived rounds one listing answers with.
+ *
+ * A listing is read by a person narrowing "Tuesday evening" down to one game, so it wants to
+ * be a page rather than an export. An hour of play is far short of this; a whole day at a
+ * scale that reached it would be asked an hour at a time, which is what the prefix is for.
+ */
+const ARCHIVE_PAGE = 1000;
+
+/**
  * How many Durable Objects share the replay load. A Durable Object is single-threaded, so
  * one object would queue a batch of recordings behind each other; replay holds no state, so
  * spreading it costs nothing.
@@ -431,7 +440,83 @@ export class Room {
     );
     if (result.recording) {
       await this.ctx.storage.put(`recording:${after}`, JSON.stringify(result.recording));
+      await this.#archive(result.recording, after);
     }
+  }
+
+  /**
+   * Puts a round somewhere it outlives this room.
+   *
+   * The copy above is in the object's own storage, which `deleteAll()` takes with the room —
+   * two minutes after the last person leaves. That is long enough to fetch a recording you
+   * already knew you wanted and no use at all for the question people actually ask, which
+   * arrives days later and names a time rather than a room.
+   *
+   * So the key is the clock: `2026/09/08/22/S3C9Z6-3.json`, which makes a time range a prefix
+   * list. The hour is in the path because that is the coarsest bucket somebody describing
+   * "Tuesday evening" can be held to; the room code and round make it unique, and the code is
+   * in the *object* rather than only in the metadata so a listing is readable on its own.
+   *
+   * Absent-safe and failure-safe, in that order. No bucket bound and nothing is archived;
+   * a bucket that refuses a write must never take a game down with it, so the write is tried,
+   * reported and dropped — the same rule `#tellRegistry` follows for the registry.
+   */
+  async #archive(recording, round) {
+    if (!this.env.ARCHIVE) return;
+
+    const code = recording.meta?.label?.split(' ')[0]?.replace(/^room-/, '') ?? 'unknown';
+    const now = new Date();
+    const stamp = [
+      now.getUTCFullYear(),
+      String(now.getUTCMonth() + 1).padStart(2, '0'),
+      String(now.getUTCDate()).padStart(2, '0'),
+      String(now.getUTCHours()).padStart(2, '0'),
+    ].join('/');
+
+    const at = `${stamp}/${code}-${round}.json`;
+    // Enough to answer "which of these is the one" from a listing, without opening any of
+    // them. The nicknames are minted rather than typed (`looksMinted` at the room's door),
+    // so nothing here is a name anybody chose for themselves.
+    const about = {
+      at,
+      room: code,
+      round: String(round),
+      gameId: recording.initialState?.gameId ?? '',
+      seats: String(recording.initialState?.players?.length ?? 0),
+      actions: String(recording.actions?.length ?? 0),
+    };
+
+    try {
+      await this.env.ARCHIVE.put(at, JSON.stringify(recording), { customMetadata: about });
+
+      // A pointer, so a crash report's `gameId` is one lookup rather than a scan. Empty, with
+      // everything in its metadata: the round itself is 140 KB at worst and there is no reason
+      // to keep two of it. It expires on the same bucket rule the round does.
+      if (about.gameId) {
+        await this.env.ARCHIVE.put(`by-game/${about.gameId}/${code}-${round}`, '', {
+          customMetadata: about,
+        });
+      }
+    } catch (error) {
+      reportError(this.env, error, { surface: 'room-archive' });
+    }
+  }
+
+  /**
+   * Archives the round a dying room still had on the table, if it had one.
+   *
+   * Filed under the round it *would* have been — `session.rounds.length + 1` — so an abandoned
+   * third round does not overwrite the second, and the label the recording carries already says
+   * it is unfinished.
+   */
+  async #archiveAbandoned(stateJson) {
+    if (!this.env.ARCHIVE) return;
+
+    const state = JSON.parse(stateJson);
+    if (!state.game || !state.roundInitial) return;
+
+    const result = JSON.parse(roundRecording(stateJson, new Date().toISOString()));
+    if (result.recording) await this.#archive(result.recording, state.session.rounds.length + 1);
   }
 
   /** Recomputes the deadlines from who is actually here, and reschedules. */
@@ -518,6 +603,17 @@ export class Room {
 
     if (result.deleted) {
       const code = JSON.parse(stateJson).roomId.replace(/^room-/, '');
+
+      // The round nobody scored, kept before the storage goes.
+      //
+      // A room dies with a game on the table more often than it dies cleanly: the buzzer cuts
+      // a round that had no Vinto in it, the last person closes a tab, an app crashes and
+      // nobody comes back. Every one of those used to leave nothing at all — and they are
+      // exactly the rounds a report is about, because a round that played out to scoring is a
+      // round that went fine. `roundRecording` builds one for a game in progress now, so the
+      // only thing left to do is put it somewhere before `deleteAll()` takes it.
+      await this.#archiveAbandoned(stateJson);
+
       await this.#tellRegistry('/forget', { code });
       this.#broadcast({ type: 'closed', reason: 'the room ended' });
       for (const socket of this.ctx.getWebSockets()) {
@@ -1370,6 +1466,93 @@ async function handle(request, env) {
       const listed = await registry().fetch(new Request('https://registry/public'));
       return new Response(await listed.text(), {
         headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+      });
+    }
+
+    // --- the round archive ------------------------------------------------------------------
+    //
+    // What a person writing in actually gives you is a time. "Somebody used a King and nobody
+    // took a penalty, Tuesday evening" — no room code, no logs, no report filed. So the archive
+    // is asked by hour and answers with a listing, and one of those keys fetches the document
+    // `POST /replay` runs through the real engine.
+    //
+    // Behind `RECORDINGS_KEY`, which is deliberately its own secret rather than the debug key:
+    // a recording is every hand at one table, and `ROOM_DEBUG_KEY` opens `RoomState` on nothing
+    // but a room code, which is why wrangler.jsonc says it must stay absent from a deployment.
+    // This one grants exactly one thing.
+    //
+    // A 404 for a missing or wrong key, and the same 404 when no bucket is bound — the rule the
+    // rest of this service follows: a door that says "you need a key" has told a stranger there
+    // is something here worth having one for.
+    if (url.pathname === '/rounds') {
+      const key = env.RECORDINGS_KEY;
+      if (!key || !env.ARCHIVE || !keyMatches(request.headers.get('x-recordings-key'), key)) {
+        return new Response('not found', { status: 404 });
+      }
+
+      // One object, by the key a listing gave.
+      const wanted = url.searchParams.get('at');
+      if (wanted) {
+        const stored = await env.ARCHIVE.get(wanted);
+        if (!stored) return new Response('no such round', { status: 404 });
+        return new Response(stored.body, { headers: { 'content-type': 'application/json' } });
+      }
+
+      // Or by the deal, which is the half a crash report can give you.
+      //
+      // A report names `gameId`, the round and the turn, and deliberately never the room code:
+      // a code is a join credential and `scrubReport` exists to strip it. So the deal has to be
+      // enough on its own, and a pointer written beside each round makes it one lookup rather
+      // than a scan of every hour anybody might have meant.
+      //
+      // **This is why there is no gameId index in the registry**, which was the other way to do
+      // it. A registry row is leased and forgotten when its room dies, so an index there would
+      // expire at exactly the moment it started being needed — a letter arrives days later, and
+      // by then the room is long gone and its code resolves to nothing. The archive outlives
+      // the room by thirty days, so the pointer belongs beside the thing it points at.
+      const deal = url.searchParams.get('game');
+      if (deal) {
+        if (!/^[A-Za-z0-9_-]{1,64}$/.test(deal)) {
+          return new Response('that is not a deal id', { status: 400 });
+        }
+        const listed = await env.ARCHIVE.list({
+          prefix: `by-game/${deal}/`,
+          limit: ARCHIVE_PAGE,
+          include: ['customMetadata'],
+        });
+        return Response.json({
+          rounds: listed.objects.map((one) => ({ at: one.customMetadata?.at, ...one.customMetadata })),
+          more: listed.truncated,
+        });
+      }
+
+      // Or the hour, as a prefix: `2026/09/08` is a day, `2026/09/08/22` an evening hour.
+      // Narrower than a whole day is the point — a listing is a page of a thousand at most,
+      // and an evening of rooms is far short of that.
+      const from = url.searchParams.get('from') ?? '';
+      if (!/^[0-9/]{0,13}$/.test(from)) {
+        return new Response('from must look like 2026/09/08/22', { status: 400 });
+      }
+      // `include` is not optional politeness: without it R2 answers with keys and sizes and
+      // drops every custom field, so a listing came back with nothing in it to tell one game
+      // from another — which is the whole job of a listing here.
+      const listed = await env.ARCHIVE.list({
+        prefix: from,
+        limit: ARCHIVE_PAGE,
+        include: ['customMetadata'],
+      });
+      return Response.json({
+        rounds: listed.objects
+          // The by-deal pointers live in the same bucket so one lifecycle rule expires both.
+          // They are an index rather than a round, and have no business in a listing of hours.
+          .filter((one) => !one.key.startsWith('by-game/'))
+          .map((one) => ({
+            at: one.key,
+            uploaded: one.uploaded,
+            size: one.size,
+            ...one.customMetadata,
+          })),
+        more: listed.truncated,
       });
     }
 

@@ -624,6 +624,10 @@
     <string name="log_made_you_draw">%1$s membuat Anda mengambil kartu</string>
     <string name="log_made_draw_they">%1$s membuat %2$s mengambil kartu</string>
     <string name="log_round_begins">ronde dimulai</string>
+    <string name="log_seat_covered">%1$s terputus — bot mengambil alih kursinya</string>
+    <string name="log_seat_covered_you">Bot memainkan kursi Anda selama Anda tidak ada</string>
+    <string name="log_seat_back">%1$s kembali</string>
+    <string name="log_seat_back_you">Anda kembali ke meja</string>
 
     <string name="help_rules_title">Aturan lengkap</string>
     <string name="help_rules_body">Lembar ini menjelaskan apa yang dilakukan sebuah kartu di sini. Aturan lengkapnya ada di situs resmi permainan ini, dari orang-orang yang membuatnya.</string>

@@ -22,6 +22,7 @@ import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.RoundResult
 import game.vinto.protocol.UPDATE_AVAILABLE_CODE
 import game.vinto.protocol.UPDATE_NEEDED_CODE
+import game.vinto.protocol.botName
 import game.vinto.protocol.looksMinted
 import game.vinto.protocol.mintNickname
 import game.vinto.shapes.CoalitionPlan
@@ -76,27 +77,6 @@ import kotlin.random.Random
  * for both jobs.
  */
 private const val SEAT_COUNT = 4
-
-/**
- * What a bot is called at a networked table, by the seat it fills.
- *
- * They were "Bot 2" and "Bot 3", which is a slot number rather than an opponent, and it sat
- * next to real people's names. The four are the same three the offline game deals, plus
- * **Gale**, who never appears there because offline seat zero is the human. Online it can be a
- * bot, so it is in the list for exactly that case.
- *
- * Each name is the emblem on its seat's portrait — a leaf, a flame, a crescent, a ridge
- * (`brand/avatars/`). That is not decoration: the portraits have to be told apart without
- * colour (`vydanne.config.mjs` claims as much to Apple), and a name that says which shape it
- * is makes the picture and the label agree instead of competing.
- *
- * By seat rather than in order taken, so the same seat is the same opponent every time and two
- * bots can never collide on a name. `portraitFor` in the client matches on these exactly.
- */
-private val BOT_NAMES = listOf("Gale", "Ember", "Tide", "Dune")
-
-internal fun botName(seatIndex: Int): String =
-    BOT_NAMES.getOrElse(seatIndex) { "Bot ${seatIndex + 1}" }
 
 /**
  * A game needs two people (design R2a).
@@ -198,6 +178,43 @@ private const val MAX_BOT_STEPS = 200
  * them.
  */
 private const val TOSS_IN_MS = 15_000.0
+
+/**
+ * What the room adds to a window's clock for the moves the client still has to watch.
+ *
+ * The fifteen seconds are meant to be fifteen seconds of somebody *deciding*. They were not:
+ * the deadline was stamped when the window opened here, and the same response hands the client
+ * the whole run of moves that led to it — three bots' turns, each a card lifted, flown, turned
+ * over and read. Those play out before the window is answerable at all, and a player watched a
+ * third of their thinking time go by during an animation they could not skip. Reported from a
+ * real game: the auto-advance is for waiting on the next person, not for waiting on the table.
+ *
+ * The room cannot watch a client animate, but it knows exactly how many moves it just sent, and
+ * what one costs to watch is a number this repository already has — `Pacing`'s think, read and
+ * beat come to a little over a second for a move worth reading. It is an allowance rather than
+ * a measurement, so it is rounded generously and then **capped**: a batch is bounded by the
+ * bots' own turn order, and a clock that could be pushed out indefinitely would be no clock.
+ *
+ * Deliberately not scaled by the player's pace setting: pace is per-client and this is one
+ * deadline for a table of four, so the room budgets for the slowest sensible watcher rather
+ * than asking whose setting counts.
+ */
+private const val ANIMATION_PER_MOVE_MS = 1_200.0
+private const val MAX_ANIMATION_ALLOWANCE_MS = 15_000.0
+
+/**
+ * How long a table may be owed a move by the room before it wakes to make it.
+ *
+ * Never reached in ordinary play: the bots move inside the request that reached them, so by the
+ * time this is computed the turn belongs to a person again. It is the recovery, and five
+ * seconds is chosen from both ends — short enough that a player reads it as the table thinking,
+ * long enough that a table which is genuinely stuck wakes twelve times a minute rather than
+ * sixty until its own TTL takes it.
+ */
+private const val OWES_MOVE_MS = 5_000.0
+
+private fun animationAllowance(moves: Int): Double =
+    (moves.coerceAtLeast(0) * ANIMATION_PER_MOVE_MS).coerceAtMost(MAX_ANIMATION_ALLOWANCE_MS)
 
 /**
  * How long the coalition has to confer before the final round's first turn.
@@ -512,6 +529,26 @@ data class RoomState(
     /** Seats that have said they are done conferring. Cleared when the window closes. */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val conferReady: List<Int> = emptyList(),
     /**
+     * When the room wakes to make a move it owes.
+     *
+     * The bots are played *inside a request*: somebody acts, and the answer carries every bot
+     * turn that followed. One send, everything that happened because of it — and one hole. If a
+     * request ever ends with a bot still to move, nothing is left to make that move. Every seat
+     * waits on the room, the room waits to be asked, and the next thing on its clock is the
+     * session buzzer half an hour away.
+     *
+     * Not hypothetical. The confer window holds the bots while it is open, and it can be closed
+     * by a path that plays nobody: `withPacing` drops it the moment the last coalition human is
+     * no longer connected, and presence is recomputed when a socket closes — which is not a
+     * request that plays anything. A table sitting at a bot's turn in the final round with
+     * nothing due for thirty minutes is what that looks like from a chair.
+     *
+     * So this is a rule rather than a patch at the place it was found: while the room owes a
+     * move, it keeps an alarm for making it, and any way of reaching that state — known or not
+     * — heals in a few seconds.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val owesMoveAtEpochMs: Double? = null,
+    /**
      * The round whose window has already run, so it opens once and not once per action.
      *
      * A round number rather than a flag, because a session plays several and each gets its
@@ -606,6 +643,7 @@ data class RoomState(
             emptyUntilEpochMs,
             tossInDeadlineEpochMs,
             conferUntilEpochMs,
+            owesMoveAtEpochMs,
             finishedAtEpochMs?.plus(FINISHED_TTL_MS),
             if (phase == RoomPhase.LOBBY || phase == RoomPhase.STARTING) {
                 createdAtEpochMs + LOBBY_TTL_MS
@@ -994,7 +1032,37 @@ fun startGame(stateJson: String, nowMs: Double): String {
         ),
     )
 
-    return VintoJson.encodeToString(JoinResult(withPacing(playBots(started), nowMs), 0))
+    // Tracked rather than played blind: a deal can open a window behind a run of bot moves
+    // like any other response, and the clock has to cover watching them.
+    val opening = playBotsTracked(started)
+    return VintoJson.encodeToString(
+        JoinResult(withPacing(opening.state, nowMs, watching = opening.steps.size), 0),
+    )
+}
+
+/**
+ * Whether the table is waiting on a move the *room* is supposed to make.
+ *
+ * The turn holder's seat rather than the engine's idea of who is a bot, for the reason
+ * `playBotsTracked` uses the same test: a seat a bot has taken over is one the room plays, and
+ * the game state deliberately never records that (it is inside the canonical hash).
+ *
+ * A window that is holding the bots on purpose is not the room owing anything — the confer
+ * window has its own clock, and waking to play through it would be undoing it.
+ */
+private fun owesAMove(state: RoomState): Boolean {
+    if (state.phase != RoomPhase.PLAYING || conferring(state)) return false
+    val game = state.game ?: return false
+
+    // Only where "whose turn it is" means anything. In setup everybody peeks at once, so the
+    // turn holder names nobody in particular — and the phase has a driver of its own: each
+    // person finishing their peeks is a request, and a request plays whatever the room owes.
+    // Read as a turn, setup made every taken-over seat look like a table waiting on the room.
+    if (game.phase != GamePhase.PLAYING && game.phase != GamePhase.FINAL) return false
+
+    val holder = game.players.getOrNull(game.currentPlayerIndex) ?: return false
+    val seat = state.seats.firstOrNull { it.playerId == holder.id } ?: return false
+    return seat.isBot || seat.tokenHash == null
 }
 
 /** The humans an open toss-in window is still waiting on. Empty when nothing waits. */
@@ -1017,11 +1085,14 @@ private fun laggingHumans(state: RoomState): List<String> {
  * A deadline exists exactly while its situation does, and a *running* one is kept rather
  * than refreshed — an unrelated action must not buy the lagging player more time. Applied
  * after everything that changes the game: an action, a deal, a takeover, an expiry.
+ *
+ * @param watching how many moves this same response is handing the client to play out before
+ *   the window can be answered at all. See [animationAllowance].
  */
-internal fun withPacing(state: RoomState, nowMs: Double): RoomState {
+internal fun withPacing(state: RoomState, nowMs: Double, watching: Int = 0): RoomState {
     val playing = state.phase == RoomPhase.PLAYING
     val tossDeadline = if (playing && laggingHumans(state).isNotEmpty()) {
-        state.tossInDeadlineEpochMs ?: (nowMs + TOSS_IN_MS)
+        state.tossInDeadlineEpochMs ?: nowMs + TOSS_IN_MS + animationAllowance(watching)
     } else {
         null
     }
@@ -1040,9 +1111,15 @@ internal fun withPacing(state: RoomState, nowMs: Double): RoomState {
     } else {
         state.conferredRound
     }
+    // A running one is kept rather than refreshed, like the toss-in clock: a table that has
+    // been owed a move for four seconds must not have its wake pushed to five by an unrelated
+    // recompute.
+    val owes = if (owesAMove(state)) state.owesMoveAtEpochMs ?: nowMs + OWES_MOVE_MS else null
+
     return state.copy(
         tossInDeadlineEpochMs = tossDeadline,
         conferUntilEpochMs = conferUntil,
+        owesMoveAtEpochMs = owes,
         conferredRound = conferred,
         plan = state.plan?.let { state.withLanesLocked(it) },
         // A window's extensions die with it; the next window starts with a full allowance.
@@ -1463,7 +1540,7 @@ internal fun onAlarmTracked(stateJson: String, nowMs: Double): TrackedAlarm {
         }
         state = state.copy(seats = seats, seatGrace = state.seatGrace - expired)
         val played = playBotsTracked(state)
-        state = withPacing(played.state, nowMs)
+        state = withPacing(played.state, nowMs, watching = played.steps.size)
         return TrackedAlarm(
             LifecycleResult(
                 state,
@@ -1475,23 +1552,10 @@ internal fun onAlarmTracked(stateJson: String, nowMs: Double): TrackedAlarm {
         )
     }
 
-    // 7. Pacing (9.4): the table has out-waited a human, and the room moves for them.
-    if (due(state.conferUntilEpochMs)) {
-        // Nobody is moved for and nothing is synthesised: the window simply ends, and the
-        // round it was holding gets played.
-        val closed = closeConfer(state)
-        val played = playBotsTracked(closed)
-        val next = withPacing(played.state, nowMs)
-        return TrackedAlarm(
-            LifecycleResult(next, nextAlarmAtEpochMs = next.nextAlarmAt),
-            steps = played.steps,
-            said = played.said,
-        )
-    }
-
-    if (due(state.tossInDeadlineEpochMs)) {
-        return expirePacing(state, nowMs, tossInDue = true)
-    }
+    // 7. Pacing (9.4): a clock the table was being held by has run out. All three live in
+    //    `pacingDue`, together, because they are one subject and reading them as a group is
+    //    what makes their order — talk, then the window, then a move the room owes — legible.
+    pacingDue(state, nowMs)?.let { return it }
 
     // 8. Nothing was due, but pacing is still recomputed before the object goes back to sleep.
     //    A deadline exists exactly while its situation does, and the situation can have moved
@@ -1500,6 +1564,51 @@ internal fun onAlarmTracked(stateJson: String, nowMs: Double): TrackedAlarm {
     //    hand anybody more time; what it does is stop one outliving what it was waiting for.
     val paced = withPacing(state, nowMs)
     return TrackedAlarm(LifecycleResult(paced, nextAlarmAtEpochMs = paced.nextAlarmAt))
+}
+
+/**
+ * Whichever pacing clock has run out, or null when the table is not being held by one.
+ *
+ * Order is the reading order and not arbitrary: the coalition's conversation ends before the
+ * window it was holding, and a move the room owes is looked at last because the two above it
+ * play the bots themselves and usually leave nothing owed.
+ */
+private fun pacingDue(state: RoomState, nowMs: Double): TrackedAlarm? {
+    val due = { at: Double? -> at != null && nowMs >= at }
+
+    if (due(state.conferUntilEpochMs)) {
+        // Nobody is moved for and nothing is synthesised: the window simply ends, and the
+        // round it was holding gets played.
+        val played = playBotsTracked(closeConfer(state))
+        val next = withPacing(played.state, nowMs, watching = played.steps.size)
+        return TrackedAlarm(
+            LifecycleResult(next, nextAlarmAtEpochMs = next.nextAlarmAt),
+            steps = played.steps,
+            said = played.said,
+        )
+    }
+
+    if (due(state.tossInDeadlineEpochMs)) return expirePacing(state, nowMs, tossInDue = true)
+    if (due(state.owesMoveAtEpochMs)) return playWhatIsOwed(state, nowMs)
+    return null
+}
+
+/**
+ * The room wakes and makes the move it owed. See `owesMoveAtEpochMs` for how it got there.
+ *
+ * The deadline is cleared *before* playing rather than after: `withPacing` keeps a running one,
+ * so leaving the expired value in place would re-arm it in the past and the room would wake in
+ * a tight loop. Cleared first, a table that is genuinely stuck asks again in five seconds, and
+ * a table that was merely waiting moves on.
+ */
+private fun playWhatIsOwed(state: RoomState, nowMs: Double): TrackedAlarm {
+    val played = playBotsTracked(state.copy(owesMoveAtEpochMs = null))
+    val next = withPacing(settleRound(played.state, nowMs), nowMs, watching = played.steps.size)
+    return TrackedAlarm(
+        LifecycleResult(next, nextAlarmAtEpochMs = next.nextAlarmAt),
+        steps = played.steps,
+        said = played.said,
+    )
 }
 
 /**
@@ -1538,7 +1647,7 @@ private fun expirePacing(
     }
 
     val played = playBotsTracked(working)
-    working = withPacing(settleRound(played.state, nowMs), nowMs)
+    working = withPacing(settleRound(played.state, nowMs), nowMs, watching = steps.size + played.steps.size)
     return TrackedAlarm(
         LifecycleResult(working, nextAlarmAtEpochMs = working.nextAlarmAt),
         steps = steps + played.steps,
@@ -1654,7 +1763,10 @@ internal fun applyActionApplied(
     val settled = settleRound(played.state, nowMs)
 
     return Applied(
-        withPacing(settled, nowMs),
+        // The bots' moves only: the sender's own move is answered on their screen immediately
+        // — they know what they decided, and a client does not make somebody wait to be told
+        // what they just did (`Pacing.dwellAfter`). What they wait for is everybody else's.
+        withPacing(settled, nowMs, watching = played.steps.size),
         steps = listOf(Step(accepted, reduced, result.revealed)) + played.steps,
         said = played.said,
     )
@@ -1692,9 +1804,6 @@ internal data class PlayedOut(
     val steps: List<Step>,
     val said: List<TableTalk> = emptyList(),
 )
-
-private fun playBots(start: RoomState, playerMove: ObservedMove? = null): RoomState =
-    playBotsTracked(start, playerMove).state
 
 internal fun playBotsTracked(start: RoomState, playerMove: ObservedMove? = null): PlayedOut {
     if (start.game == null) return PlayedOut(start, emptyList())

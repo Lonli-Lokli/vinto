@@ -601,6 +601,10 @@
     <string name="log_made_you_draw">קלף נמשך על ידכם, בעקבות המהלך של %1$s</string>
     <string name="log_made_draw_they">קלף נמשך בידי %2$s, בעקבות המהלך של %1$s</string>
     <string name="log_round_begins">הסיבוב מתחיל</string>
+    <string name="log_seat_covered">ניתוק אצל %1$s — בוט תופס את המקום</string>
+    <string name="log_seat_covered_you">בוט שיחק בעמדתכם בזמן שנעדרתם</string>
+    <string name="log_seat_back">%1$s בחזרה למשחק</string>
+    <string name="log_seat_back_you">חזרתם לשולחן</string>
 
     <string name="help_rules_title">הכללים המלאים</string>
     <string name="help_rules_body">הדף הזה מסביר מה כל קלף עושה כאן. הכללים המלאים נמצאים באתר של המשחק עצמו, אצל מי שיצר אותו.</string>
