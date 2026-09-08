@@ -57,6 +57,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -214,12 +215,8 @@ private val HeaderHair = 1.dp
 /** Where a header control has room for a word beside its mark: a desktop or a landscape tablet. */
 private val WideHeader = 700.dp
 
-/**
- * What the header has already spent before any control asks for a word: the wordmark, the round
- * counter, the deck chip and the gaps around them. An estimate, and deliberately a generous one
- * — [headerSaysItsWords] is the wrong thing to be optimistic in.
- */
-private val HeaderTaken = 260.dp
+/** The row's own padding, the same either side. */
+private val HeaderEdge = 14.dp
 
 private val HeaderMark = 18.dp
 private val HeaderWordPad = 12.dp
@@ -602,27 +599,51 @@ private fun HeaderChip(
 }
 
 /**
- * Whether every header control can wear its word, measured rather than guessed.
+ * What the header can afford to say, measured in this language against the room it has.
  *
- * The same rule as the rail's choices and for the same reasons: the labels are translated into
- * nineteen languages, there are six of them, and the width they have to fit in is a window
- * somebody is dragging. A constant tuned against English on a laptop is wrong for German on a
- * tablet, and wrong the day a seventh control is added.
+ * Three decisions, and all of them the same one: there are six controls, their labels are
+ * translated into nineteen languages, and the width is a window somebody is dragging. Nothing
+ * about that can be settled with a constant — so the words are measured, the controls' own
+ * chrome is added, and what is left decides whether the name and the round counter fit beside
+ * them.
  *
- * Conservative on purpose. It measures the words, adds every chip's own padding and mark and the
- * gaps between them, and then asks for a little more than that — a header that *just* fits is a
- * header one long translation away from clipping the deck count off the end.
+ * **Nothing is ever clipped.** A control that shrinks is a control nobody can hit, and a word
+ * cut in half is worse than a word that is not there: "VINT" under a wordmark and "Р" where a
+ * round counter should be reads as a broken page, which is exactly what a phone showed once the
+ * controls stopped being the thing that gave way. So each piece is either drawn whole or not
+ * drawn, and the order they are given up in is the order they matter least.
  */
 @Composable
-private fun headerSaysItsWords(labels: List<String>, room: Dp, taken: Dp): Boolean {
+private fun headerRoom(labels: List<String>, wordmark: String, counter: String, room: Dp): HeaderRoom {
     val measurer = rememberTextMeasurer()
-    val style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-    val words = with(LocalDensity.current) {
-        labels.sumOf { measurer.measure(AnnotatedString(it), style, maxLines = 1).size.width as Int }.toDp()
+    val words = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+    val brand = TextStyle(fontFamily = Wordmark, fontSize = WordmarkSize, fontWeight = FontWeight.Bold)
+    val density = LocalDensity.current
+    val widthOf: (String, TextStyle) -> Dp = { text, style ->
+        with(density) { measurer.measure(AnnotatedString(text), style, maxLines = 1).size.width.toDp() }
     }
+
+    // What the controls need if every one of them says its word, and what they need if none do.
     val chrome = (HeaderWordPad * 2 + HeaderMark + HeaderWordGap + Gap) * labels.size
-    return taken + words + chrome <= room
+    val spoken = labels.fold(0.dp) { sum, label -> sum + widthOf(label, words) } + chrome
+    val silent = (HeaderTap + Gap) * labels.size
+
+    // The deck chip is always a chip and never a word, and the row has padding of its own.
+    val fixed = HeaderTap + Gap + HeaderEdge * 2
+    val wide = fixed + spoken <= room
+    val left = room - fixed - if (wide) spoken else silent
+
+    val brandWidth = widthOf(wordmark, brand)
+    val counterWidth = widthOf(counter, words)
+    return HeaderRoom(
+        wide = wide,
+        wordmark = left >= brandWidth,
+        counter = left >= brandWidth + Gap + counterWidth,
+    )
 }
+
+/** Which of the header's three optional pieces there is room for. */
+private data class HeaderRoom(val wide: Boolean, val wordmark: Boolean, val counter: Boolean)
 
 /** A gear: the ring, eight teeth, and the hub, all strokes. */
 private fun DrawScope.drawGear(ink: Color) {
@@ -722,6 +743,41 @@ private const val BUG_WING = 0.36f
 private const val BUG_HIGH_SPOT = 0.22f
 private const val BUG_LOW_SPOT = 0.30f
 
+/**
+ * The name and the round counter, each drawn only where it fits whole.
+ *
+ * On a phone with six controls there is room for neither, and that is a better header than one
+ * showing "VINT" and "Р" — the failure a Russian phone reported the moment the controls stopped
+ * being the thing that gave way.
+ */
+@Composable
+private fun HeaderName(name: String, counter: String, fits: HeaderRoom, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(Gap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (fits.wordmark) {
+            // On the rail, so the rail's own ink — not the theme's, which is a page colour and
+            // reads as dark-on-dark here.
+            Text(
+                name,
+                fontFamily = Wordmark,
+                fontSize = WordmarkSize,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 2.sp,
+                color = Rail.brand,
+                maxLines = 1,
+            )
+        }
+        if (fits.counter) {
+            // The *game's* round, not the deal's. The engine counts rounds within one deal — it
+            // is a turn counter that wraps — while the player is counting hands played.
+            Text(counter, style = MaterialTheme.typography.labelLarge, color = Rail.inkDim, maxLines = 1)
+        }
+    }
+}
+
 /** Where the round is up to, and how much deck is left. */
 @Composable
 private fun TableHeader(
@@ -752,10 +808,12 @@ private fun TableHeader(
         // wordmark and the round counter are what is already spoken for; [WideHeader] stays as a
         // floor so a narrow header never even tries.
         val words = listOfNotNull(rules, settings, report, leave.takeIf { onLeave != null }, support)
-        val wideHeader = maxWidth >= WideHeader &&
-            headerSaysItsWords(words, maxWidth, taken = HeaderTaken)
+        val name = stringResource(Res.string.app_name)
+        val counter = stringResource(Res.string.table_round_turn, round, view.turnNumber)
+        val fits = headerRoom(words, name, counter, maxWidth)
+        val wideHeader = maxWidth >= WideHeader && fits.wide
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = Gap),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = HeaderEdge, vertical = Gap),
             horizontalArrangement = Arrangement.spacedBy(Gap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -766,32 +824,7 @@ private fun TableHeader(
             // the deck count — the last thing in the row — came out 36 points wide under a
             // 44-point thumb, which `TouchTargetTest` reads as a target nobody can hit. A word
             // may be clipped; a control may not.
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(Gap),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // On the rail, so the rail's own ink — not the theme's, which is a page colour
-                // and reads as dark-on-dark here.
-                Text(
-                    stringResource(Res.string.app_name),
-                    fontFamily = Wordmark,
-                    fontSize = WordmarkSize,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp,
-                    color = Rail.brand,
-                    maxLines = 1,
-                )
-                Text(
-                    // The *game's* round, not the deal's. The engine counts rounds within one
-                    // deal — it is a turn counter that wraps — while the player is counting
-                    // hands played.
-                    stringResource(Res.string.table_round_turn, round, view.turnNumber),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Rail.inkDim,
-                    maxLines = 1,
-                )
-            }
+            HeaderName(name, counter, fits, modifier = Modifier.weight(1f))
 
             // The rules, in the one place on the screen that never moves.
             //
