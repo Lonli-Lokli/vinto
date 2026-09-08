@@ -261,6 +261,10 @@
     <string name="table_away_mark">away</string>
     <string name="seat_pointed_turn">%1$s is playing</string>
     <string name="seat_is_a_bot">a bot</string>
+    <string name="seat_badge_waiting">the table is waiting on this seat</string>
+    <string name="seat_badge_vinto">called Vinto</string>
+    <string name="seat_badge_coalition">in the coalition</string>
+    <string name="seat_badge_away">away from the table</string>
     <string name="seat_pointed_vinto">%1$s called Vinto</string>
     <string name="seat_pointed_penalty">%1$s is taking a card from the deck</string>
     <string name="seat_pointed_coalition">%1$s leads the coalition</string>

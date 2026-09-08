@@ -218,6 +218,10 @@
     <string name="table_away_mark">離席中</string>
     <string name="seat_pointed_turn">%1$sの番です</string>
     <string name="seat_is_a_bot">ボット</string>
+    <string name="seat_badge_waiting">この席を待っています</string>
+    <string name="seat_badge_vinto">ヴィントを宣言</string>
+    <string name="seat_badge_coalition">連合の一員</string>
+    <string name="seat_badge_away">席を外している</string>
     <string name="seat_pointed_vinto">%1$sがVintoを宣言しました</string>
     <string name="seat_pointed_penalty">%1$sが山札からカードを引いています</string>
     <string name="seat_pointed_coalition">%1$sが連合を率いています</string>

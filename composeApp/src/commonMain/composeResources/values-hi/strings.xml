@@ -216,6 +216,10 @@
     <string name="table_away_mark">अनुपस्थित</string>
     <string name="seat_pointed_turn">%1$s खेल रहे हैं</string>
     <string name="seat_is_a_bot">एक बॉट</string>
+    <string name="seat_badge_waiting">टेबल इस सीट का इंतज़ार कर रही है</string>
+    <string name="seat_badge_vinto">विंटो बोला</string>
+    <string name="seat_badge_coalition">गठबंधन में</string>
+    <string name="seat_badge_away">टेबल से दूर</string>
     <string name="seat_pointed_vinto">%1$s ने Vinto बोला</string>
     <string name="seat_pointed_penalty">%1$s डेक से पत्ता ले रहे हैं</string>
     <string name="seat_pointed_coalition">%1$s गठबंधन का नेतृत्व कर रहे हैं</string>

@@ -199,9 +199,11 @@ class CoalitionScreenTest {
 
         show(whole, away = setOf(away))
 
-        val words = onAllNodesWithText("away", substring = true, ignoreCase = true)
+        // A mark now rather than the word: colour and text both said too much on this plate, so
+        // the durable facts became glyphs — each carrying its own words, which is what this reads.
+        val said = onAllNodesWithContentDescription("away", substring = true, ignoreCase = true)
             .fetchSemanticsNodes()
-        assertTrue(words.isNotEmpty(), "a seat played by a bot is drawn as though its owner were there")
+        assertTrue(said.isNotEmpty(), "a seat played by a bot is drawn as though its owner were there")
     }
 
     @Test

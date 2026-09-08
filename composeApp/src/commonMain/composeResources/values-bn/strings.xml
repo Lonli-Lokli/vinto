@@ -207,6 +207,10 @@
     <string name="table_away_mark">অনুপস্থিত</string>
     <string name="seat_pointed_turn">%1$s খেলছেন</string>
     <string name="seat_is_a_bot">একটি বট</string>
+    <string name="seat_badge_waiting">টেবিল এই আসনের জন্য অপেক্ষা করছে</string>
+    <string name="seat_badge_vinto">ভিন্টো ডেকেছে</string>
+    <string name="seat_badge_coalition">জোটে আছে</string>
+    <string name="seat_badge_away">টেবিল থেকে দূরে</string>
     <string name="seat_pointed_vinto">%1$s Vinto ডেকেছেন</string>
     <string name="seat_pointed_penalty">%1$s ডেক থেকে তাস নিচ্ছেন</string>
     <string name="seat_pointed_coalition">%1$s কোয়ালিশনের নেতৃত্ব দিচ্ছেন</string>

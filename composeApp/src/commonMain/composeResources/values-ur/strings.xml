@@ -216,6 +216,10 @@
     <string name="table_away_mark">غیر حاضر</string>
     <string name="seat_pointed_turn">%1$s کی باری ہے</string>
     <string name="seat_is_a_bot">ایک بوٹ</string>
+    <string name="seat_badge_waiting">میز اس نشست کا انتظار کر رہی ہے</string>
+    <string name="seat_badge_vinto">ونٹو بولا</string>
+    <string name="seat_badge_coalition">اتحاد میں</string>
+    <string name="seat_badge_away">میز سے دور</string>
     <string name="seat_pointed_vinto">%1$s نے Vinto کہا</string>
     <string name="seat_pointed_penalty">%1$s ڈیک سے پتہ لے رہا ہے</string>
     <string name="seat_pointed_coalition">%1$s اتحاد کی قیادت کر رہا ہے</string>

@@ -207,6 +207,10 @@
     <string name="table_away_mark">자리비움</string>
     <string name="seat_pointed_turn">%1$s의 차례예요</string>
     <string name="seat_is_a_bot">봇</string>
+    <string name="seat_badge_waiting">이 자리를 기다리는 중</string>
+    <string name="seat_badge_vinto">빈토를 선언함</string>
+    <string name="seat_badge_coalition">연합에 속함</string>
+    <string name="seat_badge_away">자리를 비움</string>
     <string name="seat_pointed_vinto">%1$s가 Vinto를 외쳤어요</string>
     <string name="seat_pointed_penalty">%1$s가 덱에서 카드를 가져가는 중이에요</string>
     <string name="seat_pointed_coalition">%1$s가 연합을 이끌어요</string>

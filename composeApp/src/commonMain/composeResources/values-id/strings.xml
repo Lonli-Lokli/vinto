@@ -216,6 +216,10 @@
     <string name="table_away_mark">absen</string>
     <string name="seat_pointed_turn">%1$s sedang bermain</string>
     <string name="seat_is_a_bot">sebuah bot</string>
+    <string name="seat_badge_waiting">meja menunggu kursi ini</string>
+    <string name="seat_badge_vinto">menyebut Vinto</string>
+    <string name="seat_badge_coalition">dalam koalisi</string>
+    <string name="seat_badge_away">sedang pergi</string>
     <string name="seat_pointed_vinto">%1$s memanggil Vinto</string>
     <string name="seat_pointed_penalty">%1$s mengambil kartu penalti dari dek</string>
     <string name="seat_pointed_coalition">%1$s memimpin koalisi</string>

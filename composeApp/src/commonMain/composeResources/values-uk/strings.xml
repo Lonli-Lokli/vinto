@@ -225,6 +225,10 @@
     <string name="table_away_mark">немає</string>
     <string name="seat_pointed_turn">Ходить %1$s</string>
     <string name="seat_is_a_bot">бот</string>
+    <string name="seat_badge_waiting">стіл чекає на це місце</string>
+    <string name="seat_badge_vinto">оголосив Vinto</string>
+    <string name="seat_badge_coalition">у коаліції</string>
+    <string name="seat_badge_away">відійшов від столу</string>
     <string name="seat_pointed_vinto">%1$s оголошує Вінто</string>
     <string name="seat_pointed_penalty">%1$s бере карту з колоди</string>
     <string name="seat_pointed_coalition">%1$s веде коаліцію</string>

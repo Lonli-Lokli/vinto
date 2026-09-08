@@ -219,6 +219,10 @@
     <string name="table_away_mark">uzakta</string>
     <string name="seat_pointed_turn">%1$s oynuyor</string>
     <string name="seat_is_a_bot">bir bot</string>
+    <string name="seat_badge_waiting">masa bu koltuğu bekliyor</string>
+    <string name="seat_badge_vinto">Vinto dedi</string>
+    <string name="seat_badge_coalition">koalisyonda</string>
+    <string name="seat_badge_away">masadan uzakta</string>
     <string name="seat_pointed_vinto">%1$s Vinto dedi</string>
     <string name="seat_pointed_penalty">%1$s desteden kart alıyor</string>
     <string name="seat_pointed_coalition">%1$s koalisyona öncülük ediyor</string>

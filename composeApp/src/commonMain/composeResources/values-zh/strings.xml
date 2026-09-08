@@ -207,6 +207,10 @@
     <string name="table_away_mark">暂离</string>
     <string name="seat_pointed_turn">%1$s 正在出牌</string>
     <string name="seat_is_a_bot">电脑玩家</string>
+    <string name="seat_badge_waiting">牌桌正在等这个座位</string>
+    <string name="seat_badge_vinto">叫了 Vinto</string>
+    <string name="seat_badge_coalition">在联盟中</string>
+    <string name="seat_badge_away">暂时离开</string>
     <string name="seat_pointed_vinto">%1$s 喊了 Vinto</string>
     <string name="seat_pointed_penalty">%1$s 正在从牌堆抽罚牌</string>
     <string name="seat_pointed_coalition">%1$s 是联盟的代表</string>

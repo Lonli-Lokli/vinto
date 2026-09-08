@@ -216,6 +216,10 @@
     <string name="table_away_mark">ausente</string>
     <string name="seat_pointed_turn">%1$s está a jogar</string>
     <string name="seat_is_a_bot">um bot</string>
+    <string name="seat_badge_waiting">a mesa espera por este lugar</string>
+    <string name="seat_badge_vinto">chamou Vinto</string>
+    <string name="seat_badge_coalition">na coligação</string>
+    <string name="seat_badge_away">ausente da mesa</string>
     <string name="seat_pointed_vinto">%1$s chamou Vinto</string>
     <string name="seat_pointed_penalty">%1$s está a tirar uma carta do baralho</string>
     <string name="seat_pointed_coalition">%1$s lidera a coligação</string>

@@ -207,6 +207,10 @@
     <string name="table_away_mark">nieobecność</string>
     <string name="seat_pointed_turn">%1$s gra</string>
     <string name="seat_is_a_bot">bot</string>
+    <string name="seat_badge_waiting">stół czeka na to miejsce</string>
+    <string name="seat_badge_vinto">ogłosił Vinto</string>
+    <string name="seat_badge_coalition">w koalicji</string>
+    <string name="seat_badge_away">poza stołem</string>
     <string name="seat_pointed_vinto">%1$s ogłasza Vinto</string>
     <string name="seat_pointed_penalty">%1$s bierze kartę z talii</string>
     <string name="seat_pointed_coalition">%1$s prowadzi koalicję</string>

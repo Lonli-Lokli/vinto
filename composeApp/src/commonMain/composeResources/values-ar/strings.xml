@@ -216,6 +216,10 @@
     <string name="table_away_mark">غياب</string>
     <string name="seat_pointed_turn">%1$s يلعب الآن</string>
     <string name="seat_is_a_bot">روبوت</string>
+    <string name="seat_badge_waiting">الطاولة تنتظر هذا المقعد</string>
+    <string name="seat_badge_vinto">أعلن فينتو</string>
+    <string name="seat_badge_coalition">في التحالف</string>
+    <string name="seat_badge_away">بعيد عن الطاولة</string>
     <string name="seat_pointed_vinto">%1$s نادى بـ Vinto</string>
     <string name="seat_pointed_penalty">%1$s يأخذ بطاقة من المكدس</string>
     <string name="seat_pointed_coalition">%1$s يقود التحالف</string>

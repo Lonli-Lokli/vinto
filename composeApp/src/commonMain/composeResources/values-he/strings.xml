@@ -207,6 +207,10 @@
     <string name="table_away_mark">היעדרות</string>
     <string name="seat_pointed_turn">התור של %1$s</string>
     <string name="seat_is_a_bot">בוט</string>
+    <string name="seat_badge_waiting">השולחן ממתין למושב הזה</string>
+    <string name="seat_badge_vinto">הכריז וינטו</string>
+    <string name="seat_badge_coalition">בקואליציה</string>
+    <string name="seat_badge_away">מחוץ לשולחן</string>
     <string name="seat_pointed_vinto">הכרזת Vinto מאת %1$s</string>
     <string name="seat_pointed_penalty">לקיחת קלף עונש בידי %1$s</string>
     <string name="seat_pointed_coalition">הובלת הקואליציה בידי %1$s</string>

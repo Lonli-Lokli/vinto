@@ -32,7 +32,9 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
@@ -46,6 +48,10 @@ import game.vinto.app.art.avatar_dune
 import game.vinto.app.art.avatar_ember
 import game.vinto.app.art.avatar_gale
 import game.vinto.app.art.avatar_tide
+import game.vinto.app.art.seat_badge_away
+import game.vinto.app.art.seat_badge_coalition
+import game.vinto.app.art.seat_badge_vinto
+import game.vinto.app.art.seat_badge_waiting
 import game.vinto.app.art.seat_is_a_bot
 import game.vinto.app.art.seat_pointed_coalition
 import game.vinto.app.art.seat_pointed_penalty
@@ -103,11 +109,25 @@ private const val GLOW_MS = 1200
 private const val QUIET = 0.45f
 
 /** What the table is saying about a seat, in one colour. */
-private fun Attention.colour(): Color = when (this) {
+
+/**
+ * The ring's colour, for the two attentions that still have one.
+ *
+ * Colour was carrying six meanings on this one object — turn, Vinto, penalty, coalition,
+ * clickable, resting — over the top of eight avatar grounds that mean *identity*. Six colours is
+ * not a vocabulary, it is a legend nobody reads, and status and identity competing in one circle
+ * is why none of it registered.
+ *
+ * Three survive, and each is something you must react to *now*: whose turn it is, who just took
+ * a penalty, and which seats you may tap when an Ace or a Jack is asking you to pick one. The
+ * durable facts — being the Vinto caller, being in the coalition, being a bot — are marks
+ * instead, because they are things to know rather than things to catch.
+ */
+private fun Attention.colour(): Color? = when (this) {
     Attention.TURN -> Signal.turn
-    Attention.VINTO -> Signal.vinto
     Attention.PENALTY -> Signal.penalty
-    Attention.COALITION -> Signal.coalition
+    // Both are marks now, and both are durable: the ring is for what has just changed.
+    Attention.VINTO, Attention.COALITION -> null
 }
 
 /**
@@ -134,9 +154,9 @@ private fun Attention.spoken(): StringResource = when (this) {
  * which matters most to the player who has just been beaten by one and wants to know by what.
  */
 @Composable
-private fun Portrait(name: String, bot: Boolean, size: Dp) {
+private fun Portrait(name: String, size: Dp) {
     val chosen = chosenFace(name)
-    Box(contentAlignment = Alignment.BottomEnd) {
+    Box {
         // The face its owner picked, when there is one. A bot has no profile and keeps its
         // element's emblem, which is the better answer than a mark it never chose.
         //
@@ -156,7 +176,6 @@ private fun Portrait(name: String, bot: Boolean, size: Dp) {
                 modifier = Modifier.size(size).clip(CircleShape),
             )
         }
-        if (bot) BotMark(diameter = size * BotShare)
     }
 }
 
@@ -185,6 +204,219 @@ private fun seatGlow(): Float {
     )
     return glow
 }
+
+/** The marks and the score, under the name, in the order they are worth reading. */
+@Composable
+private fun BadgeRow(badges: List<SeatBadge>, marks: String?, portrait: Dp) {
+    if (badges.isEmpty() && marks == null) return
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(BadgeGap),
+    ) {
+        badges.forEach { Badge(it, portrait) }
+        marks?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.labelSmall,
+                color = Slate.gold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/**
+ * What a seat is, said in marks rather than in colour.
+ *
+ * Colour is down to the three things you must react to *now* — whose turn it is, who just took a
+ * penalty, and which seats an Ace is asking you to pick between. Everything else about a seat is
+ * a fact rather than an alarm, and a fact is better read than remembered: six ring colours over
+ * eight identity grounds was a legend, and nobody reads a legend mid-round.
+ *
+ * Each of these carries its own words for a screen reader, because a mark nobody can see is
+ * exactly the failure the ring already had.
+ */
+enum class SeatBadge {
+    /** The table is waiting on this seat — a bot thinking, or somebody yet to peek or answer. */
+    WAITING,
+
+    /** A machine plays this seat. */
+    BOT,
+
+    /** This seat called Vinto. */
+    VINTO,
+
+    /** This seat is in the coalition playing against the caller. */
+    COALITION,
+
+    /** Nobody is behind this seat at the moment. */
+    AWAY,
+}
+
+/** One mark, drawn at a size that follows the portrait beside it. */
+@Composable
+private fun Badge(badge: SeatBadge, portrait: Dp) {
+    val said = stringResource(badge.spoken())
+    val ink = when (badge) {
+        SeatBadge.WAITING -> Slate.ink
+        SeatBadge.VINTO -> Slate.gold
+        SeatBadge.COALITION -> Signal.coalition
+        SeatBadge.AWAY -> Slate.ink.copy(alpha = QUIET)
+        SeatBadge.BOT -> Slate.ink.copy(alpha = QUIET)
+    }
+    Canvas(
+        modifier = Modifier
+            .size(portrait * BadgeShare)
+            .semantics { contentDescription = said },
+    ) {
+        when (badge) {
+            SeatBadge.WAITING -> drawThought(ink)
+            SeatBadge.BOT -> drawRobot(ink)
+            SeatBadge.VINTO -> drawCrown(ink)
+            SeatBadge.COALITION -> drawLink(ink)
+            SeatBadge.AWAY -> drawAway(ink)
+        }
+    }
+}
+
+private fun SeatBadge.spoken(): StringResource = when (this) {
+    SeatBadge.WAITING -> Res.string.seat_badge_waiting
+    SeatBadge.BOT -> Res.string.seat_is_a_bot
+    SeatBadge.VINTO -> Res.string.seat_badge_vinto
+    SeatBadge.COALITION -> Res.string.seat_badge_coalition
+    SeatBadge.AWAY -> Res.string.seat_badge_away
+}
+
+/** A thought cloud: three bumps over two trailing dots. The table is waiting on this seat. */
+private fun DrawScope.drawThought(ink: Color) {
+    val w = size.minDimension
+    val pen = Stroke(width = w * BADGE_PEN, cap = StrokeCap.Round)
+    drawCircle(ink, radius = w * PUFF_BIG, center = Offset(w * PUFF_BIG_X, w * PUFF_BIG_Y), style = pen)
+    drawCircle(ink, radius = w * PUFF_MID, center = Offset(w * PUFF_MID_X, w * PUFF_MID_Y), style = pen)
+    drawCircle(ink, radius = w * PUFF_LOW, center = Offset(w * PUFF_LOW_X, w * PUFF_LOW_Y), style = pen)
+    drawCircle(ink, radius = w * TRAIL_NEAR, center = Offset(w * TRAIL_NEAR_X, w * TRAIL_NEAR_Y))
+    drawCircle(ink, radius = w * TRAIL_FAR, center = Offset(w * TRAIL_FAR_X, w * TRAIL_FAR_Y))
+}
+
+/** A square head with two eyes and a stub either side — the shape people draw for a robot. */
+private fun DrawScope.drawRobot(ink: Color) {
+    val w = size.minDimension
+    val pen = Stroke(width = w * BADGE_PEN)
+    drawRoundRect(
+        color = ink,
+        topLeft = Offset(w * HEAD_LEFT, w * HEAD_TOP_),
+        size = Size(w * HEAD_WIDE, w * HEAD_DEEP),
+        cornerRadius = CornerRadius(w * HEAD_ROUND),
+        style = pen,
+    )
+    listOf(EYE_LEFT_X, EYE_RIGHT_X).forEach {
+        drawCircle(ink, radius = w * EYE_SIZE, center = Offset(w * it, w * EYE_Y_))
+    }
+    listOf(STUB_LEFT, STUB_RIGHT).forEach {
+        drawLine(ink, Offset(w * it, w * STUB_TOP), Offset(w * it, w * STUB_FOOT), pen.width)
+    }
+    drawLine(ink, Offset(w * MIDDLE, w * AERIAL_TOP), Offset(w * MIDDLE, w * HEAD_TOP_), pen.width)
+}
+
+/** Three points and a band: the caller wears it for the rest of the round. */
+private fun DrawScope.drawCrown(ink: Color) {
+    val w = size.minDimension
+    val pen = Stroke(width = w * BADGE_PEN, cap = StrokeCap.Round)
+    val crown = Path().apply {
+        moveTo(w * CROWN_LEFT, w * CROWN_FOOT)
+        lineTo(w * CROWN_LEFT_TIP, w * CROWN_SHOULDER)
+        lineTo(w * CROWN_DIP_LEFT, w * CROWN_DIP)
+        lineTo(w * MIDDLE, w * CROWN_PEAK)
+        lineTo(w * CROWN_DIP_RIGHT, w * CROWN_DIP)
+        lineTo(w * CROWN_RIGHT_TIP, w * CROWN_SHOULDER)
+        lineTo(w * CROWN_RIGHT, w * CROWN_FOOT)
+        close()
+    }
+    drawPath(crown, color = ink, style = pen)
+}
+
+/** Two links: this seat and the others are one hand. */
+private fun DrawScope.drawLink(ink: Color) {
+    val w = size.minDimension
+    val pen = Stroke(width = w * BADGE_PEN)
+    listOf(LINK_LEFT_X, LINK_RIGHT_X).forEach {
+        drawCircle(ink, radius = w * LINK_R, center = Offset(w * it, w * MIDDLE), style = pen)
+    }
+}
+
+/** An open circle with a gap where somebody should be. */
+private fun DrawScope.drawAway(ink: Color) {
+    val w = size.minDimension
+    drawArc(
+        color = ink,
+        startAngle = AWAY_FROM,
+        sweepAngle = AWAY_SWEEP,
+        useCenter = false,
+        topLeft = Offset(w * AWAY_INSET, w * AWAY_INSET),
+        size = Size(w * AWAY_SIZE, w * AWAY_SIZE),
+        style = Stroke(width = w * BADGE_PEN, cap = StrokeCap.Round),
+    )
+}
+
+private const val BADGE_PEN = 0.09f
+private const val MIDDLE = 0.50f
+
+private const val PUFF_BIG = 0.20f
+private const val PUFF_BIG_X = 0.34f
+private const val PUFF_BIG_Y = 0.36f
+private const val PUFF_MID = 0.17f
+private const val PUFF_MID_X = 0.64f
+private const val PUFF_MID_Y = 0.30f
+private const val PUFF_LOW = 0.14f
+private const val PUFF_LOW_X = 0.72f
+private const val PUFF_LOW_Y = 0.52f
+private const val TRAIL_NEAR = 0.07f
+private const val TRAIL_NEAR_X = 0.26f
+private const val TRAIL_NEAR_Y = 0.74f
+private const val TRAIL_FAR = 0.05f
+private const val TRAIL_FAR_X = 0.13f
+private const val TRAIL_FAR_Y = 0.90f
+
+private const val HEAD_LEFT = 0.22f
+private const val HEAD_TOP_ = 0.26f
+private const val HEAD_WIDE = 0.56f
+private const val HEAD_DEEP = 0.50f
+private const val HEAD_ROUND = 0.14f
+private const val EYE_LEFT_X = 0.38f
+private const val EYE_RIGHT_X = 0.62f
+private const val EYE_SIZE = 0.06f
+private const val EYE_Y_ = 0.50f
+private const val STUB_LEFT = 0.14f
+private const val STUB_RIGHT = 0.86f
+private const val STUB_TOP = 0.44f
+private const val STUB_FOOT = 0.58f
+private const val AERIAL_TOP = 0.12f
+
+private const val CROWN_LEFT = 0.16f
+private const val CROWN_RIGHT = 0.84f
+private const val CROWN_FOOT = 0.72f
+private const val CROWN_LEFT_TIP = 0.22f
+private const val CROWN_RIGHT_TIP = 0.78f
+private const val CROWN_SHOULDER = 0.30f
+private const val CROWN_DIP_LEFT = 0.40f
+private const val CROWN_DIP_RIGHT = 0.60f
+private const val CROWN_DIP = 0.54f
+private const val CROWN_PEAK = 0.24f
+
+private const val LINK_LEFT_X = 0.36f
+private const val LINK_RIGHT_X = 0.64f
+private const val LINK_R = 0.20f
+
+private const val AWAY_FROM = 40f
+private const val AWAY_SWEEP = 280f
+private const val AWAY_INSET = 0.22f
+private const val AWAY_SIZE = 0.56f
+
+private val BadgeGap = 3.dp
+
+/** A mark is a little over a third of the portrait beside it, so the two step together. */
+private const val BadgeShare = 0.38f
 
 /**
  * The badge that says a seat is played by the machine.
@@ -259,8 +491,7 @@ fun SeatPlate(
     active: Boolean,
     modifier: Modifier = Modifier,
     marks: String? = null,
-    /** Whether this seat is played by the machine, which is worth saying out loud. */
-    bot: Boolean = false,
+    badges: List<SeatBadge> = emptyList(),
     pointed: Attention? = null,
     size: Dp = 40.dp,
     onClick: (() -> Unit)? = null,
@@ -269,11 +500,18 @@ fun SeatPlate(
 
     val edge by animateColorAsState(
         when {
-            // Being pointed at wins over everything: it is the table saying *this* seat, now
-            // — the one drawing a penalty, the one who called Vinto, the one leading.
-            pointed != null -> pointed.colour()
+            // Being pointed at wins over everything: it is the table saying *this* seat, now.
+            pointed?.colour() != null -> pointed.colour()!!
+
+            // Gold means "you may pick this one", and it outranks whose turn it is because it
+            // is the only one of the three that is a *question being asked of you*.
+            //
+            // This was gold too when it was merely somebody's turn, so an Ace asking you to
+            // choose a player lit the same colour on the seat you had to pick and on the seat
+            // whose turn it happened to be. Two meanings, one colour, in the one moment the
+            // colour is load-bearing.
             onClick != null -> Slate.gold
-            active -> Slate.gold.copy(alpha = seatGlow())
+            active -> Signal.turn.copy(alpha = seatGlow())
             else -> scheme.onFelt().copy(alpha = QUIET)
         },
         label = "edge",
@@ -305,7 +543,7 @@ fun SeatPlate(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(PlateGap),
         ) {
-            Portrait(name = name, bot = bot, size = size)
+            Portrait(name = name, size = size)
             // Capped, and the name gives way before the marks do. A plate that grows with
             // "Vinto · 12" is a plate that pushes the player's own hand onto a second row,
             // which is the one hand that has to stay in one piece.
@@ -318,15 +556,7 @@ fun SeatPlate(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                marks?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Slate.gold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+                BadgeRow(badges, marks, size)
             }
         }
     }

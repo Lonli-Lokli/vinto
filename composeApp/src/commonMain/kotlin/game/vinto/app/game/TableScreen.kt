@@ -84,7 +84,6 @@ import game.vinto.app.art.header_leave
 import game.vinto.app.art.header_rules
 import game.vinto.app.art.header_settings
 import game.vinto.app.art.header_support
-import game.vinto.app.art.table_away_mark
 import game.vinto.app.art.table_discard
 import game.vinto.app.art.table_draw
 import game.vinto.app.art.table_final_caller
@@ -101,7 +100,6 @@ import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_toss_in_summary
 import game.vinto.app.art.table_toss_in_timed
 import game.vinto.app.art.table_tossed
-import game.vinto.app.art.table_vinto_mark
 import game.vinto.app.openUrl
 import game.vinto.app.speakerName
 import game.vinto.app.supportOffer
@@ -1520,6 +1518,40 @@ private fun HandLine(
 /** How much of a card stays out from under the next one when a hand runs out of room. */
 private const val MIN_SHOWING = 0.55f
 
+/**
+ * What this seat is wearing, in the order it is worth reading.
+ *
+ * **Waiting comes first, because it is the only one that is about right now.** The rail says
+ * "waiting for 1" and never said *which one* — so a round could sit there with nothing on the
+ * table pointing at the seat holding it up. It covers the three ways a seat holds a round:
+ * somebody yet to take their setup peeks, a seat that has not answered an open toss-in window,
+ * and whoever's turn it is — which is a bot thinking as much as a person deciding.
+ *
+ * The rest are facts rather than alarms: a machine plays this seat, this seat called Vinto, this
+ * seat is in the coalition, nobody is behind it at the moment.
+ */
+private fun badgesFor(
+    seat: PlayerSeatView,
+    view: PlayerView,
+    table: Table,
+    active: Boolean,
+): List<SeatBadge> = buildList {
+    val toss = view.activeTossIn
+    val waiting = when {
+        view.phase == GamePhase.SETUP -> seat.knownCardPositions.size < SETUP_PEEKS
+        toss?.waitingForInput == true -> seat.id !in toss.playersReadyForNextTurn
+        else -> active
+    }
+    if (waiting) add(SeatBadge.WAITING)
+    if (seat.isBot) add(SeatBadge.BOT)
+    if (seat.isVintoCaller) add(SeatBadge.VINTO)
+    if (seat.coalitionWith.isNotEmpty()) add(SeatBadge.COALITION)
+    if (seat.id in table.away) add(SeatBadge.AWAY)
+}
+
+/** The two cards the rules tell every player to look at before the round starts. */
+private const val SETUP_PEEKS = 2
+
 @Composable
 private fun Plate(
     seat: PlayerSeatView,
@@ -1529,11 +1561,11 @@ private fun Plate(
     onMove: (Move) -> Unit,
 ) {
     val active = view.turnHolderId == seat.id
-    val marks = buildList {
-        if (seat.isVintoCaller) add(stringResource(Res.string.table_vinto_mark))
-        if (seat.id in table.away) add(stringResource(Res.string.table_away_mark))
-        view.scores?.get(seat.id)?.let { add("$it") }
-    }
+
+    // The score is the only thing here that is a *number*; everything else about a seat is now a
+    // mark, because six ring colours over eight identity grounds was a legend nobody reads.
+    val marks = buildList { view.scores?.get(seat.id)?.let { add("$it") } }
+    val badges = badgesFor(seat, view, table, active)
     val tap = table.seats.firstOrNull { it.id == seat.id }?.move
     val stage = LocalStage.current
     val line = stage.lineFor(seat.id)
@@ -1565,7 +1597,7 @@ private fun Plate(
             modifier = Modifier.markedAs(stage, "seat:${seat.id}"),
             pointed = pointed,
             marks = marks.takeIf { it.isNotEmpty() }?.joinToString(" · "),
-            bot = seat.isBot,
+            badges = badges,
             size = sizes.avatar,
             onClick = tap?.let { { onMove(it) } },
         )
