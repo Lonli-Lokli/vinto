@@ -1,3 +1,7 @@
+import { keyMatches } from './secrets.mjs';
+
+export { keyMatches };
+
 /**
  * The dashboard: six questions about the audience, answered from Workers Analytics Engine.
  *
@@ -8,8 +12,27 @@
  * closest thing to an audience number is [together] — how many humans sat at one table.
  *
  * Server-side by design (§A6). The API token that can read the account's analytics never
- * reaches a browser, there is no client-side querying, and there is no second app to deploy —
- * the thing that already holds the data serves the page about it.
+ * reaches a browser, and there is no client-side querying.
+ *
+ * ### This module is on its way to `stats.kupalinka.app`
+ *
+ * It is no longer routed from this Worker, and `vinto-room.kupalinka.app/counts` is gone. The
+ * portfolio already has a stats host, it is behind Cloudflare Access, and a per-game URL with a
+ * shared secret in its query string was the odd one out — SSO is a better door than `?key=`, and
+ * one page for every game is a better place than one page per game.
+ *
+ * **The data does not move, because it never had to.** Analytics Engine datasets are scoped to
+ * the *account*, so any Worker on it can read `vinto_events` with exactly the SQL below.
+ *
+ * What stays here is [QUERIES], and that is deliberate: they encode this dataset's own layout —
+ * which double is a duration, which blob is a difficulty — and that layout is decided by
+ * `shared/protocol/.../Analytics.kt` in this repository. Queries living next to the schema they
+ * read cannot drift from it silently; queries living in another repository can, and the drift
+ * would show up as a chart of plausible wrong numbers.
+ *
+ * [renderPage] and [renderChart] are the opposite: nothing about them is Vinto's, and the stats
+ * Worker should own them once it has them. This module carries a copy until it does, which is
+ * the one honest state between "here" and "there".
  *
  * **Absent-safe like everything else on this Worker.** With no `ANALYTICS_TOKEN`,
  * `ANALYTICS_ACCOUNT_ID` or `DASHBOARD_KEY` the route answers 404 and behaves as if it were
@@ -148,14 +171,6 @@ export function dashboardConfigured(env) {
  * Not because timing is a plausible attack on a read-only page of aggregate counts, but
  * because `===` on a secret is the habit that matters in the next place it is written.
  */
-export function keyMatches(given, expected) {
-  if (typeof given !== 'string' || typeof expected !== 'string') return false;
-  if (given.length !== expected.length) return false;
-  let diff = 0;
-  for (let i = 0; i < given.length; i += 1) diff |= given.charCodeAt(i) ^ expected.charCodeAt(i);
-  return diff === 0;
-}
-
 async function runQuery(env, sql) {
   const response = await fetch(SQL_API(env.ANALYTICS_ACCOUNT_ID), {
     method: 'POST',
@@ -178,191 +193,238 @@ export function escapeHtml(value) {
     .replaceAll('"', '&quot;');
 }
 
-function renderRows(rows) {
-  if (!rows.length) return '<p class="empty">Nothing yet.</p>';
-  const columns = Object.keys(rows[0]);
-  const head = columns.map((c) => `<th>${escapeHtml(c)}</th>`).join('');
-  const body = rows
-    .map((row) => `<tr>${columns.map((c) => `<td>${escapeHtml(format(row[c]))}</td>`).join('')}</tr>`)
-    .join('');
-  return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
-}
-
+/** Numbers the browser will format; the server only decides which are rows and which are labels. */
 function format(value) {
   if (typeof value !== 'number') return value ?? '';
-  return Number.isInteger(value) ? value : value.toFixed(2);
+  return Number.isInteger(value) ? value : Number(value.toFixed(2));
 }
-
 
 /**
- * A bar chart, drawn as SVG on the server.
+ * Every section's rows, as JSON, for the page to draw.
  *
- * **No script, no library, no request.** A chart is a shape, and a shape is something HTML can
- * already say — so this is `<rect>` elements with numbers in them, computed here, in the same
- * response as the table under it. Nothing to load means nothing to block, nothing to go stale,
- * no third-party host on a page about our own players, and no reason for a reader's network tab
- * to name anybody but us. It also means the page works with JavaScript off, which is a strange
- * thing to care about until the one time it is the reason you can see the numbers.
- *
- * Where a row has a *part* of its total worth seeing — the games that were finished, of the
- * games that were played — it is drawn over the bar rather than beside it, because the question
- * is what share it is and a share is read by comparing two lengths from the same baseline.
+ * The split is the security property: the SQL and the account's read token stay on the server,
+ * and what crosses to the browser is aggregate rows with no identity in them — which is all the
+ * dataset holds in the first place ([AnalyticsPrivacyTest] makes it so). A browser that could
+ * query would be a browser holding a token that can read the whole account's analytics.
  */
-function renderChart(rows, chart) {
-  if (!chart || !rows.length) return '';
-
-  // Days arrive newest-first because that is how a table wants them, and a chart wants the
-  // opposite: time runs left to right or it is not a time axis.
-  const ordered = chart.overTime ? [...rows].reverse() : rows;
-  const points = ordered.map((row) => ({
-    label: String(row[chart.x] ?? ''),
-    value: Number(row[chart.y]) || 0,
-    part: chart.of == null ? null : Number(row[chart.of]) || 0,
-  }));
-
-  const top = Math.max(...points.map((p) => p.value), 1);
-  const band = CHART_W / points.length;
-  const width = Math.max(2, Math.min(band - CHART_GAP, CHART_BAR_MAX));
-  const floor = CHART_H - CHART_FOOT;
-  const room = floor - CHART_HEAD;
-
-  const bar = (p, i) => {
-    const x = i * band + (band - width) / 2;
-    const h = (p.value / top) * room;
-    const parts = [
-      `<rect x="${x.toFixed(1)}" y="${(floor - h).toFixed(1)}"`
-      + ` width="${width.toFixed(1)}" height="${h.toFixed(1)}" class="bar"/>`,
-    ];
-    if (p.part != null) {
-      const ph = (p.part / top) * room;
-      parts.push(
-        `<rect x="${x.toFixed(1)}" y="${(floor - ph).toFixed(1)}"`
-        + ` width="${width.toFixed(1)}" height="${ph.toFixed(1)}" class="part"/>`,
-      );
-    }
-    return parts.join('');
-  };
-
-  // Enough ticks to read the axis, never so many they collide: a month of days at eight labels
-  // is one every four, and a handful of categories gets all of them.
-  const every = Math.ceil(points.length / CHART_TICKS);
-  const tick = (p, i) =>
-    i % every === 0
-      ? `<text x="${(i * band + band / 2).toFixed(1)}" y="${CHART_H - 5}" class="tick">`
-        + `${escapeHtml(shortLabel(p.label))}</text>`
-      : '';
-
-  const legend = chart.of == null
-    ? ''
-    : `<p class="legend"><span class="swatch bar"></span>${escapeHtml(chart.y)}`
-      + `<span class="swatch part"></span>${escapeHtml(chart.of)}</p>`;
-
-  return `<svg viewBox="0 0 ${CHART_W} ${CHART_H}" class="chart" role="img"`
-    + ` aria-label="${escapeHtml(chart.y)} by ${escapeHtml(chart.x)}, highest ${format(top)}">`
-    + `<line x1="0" y1="${floor}" x2="${CHART_W}" y2="${floor}" class="axis"/>`
-    + points.map(bar).join('')
-    + points.map(tick).join('')
-    + `</svg><p class="peak">highest: ${format(top)}</p>${legend}`;
+export async function dashboardData(env) {
+  return Promise.all(
+    QUERIES.map(async (query) => {
+      const answer = await runQuery(env, query.sql);
+      return {
+        id: query.id,
+        title: query.title,
+        note: query.note,
+        chart: query.chart ?? null,
+        rows: (answer.rows ?? []).map((row) => {
+          const out = {};
+          for (const [key, value] of Object.entries(row)) out[key] = format(value);
+          return out;
+        }),
+        error: answer.error ?? null,
+      };
+    }),
+  );
 }
 
-/** A date is read by its day, not by its century: "2026-09-08" is "09-08" on an axis. */
-function shortLabel(label) {
-  const date = /^\d{4}-(\d{2}-\d{2})/.exec(label);
-  return date ? date[1] : label.length > LABEL_MAX ? `${label.slice(0, LABEL_MAX)}…` : label;
-}
-
-const CHART_W = 720;
-const CHART_H = 170;
-const CHART_HEAD = 8;
-const CHART_FOOT = 24;
-const CHART_GAP = 4;
-const CHART_BAR_MAX = 44;
-const CHART_TICKS = 8;
-const LABEL_MAX = 12;
-
-/** The page. Plain HTML and one inline stylesheet — no build step, no framework, no fetch. */
-export function renderPage(sections) {
-  const body = sections
-    .map(
-      (section) => `<section>
-        <h2>${escapeHtml(section.title)}</h2>
-        <p class="note">${escapeHtml(section.note)}</p>
-        ${section.error
-          ? `<p class="error">${escapeHtml(section.error)}</p>`
-          : renderChart(section.rows, section.chart) + renderRows(section.rows)}
-      </section>`,
-    )
-    .join('');
-
+/**
+ * The page: HTML, CSS and JavaScript, drawing the JSON above with Chart.js.
+ *
+ * It was hand-rolled SVG rendered on the server, which had the virtue of loading nothing and the
+ * defect of looking it — no hover, no legend that means anything, no axis a reader can trust,
+ * and every improvement paid for in geometry by hand. A dashboard is a thing somebody reads
+ * every week; it should look like one.
+ *
+ * **The library is pinned and hashed.** A `<script>` from a CDN is a supply-chain hole unless the
+ * browser is told exactly what it is allowed to run, so the tag carries `integrity` and the CSP
+ * below names the two hosts and nothing else. If a byte of that file ever differs from the hash,
+ * the browser refuses it and the charts do not draw — which is the failure you want, rather than
+ * running somebody else's code on a page about your players. To drop the CDN entirely, serve the
+ * file from this Worker and change the one `src`.
+ */
+export function renderShell() {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src ${CHART_HOST} 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
 <title>Vinto — counts</title>
 <style>
-  :root { color-scheme: dark; }
-  body { margin: 0; padding: 24px; background: #14181d; color: #e8e6e3;
-         font: 15px/1.5 system-ui, sans-serif; }
+  :root { color-scheme: dark; --ink: #e8e6e3; --dim: #9aa3ad; --line: #262c33; --panel: #191e24; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px; background: #14181d; color: var(--ink);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { max-width: 1200px; margin: 0 auto 20px; }
   h1 { font-size: 20px; margin: 0 0 4px; }
-  h2 { font-size: 16px; margin: 32px 0 4px; }
-  .note, .sub { color: #9aa3ad; font-size: 13px; margin: 0 0 12px; }
-  .error { color: #e0796b; }
-  .empty { color: #6f7780; font-style: italic; }
-  table { border-collapse: collapse; width: 100%; max-width: 760px; }
-  th, td { text-align: left; padding: 6px 12px 6px 0; border-bottom: 1px solid #262c33; }
-  th { color: #9aa3ad; font-weight: 600; }
-  .chart { width: 100%; max-width: 760px; height: auto; display: block; margin: 4px 0 2px; }
-  .bar { fill: #2c5f46; }
-  .part { fill: #3fd07a; }
-  .axis { stroke: #2b323a; stroke-width: 1; }
-  .tick { fill: #6f7780; font-size: 11px; text-anchor: middle;
-          font-family: system-ui, sans-serif; }
-  .peak, .legend { color: #6f7780; font-size: 12px; margin: 0 0 10px; }
-  .legend { display: flex; align-items: center; gap: 6px; }
-  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-  .swatch.part { margin-left: 10px; }
+  .sub { color: var(--dim); font-size: 13px; margin: 0; }
+  main { max-width: 1200px; margin: 0 auto; display: grid; gap: 18px;
+         grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+            padding: 16px; min-width: 0; }
+  h2 { font-size: 15px; margin: 0 0 4px; }
+  .note { color: var(--dim); font-size: 12.5px; margin: 0 0 12px; }
+  .frame { position: relative; height: 220px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 13px; }
+  th, td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--line);
+           white-space: nowrap; }
+  th { color: var(--dim); font-weight: 600; }
+  .scroll { overflow-x: auto; }
+  .empty { color: #6f7780; font-style: italic; margin: 0; }
+  .error { color: #e0796b; margin: 0; }
 </style></head>
 <body>
-<h1>Vinto — counts</h1>
-<p class="sub">The last ${WINDOW_DAYS} days. Anonymous aggregates: there is nothing here that
-identifies a person, because there is nowhere in what is collected to put it.</p>
-${body}
+<header>
+  <h1>Vinto — counts</h1>
+  <p class="sub">The last ${WINDOW_DAYS} days. Anonymous aggregates: there is nothing here that
+  identifies a person, because there is nowhere in what is collected to put it.</p>
+</header>
+<main id="board"><p class="empty">Loading…</p></main>
+<script src="${CHART_SRC}" integrity="${CHART_SRI}" crossorigin="anonymous"></script>
+<script>
+(async function () {
+  var board = document.getElementById('board');
+  var res = await fetch('?format=json', { headers: { accept: 'application/json' } });
+  if (!res.ok) { board.innerHTML = '<p class="error">Could not read the counts.</p>'; return; }
+  var sections = await res.json();
+  board.innerHTML = '';
+
+  var INK = '#e8e6e3', DIM = '#9aa3ad', LINE = '#262c33';
+  var BAR = '#2c5f46', PART = '#3fd07a';
+
+  sections.forEach(function (section) {
+    var el = document.createElement('section');
+    var head = '<h2></h2><p class="note"></p>';
+    el.innerHTML = head;
+    el.querySelector('h2').textContent = section.title;
+    el.querySelector('.note').textContent = section.note;
+
+    if (section.error) {
+      var e = document.createElement('p');
+      e.className = 'error';
+      e.textContent = section.error;
+      el.appendChild(e);
+      board.appendChild(el);
+      return;
+    }
+    if (!section.rows.length) {
+      var n = document.createElement('p');
+      n.className = 'empty';
+      n.textContent = 'Nothing yet.';
+      el.appendChild(n);
+      board.appendChild(el);
+      return;
+    }
+
+    if (section.chart) {
+      var spec = section.chart;
+      var rows = spec.overTime ? section.rows.slice().reverse() : section.rows;
+      var frame = document.createElement('div');
+      frame.className = 'frame';
+      var canvas = document.createElement('canvas');
+      frame.appendChild(canvas);
+      el.appendChild(frame);
+
+      var sets = [{ label: spec.y, data: rows.map(function (r) { return r[spec.y]; }),
+                    backgroundColor: BAR, borderRadius: 3 }];
+      if (spec.of) {
+        sets.push({ label: spec.of, data: rows.map(function (r) { return r[spec.of]; }),
+                    backgroundColor: PART, borderRadius: 3 });
+      }
+      new Chart(canvas, {
+        type: 'bar',
+        data: { labels: rows.map(function (r) { return String(r[spec.x]); }), datasets: sets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { grid: { display: false }, ticks: { color: DIM, maxRotation: 0, autoSkip: true } },
+            y: { beginAtZero: true, grid: { color: LINE }, ticks: { color: DIM, precision: 0 } }
+          },
+          plugins: {
+            legend: { display: !!spec.of, labels: { color: INK, boxWidth: 12, boxHeight: 12 } },
+            tooltip: { mode: 'index', intersect: false }
+          }
+        }
+      });
+    }
+
+    var columns = Object.keys(section.rows[0]);
+    var wrap = document.createElement('div');
+    wrap.className = 'scroll';
+    var table = document.createElement('table');
+    var thead = document.createElement('thead');
+    var hr = document.createElement('tr');
+    columns.forEach(function (c) {
+      var th = document.createElement('th');
+      th.textContent = c;
+      hr.appendChild(th);
+    });
+    thead.appendChild(hr);
+    table.appendChild(thead);
+    var tbody = document.createElement('tbody');
+    section.rows.forEach(function (row) {
+      var tr = document.createElement('tr');
+      columns.forEach(function (c) {
+        var td = document.createElement('td');
+        td.textContent = row[c] == null ? '' : String(row[c]);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    el.appendChild(wrap);
+    board.appendChild(el);
+  });
+})();
+</script>
 </body></html>`;
 }
 
+/** Pinned, hashed, and named in the CSP — the three things that make a CDN script safe to run. */
+const CHART_HOST = 'https://cdn.jsdelivr.net';
+const CHART_SRC = `${CHART_HOST}/npm/chart.js@4.4.6/dist/chart.umd.min.js`;
+const CHART_SRI = 'sha384-Sse/HDqcypGpyTDpvZOJNnG0TT3feGQUkF9H+mnRvic+LjR+K1NhTt8f51KIQ3v3';
+
 /**
- * `GET /counts?key=…`.
+ * The route, in two halves: the page, and the numbers it draws.
+ *
+ * `?format=json` answers the rows and anything else answers the shell that fetches them. Two
+ * halves rather than one server-rendered page because the charting happens in the browser now,
+ * and one URL rather than two because whatever is guarding this — Cloudflare Access on the
+ * stats host — should guard both without anybody having to remember the second one.
+ *
+ * The key check stays for a deployment that is *not* behind Access, and does nothing when
+ * `DASHBOARD_KEY` is unset. On the stats host, Access is the door and this is belt to its
+ * braces; without either, the route answers 404 and is indistinguishable from absent.
  *
  * Returns null when this is not that route, so the caller's router reads as a list of routes
  * rather than a nest of conditions.
  */
-export async function serveDashboard(request, env, url) {
-  if (url.pathname !== '/counts') return null;
+export async function serveDashboard(request, env, url, path = '/counts') {
+  if (url.pathname !== path) return null;
 
   // An unconfigured deployment does not have a dashboard, and says exactly that — the same
   // answer as a path that does not exist, so a prober cannot tell a service that is missing
   // its secret from one that never had this route.
   if (!dashboardConfigured(env)) return new Response('not found', { status: 404 });
-  if (!keyMatches(url.searchParams.get('key'), env.DASHBOARD_KEY)) {
+  if (env.DASHBOARD_KEY && !keyMatches(url.searchParams.get('key'), env.DASHBOARD_KEY)) {
     return new Response('not found', { status: 404 });
   }
 
-  const sections = await Promise.all(
-    QUERIES.map(async (query) => ({
-      title: query.title,
-      note: query.note,
-      chart: query.chart,
-      ...(await runQuery(env, query.sql)),
-    })),
-  );
+  // Never cached and never indexed: it is a private view, and a stale one is worse than none
+  // because the number it shows is the one somebody will act on.
+  const guard = {
+    'cache-control': 'no-store',
+    'x-robots-tag': 'noindex, nofollow',
+  };
 
-  return new Response(renderPage(sections), {
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      // Never cached and never indexed: it is a private view, and a stale one is worse than
-      // none because the number it shows is the one somebody will act on.
-      'cache-control': 'no-store',
-      'x-robots-tag': 'noindex, nofollow',
-    },
+  if (url.searchParams.get('format') === 'json') {
+    return new Response(JSON.stringify(await dashboardData(env)), {
+      headers: { 'content-type': 'application/json; charset=utf-8', ...guard },
+    });
+  }
+
+  return new Response(renderShell(), {
+    headers: { 'content-type': 'text/html; charset=utf-8', ...guard },
   });
 }

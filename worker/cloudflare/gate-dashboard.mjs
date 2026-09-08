@@ -18,8 +18,7 @@ import {
   WINDOW_DAYS,
   dashboardConfigured,
   keyMatches,
-  escapeHtml,
-  renderPage,
+  renderShell,
   serveDashboard,
 } from './dashboard.mjs';
 
@@ -119,22 +118,31 @@ check(
 
 console.log('\ndashboard: the page');
 
-const page = renderPage([
-  { title: 'A section', note: 'What it is for.', rows: [{ day: '2026-08-29', opens: 12.5 }] },
-  { title: 'An empty one', note: 'Nothing yet.', rows: [] },
-  { title: 'A broken one', note: 'It failed.', error: 'the SQL API answered 403' },
-]);
+const page = renderShell();
 
-check('rows render', page.includes('<td>2026-08-29</td>') && page.includes('<td>12.50</td>'));
-check('an empty section says so', page.includes('Nothing yet.'));
-check('an error is shown rather than swallowed', page.includes('the SQL API answered 403'));
 check('the page asks not to be indexed', page.includes('noindex'));
+check('it fetches its own numbers rather than embedding them', page.includes("format=json"));
+check('the canvas the charts draw on is there', page.includes('<canvas') || page.includes("'canvas'"));
 
-// The values are enum labels and numbers today, so nothing here can carry markup. The
-// escaping is still asserted, because "the data is safe" is a property of a schema somebody
-// can change and not of this renderer.
-check('markup in a value is escaped', escapeHtml('<script>x</script>') === '&lt;script&gt;x&lt;/script&gt;');
-check('quotes are escaped', escapeHtml('a "b" & c') === 'a &quot;b&quot; &amp; c');
+// A `<script>` from a CDN is somebody else's code running on a page about our players. Three
+// things make that acceptable and this asserts all three: the version is pinned, the browser is
+// told the exact bytes to accept, and the CSP names the one host it may come from.
+const src = /<script src="([^"]+)" integrity="([^"]+)"/.exec(page);
+check('the chart library is loaded with an integrity hash', src !== null);
+check('and pinned to an exact version', /chart\.js@\d+\.\d+\.\d+\//.test(src?.[1] ?? ''));
+check('with a sha384 hash', (src?.[2] ?? '').startsWith('sha384-'), src?.[2]);
+check('and a CSP that names where scripts may come from', page.includes('script-src'));
+check(
+  'the CSP allows the library host and nothing else to run',
+  page.includes(`script-src ${new URL(src?.[1] ?? 'https://x/').origin}`),
+);
+check('nothing may be fetched cross-origin from the page', page.includes("connect-src 'self'"));
+
+// The rows are built into the DOM with textContent rather than interpolated into HTML, so a
+// value that ever *did* carry markup is text rather than markup. Asserted on the source because
+// the alternative is asserting it on a browser this gate does not have.
+check('values reach the DOM as text, never as markup', page.includes('textContent'));
+check('and the page never assigns a row into innerHTML', !/innerHTML\s*=\s*[^;]*row/.test(page));
 
 console.log(failures === 0 ? '\ndashboard gate: ok\n' : `\ndashboard gate: ${failures} FAILED\n`);
 process.exit(failures === 0 ? 0 : 1);

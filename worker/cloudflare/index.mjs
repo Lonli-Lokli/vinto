@@ -41,7 +41,7 @@ import {
  * which names are real is telling it something.
  */
 import { reportError, roomContext } from './sentry.mjs';
-import { serveDashboard, keyMatches } from './dashboard.mjs';
+import { keyMatches } from './secrets.mjs';
 
 const CLIENT_EVENTS = new Set(['funnel', 'solo_round', 'lesson', 'failure']);
 
@@ -1303,12 +1303,12 @@ async function handle(request, env) {
       return new Response(null, { status: 204 });
     }
 
-    // The dashboard (§A6). Above the ROOM_OPEN gate for the same reason `/e` is: the counts
-    // worth reading on a day the room is shut are exactly the ones about it being shut. It
-    // answers 404 unless this deployment holds all three of its secrets and the key in the
-    // URL matches, so on a Worker with none of them it is indistinguishable from absent.
-    const counts = await serveDashboard(request, env, url);
-    if (counts) return counts;
+    // The counts are read at `stats.kupalinka.app`, not here.
+    //
+    // This Worker used to serve them at `/counts?key=…`, which put a per-game URL and a shared
+    // secret where the portfolio already had a stats host behind Cloudflare Access. Analytics
+    // Engine datasets are account-scoped, so nothing had to move but the page: the room still
+    // writes `vinto_events` and something else reads it. `dashboard.mjs` holds the queries.
 
     if (env.ROOM_OPEN !== 'true') {
       return new Response('the room service is closed', {
