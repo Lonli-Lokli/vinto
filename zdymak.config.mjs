@@ -9,6 +9,11 @@
  * Pinned to zdymak 0.22.0 — the version `.claude/skills/zdymak/SKILL.md` was vendored from.
  * Behaviour here is version-specific (the output layout changed at 0.15), so bump both together.
  *
+ * **One exception, and it is temporary.** `appstore-iap-review` below was added to zdymak for this
+ * repository's in-app purchase and is not in 0.22.0, so `npm run capture-iap` runs the local
+ * checkout by path — the same shape `capture-ios` and `capture-android` already use. When zdymak
+ * publishes, raise the pin in `package.json` and put `zdymak screenshots` back in that script.
+ *
  * **`npx zdymak capture` drives this app now.** The handle the note at the foot of this file
  * specified is built: `MarketingScene` in `composeApp`, read from an intent extra on Android
  * (debug source set) and a launch argument on iOS. `npm run capture-ios`, `capture-ipad` and
@@ -101,12 +106,7 @@ export default {
       // so the only preview this config makes is the `reel` above, from recorded clips.
       screenshots: [
         { target: 'appstore-iphone-6.9', style: 'framed' },
-        // `size` pinned, because the target's default is 1242x2688 and Apple's current
-        // specification for the 6.5" class is 1284x2778 — the older size is not on the list any
-        // more. Found the hard way on the IAP review screenshot, which was refused with "The
-        // dimensions of one or more screenshots are wrong" for the equivalent mistake one class
-        // up; this set had the same fault waiting for the first listing upload.
-        { target: 'appstore-iphone-6.5', size: [1284, 2778], style: 'framed' },
+        { target: 'appstore-iphone-6.5', style: 'framed' },
       ],
     },
     ipad: {
@@ -133,15 +133,18 @@ export default {
     /**
      * The review screenshot App Store Connect will not create an in-app purchase without.
      *
-     * Not a listing asset — it never reaches a shopper. It goes in the purchase's own slot, and
-     * a reviewer looks at it once to see where in the app the thing being sold appears. So it is
-     * here rather than uploaded by hand for the reason every other image is here: **no alpha** is
-     * a store rule, this is the tool that knows it, and a flatten written into an npm script is a
-     * rule kept somewhere nobody looks.
+     * Not a listing asset — it never reaches a shopper. It goes in the purchase's own slot, and a
+     * reviewer looks at it once to see where in the app the thing being sold appears.
      *
-     * `bleed` and `caption: false` — the same pairing the Play uploads use, and for a stricter
-     * version of the same reason. Play merely dislikes a frame; here a bezel or a headline would
-     * be answering "where is this in your app?" with a marketing graphic.
+     * **`appstore-iap-review`, not a listing target with a `size:` on it.** That was the first
+     * attempt and it cost two rejections. The purchase form validates against an OLDER table than
+     * the listing form: 1290x2796 and 1320x2868 are both refused there — "The dimensions of one or
+     * more screenshots are wrong" — while the listing slots take either happily, and Apple's
+     * screenshot specification lists both as valid 6.9" sizes. Nothing about the file was wrong
+     * both times; the slot simply predates those display classes. zdymak carries the IAP slot's
+     * own table now, oldest size first, which is the only place that knowledge belongs.
+     *
+     * No `style` or `caption` here either: the target is `plain`, so the interface renders alone.
      *
      * Its own `scenes`, because this device has ONE capture and it is not one of the six the
      * listing tells its story with. `IapShotTest` renders it — the real settings screen, with the
@@ -150,27 +153,9 @@ export default {
     iap: {
       capturesDir: './marketing/captures/iap',
       scenes: [{ id: 'support-review' }],
-      screenshots: [
-        {
-          target: 'appstore-iphone-6.9',
-          // `dir` keeps it out of `appstore-iphone-6.9/`, which is the listing set `vydanne
-          // bridge` uploads — this must never be mistaken for one of the ten a shopper sees.
-          dir: 'iap-review',
-          // NO `size` OVERRIDE — the target's own 1320x2868, and that is the whole lesson here.
-          //
-          // This said `size: [1290, 2796]`, which zdymak lists among the 6.9" slot's accepted
-          // sizes, and App Store Connect answered "The dimensions of one or more screenshots are
-          // wrong." The file was faultless in every other respect. Apple's current screenshot
-          // specification lists ONE size per display class — 6.9" is 1320x2868 — and 1290x2796
-          // (the old 6.7") is not on it any more. An `accepts` list that has not caught up is
-          // exactly how a retired size gets chosen on purpose.
-          //
-          // The rule for a review screenshot is "any of the screenshot specifications your app
-          // supports", and the safest reading of that is the size the listing itself uses.
-          style: 'bleed',
-          caption: false,
-        },
-      ],
+      // `dir` keeps it out of the listing folders `vydanne bridge` uploads from — this must never
+      // be mistaken for one of the ten screenshots a shopper sees.
+      screenshots: [{ target: 'appstore-iap-review', dir: 'iap-review' }],
     },
   },
 

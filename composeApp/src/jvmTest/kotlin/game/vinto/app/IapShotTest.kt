@@ -53,21 +53,24 @@ import kotlin.test.assertTrue
  * accept" for every other image in this repository. The upload is
  * `store-assets/iap-review/01-support-review.png`, not this file.
  *
- * ## The size is not a minimum, and "accepted" was not enough
+ * ## The size is the purchase form's, not the listing's
  *
- * The App Review Screenshot slot asks for "a screenshot that meets **any of the screenshot
- * specifications your app supports**" — one of Apple's own listing sizes, not merely something
- * big enough. So a render at some comfortable-looking size is not a valid file however large it
- * is.
+ * The slot's help says only that the image must meet "any of the screenshot specifications your
+ * app supports", which reads as though a listing size would do. It does not. This was rendered at
+ * 1290x2796 and then at 1320x2868 — both sizes Apple's own screenshot specification lists for the
+ * 6.9" class, both taken without complaint by the listing slots — and **App Store Connect refused
+ * each one**: "The dimensions of one or more screenshots are wrong." Nothing about either file was
+ * wrong; the purchase form is older than the listing form and validates against an older table.
  *
- * It was 1290x2796 first, which the 6.9" slot *accepts* as one of three sizes, and **App Store
- * Connect refused the upload anyway**. The file was faultless — 8-bit RGB, no alpha, no ICC
- * profile, 72 dpi, non-interlaced — so what was left was the size, and 1290x2796 is the one of
- * the three this app does not otherwise use.
+ * So the size comes from `appstore-iap-review` in zdymak, which carries that slot's own table with
+ * the oldest size first, and this renders at whatever that target asks for rather than at a phone
+ * shape somebody picked. [WIDE] x [HIGH] is 640x920 — a real screenshot specification (Apple's
+ * 3.5" class) and the size Apple's in-app purchase documentation asked for when the slot was built.
  *
- * [WIDE] x [HIGH] is the size the app's own 6.9" listing screenshots are, which is the strongest
- * form the requirement can be met in: not "a size Apple documents as accepted" but a size App
- * Store Connect has already taken from this app.
+ * **It is short and square-ish, and that is the point of rendering rather than scaling.** A phone
+ * capture squeezed into 0.7:1 is a crop of a screen; this is the screen laid out for 320x460dp,
+ * which puts the purchase — the one thing the reviewer is looking for — at the top of a page that
+ * fits.
  */
 class IapShotTest {
 
@@ -112,10 +115,17 @@ class IapShotTest {
     }
 
     private companion object {
-        /** An accepted App Store 6.9" size, which is what makes it a valid review screenshot. */
-        const val WIDE = 1320
-        const val HIGH = 2868
-        const val DENSITY = 3f
+        /** `appstore-iap-review`'s own size — see the note above for why it is not a phone's. */
+        const val WIDE = 640
+        const val HIGH = 920
+
+        /**
+         * 320x460dp at 2x, which is a real iPhone width (the SE's) rather than an arbitrary one.
+         *
+         * At 3x it would be 213dp — narrower than any device the app runs on, so the layout would
+         * be answering a question it is never asked and the shot would show a screen nobody sees.
+         */
+        const val DENSITY = 2f
 
         const val OUT_DIR = "../marketing/captures/iap"
         const val SHOT = "support-review.png"
