@@ -41,7 +41,6 @@ import {
  * which names are real is telling it something.
  */
 import { reportError, roomContext } from './sentry.mjs';
-import { serveStats } from './dashboard.mjs';
 import { keyMatches } from './secrets.mjs';
 
 const CLIENT_EVENTS = new Set(['funnel', 'solo_round', 'lesson', 'failure']);
@@ -1304,19 +1303,16 @@ async function handle(request, env) {
       return new Response(null, { status: 204 });
     }
 
-    // The counts are DRAWN at `stats.kupalinka.app` and computed here.
+    // The counts are DRAWN at `stats.kupalinka.app`, and this Worker only writes them.
     //
-    // One dashboard for the portfolio, and each game answers `/stats.json` with its own numbers —
-    // so the queries live next to the schema they read (`dashboard.mjs`, and the layout it reads
-    // is decided by `shared/protocol/.../Analytics.kt`) while the page, the chart library and the
-    // period picker are written once for every game. This Worker used to serve the whole page at
-    // `/counts?key=…`, which was a per-game URL and a second door beside the one the portfolio
-    // already had.
+    // There is no route here at all now. `emit` above writes to `kupalinka_events`, the portfolio's
+    // shared dataset, in a schema that names its own fields (`Analytics.kt`) — so the dashboard
+    // compiles this game's published `stats.json` config into queries and draws them, knowing
+    // nothing about what a round is. Analytics Engine datasets are account-scoped, which is why
+    // this needs no HTTP hop and no key: the binding IS the connection.
     //
-    // Above the `ROOM_OPEN` gate, for the same reason `/health` is: it reports on the service
-    // rather than taking part in it, and a closed room still has a month of history worth reading.
-    const stats = await serveStats(request, env, url);
-    if (stats) return stats;
+    // What used to be here was the whole page — queries, HTML, a pinned chart library — served at
+    // `/counts?key=…`. Every game would have needed its own copy of it.
 
     if (env.ROOM_OPEN !== 'true') {
       return new Response('the room service is closed', {

@@ -392,13 +392,6 @@ jobs:
         working-directory: worker/cloudflare
         run: node gate-sentry.mjs
 
-      # The dashboard's queries and refusals. Not its numbers: the Analytics Engine SQL API is
-      # the one part of WAE `wrangler dev` does not emulate, so the six queries can only be run
-      # against rows on a deployment with traffic. Task 5.1 stays unticked for that reason.
-      - name: 'Gate: the dashboard'
-        working-directory: worker/cloudflare
-        run: node gate-dashboard.mjs
-
       # The remaining three need a running Worker: sockets and hibernation
       # (gate-two-clients), the room-code HTTP surface (gate-room-codes) and the corpus
       # replayed through workerd (gate-engine-replay). `wrangler dev` runs the real runtime

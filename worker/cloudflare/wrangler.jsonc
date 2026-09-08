@@ -71,71 +71,16 @@
   //
   // The dataset is where queries read from; it is created on first write, so there is nothing
   // to set up in the dashboard beforehand.
-  "analytics_engine_datasets": [{ "binding": "ANALYTICS", "dataset": "vinto_events" }],
+  "analytics_engine_datasets": [{ "binding": "ANALYTICS", "dataset": "kupalinka_events" }],
 
-  // Reading those counts back needs three secrets, none of which is here:
+  // **The dataset is the portfolio's, not this game's.** Every game on the account writes to
+  // `kupalinka_events` in one self-describing schema (`Analytics.kt`), and `stats.kupalinka.app`
+  // compiles each game's published `stats.json` config into queries against it. So this Worker
+  // needs no analytics token, no dashboard secret and no route: writing is the whole of its part,
+  // and Analytics Engine datasets are account-scoped, so the binding IS the connection.
   //
-  //   ANALYTICS_TOKEN       Account Analytics · Read, and nothing else
-  //   ANALYTICS_ACCOUNT_ID  which account's datasets to query
-  //   STATS_KEY             the portfolio's shared server-to-server key for `/stats.json`
-  //
-  // `wrangler secret put <name>`. With any of them missing the route answers 404 and behaves as
-  // if it were not there, which is what lets every gate script run with no Cloudflare account —
-  // and means an unconfigured deployment never publishes its numbers by default.
-
-  "observability": { "enabled": true },
-
-  // --- Volume, at the door (design R6) ------------------------------------------------------
-  //
-  // Everything else in this service bounds a *total*: the registry's global and per-source
-  // room caps, the per-seat action budget, the socket cap, the message size cap, the guess
-  // limiter in front of a private room's code. None of them bounds a *rate*, and the cheapest
-  // request here is the most amplifying one — `GET /rooms` wakes the single registry Durable
-  // Object, which is single-threaded, so a flood of the one request that costs a stranger
-  // nothing serialises through the one object every real player also needs.
-  //
-  // 120 a minute per address. Two orders of magnitude above anybody browsing a lobby (a
-  // player refreshing hard does five), and far enough below a flood to make one host useless.
-  // Deliberately generous rather than tight, because the key is an address and a school, an
-  // office or a mobile carrier is one address to us — throttling real players in a group is a
-  // worse failure than serving a slow scan.
-  //
-  // **This is now expressible here, and it was not when the note below was written.** That
-  // note said edge rate limiting was a zone-level dashboard rule that could not go in this
-  // file and could not be exercised by `wrangler dev`, so a config block would be a claim
-  // nothing verifies. `ratelimits` is a first-class binding in wrangler 4.x, workerd emulates
-  // it locally, and `gate-ratelimit.mjs` exercises it — so it is a claim something verifies.
-  //
-  // Absent-safe like every other binding: with this block removed the Worker runs identically
-  // and limits nothing, which is what keeps the other gates runnable with no account.
-  "ratelimits": [
-    { "name": "DOOR", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } }
-  ]
-
-  // --- The stats page (design A6, task 5.1) -------------------------------------------------
-  //
-  // ROOM_DEBUG_KEY is deliberately absent, and must stay absent.
-  //
-  // It is what opens the Durable Object's plain-GET state door, and what comes out of that door
-  // is `RoomState`: the seats' token hashes and, once dealt, every player's hand. The harness
-  // needs it (`gate-two-clients` proves state survives an eviction by reading the insides) and
-  // is given it with `--var` on `wrangler dev`. A deployment that has it is a deployment where
-  // knowing a room code — which is shared in invitations and printed in the room list — is
-  // enough to read the table. Setting it here would deploy it.
-
-  // Three secrets, none of them here: ANALYTICS_TOKEN (Account Analytics, read-only),
-  // ANALYTICS_ACCOUNT_ID and DASHBOARD_KEY. Set with `wrangler secret put`; DEPLOYMENT.md §7
-  // walks it through for somebody who does not do this for a living.
-  //
-  // With any of the three missing, GET /counts answers 404 — the same answer a path that does
-  // not exist gets, so a stranger cannot tell a service missing its secret from one that never
-  // had the route. That is also what lets `wrangler dev` and every gate script run without a
-  // Cloudflare account.
-  //
-  // The queries themselves cannot be exercised locally: the Analytics Engine SQL API is the
-  // one part of WAE that `wrangler dev` does not emulate, so `writeDataPoint` calls made in
-  // development go nowhere queryable. `gate-dashboard.mjs` covers the queries' shape and the
-  // route's refusals; the numbers need a deployment with traffic.
+  // It used to be `vinto_events`, read by a page this Worker served at `/counts?key=…` — a per-game
+  // dashboard, with per-game SQL, that every other game would have needed a copy of.
 
   // --- Edge rate limiting (design R6, task 5.3) --------------------------------------------
   //

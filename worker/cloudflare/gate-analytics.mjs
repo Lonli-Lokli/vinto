@@ -50,9 +50,13 @@ const points = {
   session_ended: sessionEndedPoint('PLAYED_OUT', 3, 600000, 5, 1),
 };
 
-// The whole allowed string vocabulary: event names and enum labels. Nothing else may appear
-// anywhere in a rendered point.
+// The whole allowed string vocabulary. Points are self-describing now — the portfolio's shared
+// schema, so one dashboard can draw every game from configuration — so a blob may be the game's
+// name, the event's name, a FIELD name, an enum label, a boolean or a number. The claim is
+// unchanged and only the alphabet is wider: none of those can carry text a person wrote, because
+// `AnalyticsEvent` has no String field to carry it in.
 const VOCABULARY = new Set([
+  'vinto',
   ...Object.keys(points),
   'EASY', 'MODERATE', 'HARD',
   'VINTO_CALLED', 'DECK_EXHAUSTED', 'ABANDONED',
@@ -61,12 +65,26 @@ const VOCABULARY = new Set([
   'SOLO', 'ONLINE', 'LESSON', 'MENU',
   'STAGE_STALLED', 'SOCKET_LOST', 'MOVE_REFUSED', 'RENDER_FAILED',
   'funnel', 'solo_round', 'lesson', 'failure',
+  'true', 'false',
+]);
+
+// Tag and measure names, closed rather than pattern-matched: a new field has to be added here
+// before it can reach the store, so somebody looks at it once.
+const FIELDS = new Set([
+  'difficulty', 'listed', 'humans', 'bots', 'by_bot', 'grace', 'ended_by', 'caller_won',
+  'reason', 'finished', 'away_ms', 'round_number', 'duration_ms', 'actions', 'rounds',
+  'turns', 'reached_stage', 'wall_ms', 'requests',
 ]);
 
 for (const [name, json] of Object.entries(points)) {
   const point = JSON.parse(json);
-  check(`${name} is indexed by its own name`, point.indexes?.[0] === name, JSON.stringify(point.indexes));
-  const strays = [...(point.blobs ?? []), ...point.indexes].filter((b) => !VOCABULARY.has(b));
+  // The GAME is the index and the event is blob2. One index per game rather than per event is what
+  // lets the shared dashboard group by game without knowing any game's event names.
+  check(`${name} is indexed by the game`, point.indexes?.[0] === 'vinto', JSON.stringify(point.indexes));
+  check(`${name} names itself in blob2`, point.blobs?.[1] === name, JSON.stringify(point.blobs?.[1]));
+  const strays = [...(point.blobs ?? []), ...point.indexes].filter(
+    (b) => b !== '' && !VOCABULARY.has(b) && !FIELDS.has(b) && Number.isNaN(Number(b)),
+  );
   check(`${name} writes only closed-vocabulary strings`, strays.length === 0, strays.join(', '));
   check(`${name} carries what it cost`, point.doubles.length >= 3, JSON.stringify(point.doubles));
 }
@@ -83,7 +101,9 @@ const good = clientEventPoint(JSON.stringify({
 check('a known client event renders', good !== null && good !== undefined);
 check(
   'and carries no cost, because a client cannot know one',
-  good ? JSON.parse(good).doubles.length === 4 : false,
+  // Read by NAME rather than by counting columns: the schema pads every point to the same width,
+  // so a length check would pass whatever was in it.
+  good ? !JSON.parse(good).blobs.some((b) => b === 'wall_ms' || b === 'requests') : false,
   good ?? 'null',
 );
 

@@ -1,0 +1,105 @@
+{
+  "_": [
+    "How Vinto wants its numbers drawn on stats.kupalinka.app. Data, not code: the dashboard",
+    "compiles this into queries against the portfolio's shared event dataset and renders them,",
+    "and it knows nothing about what a round or a coalition is. Adding a chart is a line here.",
+    "",
+    "Event names, tags and measures are whatever `Analytics.kt` emits — that file is the source",
+    "of truth for the vocabulary, and a name misspelt here draws a panel saying so rather than",
+    "an empty chart. `agg` is count|sum|avg|min|max, `by` is day|hour|tag:<name>, and `chart` is",
+    "line|bar|table. Served from this game's own domain, so a change ships with the web build.",
+    "",
+    "Offline and online are kept apart on purpose: they are different products with different",
+    "costs, and one number covering both answers nobody's question."
+  ],
+
+  "tiles": [
+    { "label": "Rounds offline", "event": "solo_round", "agg": "count" },
+    { "label": "Rounds online", "event": "round_end", "agg": "count" },
+    { "label": "Sessions", "event": "session_ended", "agg": "count" },
+    { "label": "Rooms opened", "event": "room_created", "agg": "count" },
+    { "label": "Lessons taken", "event": "lesson", "agg": "count" }
+  ],
+
+  "panels": [
+    {
+      "title": "Rounds played alone, by day",
+      "event": "solo_round",
+      "agg": "count",
+      "by": "day",
+      "chart": "line"
+    },
+    {
+      "title": "Rounds played online, by day",
+      "event": "round_end",
+      "agg": "count",
+      "by": "day",
+      "chart": "line"
+    },
+    {
+      "title": "How many humans sat at one table",
+      "note": "rounds, by the number of people in them",
+      "event": "round_start",
+      "agg": "count",
+      "by": "tag:humans",
+      "chart": "table"
+    },
+    {
+      "title": "How a round ended",
+      "note": "a called Vinto, or the deck running out",
+      "event": "round_end",
+      "agg": "count",
+      "by": "tag:ended_by",
+      "chart": "table"
+    },
+    {
+      "title": "How long a round takes",
+      "note": "milliseconds, averaged over the day",
+      "event": "round_end",
+      "agg": "avg",
+      "measure": "duration_ms",
+      "by": "day",
+      "chart": "line"
+    },
+    {
+      "title": "How long a session lasts",
+      "note": "milliseconds, averaged over the day",
+      "event": "session_ended",
+      "agg": "avg",
+      "measure": "duration_ms",
+      "by": "day",
+      "chart": "line"
+    },
+    {
+      "title": "Did the solo round get finished",
+      "note": "played to scoring, or abandoned",
+      "event": "solo_round",
+      "agg": "count",
+      "by": "tag:finished",
+      "chart": "table"
+    },
+    {
+      "title": "Which difficulty people choose",
+      "event": "solo_round",
+      "agg": "count",
+      "by": "tag:difficulty",
+      "chart": "table"
+    },
+    {
+      "title": "Why a session ended",
+      "event": "session_ended",
+      "agg": "count",
+      "by": "tag:reason",
+      "chart": "table"
+    },
+    {
+      "title": "What a round costs to serve",
+      "note": "the room's own wall time, milliseconds, averaged",
+      "event": "round_end",
+      "agg": "avg",
+      "measure": "wall_ms",
+      "by": "day",
+      "chart": "line"
+    }
+  ]
+}

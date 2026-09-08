@@ -183,11 +183,29 @@ public enum class FailureKind {
 public data class Cost(val wallMs: Double, val requests: Double)
 
 /**
- * A Workers Analytics Engine data point: one index, some strings, some numbers.
+ * A Workers Analytics Engine data point, in the portfolio's **shared, self-describing** schema.
  *
- * That is the entire schema WAE offers, so the discipline is in what goes where — the event
- * name is the index because it is what every query groups by, blobs hold only low-cardinality
- * strings (enum names, never free text), and doubles hold counts and durations.
+ *     indexes  [game]
+ *     blobs    [game, event, k1, v1, k2, v2, k3, v3, m1, m2, m3]
+ *     doubles  [sampleRate, n1, n2, n3]
+ *
+ * `k`/`v` are tag names and their values; `m` names the measure each `n` holds.
+ *
+ * ### It used to be positional, and that is what changed
+ *
+ * `blobs[0]` meant the difficulty on one event and the ending reason on another, and `doubles[2]`
+ * was a duration here and a turn count there. That works exactly as long as the queries live in
+ * this repository, because the meaning of `double2` is written down nowhere a reader can check —
+ * and it is why the dashboard had to be Vinto's own, with Vinto's SQL, duplicated per game.
+ *
+ * Naming the fields is what lets one dashboard draw every game from configuration. A reader that
+ * knows only this layout can answer "count `round_end` grouped by tag `size`" without knowing
+ * what a round is. `workers/px/src/collect.ts` in the `kupalinka` repository writes the same
+ * shape for browsers, and `panels.ts` beside it compiles a game's published config against it.
+ *
+ * **The privacy rule is unchanged and is what makes tags safe.** A tag value can only come from
+ * an enum name or a number here, because [AnalyticsEvent] has nothing else to give it —
+ * `AnalyticsPrivacyTest` still fails the build if a free string ever becomes representable.
  */
 @Serializable
 public data class DataPoint(
@@ -196,48 +214,123 @@ public data class DataPoint(
     val doubles: List<Double>,
 )
 
+/**
+ * Matching the shared collector: three tags, four measures.
+ *
+ * A tag is a GROUP BY key, and each one multiplies the cardinality Analytics Engine samples
+ * against; a measure is another column on the same row and costs nothing to carry. Four is what
+ * [AnalyticsEvent.RoundEnd] needs — a duration, an action count, and the two numbers saying what
+ * the room cost to serve it.
+ */
+private const val TAGS = 3
+private const val MEASURES = 4
+
+/**
+ * The field names, once each.
+ *
+ * They are the vocabulary a dashboard's configuration is written against — a panel says
+ * `"by": "tag:humans"` and means [HUMANS] — so a typo in one of them is a chart that silently
+ * draws nothing. Naming them here makes that a compile error instead, and is why `AnalyticsPrivacyTest`
+ * can hold a closed list of every field this file can emit.
+ */
+private const val HUMANS = "humans"
+private const val BOTS = "bots"
+private const val DIFFICULTY = "difficulty"
+private const val FINISHED = "finished"
+private const val DURATION_MS = "duration_ms"
+
 private fun flag(value: Boolean): Double = if (value) 1.0 else 0.0
 
 /**
- * Flattens an event, plus what it cost, into the shape WAE stores.
+ * Flattens an event, plus what it cost, into the shape the shared dataset stores.
  *
- * [sampleRate] rides along as a double so a query can weight a sampled count instead of
- * quietly under-reporting it (design §A8). Events that are never sampled carry 1.0.
+ * Tags are what a panel GROUPS BY and measures are what it aggregates, so the split is by how a
+ * number gets read rather than by its type: `humans` is a tag because the useful question is
+ * "how many rounds had four", and `duration_ms` is a measure because the useful question is its
+ * average. A field that is genuinely both is a tag — a measure cannot be grouped by, and a tag
+ * can still be counted.
+ *
+ * [sampleRate] rides along so a query can weight a sampled count instead of quietly
+ * under-reporting it (design §A8). Events that are never sampled carry 1.0.
  */
 public fun AnalyticsEvent.toDataPoint(cost: Cost? = null, sampleRate: Double = 1.0): DataPoint {
-    val blobs = mutableListOf<String>()
-    val doubles = mutableListOf(sampleRate)
+    val tags = mutableListOf<Pair<String, String>>()
+    val measures = mutableListOf<Pair<String, Double>>()
 
     when (this) {
         is AnalyticsEvent.RoomCreated -> {
-            blobs += difficulty.name
-            doubles += flag(listed)
+            tags += DIFFICULTY to difficulty.name
+            tags += "listed" to listed.toString()
         }
-        is AnalyticsEvent.SeatFilled -> doubles += listOf(humans.toDouble(), bots.toDouble(), flag(byBot))
-        is AnalyticsEvent.SeatVacated -> doubles += listOf(humans.toDouble(), bots.toDouble(), flag(grace))
-        is AnalyticsEvent.BotTookOver -> doubles += humans.toDouble()
-        is AnalyticsEvent.Reconnected -> doubles += awayMs
-        is AnalyticsEvent.RoundStart ->
-            doubles += listOf(humans.toDouble(), bots.toDouble(), roundNumber.toDouble())
+        is AnalyticsEvent.SeatFilled -> {
+            tags += HUMANS to humans.toString()
+            tags += BOTS to bots.toString()
+            tags += "by_bot" to byBot.toString()
+        }
+        is AnalyticsEvent.SeatVacated -> {
+            tags += HUMANS to humans.toString()
+            tags += BOTS to bots.toString()
+            tags += "grace" to grace.toString()
+        }
+        is AnalyticsEvent.BotTookOver -> tags += HUMANS to humans.toString()
+        is AnalyticsEvent.Reconnected -> measures += "away_ms" to awayMs
+        is AnalyticsEvent.RoundStart -> {
+            tags += HUMANS to humans.toString()
+            tags += BOTS to bots.toString()
+            measures += "round_number" to roundNumber.toDouble()
+        }
         is AnalyticsEvent.RoundEnd -> {
-            blobs += endedBy.name
-            doubles += listOf(actions.toDouble(), durationMs, flag(callerWon))
+            tags += "ended_by" to endedBy.name
+            tags += "caller_won" to callerWon.toString()
+            measures += DURATION_MS to durationMs
+            measures += "actions" to actions.toDouble()
         }
         is AnalyticsEvent.SessionEnded -> {
-            blobs += reason.name
-            doubles += listOf(rounds.toDouble(), durationMs)
+            tags += "reason" to reason.name
+            measures += DURATION_MS to durationMs
+            measures += "rounds" to rounds.toDouble()
         }
         is AnalyticsEvent.SoloRound -> {
-            blobs += difficulty.name
-            doubles += listOf(flag(finished), turns.toDouble(), durationMs)
+            tags += DIFFICULTY to difficulty.name
+            tags += FINISHED to finished.toString()
+            measures += DURATION_MS to durationMs
+            measures += "turns" to turns.toDouble()
         }
-        is AnalyticsEvent.Lesson -> doubles += listOf(flag(finished), reachedStage.toDouble(), durationMs)
+        is AnalyticsEvent.Lesson -> {
+            tags += FINISHED to finished.toString()
+            measures += DURATION_MS to durationMs
+            measures += "reached_stage" to reachedStage.toDouble()
+        }
     }
 
-    if (cost != null) doubles += listOf(cost.wallMs, cost.requests)
+    // What a room cost to run, on every event that reports one. Measures rather than tags: the
+    // question is "what does a busy hour cost", which is a sum, never a grouping.
+    if (cost != null) {
+        measures += "wall_ms" to cost.wallMs
+        measures += "requests" to cost.requests
+    }
 
-    return DataPoint(indexes = listOf(name), blobs = blobs, doubles = doubles)
+    val keptTags = tags.take(TAGS)
+    val keptMeasures = measures.take(MEASURES)
+    fun <T> padded(list: List<T>, to: Int, filler: T) = list + List(maxOf(0, to - list.size)) { filler }
+
+    return DataPoint(
+        indexes = listOf(GAME),
+        blobs = listOf(GAME, name) +
+            padded(keptTags.flatMap { listOf(it.first, it.second) }, TAGS * 2, "") +
+            padded(keptMeasures.map { it.first }, MEASURES, ""),
+        doubles = listOf(sampleRate) + padded(keptMeasures.map { it.second }, MEASURES, 0.0),
+    )
 }
+
+/**
+ * The index every point carries, and the name the dashboard knows this game by.
+ *
+ * It is the first label of the host the web build is served from (`vinto.kupalinka.app`), because
+ * that is what the portfolio's visit beacon calls this game — deriving it the same way here means
+ * the two halves of one game's numbers cannot end up filed under two names.
+ */
+public const val GAME: String = "vinto"
 
 /** The JSON the Worker shim hands to `writeDataPoint`. */
 public val AnalyticsJson: Json = Json { encodeDefaults = true }

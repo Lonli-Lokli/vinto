@@ -58,10 +58,21 @@ class AnalyticsPrivacyTest {
     }
 
     /**
-     * And the rendered point carries no strings beyond the event name and its enum labels.
+     * And the rendered point carries nothing a person could be recognised by.
      *
      * The check above is about what *can* be declared; this is about what actually goes out,
      * which is the thing an operator would see in the store.
+     *
+     * **The rule got wider when the schema did, and it did not get weaker.** Points used to be
+     * positional, so every blob was an enum label and the check could be "is this string in the
+     * vocabulary". They are self-describing now — the shared portfolio schema, so one dashboard
+     * can draw every game from configuration — which means a blob may also be the game's name,
+     * the event's name, a FIELD name, or a value rendered from a number or a boolean.
+     *
+     * So the check is the same claim stated for the wider alphabet: every blob is one of those
+     * six things, and none of them can carry text a person wrote. The structural half — that
+     * `AnalyticsEvent` has no `String` field to carry it in the first place — is
+     * [nothingIdentifyingIsRepresentable] above, which is what makes this enumerable at all.
      */
     @Test
     fun everyRenderedBlobIsAnEnumLabelOrTheEventName() {
@@ -94,15 +105,32 @@ class AnalyticsPrivacyTest {
             addAll(Difficulty.entries.map { it.name })
             addAll(RoundEnding.entries.map { it.name })
             addAll(SessionEnding.entries.map { it.name })
+            addAll(listOf("true", "false"))
+            add(GAME)
+            addAll(samples.map { it.name })
         }
+
+        // Tag and measure NAMES — the words that make the schema self-describing. A closed list
+        // rather than a pattern, so a new field arrives in this test before it arrives in the
+        // store, and somebody has to look at it.
+        val fields = setOf(
+            "difficulty", "listed", "humans", "bots", "by_bot", "grace", "ended_by", "caller_won",
+            "reason", "finished", "away_ms", "round_number", "duration_ms", "actions", "rounds",
+            "turns", "reached_stage", "wall_ms", "requests",
+        )
 
         for (sample in samples) {
             val point = sample.toDataPoint(Cost(wallMs = 12.0, requests = 1.0))
-            assertTrue(point.indexes == listOf(sample.name), "the index must be the event name: ${point.indexes}")
+            assertTrue(
+                point.indexes == listOf(GAME),
+                "the index must be the game, so one dashboard can group by it: ${point.indexes}",
+            )
+            assertTrue(point.blobs[1] == sample.name, "blob2 must be the event name: ${point.blobs}")
             for (blob in point.blobs) {
                 assertTrue(
-                    blob in vocabulary,
-                    "'$blob' on ${sample.name} is not an enum label — only closed vocabularies may be written",
+                    blob.isEmpty() || blob in vocabulary || blob in fields || blob.toDoubleOrNull() != null,
+                    "'$blob' on ${sample.name} is not a name, an enum label or a number — " +
+                        "only closed vocabularies may be written",
                 )
             }
         }
@@ -115,10 +143,15 @@ class AnalyticsPrivacyTest {
             .toDataPoint(Cost(wallMs = 1_600.0, requests = 12.0))
         val without = AnalyticsEvent.SoloRound(true, Difficulty.EASY, 30, 60_000.0).toDataPoint()
 
-        assertTrue(withCost.doubles.takeLast(2) == listOf(1_600.0, 12.0), "cost is not on the point: $withCost")
+        // Read by NAME rather than by slot, which is the whole reason the schema changed: a test
+        // that asserts on `doubles[3]` passes for a point whose fields moved under it.
+        val named = withCost.blobs.drop(8).zip(withCost.doubles.drop(1)).toMap()
+        assertTrue(named["wall_ms"] == 1_600.0, "wall time is not on the point: $withCost")
+        assertTrue(named["requests"] == 12.0, "the request count is not on the point: $withCost")
+
         assertTrue(
-            without.doubles.first() == 1.0 && without.doubles.size == 4,
-            "a client event should carry its sample rate and its own three numbers, no cost: $without",
+            without.doubles.first() == 1.0 && without.blobs.none { it == "wall_ms" || it == "requests" },
+            "a client event should carry its sample rate and no cost: $without",
         )
     }
 }
