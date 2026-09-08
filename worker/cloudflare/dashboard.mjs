@@ -54,6 +54,7 @@ const WEIGHT = '_sample_interval * double1';
 export const QUERIES = [
   {
     id: 'solo_daily',
+    chart: { x: 'day', y: 'games', of: 'finished', overTime: true },
     title: 'Games played offline, per day',
     note: 'One row per day. A solo round is one game of Vinto against three bots; `finished` is the ones played through to the score sheet. Thirty played and none finished is a worse sign than thirty not played.',
     sql: `SELECT toDate(timestamp) AS day,
@@ -67,6 +68,7 @@ export const QUERIES = [
   },
   {
     id: 'online_daily',
+    chart: { x: 'day', y: 'rounds', overTime: true },
     title: 'Games played online, per day',
     note: 'One row per day. A round the room dealt and finished, its length on the clock, and what it cost the Durable Object to host — the number that decides whether online play can stay free.',
     sql: `SELECT toDate(timestamp) AS day,
@@ -81,6 +83,7 @@ export const QUERIES = [
   },
   {
     id: 'together',
+    chart: { x: 'humans', y: 'rounds' },
     title: 'How many people played online together',
     note: 'Every dealt round by the size of the table it was dealt to: four people, or two people and two bots, and so on. This is the one number that says whether online play is doing what it exists for, and no identity is involved — the room counts the seats in front of it.',
     sql: `SELECT double2 AS humans, double3 AS bots, sum(${WEIGHT}) AS rounds
@@ -91,6 +94,7 @@ export const QUERIES = [
   },
   {
     id: 'sessions_daily',
+    chart: { x: 'day', y: 'sessions', overTime: true },
     title: 'Online sessions per day, and how long they last',
     note: 'A session is one room from its first deal to its last round, so this is the count of games-with-friends rather than of rounds. Rounds per session is how many they stayed for.',
     sql: `SELECT toDate(timestamp) AS day,
@@ -104,6 +108,7 @@ export const QUERIES = [
   },
   {
     id: 'solo_finishing',
+    chart: { x: 'difficulty', y: 'games', of: 'finished' },
     title: 'Offline: finished against walked away from',
     note: 'The whole window rather than per day, split by difficulty, because the ratio is the point and a day is too few games to read one from. A difficulty people start and never finish is a difficulty that is wrong.',
     sql: `SELECT blob1 AS difficulty,
@@ -118,6 +123,7 @@ export const QUERIES = [
   },
   {
     id: 'session_endings',
+    chart: { x: 'ended_by', y: 'sessions' },
     title: 'Online: how sessions end',
     note: 'Played out is success. Too-few-humans and everybody-left at round one are not, and they are different problems: one is nobody arriving, the other is people arriving and leaving.',
     sql: `SELECT blob1 AS ended_by,
@@ -187,6 +193,93 @@ function format(value) {
   return Number.isInteger(value) ? value : value.toFixed(2);
 }
 
+
+/**
+ * A bar chart, drawn as SVG on the server.
+ *
+ * **No script, no library, no request.** A chart is a shape, and a shape is something HTML can
+ * already say — so this is `<rect>` elements with numbers in them, computed here, in the same
+ * response as the table under it. Nothing to load means nothing to block, nothing to go stale,
+ * no third-party host on a page about our own players, and no reason for a reader's network tab
+ * to name anybody but us. It also means the page works with JavaScript off, which is a strange
+ * thing to care about until the one time it is the reason you can see the numbers.
+ *
+ * Where a row has a *part* of its total worth seeing — the games that were finished, of the
+ * games that were played — it is drawn over the bar rather than beside it, because the question
+ * is what share it is and a share is read by comparing two lengths from the same baseline.
+ */
+function renderChart(rows, chart) {
+  if (!chart || !rows.length) return '';
+
+  // Days arrive newest-first because that is how a table wants them, and a chart wants the
+  // opposite: time runs left to right or it is not a time axis.
+  const ordered = chart.overTime ? [...rows].reverse() : rows;
+  const points = ordered.map((row) => ({
+    label: String(row[chart.x] ?? ''),
+    value: Number(row[chart.y]) || 0,
+    part: chart.of == null ? null : Number(row[chart.of]) || 0,
+  }));
+
+  const top = Math.max(...points.map((p) => p.value), 1);
+  const band = CHART_W / points.length;
+  const width = Math.max(2, Math.min(band - CHART_GAP, CHART_BAR_MAX));
+  const floor = CHART_H - CHART_FOOT;
+  const room = floor - CHART_HEAD;
+
+  const bar = (p, i) => {
+    const x = i * band + (band - width) / 2;
+    const h = (p.value / top) * room;
+    const parts = [
+      `<rect x="${x.toFixed(1)}" y="${(floor - h).toFixed(1)}"`
+      + ` width="${width.toFixed(1)}" height="${h.toFixed(1)}" class="bar"/>`,
+    ];
+    if (p.part != null) {
+      const ph = (p.part / top) * room;
+      parts.push(
+        `<rect x="${x.toFixed(1)}" y="${(floor - ph).toFixed(1)}"`
+        + ` width="${width.toFixed(1)}" height="${ph.toFixed(1)}" class="part"/>`,
+      );
+    }
+    return parts.join('');
+  };
+
+  // Enough ticks to read the axis, never so many they collide: a month of days at eight labels
+  // is one every four, and a handful of categories gets all of them.
+  const every = Math.ceil(points.length / CHART_TICKS);
+  const tick = (p, i) =>
+    i % every === 0
+      ? `<text x="${(i * band + band / 2).toFixed(1)}" y="${CHART_H - 5}" class="tick">`
+        + `${escapeHtml(shortLabel(p.label))}</text>`
+      : '';
+
+  const legend = chart.of == null
+    ? ''
+    : `<p class="legend"><span class="swatch bar"></span>${escapeHtml(chart.y)}`
+      + `<span class="swatch part"></span>${escapeHtml(chart.of)}</p>`;
+
+  return `<svg viewBox="0 0 ${CHART_W} ${CHART_H}" class="chart" role="img"`
+    + ` aria-label="${escapeHtml(chart.y)} by ${escapeHtml(chart.x)}, highest ${format(top)}">`
+    + `<line x1="0" y1="${floor}" x2="${CHART_W}" y2="${floor}" class="axis"/>`
+    + points.map(bar).join('')
+    + points.map(tick).join('')
+    + `</svg><p class="peak">highest: ${format(top)}</p>${legend}`;
+}
+
+/** A date is read by its day, not by its century: "2026-09-08" is "09-08" on an axis. */
+function shortLabel(label) {
+  const date = /^\d{4}-(\d{2}-\d{2})/.exec(label);
+  return date ? date[1] : label.length > LABEL_MAX ? `${label.slice(0, LABEL_MAX)}…` : label;
+}
+
+const CHART_W = 720;
+const CHART_H = 170;
+const CHART_HEAD = 8;
+const CHART_FOOT = 24;
+const CHART_GAP = 4;
+const CHART_BAR_MAX = 44;
+const CHART_TICKS = 8;
+const LABEL_MAX = 12;
+
 /** The page. Plain HTML and one inline stylesheet — no build step, no framework, no fetch. */
 export function renderPage(sections) {
   const body = sections
@@ -194,7 +287,9 @@ export function renderPage(sections) {
       (section) => `<section>
         <h2>${escapeHtml(section.title)}</h2>
         <p class="note">${escapeHtml(section.note)}</p>
-        ${section.error ? `<p class="error">${escapeHtml(section.error)}</p>` : renderRows(section.rows)}
+        ${section.error
+          ? `<p class="error">${escapeHtml(section.error)}</p>`
+          : renderChart(section.rows, section.chart) + renderRows(section.rows)}
       </section>`,
     )
     .join('');
@@ -216,6 +311,16 @@ export function renderPage(sections) {
   table { border-collapse: collapse; width: 100%; max-width: 760px; }
   th, td { text-align: left; padding: 6px 12px 6px 0; border-bottom: 1px solid #262c33; }
   th { color: #9aa3ad; font-weight: 600; }
+  .chart { width: 100%; max-width: 760px; height: auto; display: block; margin: 4px 0 2px; }
+  .bar { fill: #2c5f46; }
+  .part { fill: #3fd07a; }
+  .axis { stroke: #2b323a; stroke-width: 1; }
+  .tick { fill: #6f7780; font-size: 11px; text-anchor: middle;
+          font-family: system-ui, sans-serif; }
+  .peak, .legend { color: #6f7780; font-size: 12px; margin: 0 0 10px; }
+  .legend { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .swatch.part { margin-left: 10px; }
 </style></head>
 <body>
 <h1>Vinto — counts</h1>
@@ -246,6 +351,7 @@ export async function serveDashboard(request, env, url) {
     QUERIES.map(async (query) => ({
       title: query.title,
       note: query.note,
+      chart: query.chart,
       ...(await runQuery(env, query.sql)),
     })),
   );

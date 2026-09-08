@@ -48,6 +48,22 @@ for (const query of QUERIES) {
     'a query over every index1 mixes events whose doubles mean different things',
   );
   check(`${query.id} has a note saying what it is for`, (query.note ?? '').length > 40);
+
+  // A chart names columns; the query produces them. Nothing at runtime would say otherwise —
+  // a mistyped axis reads every row as zero and draws a flat chart, which looks exactly like a
+  // quiet week. So the two are checked against each other here, where it costs nothing.
+  if (query.chart) {
+    const aliases = [...query.sql.matchAll(/AS ([a-z_]+)/g)].map((m) => m[1]);
+    for (const axis of ['x', 'y', 'of']) {
+      const column = query.chart[axis];
+      if (column == null) continue;
+      check(
+        `${query.id}: the chart's ${axis} (${column}) is a column the query selects`,
+        aliases.includes(column),
+        `selects ${aliases.join(', ')}`,
+      );
+    }
+  }
 }
 
 // Every aggregate that counts events has to carry both samplings: Analytics Engine's own
