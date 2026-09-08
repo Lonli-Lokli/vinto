@@ -186,6 +186,8 @@
     <string name="settings_sound">आवाज़</string>
     <string name="settings_sound_detail">पत्ता बंटना, पत्ता उतरना, दंड, दौर का खत्म होना — और कुछ नहीं।</string>
     <string name="settings_haptics">स्पर्श-प्रतिक्रिया</string>
+    <string name="settings_awake">स्क्रीन चालू रखें</string>
+    <string name="settings_awake_detail">एक हाथ टैप करने से ज़्यादा देखने के मिनट होते हैं, और फ़ोन इसे निष्क्रिय मानता है। चालू रहने पर राउंड के दौरान ही स्क्रीन जगी रहती है।</string>
     <string name="settings_haptics_detail">जब कोई पत्ता छुआ जाए, कोई चाल चले, या कोई नियम लागू हो, तो अंगूठे के नीचे हल्का सा झटका।</string>
     <string name="settings_analytics">गुमनाम गिनती</string>
     <string name="settings_analytics_detail">कितने दौर खेले जाते हैं, और उनमें कितना समय लगता है। कभी आपका नाम, आपके रूम कोड या कुछ भी जो आप तक पहुंचा सके नहीं — जो हम भेजते हैं उसमें उनके लिए कोई जगह ही नहीं है। इसे बंद करने पर कुछ भी नहीं भेजा जाता।</string>

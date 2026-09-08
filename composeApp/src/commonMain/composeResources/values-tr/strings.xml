@@ -189,6 +189,8 @@
     <string name="settings_sound">Ses</string>
     <string name="settings_sound_detail">Dağıtılan bir kart, düşen bir kart, bir ceza, turun bitişi — ve başka hiçbir şey.</string>
     <string name="settings_haptics">Titreşim</string>
+    <string name="settings_awake">Ekran açık kalsın</string>
+    <string name="settings_awake_detail">Bir el, dokunmaktan çok izlemekle geçen dakikalardır ve telefon bunu boşta saymaktadır. Açıkken ekran yalnızca el sürerken açık kalır.</string>
     <string name="settings_haptics_detail">Bir kart dokunulduğunda, bir hamle sonuçlandığında, ya da bir kural işlediğinde parmağının altında küçük bir tık.</string>
     <string name="settings_analytics">Anonim sayımlar</string>
     <string name="settings_analytics_detail">Kaç tur oynandığı ve ne kadar sürdüğü. Asla adın, oda kodların, ya da seni işaret edebilecek hiçbir şey — gönderdiğimizde bunlar için yer yok. Bunu kapatmak hiçbir şey göndermez.</string>

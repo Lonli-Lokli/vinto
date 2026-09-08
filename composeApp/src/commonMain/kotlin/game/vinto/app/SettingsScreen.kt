@@ -28,9 +28,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -45,6 +50,8 @@ import game.vinto.app.art.header_report
 import game.vinto.app.art.home_version
 import game.vinto.app.art.settings_analytics
 import game.vinto.app.art.settings_analytics_detail
+import game.vinto.app.art.settings_awake
+import game.vinto.app.art.settings_awake_detail
 import game.vinto.app.art.settings_back
 import game.vinto.app.art.settings_bots
 import game.vinto.app.art.settings_bots_detail
@@ -81,8 +88,6 @@ import game.vinto.app.art.settings_privacy_detail
 import game.vinto.app.art.settings_rate
 import game.vinto.app.art.settings_record
 import game.vinto.app.art.settings_record_detail
-import game.vinto.app.art.settings_report_detail
-import game.vinto.app.art.settings_report_send
 import game.vinto.app.art.settings_saved_game
 import game.vinto.app.art.settings_saved_game_detail
 import game.vinto.app.art.settings_share
@@ -137,6 +142,9 @@ import game.vinto.client.loadStats
 import game.vinto.shapes.Difficulty
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 private val Pad = 20.dp
 private val Gap = 12.dp
@@ -291,6 +299,7 @@ private fun Page(
             SupportRow()
             Noise(settings, onChange)
             Buzz(settings, onChange)
+            Awake(settings, onChange)
             RateRow()
             // Under the review button, and for the same reason it is here at all: both are
             // things a player does *about* the app rather than in it, and neither belongs on a
@@ -446,6 +455,41 @@ private fun Counting(settings: Settings, onChange: (Settings) -> Unit) {
         onToggle = { on -> onChange(settings.copy(analytics = on)) },
     )
 }
+
+@Composable
+private fun Awake(settings: Settings, onChange: (Settings) -> Unit) {
+    SwitchRow(
+        title = stringResource(Res.string.settings_awake),
+        detail = stringResource(Res.string.settings_awake_detail),
+        on = settings.keepAwake,
+        mark = { drawSun(it) },
+        onToggle = { on -> onChange(settings.copy(keepAwake = on)) },
+    )
+}
+
+/** A disc with rays: the screen staying lit. */
+private fun DrawScope.drawSun(ink: Color) {
+    val w = size.minDimension
+    drawCircle(ink, radius = w * SUN_CORE, center = Offset(w / 2, w / 2), style = Stroke(w * SUN_PEN))
+    for (ray in 0 until SUN_RAYS) {
+        val angle = ray * 2 * PI / SUN_RAYS
+        val dx = cos(angle).toFloat()
+        val dy = sin(angle).toFloat()
+        drawLine(
+            ink,
+            Offset(w / 2 + dx * w * SUN_NEAR, w / 2 + dy * w * SUN_NEAR),
+            Offset(w / 2 + dx * w * SUN_FAR, w / 2 + dy * w * SUN_FAR),
+            strokeWidth = w * SUN_PEN,
+            cap = StrokeCap.Round,
+        )
+    }
+}
+
+private const val SUN_RAYS = 8
+private const val SUN_CORE = 0.22f
+private const val SUN_NEAR = 0.34f
+private const val SUN_FAR = 0.46f
+private const val SUN_PEN = 0.08f
 
 @Composable
 private fun Buzz(settings: Settings, onChange: (Settings) -> Unit) {
@@ -754,16 +798,18 @@ private fun SupportRow() {
 /** The way to send a game that went wrong, where a player looks when something has. */
 @Composable
 private fun ReportRow(onReport: () -> Unit) {
-    Setting(
-        title = stringResource(Res.string.header_report),
-        detail = stringResource(Res.string.settings_report_detail),
-    ) {
-        GameButton(
-            label = stringResource(Res.string.settings_report_send),
-            tone = ButtonTone.NEUTRAL,
-            onClick = onReport,
-        )
-    }
+    // A button, exactly as [RateRow] is, and for the same reason: a title, a sentence and an (i)
+    // around one action is furniture. The two of them sit together and are the same shape, which
+    // is what makes them read as a pair of things you *do* rather than settings you change. The
+    // sentence that was here is on the dialog the button opens, where it is about to matter.
+    val ink = Rail.ink
+    GameButton(
+        label = stringResource(Res.string.header_report),
+        tone = ButtonTone.NEUTRAL,
+        onClick = onReport,
+        modifier = Modifier.fillMaxWidth(),
+        leadingContent = { Canvas(modifier = Modifier.size(RowMark)) { drawBugMark(ink) } },
+    )
 }
 
 @Composable
@@ -774,14 +820,79 @@ private fun RateRow() {
     // A button, not a panel. There is nothing to choose and nothing to explain — a title, a
     // sentence and an (i) around one action is furniture, and this is the one row on the page
     // whose whole content is "press this".
+    val ink = Rail.ink
     GameButton(
         label = stringResource(Res.string.settings_rate),
         tone = ButtonTone.NEUTRAL,
         onClick = { if (!openUrl(url)) failed.value = url },
         modifier = Modifier.fillMaxWidth(),
+        leadingContent = { Canvas(modifier = Modifier.size(RowMark)) { drawStar(ink) } },
     )
     OpenFailed(failed)
 }
+
+/**
+ * The two marks the settings' two *actions* wear.
+ *
+ * A star for the review and a bug for the report: both buttons say what they do in words as
+ * well, so these are recognition rather than instruction — the shape is what the eye finds in a
+ * column of panels before any of it has been read.
+ */
+private fun DrawScope.drawStar(ink: Color) {
+    val w = size.minDimension
+    val points = Path()
+    for (tip in 0 until STAR_POINTS) {
+        val outer = tip * 2 * PI / STAR_POINTS - PI / 2
+        val inner = outer + PI / STAR_POINTS
+        val ox = w / 2 + cos(outer).toFloat() * w * STAR_OUT
+        val oy = w / 2 + sin(outer).toFloat() * w * STAR_OUT
+        val ix = w / 2 + cos(inner).toFloat() * w * STAR_IN
+        val iy = w / 2 + sin(inner).toFloat() * w * STAR_IN
+        if (tip == 0) points.moveTo(ox, oy) else points.lineTo(ox, oy)
+        points.lineTo(ix, iy)
+    }
+    points.close()
+    drawPath(points, color = ink)
+}
+
+/** The same beetle the header used to wear, kept because the report is the same thing. */
+private fun DrawScope.drawBugMark(ink: Color) {
+    val w = size.minDimension
+    val c = Offset(w / 2, w / 2)
+    drawOval(
+        color = ink,
+        topLeft = Offset(w * BUG_SIDE, w * BUG_HIGH),
+        size = Size(w * BUG_WIDE, w * BUG_DEEP),
+    )
+    drawCircle(ink, radius = w * BUG_HEAD_R, center = Offset(w / 2, w * BUG_HEAD_Y))
+    for (side in listOf(-1f, 1f)) {
+        for (row in listOf(BUG_LEG_HIGH, BUG_LEG_MID, BUG_LEG_LOW)) {
+            drawLine(
+                ink,
+                Offset(c.x + side * w * BUG_WIDE / 2, w * row),
+                Offset(c.x + side * w * BUG_REACH, w * row),
+                strokeWidth = w * BUG_PEN,
+                cap = StrokeCap.Round,
+            )
+        }
+    }
+}
+
+private val RowMark = 18.dp
+private const val STAR_POINTS = 5
+private const val STAR_OUT = 0.48f
+private const val STAR_IN = 0.21f
+private const val BUG_SIDE = 0.30f
+private const val BUG_HIGH = 0.32f
+private const val BUG_WIDE = 0.40f
+private const val BUG_DEEP = 0.50f
+private const val BUG_HEAD_R = 0.13f
+private const val BUG_HEAD_Y = 0.24f
+private const val BUG_LEG_HIGH = 0.42f
+private const val BUG_LEG_MID = 0.56f
+private const val BUG_LEG_LOW = 0.70f
+private const val BUG_REACH = 0.42f
+private const val BUG_PEN = 0.07f
 
 /**
  * A two-state setting on one line: a mark, what it is, and where it stands.

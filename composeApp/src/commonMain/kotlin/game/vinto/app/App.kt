@@ -200,14 +200,7 @@ fun App(
                     // in them the right way round to be seen against it.
                     Surface(modifier = Modifier.fillMaxSize(), color = Rail.fill) {
                         Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-                            // Where the app is, for the events that are about that rather than about
-                            // what happened. Provided once here rather than by each screen: the thing
-                            // that reads it is `CardStage`, which is the same code under all three
-                            // tables and cannot tell them apart on its own.
-                            CompositionLocalProvider(
-                                LocalSurface provides surfaceOf(screen),
-                                LocalVault provides vault,
-                            ) {
+                            OnThisScreen(settings, screen, vault) {
                                 when (val here = screen) {
                                     Screen.Opening -> OpeningScreen()
 
@@ -603,6 +596,28 @@ private fun AtTheTable(here: Screen.Playing, pace: Pace, onSettings: () -> Unit,
         pace = pace,
         onSettings = onSettings,
         onQuit = onQuit,
+    )
+}
+
+/**
+ * What is true of every screen, whichever one is up: where the app is, and whether it stays lit.
+ *
+ * **Where** is a composition local because the thing that reads it is `CardStage`, which is the
+ * same code under all three tables and cannot tell them apart on its own — so it is provided
+ * once here rather than by each screen.
+ *
+ * **Lit** is held here for the same reason and one more: the lease ends when this leaves the
+ * composition, so a player who quits the round, opens the settings or closes the tab stops
+ * paying for it without anything having to remember to say so. Only while a round is on screen —
+ * a menu is left to the platform's own timeout, which is what a platform's timeout is for.
+ */
+@Composable
+private fun OnThisScreen(settings: Settings, screen: Screen, vault: Vault, content: @Composable () -> Unit) {
+    KeepAwake(on = settings.keepAwake && surfaceOf(screen) != Surface.MENU)
+    CompositionLocalProvider(
+        LocalSurface provides surfaceOf(screen),
+        LocalVault provides vault,
+        content = content,
     )
 }
 

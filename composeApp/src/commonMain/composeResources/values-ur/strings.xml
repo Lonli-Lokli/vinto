@@ -186,6 +186,8 @@
     <string name="settings_sound">آواز</string>
     <string name="settings_sound_detail">ایک پتہ بٹا، ایک پتہ گرا، ایک جرمانہ، دور کا اختتام — اور کچھ نہیں۔</string>
     <string name="settings_haptics">ہیپٹکس</string>
+    <string name="settings_awake">اسکرین آن رکھیں</string>
+    <string name="settings_awake_detail">ایک ہاتھ چھونے سے زیادہ دیکھنے کے منٹ ہوتا ہے، اور فون اسے بےکاری سمجھتا ہے۔ آن ہونے پر راؤنڈ کے دوران ہی اسکرین روشن رہتی ہے۔</string>
     <string name="settings_haptics_detail">جب کوئی پتہ چھوا جائے، کوئی چال چلی جائے، یا کوئی اصول لاگو ہو تو انگوٹھے کے نیچے ہلکا سا جھٹکا۔</string>
     <string name="settings_analytics">گمنام شمار</string>
     <string name="settings_analytics_detail">کتنے دور کھیلے جاتے ہیں، اور انہیں کتنا وقت لگتا ہے۔ کبھی آپ کا نام، آپ کے روم کوڈز، یا کوئی ایسی چیز نہیں جو آپ تک واپس اشارہ کر سکے — جو ہم بھیجتے ہیں اس میں انہیں رکھنے کی کوئی جگہ ہی نہیں۔ اسے بند کرنے سے کچھ بھی نہیں بھیجا جاتا۔</string>

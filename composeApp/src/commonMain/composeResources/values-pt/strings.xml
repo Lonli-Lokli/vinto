@@ -186,6 +186,8 @@
     <string name="settings_sound">Som</string>
     <string name="settings_sound_detail">Uma carta distribuída, uma carta a pousar, uma penalização, o fim da ronda — e mais nada.</string>
     <string name="settings_haptics">Vibração</string>
+    <string name="settings_awake">Manter o ecrã ligado</string>
+    <string name="settings_awake_detail">Uma mão são minutos a ver e não a tocar, e o telemóvel lê isso como inatividade. Ligado, o ecrã fica aceso durante uma ronda — e apenas então.</string>
     <string name="settings_haptics_detail">Um pequeno toque sob o polegar quando uma carta é tocada, uma jogada acontece, ou uma regra se aplica.</string>
     <string name="settings_analytics">Contagens anónimas</string>
     <string name="settings_analytics_detail">Quantas rondas são jogadas, e quanto tempo demoram. Nunca o teu nome, os códigos das tuas salas, ou algo que te possa identificar — não há onde os colocar no que enviamos. Desativar isto não envia nada.</string>

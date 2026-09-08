@@ -267,7 +267,7 @@ private fun Badge(badge: SeatBadge, portrait: Dp) {
     }
     Canvas(
         modifier = Modifier
-            .size(portrait * BadgeShare)
+            .size(maxOf(portrait * BadgeShare, BadgeLeast))
             .semantics { contentDescription = said },
     ) {
         when (badge) {
@@ -288,15 +288,21 @@ private fun SeatBadge.spoken(): StringResource = when (this) {
     SeatBadge.AWAY -> Res.string.seat_badge_away
 }
 
-/** A thought cloud: three bumps over two trailing dots. The table is waiting on this seat. */
+/**
+ * A thought cloud: three puffs and one trailing bubble, filled rather than outlined.
+ *
+ * Outlined it was five thin rings, which at a phone's mark size is grey fuzz — a stroke of a
+ * tenth of seventeen points is under two pixels, and five of them touching is one blob.
+ * Filled shapes keep their silhouette at any size, which is the only thing a mark this small
+ * has. The trailing bubbles went from two to one and moved up: two of them hung below the
+ * cloud's mass and dragged its optical centre off the line the other marks sit on.
+ */
 private fun DrawScope.drawThought(ink: Color) {
     val w = size.minDimension
-    val pen = Stroke(width = w * BADGE_PEN, cap = StrokeCap.Round)
-    drawCircle(ink, radius = w * PUFF_BIG, center = Offset(w * PUFF_BIG_X, w * PUFF_BIG_Y), style = pen)
-    drawCircle(ink, radius = w * PUFF_MID, center = Offset(w * PUFF_MID_X, w * PUFF_MID_Y), style = pen)
-    drawCircle(ink, radius = w * PUFF_LOW, center = Offset(w * PUFF_LOW_X, w * PUFF_LOW_Y), style = pen)
+    drawCircle(ink, radius = w * PUFF_BIG, center = Offset(w * PUFF_BIG_X, w * PUFF_BIG_Y))
+    drawCircle(ink, radius = w * PUFF_MID, center = Offset(w * PUFF_MID_X, w * PUFF_MID_Y))
+    drawCircle(ink, radius = w * PUFF_LOW, center = Offset(w * PUFF_LOW_X, w * PUFF_LOW_Y))
     drawCircle(ink, radius = w * TRAIL_NEAR, center = Offset(w * TRAIL_NEAR_X, w * TRAIL_NEAR_Y))
-    drawCircle(ink, radius = w * TRAIL_FAR, center = Offset(w * TRAIL_FAR_X, w * TRAIL_FAR_Y))
 }
 
 /** A square head with two eyes and a stub either side — the shape people draw for a robot. */
@@ -316,7 +322,6 @@ private fun DrawScope.drawRobot(ink: Color) {
     listOf(STUB_LEFT, STUB_RIGHT).forEach {
         drawLine(ink, Offset(w * it, w * STUB_TOP), Offset(w * it, w * STUB_FOOT), pen.width)
     }
-    drawLine(ink, Offset(w * MIDDLE, w * AERIAL_TOP), Offset(w * MIDDLE, w * HEAD_TOP_), pen.width)
 }
 
 /** Three points and a band: the caller wears it for the rest of the round. */
@@ -362,26 +367,23 @@ private fun DrawScope.drawAway(ink: Color) {
 private const val BADGE_PEN = 0.09f
 private const val MIDDLE = 0.50f
 
-private const val PUFF_BIG = 0.20f
-private const val PUFF_BIG_X = 0.34f
-private const val PUFF_BIG_Y = 0.36f
-private const val PUFF_MID = 0.17f
-private const val PUFF_MID_X = 0.64f
-private const val PUFF_MID_Y = 0.30f
-private const val PUFF_LOW = 0.14f
-private const val PUFF_LOW_X = 0.72f
-private const val PUFF_LOW_Y = 0.52f
-private const val TRAIL_NEAR = 0.07f
-private const val TRAIL_NEAR_X = 0.26f
-private const val TRAIL_NEAR_Y = 0.74f
-private const val TRAIL_FAR = 0.05f
-private const val TRAIL_FAR_X = 0.13f
-private const val TRAIL_FAR_Y = 0.90f
+private const val PUFF_BIG = 0.24f
+private const val PUFF_BIG_X = 0.40f
+private const val PUFF_BIG_Y = 0.42f
+private const val PUFF_MID = 0.19f
+private const val PUFF_MID_X = 0.70f
+private const val PUFF_MID_Y = 0.35f
+private const val PUFF_LOW = 0.15f
+private const val PUFF_LOW_X = 0.20f
+private const val PUFF_LOW_Y = 0.62f
+private const val TRAIL_NEAR = 0.08f
+private const val TRAIL_NEAR_X = 0.80f
+private const val TRAIL_NEAR_Y = 0.72f
 
 private const val HEAD_LEFT = 0.22f
-private const val HEAD_TOP_ = 0.26f
+private const val HEAD_TOP_ = 0.22f
 private const val HEAD_WIDE = 0.56f
-private const val HEAD_DEEP = 0.50f
+private const val HEAD_DEEP = 0.56f
 private const val HEAD_ROUND = 0.14f
 private const val EYE_LEFT_X = 0.38f
 private const val EYE_RIGHT_X = 0.62f
@@ -391,7 +393,6 @@ private const val STUB_LEFT = 0.14f
 private const val STUB_RIGHT = 0.86f
 private const val STUB_TOP = 0.44f
 private const val STUB_FOOT = 0.58f
-private const val AERIAL_TOP = 0.12f
 
 private const val CROWN_LEFT = 0.16f
 private const val CROWN_RIGHT = 0.84f
@@ -415,8 +416,16 @@ private const val AWAY_SIZE = 0.56f
 
 private val BadgeGap = 3.dp
 
-/** A mark is a little over a third of the portrait beside it, so the two step together. */
-private const val BadgeShare = 0.38f
+/**
+ * How large a mark is drawn: half the portrait beside it, and never under [BadgeLeast].
+ *
+ * It was a little over a third, which on a phone's 30-point portrait is eleven points — smaller
+ * than any glyph can carry meaning at, and the thinking mark in particular was a smudge. The
+ * floor is what stops the smallest table having the least legible marks, which is exactly
+ * backwards: a phone is where they are hardest to read and where there is least else to go on.
+ */
+private const val BadgeShare = 0.5f
+private val BadgeLeast = 17.dp
 
 /**
  * The badge that says a seat is played by the machine.

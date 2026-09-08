@@ -186,6 +186,8 @@
     <string name="settings_sound">Suara</string>
     <string name="settings_sound_detail">Kartu dibagikan, kartu mendarat, penalti, ronde berakhir — dan tidak ada yang lain.</string>
     <string name="settings_haptics">Getaran</string>
+    <string name="settings_awake">Biarkan layar menyala</string>
+    <string name="settings_awake_detail">Satu ronde lebih banyak menonton daripada menyentuh, dan ponsel menganggapnya diam. Aktif, layar tetap menyala selama ronde berlangsung — dan hanya saat itu.</string>
     <string name="settings_haptics_detail">Sentakan kecil di jempol saat kartu disentuh, langkah berhasil, atau aturan berlaku.</string>
     <string name="settings_analytics">Hitungan anonim</string>
     <string name="settings_analytics_detail">Berapa banyak ronde yang dimainkan, dan berapa lama waktunya. Tidak pernah nama Anda, kode ruangan Anda, atau apa pun yang bisa mengarah kembali ke Anda — tidak ada tempat dalam yang kami kirim untuk menaruhnya. Mematikan ini tidak mengirim apa pun sama sekali.</string>

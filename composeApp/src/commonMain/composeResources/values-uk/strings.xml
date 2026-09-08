@@ -196,6 +196,8 @@
     <string name="settings_sound">Звук</string>
     <string name="settings_sound_detail">Роздача, приземлення карти, штраф, кінець раунду — і більше нічого.</string>
     <string name="settings_haptics">Вібровідгук</string>
+    <string name="settings_awake">Не гасити екран</string>
+    <string name="settings_awake_detail">Роздача — це хвилини спостереження, а не дотиків, і телефон вважає це бездіяльністю. Увімкнено — екран світиться, доки триває раунд, і лише тоді.</string>
     <string name="settings_haptics_detail">Короткий поштовх під пальцем, коли ви торкаєтеся картки, зроблено хід або спрацювало правило.</string>
     <string name="settings_analytics">Анонімна статистика</string>
     <string name="settings_analytics_detail">Скільки раундів зіграно і скільки вони тривають. Ніколи — ваше ім'я, коди кімнат чи щось таке, що вказало б на вас: у тому, що надсилається, для цього просто немає місця. Якщо вимкнути, не надсилається нічого.</string>

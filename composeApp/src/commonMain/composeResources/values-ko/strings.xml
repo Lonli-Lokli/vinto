@@ -178,6 +178,8 @@
     <string name="settings_sound">소리</string>
     <string name="settings_sound_detail">카드를 나눠줄 때, 카드가 놓일 때, 페널티, 라운드 종료 — 그게 전부예요.</string>
     <string name="settings_haptics">진동</string>
+    <string name="settings_awake">화면 켜 두기</string>
+    <string name="settings_awake_detail">한 판은 조작보다 지켜보는 시간이 깁니다. 휴대폰은 그것을 대기로 봅니다. 켜면 라운드가 진행되는 동안에만 화면이 켜져 있습니다.</string>
     <string name="settings_haptics_detail">카드를 만졌을 때, 수가 이뤄졌을 때, 규칙이 발동했을 때 엄지 아래로 작은 진동이 와요.</string>
     <string name="settings_analytics">익명 집계</string>
     <string name="settings_analytics_detail">몇 라운드가 진행됐는지, 얼마나 걸렸는지예요. 이름도, 방 코드도, 당신을 알아볼 수 있는 어떤 것도 절대 담기지 않아요 — 보내는 데이터엔 그걸 담을 자리 자체가 없어요. 끄면 아무것도 보내지 않아요.</string>

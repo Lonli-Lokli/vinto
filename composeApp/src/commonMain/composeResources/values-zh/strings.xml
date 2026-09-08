@@ -178,6 +178,8 @@
     <string name="settings_sound">声音</string>
     <string name="settings_sound_detail">发牌声、落牌声、罚牌声、回合结束声——仅此而已。</string>
     <string name="settings_haptics">震动反馈</string>
+    <string name="settings_awake">保持屏幕常亮</string>
+    <string name="settings_awake_detail">一局大多是在看而不是在点，手机会当成闲置。开启后，只在对局进行时保持屏幕常亮。</string>
     <string name="settings_haptics_detail">触碰卡牌、操作生效、或触发规则时的轻微震动。</string>
     <string name="settings_analytics">匿名统计</string>
     <string name="settings_analytics_detail">统计有多少局游戏、每局用时多长。绝不包含你的名字、房间代码，或任何能指向你的信息——我们发送的数据里根本没有存放这些的地方。关闭后将不再发送任何数据。</string>

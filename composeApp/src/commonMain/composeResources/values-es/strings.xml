@@ -195,6 +195,8 @@
     <string name="settings_sound">Sonido</string>
     <string name="settings_sound_detail">Una carta repartida, una carta al caer, una penalización, el final de la ronda — y nada más.</string>
     <string name="settings_haptics">Vibración</string>
+    <string name="settings_awake">Mantener la pantalla encendida</string>
+    <string name="settings_awake_detail">Una mano son minutos de mirar más que de tocar, y el teléfono lo toma por inactividad. Activado, la pantalla sigue encendida mientras haya una ronda, y solo entonces.</string>
     <string name="settings_haptics_detail">Un pequeño impulso bajo el pulgar cuando se toca una carta, se completa una jugada, o se aplica una regla.</string>
     <string name="settings_analytics">Recuentos anónimos</string>
     <string name="settings_analytics_detail">Cuántas rondas se juegan, y cuánto duran. Nunca tu nombre, los códigos de tus salas ni nada que pueda apuntar hacia ti — no hay dónde ponerlos en lo que enviamos. Desactivarlo hace que no se envíe nada en absoluto.</string>

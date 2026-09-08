@@ -188,6 +188,8 @@
     <string name="settings_sound">サウンド</string>
     <string name="settings_sound_detail">カードを配る音、置く音、ペナルティの音、ラウンド終了の音 — それだけです。</string>
     <string name="settings_haptics">触覚フィードバック</string>
+    <string name="settings_awake">画面をつけたままにする</string>
+    <string name="settings_awake_detail">1ラウンドは操作より観る時間が長く、端末はそれを放置と見なします。オンなら対局中だけ画面が点いたままになります。</string>
     <string name="settings_haptics_detail">カードに触れたとき、手が成立したとき、ルールに引っかかったときの小さな振動。</string>
     <string name="settings_analytics">匿名の統計</string>
     <string name="settings_analytics_detail">プレイされたラウンド数とその所要時間のみです。名前もルームコードも、あなたを特定できるものは一切含まれません — 送信するデータにそもそも入れる場所がありません。オフにすると何も送信されなくなります。</string>

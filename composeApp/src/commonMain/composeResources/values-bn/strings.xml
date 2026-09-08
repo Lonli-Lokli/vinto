@@ -178,6 +178,8 @@
     <string name="settings_sound">শব্দ</string>
     <string name="settings_sound_detail">তাস বিলি হওয়া, তাস নামা, জরিমানা, রাউন্ড শেষ হওয়া — আর কিছু নয়।</string>
     <string name="settings_haptics">কম্পন</string>
+    <string name="settings_awake">স্ক্রিন চালু রাখুন</string>
+    <string name="settings_awake_detail">একটি হ্যান্ড ট্যাপ করার চেয়ে দেখার সময় বেশি, আর ফোন সেটিকে নিষ্ক্রিয় ভাবে। চালু থাকলে রাউন্ড চলাকালীনই স্ক্রিন জ্বলে থাকে।</string>
     <string name="settings_haptics_detail">তাস স্পর্শ করলে, একটি চাল সম্পন্ন হলে, বা একটি নিয়ম কার্যকর হলে আঙুলের নিচে একটি ছোট কম্পন।</string>
     <string name="settings_analytics">নামহীন গণনা</string>
     <string name="settings_analytics_detail">কতগুলো রাউন্ড খেলা হয়, আর তাতে কত সময় লাগে। কখনোই আপনার নাম, রুম কোড, বা এমন কিছু নয় যা আপনার দিকে ইঙ্গিত করতে পারে — যা পাঠানো হয় তাতে সেগুলো রাখার কোনো জায়গাই নেই। এটি বন্ধ করলে কিছুই পাঠানো হয় না।</string>

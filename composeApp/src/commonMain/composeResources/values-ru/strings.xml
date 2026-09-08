@@ -192,6 +192,8 @@
     <string name="settings_sound">Звук</string>
     <string name="settings_sound_detail">Раздача, приземление карты, штраф, конец раунда — и больше ничего.</string>
     <string name="settings_haptics">Отдача</string>
+    <string name="settings_awake">Не гасить экран</string>
+    <string name="settings_awake_detail">Раздача — это минуты наблюдения, а не касаний, и телефон считает это бездействием. Включено — экран горит, пока идёт раунд, и только тогда.</string>
     <string name="settings_haptics_detail">Короткий толчок под пальцем, когда карта тронута, ход сделан или сработало правило.</string>
     <string name="settings_analytics">Анонимный счёт</string>
     <string name="settings_analytics_detail">Сколько раундов сыграно и сколько они длятся. Никогда — ваше имя, коды комнат или что-то, что укажет на вас: в том, что уходит, для этого просто нет места. Если выключить, не уходит ничего.</string>

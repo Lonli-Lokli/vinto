@@ -178,6 +178,8 @@
     <string name="settings_sound">צליל</string>
     <string name="settings_sound_detail">חלוקת קלף, נחיתת קלף, עונש, וסיום הסיבוב — ולא כלום מעבר לזה.</string>
     <string name="settings_haptics">רטט</string>
+    <string name="settings_awake">להשאיר את המסך דולק</string>
+    <string name="settings_awake_detail">סיבוב הוא דקות של צפייה ולא של נגיעה, והטלפון מפרש זאת כחוסר פעילות. כשמופעל, המסך נשאר דולק בזמן סיבוב בלבד.</string>
     <string name="settings_haptics_detail">בעיטה קלה מתחת לאגודל כשקלף נוגע, מהלך מתבצע, או כלל נשבר.</string>
     <string name="settings_analytics">ספירות אנונימיות</string>
     <string name="settings_analytics_detail">כמה סיבובים משוחקים, וכמה זמן הם לוקחים. לעולם לא השם שלכם, קודי החדרים שלכם, או כל דבר שיכול להצביע בחזרה עליכם — אין איפה בשליחה שלנו לשים אותם. כיבוי זה לא שולח כלום.</string>

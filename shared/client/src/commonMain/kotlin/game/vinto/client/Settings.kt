@@ -92,6 +92,18 @@ data class Settings(
     /** The table's four sounds: a card dealt, a card landing, a penalty, the round ending. */
     val sound: Boolean = true,
     /**
+     * Whether the screen stays lit while a round is on it.
+     *
+     * On by default, because a hand of Vinto is minutes of *reading* — three bots take their
+     * turns, the log fills, and a player is watching rather than touching. Every phone reads
+     * that as idle and locks, and coming back is a wake, an unlock, and a table you have to
+     * find your place in again. The game asks for it only while a round is actually on screen;
+     * a menu is left to the platform, which is what the platform's own timeout is for.
+     *
+     * A default-added field, so an older settings file still decodes.
+     */
+    val keepAwake: Boolean = true,
+    /**
      * Whether anonymous counts may be sent — rounds played, how far people get, what a room
      * costs. Never anything identifying: see `AnalyticsEvent`, where a room code or a
      * nickname is unrepresentable rather than filtered.

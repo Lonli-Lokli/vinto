@@ -178,6 +178,8 @@
     <string name="settings_sound">Dźwięk</string>
     <string name="settings_sound_detail">Rozdanie karty, lądowanie karty, kara, koniec rundy — i nic więcej.</string>
     <string name="settings_haptics">Wibracje</string>
+    <string name="settings_awake">Nie wygaszaj ekranu</string>
+    <string name="settings_awake_detail">Rozdanie to minuty patrzenia, a nie stukania, a telefon uznaje to za bezczynność. Włączone — ekran świeci, dopóki trwa runda, i tylko wtedy.</string>
     <string name="settings_haptics_detail">Delikatne szturchnięcie pod kciukiem, gdy karta zostaje dotknięta, ruch się wykonuje albo reguła daje o sobie znać.</string>
     <string name="settings_analytics">Anonimowe statystyki</string>
     <string name="settings_analytics_detail">Ile rund jest rozgrywanych i ile trwają. Nigdy twoje imię, kody pokoi ani nic, co mogłoby cię zidentyfikować — nie ma na to miejsca w tym, co wysyłamy. Wyłączenie tej opcji nie wysyła niczego.</string>

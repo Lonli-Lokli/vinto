@@ -30,7 +30,6 @@ import game.vinto.app.art.report_subject
 import game.vinto.app.art.table_see_score
 import game.vinto.app.counted
 import game.vinto.app.elapsedMs
-import game.vinto.app.hasSystemBack
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.LocalSounds
@@ -53,13 +52,17 @@ import org.jetbrains.compose.resources.stringResource
 private val Pad = 12.dp
 
 /**
- * The table's own way back to the menu, where the platform has none.
+ * The table's own way back to the menu.
  *
- * The same exit the score sheet offers, available before the round ends — and null on Android,
- * whose back gesture already does exactly this. Leaving is a pause rather than a forfeit: the
- * round is saved on every move, so `LocalGame.resume` picks it up where it stood.
+ * On every platform, Android included. It was hidden there on the grounds that the back gesture
+ * already does this — which is true and is not the point: a gesture is invisible, and a player
+ * looking for the way out of a round looks at the screen. An exit nobody can see is an exit for
+ * the people who already knew.
+ *
+ * Leaving is a pause rather than a forfeit: the round is saved on every move, so
+ * `LocalGame.resume` picks it up where it stood.
  */
-private fun wayOut(onQuit: () -> Unit): (() -> Unit)? = onQuit.takeIf { !hasSystemBack }
+private fun wayOut(onQuit: () -> Unit): () -> Unit = onQuit
 
 /**
  * A game: rounds, one after another, with the score carried between them.

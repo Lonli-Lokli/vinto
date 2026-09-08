@@ -187,6 +187,8 @@
     <string name="settings_sound">Audio</string>
     <string name="settings_sound_detail">Una carta distribuita, una carta che atterra, una penalità, la fine del round — e nient'altro.</string>
     <string name="settings_haptics">Vibrazione</string>
+    <string name="settings_awake">Tieni acceso lo schermo</string>
+    <string name="settings_awake_detail">Una mano è fatta di minuti passati a guardare più che a toccare, e il telefono lo scambia per inattività. Attivo, lo schermo resta acceso durante una mano, e solo allora.</string>
     <string name="settings_haptics_detail">Un piccolo colpo sotto il pollice quando una carta viene toccata, una mossa va a segno, o una regola scatta.</string>
     <string name="settings_analytics">Conteggi anonimi</string>
     <string name="settings_analytics_detail">Quanti round vengono giocati, e quanto durano. Mai il tuo nome, i codici delle tue stanze o qualsiasi cosa possa ricondurre a te — non c'è spazio in quello che inviamo per metterli. Disattivarlo non invia proprio nulla.</string>

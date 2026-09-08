@@ -187,6 +187,8 @@
     <string name="settings_sound">Son</string>
     <string name="settings_sound_detail">Une carte distribuée, une carte qui atterrit, une pénalité, la fin de la manche — et rien d’autre.</string>
     <string name="settings_haptics">Vibrations</string>
+    <string name="settings_awake">Garder l'écran allumé</string>
+    <string name="settings_awake_detail">Une manche, ce sont des minutes à regarder plutôt qu'à toucher, et le téléphone y voit de l'inactivité. Activé, l'écran reste allumé pendant une manche, et seulement alors.</string>
     <string name="settings_haptics_detail">Un petit à-coup sous le pouce quand une carte est touchée, qu’un coup se joue, ou qu’une règle s’applique.</string>
     <string name="settings_analytics">Statistiques anonymes</string>
     <string name="settings_analytics_detail">Combien de manches sont jouées, et combien de temps elles durent. Jamais votre nom, vos codes de salle, ni rien qui pourrait vous identifier — il n’y a nulle part où les placer dans ce que nous envoyons. Désactiver ceci n’envoie rien du tout.</string>

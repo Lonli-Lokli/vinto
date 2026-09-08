@@ -178,6 +178,8 @@
     <string name="settings_sound">Ton</string>
     <string name="settings_sound_detail">Eine ausgeteilte Karte, eine landende Karte, eine Strafe, das Rundenende — und sonst nichts.</string>
     <string name="settings_haptics">Vibration</string>
+    <string name="settings_awake">Bildschirm anlassen</string>
+    <string name="settings_awake_detail">Eine Runde ist minutenlanges Zuschauen statt Tippen, und das Telefon hält das für untätig. An bleibt der Bildschirm hell, solange eine Runde läuft — und nur dann.</string>
     <string name="settings_haptics_detail">Ein kleiner Ruck unter dem Daumen, wenn eine Karte berührt wird, ein Zug landet, oder eine Regel greift.</string>
     <string name="settings_analytics">Anonyme Zählungen</string>
     <string name="settings_analytics_detail">Wie viele Runden gespielt werden, und wie lange sie dauern. Nie Ihr Name, Ihre Raumcodes oder irgendetwas, das auf Sie zurückweisen könnte — dafür gibt es im Gesendeten keinen Platz. Wird dies abgeschaltet, wird gar nichts gesendet.</string>

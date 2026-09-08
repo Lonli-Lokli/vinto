@@ -186,6 +186,8 @@
     <string name="settings_sound">الصوت</string>
     <string name="settings_sound_detail">بطاقة تُوزَّع، بطاقة تحط، عقوبة، نهاية جولة — ولا شيء غير ذلك.</string>
     <string name="settings_haptics">الاهتزاز</string>
+    <string name="settings_awake">أبقِ الشاشة مضاءة</string>
+    <string name="settings_awake_detail">الجولة دقائق من المشاهدة لا اللمس، والهاتف يعتبر ذلك خمولاً. عند التفعيل تبقى الشاشة مضاءة أثناء الجولة فقط.</string>
     <string name="settings_haptics_detail">نبضة خفيفة تحت الإبهام عند لمس بطاقة، أو نجاح حركة، أو تطبيق قاعدة.</string>
     <string name="settings_analytics">إحصاءات مجهولة</string>
     <string name="settings_analytics_detail">كم جولة تُلعب، وكم تستغرق من وقت. لا اسمك أبدًا، ولا رموز غرفك، ولا أي شيء قد يُشير إليك — فلا مكان فيما نرسله لوضعها. إيقاف هذا الخيار يعني عدم إرسال أي شيء إطلاقًا.</string>
