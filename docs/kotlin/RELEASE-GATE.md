@@ -51,7 +51,8 @@ for that reason; latency is printed and never committed.
 
 ```sh
 ./gradlew :worker:jsProductionExecutableCompileSync
-cd worker/cloudflare && npx wrangler dev --port 8787 --var ROOM_OPEN:true &
+cd worker/cloudflare && npx wrangler dev --port 8787 \
+  --var ROOM_OPEN:true --var ROOM_DEBUG_KEY:local-harness &
 node gate-real-room.mjs && node gate-sessions.mjs && node gate-lobby.mjs \
   && node gate-lifecycle.mjs && node gate-limits.mjs && node gate-registry.mjs \
   && node gate-room-codes.mjs && node gate-two-clients.mjs && node gate-engine-replay.mjs \

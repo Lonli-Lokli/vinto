@@ -105,12 +105,21 @@ function open(label) {
   };
 }
 
+/**
+ * What lets this gate read the object's insides.
+ *
+ * The plain-GET state door is closed unless the Worker was started with `ROOM_DEBUG_KEY`, which
+ * `wrangler dev` is given on its command line and a deployment never is — see the branch in
+ * `index.mjs`. Without this header the same request is a 404, which is the whole point.
+ */
+const PEEK = { 'x-room-debug': process.env.ROOM_DEBUG_KEY ?? 'local-harness' };
+
 const isEvents = (m) => m.type === 'events';
 
 console.log(`\nroom ${ROOM}\n`);
 
 if (VERIFY_ONLY) {
-  const room = await (await fetch(`${BASE}/?room=${ROOM}`)).json();
+  const room = await (await fetch(`${BASE}/?room=${ROOM}`, { headers: PEEK })).json();
   console.log('rebuilt from storage after every instance was destroyed');
   check('the log survived', room.log.length > 0, true);
   check('the seats survived', room.seats.filter((s) => s.tokenHash !== null).length >= 2, true);
@@ -280,7 +289,19 @@ check('resync reports the next cursor', sync.nextIndex, logLength);
 // --- state lives in storage, not memory ----------------------------------------
 aliceAgain.close();
 bob.close();
-const persisted = await (await fetch(`${BASE}/?room=${ROOM}`)).json();
+// The door the two reads below go through, refused to anyone without the key.
+//
+// `RoomState` carries the seats' token hashes and, once dealt, every hand, and this used to be
+// served to any request that knew a room code — which is not a secret: it is shared in an
+// invitation and printed in the room list. A 404 rather than a 401, so the answer is the same
+// one an unknown code gets and nothing is disclosed by the refusal itself.
+const uninvited = await fetch(`${BASE}/?room=${ROOM}`);
+check('room state is not served without the key', uninvited.status, 404);
+
+const wrongKey = await fetch(`${BASE}/?room=${ROOM}`, { headers: { 'x-room-debug': 'nope' } });
+check('nor with the wrong one', wrongKey.status, 404);
+
+const persisted = await (await fetch(`${BASE}/?room=${ROOM}`, { headers: PEEK })).json();
 
 console.log('\ndurability');
 check('the log persisted after every socket closed', persisted.log.length, logLength);

@@ -413,7 +413,13 @@ jobs:
           # opt-out. ROOM_OPEN is overridden for the run because the committed value is
           # "false" — the room stays shut in a deployment until the client that speaks to it
           # ships (see the flag's comment in wrangler.jsonc).
-          npx --yes "wrangler@${WRANGLER_VERSION}" dev --port 8787 --var ROOM_OPEN:true \
+          #
+          # ROOM_DEBUG_KEY is what opens the object's plain-GET state door, which `RoomState`
+          # comes out of and which a deployment must never have — `gate-two-clients` needs the
+          # insides to prove state survived an eviction, and nothing else may. The value is not
+          # a secret because it only ever exists on this runner, for these three steps.
+          npx --yes "wrangler@${WRANGLER_VERSION}" dev --port 8787 \
+            --var ROOM_OPEN:true --var ROOM_DEBUG_KEY:local-harness \
             > "${RUNNER_TEMP}/wrangler-dev.log" 2>&1 &
           echo $! > "${RUNNER_TEMP}/wrangler.pid"
 

@@ -34,6 +34,21 @@ async function roomObjectCount() {
 
 console.log('\nRoom codes through workerd\n');
 
+/**
+ * The key to the object's plain-GET state door, which is closed to everyone else.
+ *
+ * The reads below want the room's *insides* — its phase, its seats, its id — to prove that a
+ * minted code routes to one object and keeps routing to the same one. That door now needs
+ * `ROOM_DEBUG_KEY`, which `wrangler dev` is given and a deployment never is, because what comes
+ * out of it is every hand once a round is dealt.
+ *
+ * Worth knowing what this changed for the checks either side of it: without the key, a minted
+ * code and an invented one now answer the *same* 404, so plain HTTP is no longer an oracle for
+ * whether a room exists. That is the property `gate-bruteforce` is about, arrived at here for
+ * free.
+ */
+const PEEK = { 'x-room-debug': process.env.ROOM_DEBUG_KEY ?? 'local-harness' };
+
 // --- an invented code must reach nothing --------------------------------------------------
 const before = await roomObjectCount();
 
@@ -74,7 +89,7 @@ check(
 );
 
 // --- the code works -----------------------------------------------------------------------
-const roomResponse = await fetch(`${BASE}/?room=${minted.code}`);
+const roomResponse = await fetch(`${BASE}/?room=${minted.code}`, { headers: PEEK });
 check('the minted code reaches a room', roomResponse.status === 200, `status ${roomResponse.status}`);
 
 const room = await roomResponse.json();
@@ -86,7 +101,7 @@ check('the room object now exists', (await roomObjectCount()) === before + 1);
 
 check(
   'the same code twice is the same room, not a second one',
-  (await (await fetch(`${BASE}/?room=${minted.code}`)).json()).roomId === room.roomId,
+  (await (await fetch(`${BASE}/?room=${minted.code}`, { headers: PEEK })).json()).roomId === room.roomId,
 );
 check('and reaching it twice created only one object', (await roomObjectCount()) === before + 1);
 
@@ -107,7 +122,7 @@ check(
 check('a private room is not', !listing.rooms.some((r) => r.code === minted.code));
 check(
   'but the private room is still reachable by its code',
-  (await fetch(`${BASE}/?room=${minted.code}`)).status === 200,
+  (await fetch(`${BASE}/?room=${minted.code}`, { headers: PEEK })).status === 200,
 );
 // What a lobby browser needs and nothing else: how full, how soon, and how to get in. No
 // tokens, no hashes, no game — and no Durable Object name, which the listing used to carry
@@ -155,7 +170,7 @@ for (const nonsense of ['ABC', 'ABC2345', 'ABC01I', 'abc-23', '../../etc', '%20%
 // and the shape check must not become the thing that breaks it.
 check(
   'a real code still resolves when it is typed in lower case',
-  (await fetch(`${BASE}/?room=${minted.code.toLowerCase()}`)).status === 200,
+  (await fetch(`${BASE}/?room=${minted.code.toLowerCase()}`, { headers: PEEK })).status === 200,
 );
 
 console.log(`\n${failures === 0 ? 'ROOM CODE GATE PASS' : `ROOM CODE GATE FAIL (${failures})`}\n`);

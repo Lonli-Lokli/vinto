@@ -41,7 +41,7 @@ import {
  * which names are real is telling it something.
  */
 import { reportError, roomContext } from './sentry.mjs';
-import { serveDashboard } from './dashboard.mjs';
+import { serveDashboard, keyMatches } from './dashboard.mjs';
 
 const CLIENT_EVENTS = new Set(['funnel', 'solo_round', 'lesson', 'failure']);
 
@@ -607,9 +607,29 @@ export class Room {
       return new Response(stored, { headers: { 'content-type': 'application/json' } });
     }
 
-    // A plain GET reports room state — used by the harness to inspect the object without a
-    // socket, and to prove state survived an eviction.
+    // A plain GET reports room state — for the harness, and **for nobody else**.
+    //
+    // This is `RoomState` itself, which ARCHITECTURE.md §5 says is not the wire: it carries the
+    // seats' token hashes and, once the round is dealt, every player's hand. It was served to
+    // anyone who asked, with no credential of any kind, keyed only on a room code — and a room
+    // code is not a secret. It is shared in an invitation, read aloud over the phone, and
+    // published outright in the room list. So "knows the code" was "may read every hand", which
+    // is both a disclosure and a way to cheat at the game.
+    //
+    // It exists because two gates need the object's *insides* — `gate-two-clients` asserts on
+    // `tokenHash` and on the dealt game to prove state survived an eviction — so a redacted
+    // projection cannot serve them and the door has to stay. What it now needs is a secret that
+    // production does not have: `ROOM_DEBUG_KEY` is set with `--var` for `wrangler dev` and is
+    // never set on a deployment, so on the live room this branch cannot be entered at all.
+    //
+    // A 404 rather than a 401, the same answer an unknown room code gets and the same rule the
+    // dashboard follows: a service that says "you need a key" has told a stranger there is
+    // something here worth having a key for.
     if (request.headers.get('Upgrade') !== 'websocket') {
+      const key = this.env?.ROOM_DEBUG_KEY;
+      if (!key || !keyMatches(request.headers.get('x-room-debug'), key)) {
+        return new Response('not found', { status: 404 });
+      }
       const stateJson = await this.#load(roomId);
       return new Response(stateJson, {
         headers: { 'content-type': 'application/json' },

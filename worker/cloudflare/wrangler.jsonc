@@ -104,6 +104,15 @@
 
   // --- The stats page (design A6, task 5.1) -------------------------------------------------
   //
+  // ROOM_DEBUG_KEY is deliberately absent, and must stay absent.
+  //
+  // It is what opens the Durable Object's plain-GET state door, and what comes out of that door
+  // is `RoomState`: the seats' token hashes and, once dealt, every player's hand. The harness
+  // needs it (`gate-two-clients` proves state survives an eviction by reading the insides) and
+  // is given it with `--var` on `wrangler dev`. A deployment that has it is a deployment where
+  // knowing a room code — which is shared in invitations and printed in the room list — is
+  // enough to read the table. Setting it here would deploy it.
+
   // Three secrets, none of them here: ANALYTICS_TOKEN (Account Analytics, read-only),
   // ANALYTICS_ACCOUNT_ID and DASHBOARD_KEY. Set with `wrangler secret put`; DEPLOYMENT.md §7
   // walks it through for somebody who does not do this for a living.

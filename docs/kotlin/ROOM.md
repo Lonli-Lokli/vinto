@@ -17,7 +17,7 @@ deployment before any UI exists.
 ```bash
 cd worker/cloudflare
 (cd ../.. && ./gradlew :worker:jsProductionExecutableCompileSync)
-npx wrangler dev --port 8787 --local
+npx wrangler dev --port 8787 --local --var ROOM_DEBUG_KEY:local-harness
 node gate-engine-replay.mjs            # 50/50, 13,900 actions
 
 # against a deployment
