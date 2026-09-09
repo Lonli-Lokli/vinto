@@ -293,8 +293,11 @@ compose.desktop {
  * Setting it to an empty string switches reporting off entirely, which is what a test that
  * must not talk to the network passes.
  *
- * DEPLOYMENT.md §7a is the maintainer's copy of this. The Worker's half is a wrangler secret
- * and is deliberately a different pipe with a different lifetime.
+ * DEPLOYMENT.md §7a is the maintainer's copy of this. **The Worker's half is committed the same
+ * way**, in `worker/cloudflare/wrangler.jsonc`. It was meant to be a wrangler secret, and that
+ * is precisely how it came to not exist: nothing named it, no deploy checked for it, and the
+ * live room reported nowhere for its whole life. A key that can submit and cannot read belongs
+ * where a gate can see it.
  */
 // The project's Sentry project, for every client. See the note above for why this is in
 // source and what it would cost somebody to misuse it.

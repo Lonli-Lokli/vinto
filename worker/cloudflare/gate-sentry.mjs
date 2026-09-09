@@ -8,6 +8,7 @@
  * HOSTING.md §6c binds this zone to no identifiers; this is that rule applied to the pipe
  * nobody thinks of as telemetry.
  */
+import { readFileSync } from 'node:fs';
 import { parseDsn, scrub, reportError, roomContext } from './sentry.mjs';
 
 let failures = 0;
@@ -175,6 +176,31 @@ try {
 }
 check('the sent envelope carries the game id', addressed.includes('game-1699'), addressed.slice(0, 300));
 check('the sent envelope still carries no room code', !addressed.includes('7KQ2MP'));
+
+// --- and the room this repository actually ships can reach a project ---------------------------
+//
+// Everything above proves the reporter WORKS. None of it proves this deployment has anywhere to
+// report TO, and for the life of the room it did not: `wrangler secret list` on the live Worker
+// returned one secret and it was not this one. Every catch-all 500, every `room-socket` and
+// `room-alarm` failure, called a reporter that returned null before it built an event — silently,
+// because absent-safe is silent by design and nothing ever asked which state it was in.
+//
+// So the config is the thing under test here, not the code. The portfolio's rule is already
+// written down in `kupalinka/.github/workflows/deploy-workers.yml`: every Worker reports its
+// crashes, a DSN is a public ingest key and is committed in the Worker's own config, and CI is
+// where the blank one is refused. The room simply never adopted it.
+console.log('\nsentry: this deployment has somewhere to report to');
+
+// JSONC: the comments in that file are load-bearing prose and it ends on a trailing comma.
+// Both are legal there and neither is legal here, so both come out before it is read.
+const config = JSON.parse(
+  readFileSync(new URL('./wrangler.jsonc', import.meta.url), 'utf8')
+    .replace(/^\s*\/\/.*$/gm, '')
+    .replace(/,(\s*[}\]])/g, '$1'),
+);
+const shipped = parseDsn(config?.vars?.SENTRY_DSN);
+check('the room ships with a DSN', Boolean(config?.vars?.SENTRY_DSN), 'vars.SENTRY_DSN is missing');
+check('and it is one the reporter can use', shipped !== null, `${config?.vars?.SENTRY_DSN}`);
 
 console.log(failures === 0 ? '\nsentry gate: PASS\n' : `\nsentry gate: ${failures} FAILED\n`);
 process.exit(failures === 0 ? 0 : 1);

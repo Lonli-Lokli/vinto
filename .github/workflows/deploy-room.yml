@@ -186,6 +186,32 @@ jobs:
           echo "Dry run: nothing was published." >> "$GITHUB_STEP_SUMMARY"
           echo "ROOM_OPEN would have been \`${{ steps.door.outputs.want }}\`." >> "$GITHUB_STEP_SUMMARY"
 
+      # A room that cannot report its failures must not ship, and CI is where that is enforced —
+      # the rule `kupalinka/workers` already follows and this one did not. It cost a silent
+      # production 500 that reached nobody: the reporter was there, absent-safe, and absent.
+      #
+      # No Sentry token is involved. A DSN is a public ingest key that can submit an event and
+      # cannot read one, so it is committed in `wrangler.jsonc` and this only checks it is there
+      # and has the shape the reporter parses.
+      - name: A room that cannot report does not ship
+        working-directory: worker/cloudflare
+        run: |
+          dsn=$(node -e "
+            const fs = require('node:fs');
+            const raw = fs.readFileSync('wrangler.jsonc', 'utf8')
+              .replace(/^\s*\/\/.*$/gm, '').replace(/,(\s*[}\]])/g, '\$1');
+            process.stdout.write(JSON.parse(raw)?.vars?.SENTRY_DSN ?? '');
+          ")
+          if [ -z "$dsn" ]; then
+            echo "::error::No SENTRY_DSN in worker/cloudflare/wrangler.jsonc — this room would publish blind."
+            exit 1
+          fi
+          if ! printf '%s' "$dsn" | grep -qE '^https://[0-9a-f]+@[^/]+/[0-9]+$'; then
+            echo "::error::SENTRY_DSN in wrangler.jsonc is not a DSN the reporter can parse."
+            exit 1
+          fi
+          echo "reporting is armed"
+
       - name: Deploy
         if: ${{ !inputs.dryRun }}
         working-directory: worker/cloudflare
@@ -211,6 +237,10 @@ jobs:
           for attempt in $(seq 1 30); do
             health=$(curl -sS --max-time 10 "$SERVICE/health" || echo '{}')
             echo "attempt $attempt: $health"
+            if echo "$health" | grep -q "\"reporting\":false"; then
+              echo "::error::The deployed room says it cannot report. See wrangler.jsonc's SENTRY_DSN."
+              exit 1
+            fi
             if echo "$health" | grep -q "\"roomOpen\":$want"; then
               {
                 echo "### Room deployed"

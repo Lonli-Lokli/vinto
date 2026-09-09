@@ -55,7 +55,26 @@
   // (The original note here said to flip this in the same commit that landed
   // `ActionValidator`. That landed in phase 4; the flag stayed false for months afterwards,
   // which is the drift described above.)
-  "vars": { "ROOM_OPEN": "true" },
+  // Where the room reports its failures, and why it is in the file rather than in a secret.
+  //
+  // It WAS meant to be a `wrangler secret`, and that is exactly how it came to not exist: nothing
+  // in the repository named it, no deploy checked for it, and `wrangler secret list` on the live
+  // Worker returned one secret which was not this one. Every catch-all 500 and every `room-socket`
+  // failure the room has ever had called a reporter that returned null before it built an event.
+  // A configuration that only exists if somebody remembered to type it once is not configuration.
+  //
+  // A DSN is a **public ingest key**: it can submit an event and it cannot read one, which is why
+  // every client in this project already carries one in source and why `kupalinka/workers/px`
+  // commits its own. Committing it is what lets `gate-sentry.mjs` and the deploy refuse a room
+  // that would publish blind — the portfolio's rule, which this Worker simply never adopted.
+  //
+  // This is the project the CLIENTS report to, so the room's reports arrive beside them; they
+  // carry `server_name: vinto-room` and a `surface` tag, so they filter apart. Point it at a room
+  // of its own by changing this one string.
+  "vars": {
+    "ROOM_OPEN": "true",
+    "SENTRY_DSN": "https://b72aaadb269f6ba420258c6e930b6f8f@o473632.ingest.us.sentry.io/4510118789251072"
+  },
 
   // --- Analytics (openspec/changes/add-live-analytics) --------------------------------------
   //

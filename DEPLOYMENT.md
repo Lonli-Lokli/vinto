@@ -580,19 +580,25 @@ why there is no consent banner to add. Results appear under **Analytics & Logs**
 
 When something goes wrong for a player, we want to know. Sentry is where those reports go.
 
-Give the room service its key:
+**The room's key is in the repository**, in `worker/cloudflare/wrangler.jsonc` under `vars`.
+There is nothing to type and nothing to remember, and that is the whole point of the change:
+it used to be a `wrangler secret`, which is exactly how it came to not exist. Nothing named it,
+no deploy checked for it, and the live room reported **nowhere** for its whole life — every
+failure it ever caught called a reporter that had no address and returned quietly.
 
-```sh
-cd worker/cloudflare
-npx wrangler secret put SENTRY_DSN
-```
+A DSN is not a secret. It can submit a report and it cannot read one, which is why every app in
+this project already carries one in its source. Committing the room's too is what lets a gate
+see it: `gate-sentry.mjs` fails the build if it is missing or malformed, the deploy refuses to
+ship a room that would publish blind, and `/health` answers `"reporting": true` so you can check
+a running deployment from a phone.
 
-Paste the DSN when it asks. It looks like
-`https://<a long string>@<something>.ingest.us.sentry.io/<a number>`, and you get it from
-Sentry → **Settings** → **Client Keys (DSN)**.
+To point the room at a different Sentry project, change that one string. You get the value from
+Sentry → **Settings** → **Client Keys (DSN)**; it looks like
+`https://<a long string>@<something>.ingest.us.sentry.io/<a number>`.
 
-**With no key set, crash reporting is simply off** and everything else works normally. That is
-deliberate: nobody should need a Sentry account to work on the game.
+**With the value emptied, crash reporting is simply off** and everything else works normally —
+which is what a test that must not talk to the network relies on. What is no longer possible is
+being off *by accident*: an empty one stops the deploy rather than the reports.
 
 ### The apps report too, and they need the same key put somewhere else
 

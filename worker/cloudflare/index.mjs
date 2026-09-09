@@ -41,7 +41,7 @@ import {
  * which names are real is telling it something.
  */
 import { emit } from './analytics.mjs';
-import { reportError, roomContext } from './sentry.mjs';
+import { parseDsn, reportError, roomContext } from './sentry.mjs';
 import { keyMatches } from './secrets.mjs';
 
 const CLIENT_EVENTS = new Set(['funnel', 'solo_round', 'lesson', 'failure']);
@@ -1298,6 +1298,10 @@ async function handle(request, env, ctx) {
         service: 'vinto-room',
         engine: 'kotlin',
         roomOpen: env.ROOM_OPEN === 'true',
+        // Whether this deployment can report a failure at all — the question nobody could ask
+        // from outside, and the answer was no for the life of the room. Not the DSN, which is
+        // public but is nobody's business here: only whether one is present and parseable.
+        reporting: parseDsn(env.SENTRY_DSN) !== null,
       });
     }
 
