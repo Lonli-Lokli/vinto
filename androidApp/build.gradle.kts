@@ -89,14 +89,35 @@ val BUILD_NUMBER_OFFSET = 100
  * does not strictly exceed the last one on the track.
  *
  * `-PversionCode=` overrides it, which is what a shallow CI checkout needs: counting commits in a
- * truncated clone is not monotonic. A tree with no git at all falls back to 1 rather than failing.
+ * truncated clone is not monotonic.
  * `providers.exec` rather than a plain shell-out because the configuration cache is on.
  */
-val buildNumber = (project.findProperty("versionCode") as String?)?.toIntOrNull()
-    ?: runCatching {
-        project.providers.exec { commandLine("git", "rev-list", "--count", "HEAD") }
-            .standardOutput.asText.get().trim().toInt() + BUILD_NUMBER_OFFSET
-    }.getOrDefault(1)
+// IT FAILS RATHER THAN GUESSING. The old `getOrDefault(1)` meant a tree without usable git history
+// produced versionCode **1** silently: the build went green and the artifact was named after a
+// number that resolves to no commit. That exact fallback archived Vodar 1.2 as build 1 into App
+// Store review on 2026-09-04. A build that stops is a five-minute problem; a build that ships an
+// untraceable number is permanent. Escape hatch, spelled like `Scripts/build-number.sh`'s:
+// `-PversionCode=<n>` or `BUILD_NUMBER=<n>`.
+val buildNumber: Int = (project.findProperty("versionCode") as String?)?.toIntOrNull()
+    ?: providers.environmentVariable("BUILD_NUMBER").orNull?.toIntOrNull()
+    ?: run {
+        fun git(vararg args: String): String? = runCatching {
+            project.providers.exec { commandLine(*args) }.standardOutput.asText.get().trim()
+        }.getOrNull()
+
+        // A shallow clone counts only what it fetched, so it yields a plausible, wrong, SMALLER
+        // number — worse than none, because nothing about it looks wrong.
+        check(git("git", "rev-parse", "--is-shallow-repository") != "true") {
+            "shallow clone — the commit count would be wrong (CI needs fetch-depth: 0). " +
+                "Pass -PversionCode=<n> or BUILD_NUMBER=<n> if this is deliberate."
+        }
+        val count = git("git", "rev-list", "--count", "HEAD")?.toIntOrNull()
+        checkNotNull(count) {
+            "not a git checkout, so there is no commit count to build a versionCode from. " +
+                "Pass -PversionCode=<n> or BUILD_NUMBER=<n> if this is deliberate (exported tree)."
+        }
+        count + BUILD_NUMBER_OFFSET
+    }
 
 /** The human semver, bumped by hand at a release. `VersionTest` holds it to `Version.kt`. */
 val MARKETING_VERSION = "1.0"
