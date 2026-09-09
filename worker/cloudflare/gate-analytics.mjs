@@ -14,6 +14,7 @@
  * Cloudflare account to develop against, so every path is absent-safe and this asserts it
  * rather than trusting it.
  */
+import { emit } from './analytics.mjs';
 import {
   clientEventPoint,
   roomCreatedPoint,
@@ -129,11 +130,10 @@ for (const [label, body] of [
 
 console.log('\nanalytics: with no binding configured');
 
-// Exactly the shim's helper, which is the code path a deployment without the binding takes.
-function emit(env, point) {
-  if (!env.ANALYTICS || !point) return;
-  try { env.ANALYTICS.writeDataPoint(point); } catch { /* never fails the request */ }
-}
+// The REAL helper, imported rather than copied. It used to be copied here, under the comment
+// "exactly the shim's helper" — and the copy is why this file could not see the bug that
+// mattered: a stub `writeDataPoint` that accepts anything proves a write happened and nothing
+// about what was written. `kupalinka_events` held zero rows for the life of the deployment.
 
 let wrote = 0;
 emit({}, points.round_end);
@@ -145,6 +145,21 @@ check('a configured binding is written to', wrote === 1);
 
 emit({ ANALYTICS: { writeDataPoint: () => { throw new Error('quota'); } } }, points.round_end);
 check('a sink that throws does not fail the request', true);
+
+// WHAT reaches the sink, which is the half that was never asked.
+//
+// Analytics Engine takes an OBJECT with three arrays; every builder returns a JSON STRING,
+// because that is what crosses the Kotlin/JS boundary cleanly. Nothing in between parsed it, so
+// every count this game has ever taken was thrown away by the runtime without a word.
+let seen = null;
+emit({ ANALYTICS: { writeDataPoint: (p) => { seen = p; } } }, points.round_end);
+check('the sink is handed an object, not the JSON it was built as', typeof seen === 'object' && seen !== null,
+  `${typeof seen}`);
+check('with the three columns Analytics Engine names',
+  Array.isArray(seen?.indexes) && Array.isArray(seen?.blobs) && Array.isArray(seen?.doubles),
+  JSON.stringify(seen)?.slice(0, 120) ?? 'null');
+check('indexed by the game, so the dashboard can find it', seen?.indexes?.[0] === 'vinto', `${seen?.indexes}`);
+check('and naming its event where the queries look for it', seen?.blobs?.[1] === 'round_end', `${seen?.blobs?.[1]}`);
 
 console.log('\nanalytics: a real room, and what it says about itself');
 

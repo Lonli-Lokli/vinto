@@ -40,6 +40,7 @@ import {
  * this list is dropped silently rather than answered with an error, because telling a scanner
  * which names are real is telling it something.
  */
+import { emit } from './analytics.mjs';
 import { reportError, roomContext } from './sentry.mjs';
 import { keyMatches } from './secrets.mjs';
 
@@ -52,27 +53,6 @@ const MAX_EVENT_BYTES = 8 * 1024;
 const SESSION_SPAN_MS = 30 * 60 * 1000;
 const MAX_EVENTS_PER_BATCH = 40;
 
-/**
- * Writes one data point, if there is anywhere to write it.
- *
- * **Absent-safe by design, not by accident.** With no `ANALYTICS` binding this is a no-op, so
- * `wrangler dev` and every gate script run identically without a Cloudflare account — which
- * is what keeps analytics from becoming a thing you need credentials to develop against.
- *
- * `writeDataPoint` does not count against the invocation's CPU time and does not return a
- * promise worth awaiting. That matters more here than anywhere: the thing being measured is a
- * Durable Object whose 30-second budget is already going on MCTS, and analytics that slowed
- * the room down would be measuring a room nobody wants.
- */
-function emit(env, point) {
-  if (!env.ANALYTICS || !point) return;
-  try {
-    env.ANALYTICS.writeDataPoint(point);
-  } catch {
-    // A sink that refuses a point must never fail the request that produced it. There is
-    // nothing to retry and nothing to report: the count is simply lost.
-  }
-}
 
 /**
  * What this invocation cost, carried on every server event.
