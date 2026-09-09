@@ -346,6 +346,15 @@ git clone <repo> && cd vinto
 echo "sdk.dir=$ANDROID_HOME" > local.properties
 ```
 
+**The commit hook needs no step here**, which is the point of it. `lefthook.yml` describes a
+pre-commit detekt run; `installGitHooks` in the root build installs it on the first
+`./gradlew detekt` in a clone that has none, by way of `npm install` and the `prepare` script.
+It is skipped when `CI` is set — a runner has no commits to hook — and skipped in a git
+worktree, which shares the main checkout's hooks. The hook itself carries
+`assert_lefthook_installed`, so a machine that cannot find the binary fails the commit instead
+of printing `Can't find lefthook in PATH` and letting it through, which is what it did until
+2026-09-09.
+
 ## 3. Module map
 
 | Module          | Targets                                                 | Purpose                                                                                                    |

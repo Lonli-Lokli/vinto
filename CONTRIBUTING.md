@@ -37,6 +37,13 @@ build skips them and says so rather than failing.
 Also useful: Node 22 for the Worker tooling, and `./gradlew :composeApp:run` — a desktop window
 running the real app, which is the fastest way to look at a UI change with no emulator to boot.
 
+**The commit hook installs itself.** `lefthook.yml` runs detekt over any commit that touches
+Kotlin, and the first `./gradlew detekt` in a fresh clone installs it — an `npm install`
+scrolling past on that first build is `installGitHooks` doing exactly that, so it wants Node on
+PATH. If the hook can ever not find lefthook it **stops the commit** rather than printing a line
+and letting it through: a clone either has working checks or says it has not. `CI=1` skips the
+install, which is how the runners see it.
+
 ## What to run before you push
 
 ```sh

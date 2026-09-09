@@ -330,3 +330,58 @@ tasks.register("releaseGate") {
     // the document rather than here.
     dependsOn(":worker:jsProductionExecutableCompileSync")
 }
+
+/**
+ * The commit hook, installed by the build rather than by a line in a setup document.
+ *
+ * `lefthook.yml` *describes* a pre-commit hook; a description is not an installation. Until
+ * `lefthook install` has run on a machine, `.git/hooks/pre-commit` does not exist there and
+ * every commit goes through unchecked — a fresh clone carries the file describing the checks
+ * and none of the machinery that runs them, and nothing says so.
+ *
+ * `npm install` installs it (`prepare` in `package.json`), which covers anybody who runs the
+ * release tooling. It does not cover the contributor who only ever types `./gradlew`, and that
+ * is most of them. So the build does it: on a machine with a `.git` and no hook, the first
+ * `./gradlew detekt` installs one. Afterwards the check is two `File` lookups and the task does
+ * nothing.
+ *
+ * **Never on CI.** `CI` is set by GitHub Actions and by every other runner, and a runner has no
+ * commits to hook and no business editing its checkout. CI runs the same detekt directly, which
+ * is what keeps the hook a convenience rather than the gate — a commit that dodges it is still
+ * caught by `kmp-detekt` before it can merge.
+ *
+ * Skipped in a git worktree too, where `.git` is a file: a worktree shares the main checkout's
+ * hooks, so there is nothing to install and an `npm install` on every build would be the only
+ * result.
+ *
+ * The two halves cover each other. This installs the hook; `assert_lefthook_installed` in
+ * `lefthook.yml` stops the hook passing when it cannot find lefthook to run. Before that pair,
+ * a missing binary printed one line and exited 0, and the commit landed unchecked.
+ */
+val installGitHooks = tasks.register<Exec>("installGitHooks") {
+    group = "build setup"
+    description = "Installs the lefthook pre-commit hook if this clone has not got one."
+
+    workingDir = rootDir
+    // `npm install` rather than `lefthook install`: it covers the case where the binary is
+    // absent as well as the case where only the hook is, and its `prepare` script runs the
+    // second half. One command, whichever of the two is missing.
+    commandLine("npm", "install")
+
+    val onCi = providers.environmentVariable("CI").isPresent
+    val gitDir = rootProject.layout.projectDirectory.dir(".git").asFile
+    val hook = rootProject.layout.projectDirectory.file(".git/hooks/pre-commit").asFile
+
+    onlyIf {
+        !onCi && gitDir.isDirectory && !(hook.isFile && hook.readText().contains("lefthook"))
+    }
+
+    doFirst {
+        logger.lifecycle(
+            "No lefthook pre-commit hook in this clone — running `npm install` to install one " +
+                "(lefthook.yml). Set CI=1 to skip.",
+        )
+    }
+}
+
+tasks.named("detekt") { dependsOn(installGitHooks) }
