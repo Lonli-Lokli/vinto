@@ -1226,7 +1226,7 @@ export default {
     // branch below is a 500 with an opaque Cloudflare page, and the only person who knows is
     // the player who hit it.
     try {
-      return withCors(await handle(request, env), request);
+      return withCors(await handle(request, env, ctx), request);
     } catch (error) {
       const sent = reportError(env, error, { surface: 'worker' });
       // Handed to the runtime rather than awaited: the response should not wait on telemetry.
@@ -1278,7 +1278,15 @@ async function sourceIdOf(request) {
     .map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function handle(request, env) {
+/**
+ * Every HTTP route the Worker itself answers.
+ *
+ * [ctx] rides along only for work that must outlive the response: a Sentry report about a count
+ * that could not be written. Optional in the sense that everything works without it — nothing
+ * here awaits it — and passed because a promise the runtime is not told about is cancelled when
+ * the response is sent, which would make a report of a silent failure silently fail.
+ */
+async function handle(request, env, ctx) {
     const url = new URL(request.url);
 
     // Reports what is deployed and what is switched on, so a deployment can be identified
