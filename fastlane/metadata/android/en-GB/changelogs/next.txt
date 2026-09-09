@@ -1,0 +1,9 @@
+A card you tap starts moving at once now, and a control that is busy says so instead of ignoring you.
+
+The invite carries a code to scan: point a phone at it rather than reading six characters out. Tell somebody has one too.
+
+Your opponents have names — Gale, Ember, Tide and Dune keep the same seats.
+
+Your fifteen seconds are yours: the clock no longer runs down while the bots play.
+
+Thank you for playing.
