@@ -44,7 +44,8 @@
     "capture-headless": "./gradlew :composeApp:jvmTest --tests \"*StoreShotsTest*\" --tests \"*IapShotTest*\" -PstoreShots --rerun",
     "capture-iap": "npm run capture-headless && node ../zdymak/bin/zdymak.mjs screenshots && vydanne iap",
     "release:check": "node tools/check-release-branch.mjs",
-    "shipped": "node ../gulnya/tools/shipped.mjs app.kupalinka.vinto"
+    "shipped": "node ../gulnya/tools/shipped.mjs app.kupalinka.vinto",
+    "shipped:all": "node ../gulnya/tools/shipped.mjs"
   },
   "devDependencies": {
     "lefthook": "^2.1.12",
