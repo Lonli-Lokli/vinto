@@ -254,7 +254,7 @@ export class Room {
   #emit(build) {
     this.#requests += 1;
     const wallMs = Date.now() - (this.#awokeAt ??= Date.now());
-    emit(this.env, build(wallMs, this.#requests));
+    emit(this.env, build(wallMs, this.#requests), this.ctx);
   }
 
   #requests = 0;
@@ -1380,7 +1380,7 @@ async function handle(request, env) {
           // Built on this side from a name we recognise, never forwarded as the client sent
           // it — so a field nobody declared cannot reach the store, and a client-supplied
           // timestamp cannot be believed.
-          emit(env, clientEventPoint(JSON.stringify(event)));
+          emit(env, clientEventPoint(JSON.stringify(event)), ctx);
         }
       }
       return new Response(null, { status: 204 });
@@ -1435,6 +1435,7 @@ async function handle(request, env) {
             cost.wallMs,
             cost.requests,
           ),
+          ctx,
         );
       }
 

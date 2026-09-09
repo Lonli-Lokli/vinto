@@ -161,6 +161,43 @@ check('with the three columns Analytics Engine names',
 check('indexed by the game, so the dashboard can find it', seen?.indexes?.[0] === 'vinto', `${seen?.indexes}`);
 check('and naming its event where the queries look for it', seen?.blobs?.[1] === 'round_end', `${seen?.blobs?.[1]}`);
 
+// A sink that refuses is no longer silence.
+//
+// The catch in `emit` is deaf on purpose — a lost count must never fail the request that
+// produced it — and being deaf is how a dataset stayed empty for the life of a deployment with
+// nothing anywhere saying so. It still swallows; it now says so once, where somebody is looking.
+const realFetch = globalThis.fetch;
+let posted = 0;
+globalThis.fetch = async () => { posted += 1; return new Response(null, { status: 200 }); };
+const refusing = { ANALYTICS: { writeDataPoint: () => { throw new Error('quota'); } } };
+
+// With nowhere to report to, nothing is said and nothing is remembered — so a deployment that
+// later gains a DSN still gets told. Absent-safe is the rule telemetry here is built on.
+emit({ ...refusing }, points.round_end);
+check('no DSN reports nothing', posted === 0, `${posted}`);
+
+const watched = { ...refusing, SENTRY_DSN: 'https://abc123@o1.ingest.us.sentry.io/456' };
+emit(watched, points.round_end);
+await new Promise((r) => setTimeout(r, 0));
+check('a sink that refuses a point is reported', posted === 1, `${posted}`);
+
+emit(watched, points.round_end);
+emit(watched, points.round_start);
+await new Promise((r) => setTimeout(r, 0));
+check('and reported ONCE — a broken sink is one fault, not one per game action', posted === 1, `${posted}`);
+
+// The other way a point can fail, and a different fault: the builder produced something that is
+// not a point at all. Told separately, because "the sink refuses us" and "we are building junk"
+// are answered by different people.
+emit(watched, '{not json');
+await new Promise((r) => setTimeout(r, 0));
+check('a point that is not a point is reported too', posted === 2, `${posted}`);
+
+let handed;
+globalThis.fetch = async (url, init) => { handed = String(init?.body ?? ''); return new Response(null, { status: 200 }); };
+emit({ ANALYTICS: { writeDataPoint: () => { throw new Error('quota'); } }, SENTRY_DSN: 'https://abc123@o1.ingest.us.sentry.io/456' }, points.round_end);
+globalThis.fetch = realFetch;
+
 console.log('\nanalytics: a real room, and what it says about itself');
 
 // The shim's `#observe` derives every room event by comparing the state a request read with

@@ -305,6 +305,37 @@ implemented yet (see ActionValidator, task 4.4)" — which is true, is addressed
 works on this, and tells a player nothing. `troubled()` is a `when` with no `else`, so a seventh
 `RoomTrouble` is a compile error rather than a screen that says nothing.
 
+### A catch that swallowed on purpose, and the dataset that was empty because of it
+
+The room's counting was never lost, exactly: it was refused, once per event, for the life of
+the deployment. `kupalinka_events` held **zero rows in ninety days** — not zero for Vinto, zero
+for every game — while `kupalinka_usage` beside it counted visits perfectly, which is the
+comparison that made it look like a dashboard problem rather than a writing one.
+
+Three ordinary decisions produced it, none wrong on its own:
+
+1. Every builder in `AnalyticsExports.kt` returns a **JSON string**, because that is what crosses
+   the Kotlin/JS boundary cleanly, and it says so.
+2. `writeDataPoint` takes an **object** with `indexes`, `blobs` and `doubles`. Nothing between
+   the two parsed it.
+3. `emit`'s catch is deaf **on purpose** — a sink that refuses a point must never fail the
+   request that produced it, and there is nothing to retry.
+
+The third is why the first two lasted. It is also right, and it is still there: what changed is
+that being deaf is no longer being *private*. A refused point now reports to Sentry with
+`surface: analytics`, **once per fault per isolate**, and there are exactly two faults it can
+name — the sink refused us, or we built something that is not a point. Reporting per call would
+send one event per game action for as long as a quota lasted, which buries every other report
+and says nothing the first one did not. The fault is remembered only when it was actually
+reported, so a deployment with no DSN is not quietly marked as having complained.
+
+**The gate could not have caught it, and that is the part worth keeping.** `gate-analytics.mjs`
+carried a *copy* of `emit` under the comment "exactly the shim's helper", handed the copy a stub
+`writeDataPoint` that accepted whatever it was given, and checked that a write happened. It
+always did. `emit` lives in `analytics.mjs` now and both the shim and the gate import the one
+copy; the gate asserts what reaches the sink — an object, three named columns, indexed by the
+game — and that a refusal is reported, and reported once.
+
 ### What is still unknown
 
 **Why the app exits.** That is not diagnosed, and saying otherwise would be a guess dressed up.
