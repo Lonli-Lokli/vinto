@@ -681,4 +681,6 @@
     <string name="card_help_ace">Выберите соперника, который возьмёт штрафную карту из колоды. Это увеличивает его руку и сумму очков. Это действие можно пропустить.</string>
     <string name="card_help_joker">Джокер, достоинство −1</string>
 
+    <string name="invite_scan">Или отсканируйте этот код</string>
+    <string name="settings_share_scan">Отсканируйте, чтобы открыть Vinto</string>
 </resources>

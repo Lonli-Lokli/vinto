@@ -691,4 +691,6 @@
     <string name="card_help_king">Pilih aksi kartu mana yang akan dijalankan: 7 (lihat milik sendiri), 8 (lihat milik sendiri), 9/10 (lihat milik lawan), J (tukar), Q (lihat &amp; tukar), A (paksa ambil kartu). Anda juga bisa menyebutkan kartu tanpa aksi (2-6, K, Joker).</string>
     <string name="card_help_ace">Pilih seorang lawan untuk memaksanya mengambil kartu penalti dari dek. Ini menambah jumlah kartu dan total nilai tangan mereka. Anda boleh melewati aksi ini jika mau.</string>
     <string name="card_help_joker">Joker bernilai -1</string>
+    <string name="invite_scan">Atau pindai kode ini</string>
+    <string name="settings_share_scan">Pindai untuk membuka Vinto</string>
 </resources>

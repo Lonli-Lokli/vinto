@@ -693,4 +693,6 @@
     <string name="card_help_king">Choisissez quelle action de carte exécuter : 7 (regarder une des vôtres), 8 (regarder une des vôtres), 9/10 (regarder celle d’un adversaire), V (échanger), D (regarder et échanger), A (forcer à piocher). Vous pouvez aussi déclarer des cartes sans action (2-6, R, Joker).</string>
     <string name="card_help_ace">Sélectionnez un adversaire pour le forcer à piocher une carte de pénalité dans la pioche. Cela augmente sa main et son total. Vous pouvez ignorer cette action si vous préférez.</string>
     <string name="card_help_joker">Joker de valeur -1</string>
+    <string name="invite_scan">Ou scannez ce code</string>
+    <string name="settings_share_scan">Scannez pour ouvrir Vinto</string>
 </resources>

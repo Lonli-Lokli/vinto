@@ -669,4 +669,6 @@
     <string name="card_help_king">Wählen, welche Kartenaktion ausgeführt wird: 7 (eigene ansehen), 8 (eigene ansehen), 9/10 (fremde ansehen), B (tauschen), D (ansehen &amp; tauschen), A (Ziehen erzwingen). Auch Karten ohne Aktion (2-6, K, Joker) können erklärt werden.</string>
     <string name="card_help_ace">Eine gegnerische Person wählen, die dadurch eine Strafkarte vom Stapel ziehen muss. Das erhöht ihre Handgröße und Kartensumme. Diese Aktion kann übersprungen werden.</string>
     <string name="card_help_joker">Joker mit Wert -1</string>
+    <string name="invite_scan">Oder diesen Code scannen</string>
+    <string name="settings_share_scan">Zum Öffnen von Vinto scannen</string>
 </resources>

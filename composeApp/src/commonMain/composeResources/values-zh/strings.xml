@@ -667,4 +667,6 @@
     <string name="card_help_king">选择要执行哪张牌的动作：7（看自己）、8（看自己）、9/10（看对手）、J（交换）、Q（查看并交换）、A（迫使摸牌）。你也可以声明没有动作的牌（2-6、K、大小王）。</string>
     <string name="card_help_ace">选择一名对手，迫使他抽一张罚牌。这会增加他的手牌数量和总点数。你也可以选择跳过这个动作。</string>
     <string name="card_help_joker">点数为 -1 的大小王</string>
+    <string name="invite_scan">或扫描此二维码</string>
+    <string name="settings_share_scan">扫码打开 Vinto</string>
 </resources>

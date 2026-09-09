@@ -116,6 +116,9 @@
     <string name="invite_share">Share the code</string>
     <string name="invite_copy">Copy the code</string>
     <string name="invite_copied">Copied</string>
+    <!-- Under the code: the QR carries the same invite link the share sheet sends, for the
+         person sitting opposite who has a camera and no wish to type six characters. -->
+    <string name="invite_scan">Or scan this code</string>
     <string name="invite_read_it_out">Or read it out: six characters, no O or I in them.</string>
 
     <!-- The lobby: who is in, what everybody is waiting for. -->
@@ -198,6 +201,7 @@
     <string name="settings_share">Tell somebody</string>
     <string name="settings_share_detail">Send the game to a friend. Four seats, and three of them can be bots.</string>
     <string name="settings_share_subject">Vinto</string>
+    <string name="settings_share_scan">Scan to open Vinto</string>
     <string name="settings_share_body">Vinto — the card game of holding less and knowing more. Free, in the browser, no sign-up: %1$s</string>
     <string name="settings_back">Back</string>
 

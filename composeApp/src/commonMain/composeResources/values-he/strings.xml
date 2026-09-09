@@ -666,4 +666,6 @@
     <string name="card_help_king">בחרו איזו פעולת קלף לבצע: 7 (מבט עצמי), 8 (מבט עצמי), 9/10 (מבט אצל יריב), נסיך (החלפה), מלכה (מבט והחלפה), אס (משיכת עונש). אפשר גם להכריז על קלפים ללא פעולה (2-6, מלך, ג׳וקר).</string>
     <string name="card_help_ace">בחרו יריב שיאלץ למשוך קלף עונש מהחפיסה. זה מגדיל את היד שלו ואת הסכום שלו. אפשר לדלג על הפעולה הזו אם תרצו.</string>
     <string name="card_help_joker">ג׳וקר בערך -1</string>
+    <string name="invite_scan">או סרקו את הקוד הזה</string>
+    <string name="settings_share_scan">סרקו כדי לפתוח את Vinto</string>
 </resources>

@@ -708,4 +708,6 @@
     <string name="card_help_king">Elige qué acción de carta ejecutar: 7 (mirar propia), 8 (mirar propia), 9/10 (mirar de oponente), J (cambiar), Q (mirar y cambiar), A (forzar robo). También puedes declarar cartas sin acción (2-6, K, Comodín).</string>
     <string name="card_help_ace">Selecciona a un oponente para obligarlo a robar una carta de penalización del mazo. Esto aumenta el tamaño de su mano y su total de puntos. Puedes omitir esta acción si lo prefieres.</string>
     <string name="card_help_joker">Comodín con valor -1</string>
+    <string name="invite_scan">O escanea este código</string>
+    <string name="settings_share_scan">Escanea para abrir Vinto</string>
 </resources>

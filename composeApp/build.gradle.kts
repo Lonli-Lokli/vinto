@@ -96,6 +96,11 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
 
+            // The branded QR on the invite and the share row. Same library, same version and the
+            // same rules as every other game in the portfolio (`games.core.share.QrChip`), which
+            // this repository cannot depend on directly: it has no games-core dependency.
+            implementation(libs.qrose)
+
             // The game itself. `shared:client` brings the engine and the bots with it, so a
             // single-player game needs nothing else — no network dependency appears here,
             // and `NoNetworkGuardTest` is what keeps that true.

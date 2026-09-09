@@ -23,7 +23,15 @@ import androidx.compose.ui.graphics.Color
  * scheme puts the cards and the felt within a few steps of each other, and a card you cannot
  * pick out of the background is the only thing on this screen that has to work.
  */
-private val Felt = Color(0xFF1B5E43)
+/**
+ * The felt, and the brand's deep tone.
+ *
+ * Public because the QR chip needs it (`share/QrChip.kt`): a scannable code has to be drawn in a
+ * colour dark enough to threshold against cream, and this is the one Vinto colour that both
+ * belongs to the brand and clears that bar — `Brand` green is 1.7:1 on the chip's ground and
+ * would not scan at all. Read from here rather than copied, so the code and the felt cannot drift.
+ */
+val Felt = Color(0xFF1B5E43)
 private val FeltDark = Color(0xFF0E3428)
 private val Gold = Color(0xFFC9A227)
 private val Ink = Color(0xFF14181B)

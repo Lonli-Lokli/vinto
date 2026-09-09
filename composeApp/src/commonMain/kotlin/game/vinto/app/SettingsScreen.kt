@@ -90,6 +90,7 @@ import game.vinto.app.art.settings_saved_game_detail
 import game.vinto.app.art.settings_share
 import game.vinto.app.art.settings_share_body
 import game.vinto.app.art.settings_share_detail
+import game.vinto.app.art.settings_share_scan
 import game.vinto.app.art.settings_share_subject
 import game.vinto.app.art.settings_sound
 import game.vinto.app.art.settings_sound_detail
@@ -113,6 +114,8 @@ import game.vinto.app.art.stats_separator
 import game.vinto.app.art.stats_streak
 import game.vinto.app.art.stats_won
 import game.vinto.app.openUrl
+import game.vinto.app.share.QrChip
+import game.vinto.app.share.VintoQr
 import game.vinto.app.theme.ActionTile
 import game.vinto.app.theme.BackChevron
 import game.vinto.app.theme.ButtonTone
@@ -693,6 +696,23 @@ private fun About() {
         title = stringResource(Res.string.settings_share),
         detail = stringResource(Res.string.settings_share_detail),
     ) {
+        // The same link the button sends, as something a camera can take. A phone passed across a
+        // table is how this actually happens, and it needs no share sheet, no clipboard and no
+        // typing — which is also why it is the one path that works identically on every platform.
+        //
+        // Its own column: `Setting`'s slot is a plain `@Composable () -> Unit`, so there is no
+        // column scope here to align within.
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Tight),
+        ) {
+            QrChip(
+                url = Pages.GAME,
+                logo = VintoQr.ringedMark(),
+                label = stringResource(Res.string.settings_share_scan),
+            )
+        }
         GameButton(
             label = stringResource(Res.string.settings_share),
             tone = ButtonTone.NEUTRAL,

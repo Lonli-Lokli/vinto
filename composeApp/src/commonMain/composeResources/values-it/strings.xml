@@ -695,4 +695,6 @@
     <string name="card_help_king">Scegli quale azione eseguire: 7 (guarda una tua), 8 (guarda una tua), 9/10 (guarda quella di un avversario), J (scambia), Q (guarda e scambia), A (forza a pescare). Puoi anche dichiarare carte senza azione (2-6, K, Jolly).</string>
     <string name="card_help_ace">Seleziona un avversario per costringerlo a pescare una carta di penalità dal mazzo. Questo aumenta la sua mano e il suo totale. Puoi saltare questa azione se preferisci.</string>
     <string name="card_help_joker">Jolly con valore -1</string>
+    <string name="invite_scan">Oppure scansiona questo codice</string>
+    <string name="settings_share_scan">Scansiona per aprire Vinto</string>
 </resources>

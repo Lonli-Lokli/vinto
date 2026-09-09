@@ -666,4 +666,6 @@
     <string name="card_help_king">실행할 카드 능력을 고르세요: 7 (자기 확인), 8 (자기 확인), 9/10 (상대 확인), J (교환), Q (확인 후 교환), A (강제로 뽑게 하기). 능력이 없는 카드(2-6, K, Joker)도 선언할 수 있어요.</string>
     <string name="card_help_ace">상대를 골라 덱에서 페널티 카드를 뽑게 하세요. 상대의 손 크기와 카드 합계가 늘어나요. 원한다면 이 능력을 건너뛸 수 있어요.</string>
     <string name="card_help_joker">조커, 값은 -1</string>
+    <string name="invite_scan">또는 이 코드를 스캔하세요</string>
+    <string name="settings_share_scan">스캔하여 Vinto 열기</string>
 </resources>

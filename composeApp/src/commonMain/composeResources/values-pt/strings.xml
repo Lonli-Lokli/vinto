@@ -688,4 +688,6 @@
     <string name="card_help_king">Escolhe qual a ação de carta a executar: 7 (espreitar própria), 8 (espreitar própria), 9/10 (espreitar adversário), J (trocar), Q (espreitar &amp; trocar), Ás (forçar a tirar). Também podes declarar cartas sem ação (2-6, Rei, Joker).</string>
     <string name="card_help_ace">Seleciona um adversário para o obrigar a tirar uma carta de penalização do baralho. Isto aumenta o tamanho da mão e o total de cartas dele. Podes ignorar esta ação se preferires.</string>
     <string name="card_help_joker">Joker com valor -1</string>
+    <string name="invite_scan">Ou leia este código</string>
+    <string name="settings_share_scan">Leia para abrir o Vinto</string>
 </resources>

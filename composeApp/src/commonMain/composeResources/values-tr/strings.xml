@@ -698,4 +698,6 @@
     <string name="card_help_king">Hangi kart eyleminin uygulanacağını seç: 7 (kendine bak), 8 (kendine bak), 9/10 (rakibe bak), V (değiştir), K (bak ve değiştir), A (çekmeye zorla). Eylemi olmayan kartları da (2-6, Papaz, Joker) beyan edebilirsin.</string>
     <string name="card_help_ace">Bir rakibi desteden ceza kartı çekmeye zorlamak için seç. Bu onun el büyüklüğünü ve kart toplamını artırır. İstersen bu eylemi atlayabilirsin.</string>
     <string name="card_help_joker">-1 değerinde Joker</string>
+    <string name="invite_scan">Ya da bu kodu tarayın</string>
+    <string name="settings_share_scan">Vinto'yu açmak için tarayın</string>
 </resources>

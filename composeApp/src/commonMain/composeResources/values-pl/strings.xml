@@ -667,4 +667,6 @@
     <string name="card_help_king">Wybierz, którą akcję karty wykonać: 7 (podejrzyj własną), 8 (podejrzyj własną), 9/10 (podejrzyj przeciwnika), J (zamiana), Q (podejrzyj i zamień), A (wymuś dobranie). Możesz też zadeklarować karty bez akcji (2-6, K, Joker).</string>
     <string name="card_help_ace">Wybierz przeciwnika, aby zmusić go do dobrania karty karnej z talii. Zwiększa to liczbę kart w jego ręce i sumę punktów. Możesz pominąć tę akcję, jeśli wolisz.</string>
     <string name="card_help_joker">Joker o wartości -1</string>
+    <string name="invite_scan">Albo zeskanuj ten kod</string>
+    <string name="settings_share_scan">Zeskanuj, aby otworzyć Vinto</string>
 </resources>

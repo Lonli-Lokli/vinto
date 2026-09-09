@@ -700,4 +700,6 @@
     <string name="card_help_king">実行するカードのアクションを選びます: 7（自分を見る）、8（自分を見る）、9/10（相手を見る）、J（交換）、Q（見て交換）、A（強制ドロー）。アクションを持たないカード（2〜6、K、ジョーカー）を宣言することもできます。</string>
     <string name="card_help_ace">相手を選んで山札からペナルティカードを引かせます。手札の枚数と合計点が増えます。この行動は省略してもかまいません。</string>
     <string name="card_help_joker">価値-1のジョーカー</string>
+    <string name="invite_scan">またはこのコードをスキャン</string>
+    <string name="settings_share_scan">スキャンして Vinto を開く</string>
 </resources>

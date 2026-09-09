@@ -49,6 +49,7 @@ import game.vinto.app.art.invite_body
 import game.vinto.app.art.invite_copied
 import game.vinto.app.art.invite_copy
 import game.vinto.app.art.invite_read_it_out
+import game.vinto.app.art.invite_scan
 import game.vinto.app.art.invite_share
 import game.vinto.app.art.invite_subject
 import game.vinto.app.art.invite_title
@@ -79,6 +80,8 @@ import game.vinto.app.art.toss_clock_moves_on
 import game.vinto.app.art.toss_more_time
 import game.vinto.app.link.inviteLink
 import game.vinto.app.openUrl
+import game.vinto.app.share.QrChip
+import game.vinto.app.share.VintoQr
 import game.vinto.app.shareText
 import game.vinto.app.storeListingUrl
 import game.vinto.app.theme.BusyLine
@@ -427,6 +430,21 @@ private fun InviteRow(code: String) {
                 fontFamily = FontFamily.Monospace,
                 letterSpacing = CodeTracking,
                 color = Rail.ink,
+            )
+            // The code as a picture, for the person sitting opposite with a camera. It carries
+            // the same link the share sheet sends — one destination, so a room reached by
+            // scanning and a room reached by tapping are the same room.
+            QrChip(
+                url = inviteLink(code),
+                logo = VintoQr.ringedMark(),
+                label = stringResource(Res.string.invite_scan),
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+            Text(
+                text = stringResource(Res.string.invite_scan),
+                style = MaterialTheme.typography.bodySmall,
+                color = Rail.inkDim,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(Gap)) {
                 GameButton(
