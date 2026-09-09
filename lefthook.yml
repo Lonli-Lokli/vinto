@@ -3,6 +3,24 @@
 # The Kotlin build is the repository root. The npm hooks that used to run here belonged to
 # the web client under legacy-web/, which is on its way out (docs/kotlin/CI.md §1d):
 # nothing in CI builds it any more, so nothing at commit time should either.
+
+# **A hook that cannot run must stop the commit, not wave it through.**
+#
+# The hook lefthook generates tries a dozen ways to find its own binary and, when every one
+# misses, prints `Can't find lefthook in PATH` and exits **0** — so the commit lands
+# unchecked, and the single line saying why scrolls past inside the output of a commit that
+# looks like it worked.
+#
+# That is not hypothetical. It is what happened on the commit before this one: a hook was
+# installed, every lookup missed, and git carried on. Nothing was actually skipped that time
+# — the commit touched no Kotlin, and `detekt` below is glob-scoped — which is precisely the
+# problem with it. The first commit to be waved through in a way that mattered would have
+# looked exactly the same.
+#
+# This turns that branch into `exit 1`. The failure is then loud, and its fix is one command
+# that `npm install` already runs (`prepare` in package.json).
+assert_lefthook_installed: true
+
 pre-commit:
   commands:
     # Static analysis for the Kotlin side. maxIssues is 0, so this either passes or names

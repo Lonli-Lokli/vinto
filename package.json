@@ -4,6 +4,7 @@
   "type": "module",
   "description": "Release tooling that runs from the repo ROOT: zdymak (store screenshots, App Preview, Play feature graphic) and vydanne (App Store Connect / Google Play listing, declarations, compliance, build upload). Root, not a subfolder — both tools resolve their config and every relative path inside it against the working directory, so `npm run` from anywhere else silently reads the wrong paths. The COMPLETE surface is wired on purpose: an ad-hoc `npx vydanne` is how two commands stayed broken for months elsewhere in the portfolio. The Gradle build is unaffected; this file adds nothing to it.",
   "scripts": {
+    "prepare": "lefthook install",
     "store:auth": "vydanne auth",
     "store:inspect": "vydanne inspect",
     "store:releases": "vydanne releases",
@@ -45,6 +46,7 @@
     "release:check": "node tools/check-release-branch.mjs"
   },
   "devDependencies": {
+    "lefthook": "^2.1.12",
     "vydanne": "^0.13.0",
     "zdymak": "^0.22.0"
   }
