@@ -146,8 +146,12 @@ fun GameScreen(
                     // catches up the moment there is nothing left to animate.
                     state = TableState(
                         view = shown,
-                        table = holder.tableFor(shown).withoutStaleTaps(shown, holder.current),
+                        table = holder.tableAsShown(shown),
                         refusal = holder.refusal,
+                        // Solo has no wire, so `sending` stays false and the rail says nothing
+                        // about one — but the press is just as unavailable while the engine and
+                        // the bots work through it, and that is what `busy` says.
+                        busy = holder.sending,
                         recent = told,
                         round = round,
                     ),

@@ -37,6 +37,16 @@ class ChoreographyTest {
      * are about what the player is shown rather than about whose move it was, so the frames
      * are flattened back to their scenes here.
      */
+    /**
+     * Every batch the session announces, from the moment this is called.
+     *
+     * **One dispatch can be two batches**: a player's own move is announced alone and the bots'
+     * turns follow behind it, which is what lets a tapped card start travelling before three
+     * bots have finished thinking (`YourOwnMoveTravelsFirstTest`). So `.last()` means "what the
+     * bots did" whenever they did anything, and a case about the player's own move should take
+     * the first batch after it — see `aSwapIsTwoCardsCrossingAtOnce`. Most cases here dispatch a
+     * move the bots do not answer, where the two are the same batch.
+     */
     private fun TestScope.scenesOf(session: LocalGameSession): List<List<Scene>> {
         val seen = mutableListOf<List<Scene>>()
         backgroundScope.launch {
@@ -99,10 +109,14 @@ class ChoreographyTest {
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(session.playerId)))
 
         val scenes = scenesOf(session)
+        val before = scenes.size
         session.dispatch(GameAction.SwapCard(SwapCardPayload(session.playerId, 2)))
         runCurrent()
 
-        val move = scenes.last()
+        // The FIRST batch this dispatch produced, which is the swap itself: a player's own move
+        // goes out alone and the bots follow in the next batch
+        // (`YourOwnMoveTravelsFirstTest`), so `.last()` reads the bots' turns and finds no swap.
+        val move = scenes[before]
         val seat = Anchor.Seat(session.playerId, 2)
 
         val flights = move.flatten().filterIsInstance<Beat.Move>()

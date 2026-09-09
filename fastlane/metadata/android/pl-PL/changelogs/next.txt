@@ -1,0 +1,9 @@
+Twoi przeciwnicy mają imiona. Gale, Ember, Tide i Dune zajmują te same miejsca, każdy nazwany od znaku na swoim portrecie.
+
+Dotknięta karta rusza od razu, a zajęty przycisk mówi o tym, zamiast cię ignorować.
+
+Gdy ktoś odejdzie, bot przejmuje jego miejsce i stół o tym wie — i wie ponownie, gdy gracz wraca.
+
+Twoje piętnaście sekund należy do ciebie: zegar nie tyka, gdy grają boty.
+
+Dziękujemy za grę.

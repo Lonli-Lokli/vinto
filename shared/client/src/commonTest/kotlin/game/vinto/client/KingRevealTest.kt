@@ -51,6 +51,13 @@ class KingRevealTest {
 
         val frames = mutableListOf<Frame>()
         backgroundScope.launch { session.frames.collect { frames += it } }
+        // Subscribed BEFORE the dispatch, and the replay drained. One dispatch is two batches now
+        // — the player's own move alone, then the bots behind it
+        // (`YourOwnMoveTravelsFirstTest`) — and `frames` replays only ONE, so a collector that
+        // starts afterwards is handed the bots' batch and never sees the declaration at all.
+        runCurrent()
+        frames.clear()
+
         session.dispatch(GameAction.DeclareKingAction(DeclareKingActionPayload(me, wrong)))
         runCurrent()
 

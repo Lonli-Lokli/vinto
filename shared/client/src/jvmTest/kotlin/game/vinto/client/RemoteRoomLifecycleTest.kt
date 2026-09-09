@@ -141,6 +141,35 @@ class RemoteRoomLifecycleTest {
         wire.room.leave()
     }
 
+    /**
+     * And the player is TOLD, which is the half that was missing.
+     *
+     * `refused` used to answer "handled" whether or not anything had been waiting, so a refusal
+     * with no dispatch in flight went to [SessionEvent.Refused] — which **nothing in the app
+     * collects** — and the caller, believing it shown, did not fall through to `notices`, which
+     * the room screen does draw. `say`, `editPlan`, `agreePlan`, `nextRound` and `moreTime` hold
+     * no dispatch open, so those were exactly the refusals the room made and nobody ever saw:
+     * the player pressed, the room said no, and the screen said nothing at all.
+     */
+    @Test
+    fun andThatRefusalIsAlsoSaidWhereThePlayerCanSeeIt() = runTest {
+        val wire = Wire(this)
+        wire.deliverJoined(view = wire.dealtView)
+        wire.settle()
+        assertNotNull(wire.room.session.value, "there is a session, so nothing is waiting on a dispatch")
+
+        val heard = mutableListOf<String>()
+        val listener = launch { wire.room.notices.collect { heard += it } }
+        wire.pump()
+
+        wire.deliver(ServerMessage.Error("not your turn"))
+        wire.settle()
+
+        assertEquals(listOf("not your turn"), heard, "the room's own words never reached the screen")
+        listener.cancel()
+        wire.room.leave()
+    }
+
     // ------------------------------------------------------------------ the lobby's verbs
 
     @Test

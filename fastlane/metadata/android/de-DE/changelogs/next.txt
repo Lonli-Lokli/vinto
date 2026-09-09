@@ -1,0 +1,9 @@
+Ihre Gegner haben Namen. Gale, Ember, Tide und Dune behalten ihre Plätze, jeder benannt nach dem Zeichen auf seinem Bild.
+
+Eine angetippte Karte setzt sich sofort in Bewegung, und ein Bedienelement, das gerade arbeitet, sagt es statt Sie zu übergehen.
+
+Verlässt jemand den Tisch, übernimmt ein Bot seinen Platz, und der Tisch erfährt davon — und wieder bei der Rückkehr.
+
+Ihre fünfzehn Sekunden gehören Ihnen: Die Uhr läuft nicht mehr, während die Bots spielen.
+
+Danke, dass Sie spielen.

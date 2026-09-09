@@ -1,0 +1,9 @@
+Your opponents have names. Gale, Ember, Tide and Dune keep the same seats, each named for the mark on its own portrait.
+
+A card you tap starts moving at once now, and a control that is busy says so instead of ignoring you.
+
+When somebody steps away a bot covers their seat, and the table is told — and told again when they are back.
+
+Your fifteen seconds are yours: the clock no longer runs down while the bots play.
+
+Thank you for playing.

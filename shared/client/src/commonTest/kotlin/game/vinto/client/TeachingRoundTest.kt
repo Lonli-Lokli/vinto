@@ -11,7 +11,9 @@ import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
 import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.hashGameState
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,6 +29,7 @@ import kotlin.test.fail
  * alarm — a bot change, an engine fix or a mis-edited deck breaks one of them long before it
  * breaks somebody's first five minutes with the game.
  */
+@OptIn(ExperimentalCoroutinesApi::class) // `runCurrent`, to drain the frame collector deterministically.
 class TeachingRoundTest {
 
     @Test
@@ -202,30 +205,45 @@ class TeachingRoundTest {
     @Test
     fun theCoalitionsWholeFinalRoundIsHandedToTheTable() = runTest {
         val session = teachingSession()
+
+        // Read off the stream rather than its replay, because ONE DISPATCH IS TWO BATCHES now:
+        // a player's own move goes out alone and the bots follow behind it, which is what lets a
+        // tapped card start travelling before three bots have finished thinking
+        // (`YourOwnMoveTravelsFirstTest`). So the call and the coalition's answer to it are two
+        // batches, and `frames.first()` would hand back only the second.
+        val batches = mutableListOf<List<Frame>>()
+        backgroundScope.launch { session.frames.collect { batches.add(it) } }
+        runCurrent()
+
         Learner(session).follow()
+        runCurrent()
 
-        // `frames` replays its last batch, and nothing is dispatched after the call.
-        val batch = session.frames.first()
-        assertEquals(GamePhase.SCORING, session.state.phase, "the round finished in that batch")
+        assertEquals(GamePhase.SCORING, session.state.phase, "the round finished")
 
-        val played = batch.map { it.action }
-        assertTrue(
-            played.any { it is GameAction.CallVinto },
-            "this is meant to be the batch the learner's call produced: $played",
-        )
+        val calledAt = batches.indexOfFirst { batch -> batch.any { it.action is GameAction.CallVinto } }
+        assertTrue(calledAt >= 0, "the learner's call was never announced at all")
+
+        val ending = batches.drop(calledAt)
+        val played = ending.flatten().map { it.action }
         assertTrue(
             played.any { it is GameAction.SelectActionTarget || it is GameAction.DeclareKingAction },
-            "and it must carry the coalition's play, which is what the ending teaches",
+            "the ending must carry the coalition's play, which is what it teaches: $played",
         )
 
-        val queue = AnimationQueue<Frame>(takesTime = { it.hasSomethingToSee })
-        queue.submit(batch)
-
-        assertEquals(
-            batch.size,
-            queue.pending,
-            "the taught final round has outgrown the budget: a learner would read the score",
-        )
+        // Each batch has to fit the queue's budget on its own, because the queue drops a batch
+        // that costs more than it whole — the right rule for a client that fell behind, and the
+        // end of the lesson if the ending ever crossed it. Splitting the player's move off the
+        // bots' turns makes each of these smaller than the one batch this used to be, so the
+        // margin went up; that it still holds is worth asserting rather than assuming.
+        for (batch in ending) {
+            val queue = AnimationQueue<Frame>(takesTime = { it.hasSomethingToSee })
+            queue.submit(batch)
+            assertEquals(
+                batch.size,
+                queue.pending,
+                "the taught final round has outgrown the budget: a learner would read the score",
+            )
+        }
     }
 
     /**

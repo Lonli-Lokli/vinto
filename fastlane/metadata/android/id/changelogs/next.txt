@@ -1,0 +1,9 @@
+Lawan Anda kini punya nama. Gale, Ember, Tide, dan Dune selalu menempati kursi yang sama, masing-masing dinamai dari tanda pada potretnya.
+
+Kartu yang Anda ketuk langsung bergerak, dan tombol yang sedang sibuk mengatakannya alih-alih mengabaikan Anda.
+
+Saat seseorang pergi, bot mengisi kursinya dan meja diberi tahu — juga saat ia kembali.
+
+Lima belas detik itu milik Anda: waktu tidak lagi berjalan selama bot bermain.
+
+Terima kasih telah bermain.

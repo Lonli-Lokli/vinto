@@ -395,10 +395,24 @@ class LocalGameSession(
         )
         record(action, state, line)
 
-        seen += playBots()
+        // The player's own move goes out ALONE, and before the bots are played.
+        //
+        // It used to travel in one batch with everything `playBots` produced, and that is the
+        // whole of the reported symptom: the card left the hand at `publish()` above, and did
+        // not start *moving* until the bot search had finished — up to `MAX_BOT_STEPS` of it,
+        // a second or more on a real device. A player who tossed a card in saw nothing happen,
+        // pressed again, and the second press was swallowed by the in-flight guard. Nothing was
+        // broken and nothing said so.
+        //
+        // The screen animates each batch as it arrives (`CardStage` collects them), and
+        // `doneConferring` above already emits the bots' turns as a batch of their own, so this
+        // is the shape the stream was built for rather than a new one.
+        _frames.tryEmit(seen.toList())
+
+        val bots = playBots()
         // After the bots, because opening the confer window is something `playBots` decides.
         _view.value = myView()
-        _frames.tryEmit(seen)
+        if (bots.isNotEmpty()) _frames.tryEmit(bots)
         return null
     }
 

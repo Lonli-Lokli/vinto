@@ -638,9 +638,10 @@ private fun RemoteGameScreen(
                 TableScreen(
                     state = TableState(
                         view = shown,
-                        table = holder.tableFor(shown),
+                        table = holder.tableAsShown(shown),
                         refusal = holder.refusal,
                         sending = holder.sending,
+                        busy = holder.sending,
                         recent = told,
                         round = standings.size + 1,
                     ),

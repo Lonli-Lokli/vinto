@@ -1231,6 +1231,10 @@ private fun ChoiceButton(choice: Choice, onMove: (Move) -> Unit, modifier: Modif
             // finds a button after a translation. See `keyOf`.
             .markedAs(LocalStage.current, "choice:${keyOf(choice.label)}"),
         leading = if (choice.tone == Tone.STAKES) "🏆" else null,
+        // `GameButton` already draws a spinner in the label's place and swallows its own taps;
+        // this is the one line that was missing to make the in-flight move visible on the
+        // control the player pressed. Read off the stage for the same reason the card does.
+        busy = LocalStage.current.acting,
     )
 }
 

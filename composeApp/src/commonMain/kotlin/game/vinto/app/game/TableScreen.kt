@@ -33,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -279,6 +280,12 @@ fun TableScreen(
      */
     onLeave: (() -> Unit)? = null,
 ) {
+    // Onto the stage, where a card and a rail button both already read from — see [Stage.acting].
+    // In a `SideEffect` because writing to a snapshot state during composition is how a
+    // recomposition loop starts; this runs after the composition that read it succeeded.
+    val stage = LocalStage.current
+    SideEffect { stage.acting = state.busy }
+
     if (layout.landscape) {
         // Centred, not stretched: the felt column is [TableLayout.feltWidth] wide — the
         // whole remainder on a rotated phone, a capped table on a tablet or desktop — and
@@ -467,6 +474,15 @@ data class TableState(
      * the wrong thing, and this one is a Boolean sitting where a list used to be.
      */
     val sending: Boolean = false,
+    /**
+     * A move of the player's is in flight, in EITHER mode.
+     *
+     * Distinct from [sending], which is about a wire and says so in words ("Sending your
+     * move…"): solo has no wire, and the same press is just as unavailable while the engine and
+     * the bots work through it. This one is what takes the taps and the buttons away, so it is
+     * true in both — and it is why the guard in `GameHolder.act` is finally visible.
+     */
+    val busy: Boolean = false,
 )
 
 /**
@@ -1666,8 +1682,8 @@ private fun SeatCard(
 ) {
     val (view, table, scale) = of
     val ref = CardRef(seat.id, position)
-    val move = table.taps[ref]
     val stage = LocalStage.current
+    val move = table.taps[ref].unlessActing(stage)
     val anchor = Anchor.Seat(seat.id, position)
 
     if (anchor in stage.inFlight || stage.isPeeking(anchor)) {
@@ -2185,6 +2201,18 @@ private fun Pile(label: String, content: @Composable () -> Unit) {
  * the card composables to a readable signature rather than a list of arguments in a fixed
  * order that nobody can check at a glance.
  */
+
+/**
+ * The move a card offers, or none at all while a move of this player's is in flight.
+ *
+ * The same shape as `unlessRehearsing()` and for the same reason: taking the move away is what
+ * takes the *affordance* away with it. `CardFace` draws no ring without a move and attaches no
+ * `clickable` without a handler, so there is no ripple and no haptic promising something
+ * happened — the swallow that `GameHolder.act` has always performed becomes visible at the card
+ * the player touched, instead of looking like a game that has stopped responding.
+ */
+private fun Move?.unlessActing(stage: Stage): Move? = if (stage.acting) null else this
+
 private data class Rendering(val view: PlayerView, val table: Table, val scale: CardScale)
 
 /** Cards this action has already been aimed at, so the player can see what they have chosen. */

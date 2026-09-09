@@ -213,6 +213,20 @@ class Stage {
      */
     internal var rehearsing: Boolean by mutableStateOf(false)
 
+    /**
+     * Whether a move of this player's is in flight — dispatched, not yet answered.
+     *
+     * Beside [rehearsing] because it is the same kind of truth and it is read the same way: one
+     * flag about the whole table that both a card and a button need, and neither should have to
+     * be handed it through five composables.
+     *
+     * `GameHolder.act` has always swallowed a second press while the first is in flight, which
+     * is correct and was invisible: the card kept its ring and the buttons stayed live, so a
+     * player pressed again, nothing happened again, and a working guard read as a broken app.
+     * The screen reads this to take the affordance away *at the thing they touched*.
+     */
+    internal var acting: Boolean by mutableStateOf(false)
+
     /** How many cards the deck has just taken back, while that is being drawn. */
     internal var refilling: Int by mutableStateOf(0)
 

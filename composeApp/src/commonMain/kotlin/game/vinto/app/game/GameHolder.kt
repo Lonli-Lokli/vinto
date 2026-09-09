@@ -115,6 +115,18 @@ class GameHolder(
     fun tableFor(view: PlayerView): Table =
         tableFor(view, question, away.value, offered, plan.value, reveals.value)
 
+    /**
+     * The table as a SCREEN should draw it: [tableFor] the view on the felt, minus the taps that
+     * would land on a hand the engine has already changed.
+     *
+     * One function because the two screens had drifted. Solo applied [withoutStaleTaps] and the
+     * room did not — and the room is the worse place to leave it out: it applies whatever index
+     * arrives, `ClientMessage.Action` carries no id to dedupe by, and the validator never checks
+     * whether this seat has already thrown. `withoutStaleTaps`'s own KDoc names that case ("which,
+     * online, is the moment two people throw at once") and it was never wired there.
+     */
+    fun tableAsShown(shown: PlayerView): Table = tableFor(shown).withoutStaleTaps(shown, current)
+
     /** One sentence off the channel, for the holder to keep if it is addressed here. */
     fun heard(talk: TableTalk) {
         if (talk is TableTalk.Proposal && talk.to == session.playerId) offered = talk

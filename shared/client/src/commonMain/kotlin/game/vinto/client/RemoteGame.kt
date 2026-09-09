@@ -832,11 +832,22 @@ class RemoteGameSession internal constructor(
         view?.let { deliver(listOf(landingFrame(it)), bots = 0, landing = it) }
     }
 
-    /** @return true when the refusal answered a dispatch in flight. */
+    /**
+     * @return true when the refusal answered a dispatch in flight.
+     *
+     * **False when nothing was waiting, and that is the point.** It used to answer true either
+     * way, which told the caller "handled" about a refusal that had gone nowhere a player could
+     * see: [SessionEvent.Refused] has no collector in the app, so the room's own words were
+     * dropped on the floor. `say`, `editPlan`, `agreePlan`, `nextRound` and `moreTime` do not
+     * hold a dispatch open, so those were exactly the refusals nobody was ever shown.
+     *
+     * The event is still emitted, for anything that does listen; the return value is what lets
+     * `RemoteGame` fall through to `_notices`, which the room screen already draws.
+     */
     internal fun refused(reason: String): Boolean {
         val waiter = pending ?: run {
             _events.tryEmit(SessionEvent.Refused(reason))
-            return true
+            return false
         }
         waiter.complete(reason)
         return true

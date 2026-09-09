@@ -1,0 +1,9 @@
+Rakiplerinizin artık adı var. Gale, Ember, Tide ve Dune her zaman aynı yerde oturur; her biri portresindeki işaretin adını taşır.
+
+Dokunduğunuz kart hemen yola çıkar; meşgul bir denetim ise sizi yok saymak yerine bunu söyler.
+
+Biri masadan ayrılınca yerini bir bot alır ve masa bunu öğrenir — döndüğünde de öyle.
+
+On beş saniye sizin: botlar oynarken süre artık işlemiyor.
+
+Oynadığınız için teşekkürler.
