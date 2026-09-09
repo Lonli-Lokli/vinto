@@ -65,8 +65,6 @@ class HeaderNameFitsTest {
                 name.value = stringResource(Res.string.app_name)
                 val need = wordmarkWidth(name.value)
                 Framed(need - PINCH) {
-                    // Given less room than the name needs: the state the report was in, and the
-                    // one the header now decides for itself rather than being told about.
                     HeaderName(
                         name = name.value,
                         counter = COUNTER,

@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import game.vinto.app.Host
 import game.vinto.app.Support
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
@@ -101,6 +102,7 @@ import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_toss_in_summary
 import game.vinto.app.art.table_toss_in_timed
 import game.vinto.app.art.table_tossed
+import game.vinto.app.host
 import game.vinto.app.openUrl
 import game.vinto.app.speakerName
 import game.vinto.app.supportOffer
@@ -311,7 +313,7 @@ fun TableScreen(
                 horizontalArrangement = Arrangement.Center,
             ) {
                 Column(modifier = Modifier.width(layout.feltWidth)) {
-                    TableHeader(state.view, state.round, onHelp, onSettings, onLeave)
+                    TableHeader(state.view, state.round, onHelp, onSettings, onLeave, landscape = true)
                     FeltTable(
                         state = state,
                         sizes = layout.sizes,
@@ -338,7 +340,7 @@ fun TableScreen(
         }
     } else {
         Column(modifier = modifier.fillMaxSize()) {
-            TableHeader(state.view, state.round, onHelp, onSettings, onLeave)
+            TableHeader(state.view, state.round, onHelp, onSettings, onLeave, landscape = false)
 
             RehearsalLine()
             FinalRoundLine(state.view, state.table.planSummary, onMove)
@@ -643,53 +645,50 @@ private fun HeaderChip(
 }
 
 /**
- * What the header can afford to say, measured in this language against the room it has.
+ * What the header shows, decided by the machine and the shape of the window.
  *
- * Three decisions, and all of them the same one: there are six controls, their labels are
- * translated into nineteen languages, and the width is a window somebody is dragging. Nothing
- * about that can be settled with a constant — so the words are measured, the controls' own
- * chrome is added, and what is left decides whether the name and the round counter fit beside
- * them.
+ * **This replaced arithmetic, and that is the point.** The header used to measure every word it
+ * might say against the room it had, and decide from the total: the wordmark and the round counter
+ * were dropped when the sum said they would not fit. Two things went wrong with that and both were
+ * invisible. The estimate reserved a tap target for a deck chip that had moved to the felt, and it
+ * asked "do the labels fit" without the width floor the drawing applied — so a phone was charged
+ * for a control that was not there and for words it was never going to draw, and the header it
+ * produced was a blank left half with three buttons floating on the right. Reported from a phone,
+ * twice, and fixed twice by tuning the sum.
  *
- * **Nothing is ever clipped.** A control that shrinks is a control nobody can hit, and a word
- * cut in half is worse than a word that is not there: "VINT" under a wordmark and "Р" where a
- * round counter should be reads as a broken page, which is exactly what a phone showed once the
- * controls stopped being the thing that gave way. So each piece is either drawn whole or not
- * drawn, and the order they are given up in is the order they matter least.
+ * A sum that has to be right about text it has not drawn yet, in a font that on the web arrives
+ * after the first frames, will go on being wrong in new ways. So there is no sum. The header is
+ * one of three known shapes, and which one is a fact about the host and the window rather than a
+ * measurement:
+ *
+ * - **A phone in portrait** has room for marks and nothing else, so its controls are marks.
+ * - **A desktop, or anything in landscape**, has width to spare, so its controls say what they do.
+ * - **The web** is the only place that can take a payment on a page, so it is the only place the
+ *   cup is offered. A phone's answer to the same want is an in-app purchase in the settings, and
+ *   App Store 3.1.1 is why it must not be a link out of a game screen.
  */
-@Composable
-private fun headerSaysItsWords(labels: List<String>, room: Dp): Boolean {
-    val measurer = rememberTextMeasurer()
-    val words = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-    val density = LocalDensity.current
-    val widthOf: (String, TextStyle) -> Dp = { text, style ->
-        with(density) { measurer.measure(AnnotatedString(text), style, maxLines = 1).size.width.toDp() }
-    }
-
-    // What the controls need if every one of them says its word, and what they need if none do.
-    val chrome = (HeaderWordPad * 2 + HeaderMark + HeaderWordGap + Gap) * labels.size
-    val spoken = labels.fold(0.dp) { sum, label -> sum + widthOf(label, words) } + chrome
-    val silent = (HeaderTap + Gap) * labels.size
-
-    // The row's own padding, and nothing else.
-    //
-    // This used to reserve a tap target and a gap for the DECK CHIP as well — and the deck chip
-    // left the header for the felt, where it sits under the pile it counts (`DeckAndDiscard`).
-    // Nobody updated the arithmetic, so every header went on paying about 50 points for a control
-    // that was not there: on a 320-point phone that is the difference between room for the
-    // wordmark and none, and the header drew a blank left half with the controls floating on the
-    // right. Reported from a phone, which is the only place narrow enough for it to bite.
-    val fixed = HeaderEdge * 2
-
-    // What the header will ACTUALLY draw, floor included.
-    //
-    // The floor belongs here rather than at the call site. It was written in both places —
-    // `wide` here deciding what to charge the row for, `maxWidth >= WideHeader` there deciding
-    // what to draw — so between about 380 points and 700 a phone was charged for words it was
-    // never going to show, and the room left over came out a third of what it really was. One
-    // definition, so the estimate and the drawing cannot disagree.
-    return room >= WideHeader && fixed + spoken <= room
+internal data class HeaderStyle(
+    /** Controls carry their word beside the mark. */
+    val labelled: Boolean,
+    /** The cup is drawn at all. */
+    val cup: Boolean,
+) {
+    /**
+     * The round counter rides with the labels.
+     *
+     * Not because it is wide — it is four characters — but because it is the one header item a
+     * player never needs and always has somewhere else to find. Where the header is roomy it is
+     * a nicety; on a phone in portrait the wordmark is the thing that should win the space, and
+     * choosing between them by rule is what stops both being dropped by an arithmetic error.
+     */
+    val counter: Boolean get() = labelled
 }
+
+/** The rule itself, apart from Compose so it can be asserted directly. */
+internal fun headerStyle(host: Host, landscape: Boolean): HeaderStyle = HeaderStyle(
+    labelled = host == Host.DESKTOP || landscape,
+    cup = host == Host.WEB,
+)
 
 /** A gear: the ring, eight teeth, and the hub, all strokes. */
 private fun DrawScope.drawGear(ink: Color) {
@@ -797,27 +796,29 @@ private const val BUG_LOW_SPOT = 0.30f
  * being the thing that gave way.
  */
 @Composable
-internal fun HeaderName(name: String, counter: String, modifier: Modifier = Modifier) {
-    // Measured against the room this group *actually has*, in the style the words are
-    // *actually drawn in*. [headerRoom] estimates from the other side — the controls' words,
-    // their chrome, the row's padding — and an estimate is all it can be, so the group carries
-    // the row's weight and a wrong one is paid for by clipping rather than by a control
-    // shrinking. This is what stops the clipping being visible: whatever the estimate said,
-    // nothing is drawn here that does not fit here.
+internal fun HeaderName(name: String, counter: String?, modifier: Modifier = Modifier) {
+    // Measured against the room this group ACTUALLY has, in the style the words are ACTUALLY
+    // drawn in — and that is all the measuring the header does now.
     //
-    // Which matters most where the estimate is least reliable. A web font arrives *after* the
-    // first frames, so a header measured while the fallback was in place can be measuring a
-    // narrower alphabet than the one it goes on to draw — and a phone reported exactly that:
-    // "VINT" under a wordmark, with the round counter beside it cut to one letter. Here the
-    // font resolving is a recomposition, so the answer is remeasured with it.
+    // What used to be here as well was an estimate from the other side of the row: the controls'
+    // words, their chrome, the row's padding, totted up to decide whether these two were allowed
+    // at all. That sum was wrong twice and each time the header lost its wordmark completely, so
+    // the decision is a rule now ([HeaderStyle]) and the only question left here is the one that
+    // cannot be got wrong: does this text fit the box it is being drawn in.
+    //
+    // Which is also the one the web needs. A font arrives after the first frames, so a header
+    // measured under the fallback can be measuring a narrower alphabet than the one it goes on to
+    // draw — and a phone reported exactly that, "VINT" under a wordmark. The font resolving is a
+    // recomposition, so this is remeasured with it.
     BoxWithConstraints(modifier = modifier) {
         val room = maxWidth
         val brand = wordmarkStyle()
         val label = MaterialTheme.typography.labelLarge
         val nameNeeds = widthOf(name, brand)
-        val counterNeeds = widthOf(counter, label)
+        val counterNeeds = counter?.let { widthOf(it, label) } ?: 0.dp
         val showName = nameNeeds <= room
-        val showCounter = counterNeeds + (if (showName) nameNeeds + Gap else 0.dp) <= room
+        val showCounter = counter != null &&
+            counterNeeds + (if (showName) nameNeeds + Gap else 0.dp) <= room
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(Gap),
@@ -868,91 +869,81 @@ internal fun TableHeader(
     onHelp: (Rank?) -> Unit,
     onSettings: () -> Unit,
     onLeave: (() -> Unit)?,
+    /** The window's shape. With [host] it is the whole of what decides this header. */
+    landscape: Boolean = false,
 ) {
     val settings = stringResource(Res.string.header_settings)
     val leave = stringResource(Res.string.header_leave)
     val rules = stringResource(Res.string.header_rules)
-    // Only where the cup is drawn at all, which is the web and the desktop: on a phone its word
-    // must not be counted against a header that will never show it.
-    val offer = remember { supportOffer() }
-    val support = stringResource(Res.string.header_support).takeIf { offer is Support.Elsewhere }
-    // Measured here rather than from the window: `containerSize` reports the whole surface, and
-    // the header is not always the whole surface — a fixed-size preview, a split-screen phone or
-    // a resized desktop pane all have a header narrower than the window it sits in. Taking the
-    // window's width put the word on a phone-width header and squeezed the deck badge to nothing,
-    // which `TouchTargetTest` caught as a 0 dp target.
-    BoxWithConstraints {
-        // Every word this header would like to say, measured against the room it has. The
-        // wordmark and the round counter are what is already spoken for; [WideHeader] stays as a
-        // floor so a narrow header never even tries.
-        val words = listOfNotNull(rules, settings, support, leave.takeIf { onLeave != null })
-        val name = stringResource(Res.string.app_name)
-        val counter = stringResource(Res.string.table_round_turn, round, view.turnNumber)
-        val wideHeader = headerSaysItsWords(words, maxWidth)
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = HeaderEdge, vertical = Gap),
-            horizontalArrangement = Arrangement.spacedBy(Gap),
-            verticalAlignment = Alignment.CenterVertically,
+    // Three known shapes, chosen by fact rather than measured — see [HeaderStyle].
+    val style = headerStyle(host, landscape)
+    val wideHeader = style.labelled
+    val name = stringResource(Res.string.app_name)
+    val counter = stringResource(Res.string.table_round_turn, round, view.turnNumber)
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = HeaderEdge, vertical = Gap),
+        horizontalArrangement = Arrangement.spacedBy(Gap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // The name and the counter, and they are what gives way when the row runs out.
+        //
+        // The weight is on *this* group rather than on a spacer between the two halves, and
+        // that is the whole of it: a Row with no give squeezes its children from the end, so
+        // the deck count — the last thing in the row — came out 36 points wide under a
+        // 44-point thumb, which `TouchTargetTest` reads as a target nobody can hit. A word
+        // may be clipped; a control may not.
+        HeaderName(name, counter.takeIf { style.counter }, modifier = Modifier.weight(1f))
+
+        // The rules, in the one place on the screen that never moves.
+        //
+        // It used to sit in the control panel beside the prompt, which meant it slid up and
+        // down with whatever the panel was asking — a fourteen-chip King grid one moment, one
+        // button the next. A control that is always available and never changes belongs in
+        // the header, where nothing else changes either.
+        HeaderChip(
+            onClick = { onHelp(null) },
+            description = rules,
+            wide = wideHeader,
+            modifier = Modifier.markedAs(LocalStage.current, Target.HELP),
         ) {
-            // The name and the counter, and they are what gives way when the row runs out.
-            //
-            // The weight is on *this* group rather than on a spacer between the two halves, and
-            // that is the whole of it: a Row with no give squeezes its children from the end, so
-            // the deck count — the last thing in the row — came out 36 points wide under a
-            // 44-point thumb, which `TouchTargetTest` reads as a target nobody can hit. A word
-            // may be clipped; a control may not.
-            HeaderName(name, counter, modifier = Modifier.weight(1f))
+            Text(
+                text = "?",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = Rail.ink,
+            )
+        }
 
-            // The rules, in the one place on the screen that never moves.
-            //
-            // It used to sit in the control panel beside the prompt, which meant it slid up and
-            // down with whatever the panel was asking — a fourteen-chip King grid one moment, one
-            // button the next. A control that is always available and never changes belongs in
-            // the header, where nothing else changes either.
-            HeaderChip(
-                onClick = { onHelp(null) },
-                description = rules,
-                wide = wideHeader,
-                modifier = Modifier.markedAs(LocalStage.current, Target.HELP),
-            ) {
-                Text(
-                    text = "?",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Rail.ink,
-                )
-            }
+        // The settings, from the table rather than only from the front door.
+        //
+        // Pace is the setting a player wants to change *while* something is too slow or too
+        // fast to sit through, and it was reachable only from the home screen — so changing it
+        // meant abandoning the round it was annoying you in, which is a price nobody pays; they
+        // put the phone down instead. Theme and haptics are the same shape of want. Going there
+        // and coming back returns to this exact table, mid-round, with nothing lost.
+        // The same dressed circle as the "?" beside it. These were colour emoji, which
+        // made the header three different design languages in a row — an outlined glyph,
+        // then whatever the platform's emoji font felt like. Drawn glyphs in the rail's
+        // own ink are one decision made once.
+        HeaderGlyph(onClick = onSettings, description = settings, wide = wideHeader) { ink ->
+            drawGear(ink)
+        }
 
-            // The settings, from the table rather than only from the front door.
-            //
-            // Pace is the setting a player wants to change *while* something is too slow or too
-            // fast to sit through, and it was reachable only from the home screen — so changing it
-            // meant abandoning the round it was annoying you in, which is a price nobody pays; they
-            // put the phone down instead. Theme and haptics are the same shape of want. Going there
-            // and coming back returns to this exact table, mid-round, with nothing lost.
-            // The same dressed circle as the "?" beside it. These were colour emoji, which
-            // made the header three different design languages in a row — an outlined glyph,
-            // then whatever the platform's emoji font felt like. Drawn glyphs in the rail's
-            // own ink are one decision made once.
-            HeaderGlyph(onClick = onSettings, description = settings, wide = wideHeader) { ink ->
-                drawGear(ink)
-            }
+        if (style.cup) SupportGlyph(wide = wideHeader)
 
-            SupportGlyph(wide = wideHeader)
-
-            // The way out, last in the row and on the end of it.
-            //
-            // Android answers the back gesture and is handed no [onLeave] at all; the web, the
-            // desktop and iOS answer nothing, and a solo round there could only be left by
-            // finishing it — the score sheet's "Quit" was the single exit in the app. Nothing is
-            // lost by taking it: the round is saved on every move, and the menu offers it back.
-            //
-            // Rightmost because leaving is where a row of controls ends, and because it is the
-            // one of them a misplaced thumb should be least likely to find.
-            onLeave?.let { go ->
-                HeaderGlyph(onClick = go, description = leave, wide = wideHeader) { ink ->
-                    drawExit(ink)
-                }
+        // The way out, last in the row and on the end of it.
+        //
+        // Android answers the back gesture and is handed no [onLeave] at all; the web, the
+        // desktop and iOS answer nothing, and a solo round there could only be left by
+        // finishing it — the score sheet's "Quit" was the single exit in the app. Nothing is
+        // lost by taking it: the round is saved on every move, and the menu offers it back.
+        //
+        // Rightmost because leaving is where a row of controls ends, and because it is the
+        // one of them a misplaced thumb should be least likely to find.
+        onLeave?.let { go ->
+            HeaderGlyph(onClick = go, description = leave, wide = wideHeader) { ink ->
+                drawExit(ink)
             }
         }
     }
