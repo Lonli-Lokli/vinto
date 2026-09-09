@@ -63,6 +63,15 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  # `versionCode` in androidApp/build.gradle.kts REFUSES to guess on a shallow checkout now — the
+  # silent `1` it replaced once archived a real build as number 1 into App Store review. Every
+  # checkout in this file is the default depth-1, and because configure-on-demand is off, ANY Gradle
+  # invocation configures :androidApp and evaluates it — `./gradlew help` on a shallow clone fails.
+  # So declare the escape hatch once, for the whole workflow. Nothing here uploads a store binary, so
+  # the number is meaningless — which is exactly when stating it explicitly is right, and cheaper
+  # than fetching history these jobs have no other use for. (deploy-web.yml instead fetches the full
+  # history, because there the build number is the point.)
+  BUILD_NUMBER: '1'
   JAVA_VERSION: '17'
   # Pinned for the same reason `kmp.yml` pins it: `wrangler@latest` in CI means the day
   # Cloudflare ships a change is the day a deploy fails, on a commit that has nothing to do
