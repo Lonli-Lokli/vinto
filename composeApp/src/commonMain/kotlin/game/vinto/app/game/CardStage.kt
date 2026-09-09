@@ -326,7 +326,7 @@ class Stage {
     fun place(anchor: Anchor, coordinates: LayoutCoordinates, card: Size) {
         val topLeft = coordinates.positionInRoot() - origin
         val box = coordinates.size
-        berths[anchor] = Berth(
+        val berth = Berth(
             topLeft = topLeft,
             centre = topLeft + Offset(box.width / 2f, box.height / 2f),
             card = card,
@@ -334,15 +334,24 @@ class Stage {
             // sideways, as they lie in front of the seats at the sides of the table.
             turned = box.width > box.height,
         )
+        // **Only when it has actually moved.** This runs from `onGloballyPositioned`, so it is
+        // called for every card on every layout pass, and a `Berth` built afresh is never the
+        // instance already stored — so the map recorded a write and woke every reader of it,
+        // twenty-odd times a pass, for positions that had not changed. Comparing first makes
+        // the write mean what its readers assume it means.
+        if (berths[anchor] != berth) berths[anchor] = berth
         mark(anchor.key(), coordinates)
     }
 
     /** Records a piece of furniture — a button, a chip, a seat plate, the log — by name. */
     fun mark(id: String, coordinates: LayoutCoordinates) {
-        bounds[id] = Rect(
+        val box = Rect(
             offset = coordinates.positionInRoot() - origin,
             size = coordinates.size.toSize(),
         )
+        // Guarded for the same reason [place] is, and it is the busier of the two: every card
+        // marks itself here as well, under its anchor's key.
+        if (bounds[id] != box) bounds[id] = box
     }
 
     internal fun boundsOf(id: String): Rect? = bounds[id]
@@ -359,14 +368,20 @@ class Stage {
     }
 
     /**
-     * Places whose card is currently in the air.
+     * Whether this place's card is currently in the air.
      *
-     * The table draws a gap at these, because the card is being drawn by the overlay instead.
-     * Without it a card is in two places at once for the third of a second it is moving, and
-     * the eye notices the copy rather than the movement.
+     * The table draws a gap where one is, because the card is being drawn by the overlay
+     * instead. Without it a card is in two places at once for the third of a second it is
+     * moving, and the eye notices the copy rather than the movement.
+     *
+     * **A question rather than a set**, because of who asks it: every card on the felt, once
+     * per recomposition, and every gap a hand is holding open. It used to build a `Set` of the
+     * landing places and then `+` a second one over the top of that, so twenty cards meant
+     * forty sets a pass — for an answer each of them then used once. `any` walks the same
+     * flights and stops at the first match, and allocates nothing.
      */
-    val inFlight: Set<Anchor> get() =
-        flying.mapTo(mutableSetOf()) { it.landingAt } + expecting.keys
+    fun isInFlight(anchor: Anchor): Boolean =
+        flying.any { it.landingAt == anchor } || anchor in expecting
 
     /**
      * Places a card is about to arrive at, from the moment the table steps to the move.
@@ -1211,10 +1226,20 @@ private fun Reshuffling(cards: Int, sizes: TableSizes, stage: Stage) {
     repeat(minOf(cards, SWEEP_CARDS)) { index ->
         // Staggered, so it reads as a stack going back rather than one card.
         val offset = (index * SWEEP_STAGGER).coerceAtMost(1f)
-        val t = ((sweep.value - offset) / (1f - offset)).coerceIn(0f, 1f)
-        val at = Offset(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t)
 
-        Box(modifier = Modifier.offset { IntOffset(at.x.roundToInt(), at.y.roundToInt()) }) {
+        Box(
+            // The sweep is read *inside* the lambda, which runs at placement rather than in
+            // composition. Read a line higher it was a composition read, so every frame of the
+            // sweep rebuilt all six card faces — the one place on the felt that still did what
+            // `InFlight` beside it explains at length why not to do.
+            modifier = Modifier.offset {
+                val t = ((sweep.value - offset) / (1f - offset)).coerceIn(0f, 1f)
+                IntOffset(
+                    (from.x + (to.x - from.x) * t).roundToInt(),
+                    (from.y + (to.y - from.y) * t).roundToInt(),
+                )
+            },
+        ) {
             CardFace(CardView.Hidden, sizes.theirs)
         }
     }

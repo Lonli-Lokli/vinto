@@ -14,8 +14,27 @@ import androidx.compose.ui.unit.dp
  */
 val TapTarget: Dp = 44.dp
 
+/**
+ * The corner every card in the deck draws for itself, as a fraction of its width.
+ *
+ * `card_*.xml` is an 825x1125 viewport whose first path is a rounded rectangle of radius 44,
+ * with the dark outline just inside it drawn to match — so the art arrives already the shape a
+ * card is, at whatever size it is drawn. Anything that rounds a card again has to use *this*
+ * curve or it is cutting the picture rather than framing it.
+ *
+ * A fraction rather than a number of points, because that is what the art is: the corner grows
+ * with the card, from 1.9 points on a side seat's to 5.3 on a desktop's. A flat 8 points — which
+ * is what this used to be, borrowed from [TableSizes.Corner], a chip's corner — is three times
+ * the art's own on a phone, and took a bite out of every corner of every card.
+ * `CardCornerTest` measures the frame against the art rather than against either number.
+ */
+const val ART_CORNER: Float = 44f / 825f
+
 /** How large one card is drawn. */
 data class CardScale(val width: Dp, val height: Dp) {
+
+    /** The radius this card's own art rounds its corners to. See [ART_CORNER]. */
+    val corner: Dp get() = width * ART_CORNER
 
     /**
      * One step down, for a hand with more cards than room.

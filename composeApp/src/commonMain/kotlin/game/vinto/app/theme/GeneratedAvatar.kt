@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -52,6 +53,15 @@ fun GeneratedAvatar(
     Canvas(
         modifier = modifier
             .size(size)
+            // A layer of its own, so the face is tessellated once and replayed after that.
+            //
+            // [drawAvatar] is not a cheap drawing: the marks and the whorl sample a curve into
+            // a fresh `Path` point by point, and every emblem builds several. Without a layer
+            // that work is redone on every pass an ancestor makes — a seat plate has a ring
+            // that breathes and a cloud that moves above it, so "every pass" means every frame
+            // of somebody's turn. With one, the display list is kept and re-run until the
+            // traits, the ground or the size actually change.
+            .graphicsLayer()
             .semantics { if (description != null) contentDescription = description },
     ) {
         drawAvatar(traits, ground)

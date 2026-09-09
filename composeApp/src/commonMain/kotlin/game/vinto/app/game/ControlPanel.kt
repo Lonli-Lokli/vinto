@@ -756,7 +756,8 @@ private fun AimSlot(aimed: AimedCard?, scale: CardScale, caption: Dp, waiting: S
 private fun EmptySlot(scale: CardScale) {
     val empty = stringResource(Res.string.rail_aim_empty)
     val ink = Rail.inkDim
-    val corner = with(LocalDensity.current) { TableSizes.Corner.toPx() }
+    // An outline standing in for a card wears a card's corner, not a chip's — see [ART_CORNER].
+    val corner = with(LocalDensity.current) { scale.corner.toPx() }
     val dash = with(LocalDensity.current) { EmptyDash.toPx() }
     val stroke = with(LocalDensity.current) { EmptyStroke.toPx() }
 
@@ -1129,7 +1130,9 @@ private fun RecentActions(recent: List<Say>) {
                     .height(lineHeight * lines + Gap * 2)
                     .padding(horizontal = Gap, vertical = Gap),
             ) {
-                itemsIndexed(rendered) { index, line ->
+                // Keyed on the line itself, so a run of moves folding into one growing line
+                // re-uses that item rather than re-keying everything under it by position.
+                itemsIndexed(rendered, key = { index, line -> "$index:$line" }) { index, line ->
                     Text(
                         text = line,
                         fontSize = DetailSize,

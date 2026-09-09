@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,7 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -50,6 +52,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
@@ -1233,17 +1236,29 @@ private fun Felt(
     val scheme = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(FeltCorner)
     val weave = rememberFeltWeave()
+    val cloth = remember(scheme) { Brush.verticalGradient(scheme.feltGradient()) }
     BoxWithConstraints(
         modifier = modifier
             .clip(shape)
-            .background(Brush.verticalGradient(scheme.feltGradient()))
+            .background(cloth)
             // Three passes over the same cloth, and together they are the difference between
             // a green rectangle and a lit surface: the lamp above the middle of the table,
             // the shadow the rim throws back onto the felt just inside it, and the rim.
-            .drawBehind {
-                drawRect(weave)
-                drawRect(scheme.feltLamp(size.minDimension))
-                drawRect(scheme.feltShade())
+            //
+            // **Cached, not built per frame.** Both gradients were constructed inside the draw
+            // lambda — an array, a handful of blended colours and, underneath each, a shader —
+            // on every pass over the largest surface on screen, and the felt redraws whenever
+            // anything on it lays out. `drawWithCache` builds them once and keeps them until
+            // the felt changes size, which is exactly what `rememberFeltWeave` already does for
+            // the tile underneath.
+            .drawWithCache {
+                val lamp = scheme.feltLamp(size.minDimension)
+                val shade = scheme.feltShade()
+                onDrawBehind {
+                    drawRect(weave)
+                    drawRect(lamp)
+                    drawRect(shade)
+                }
             }
             .border(Rim, scheme.feltEdge(), shape),
         content = content,
@@ -1472,7 +1487,7 @@ private fun Cards(
     val gaps = stage.leaving[seat.id].orEmpty()
         .filterNot {
             val anchor = Anchor.Seat(seat.id, it)
-            anchor in stage.inFlight || stage.hasLanded(anchor)
+            stage.isInFlight(anchor) || stage.hasLanded(anchor)
         }
         .toSet()
 
@@ -1575,34 +1590,48 @@ private fun HandLine(
 private const val MIN_SHOWING = 0.55f
 
 /**
- * What this seat is wearing, in the order it is worth reading.
+ * Whether the table is being held up by this seat.
  *
- * **Waiting comes first, because it is the only one that is about right now.** The rail says
- * "waiting for 1" and never said *which one* — so a round could sit there with nothing on the
- * table pointing at the seat holding it up. It covers the three ways a seat holds a round:
- * somebody yet to take their setup peeks, a seat that has not answered an open toss-in window,
- * and whoever's turn it is — which is a bot thinking as much as a person deciding.
+ * The rail says "waiting for 1" and never said *which one* — so a round could sit there with
+ * nothing on the table pointing at the seat holding it up. It covers the three ways a seat holds
+ * a round: somebody yet to take their setup peeks, a seat that has not answered an open toss-in
+ * window, and whoever's turn it is — which is a bot thinking as much as a person deciding.
  *
- * The rest are facts rather than alarms: a machine plays this seat, this seat called Vinto, this
- * seat is in the coalition, nobody is behind it, this seat guessed wrong and may not throw in
- * again — which the client has always known for every seat and only ever read for the viewer.
+ * Asked separately from [badgesFor], and drawn separately: this is the one thing about a seat
+ * that changes **every turn**, and a mark that comes and goes in a row sized to hold it is a
+ * plate that changes width every turn. It rides on the portrait instead — `SeatPlate.Thought`
+ * carries that decision, and `SteadyPlateTest` holds the plate still across it.
  */
-private fun badgesFor(
+private fun isWaitingOn(
     seat: PlayerSeatView,
     view: PlayerView,
-    table: Table,
     active: Boolean,
-): List<SeatBadge> = buildList {
+): Boolean {
     val toss = view.activeTossIn
-    val waiting = when {
+    return when {
         view.phase == GamePhase.SETUP -> seat.knownCardPositions.size < SETUP_PEEKS
         // `tossInIsOpen` and not the window record's own flag: it reads false for a window the
         // engine has just reopened, so the seats a table was genuinely waiting on wore no mark.
         view.tossInIsOpen && toss != null -> seat.id !in toss.playersReadyForNextTurn
         else -> active
     }
-    if (waiting) add(SeatBadge.WAITING)
-    // Or being played by one: a seat a bot has taken over is a machine at the table, and the
+}
+
+/**
+ * What this seat is wearing, in the order it is worth reading.
+ *
+ * All of them are facts rather than alarms: a machine plays this seat, this seat called Vinto,
+ * this seat is in the coalition, nobody is behind it, this seat guessed wrong and may not throw
+ * in again — which the client has always known for every seat and only ever read for the viewer.
+ * A fact is durable, which is what lets this row have a settled width; the one thing about a
+ * seat that is not durable is [isWaitingOn], and it is not in here.
+ */
+private fun badgesFor(
+    seat: PlayerSeatView,
+    view: PlayerView,
+    table: Table,
+): List<SeatBadge> = buildList {
+    // Being played by a machine: a seat a bot has taken over is a machine at the table, and the
     // takeover cannot be written into the game state (`isBot` is inside the canonical hash),
     // so `away` is the only place the fact exists. Drawn as a bot, it stops reading as the
     // person whose name it used to wear.
@@ -1629,7 +1658,8 @@ private fun Plate(
     // The score is the only thing here that is a *number*; everything else about a seat is now a
     // mark, because six ring colours over eight identity grounds was a legend nobody reads.
     val marks = buildList { view.scores?.get(seat.id)?.let { add("$it") } }
-    val badges = badgesFor(seat, view, table, active)
+    val badges = badgesFor(seat, view, table)
+    val thinking = isWaitingOn(seat, view, active)
     val tap = table.seats.firstOrNull { it.id == seat.id }?.move
     val stage = LocalStage.current
     val line = stage.lineFor(seat.id)
@@ -1664,6 +1694,7 @@ private fun Plate(
             pointed = pointed,
             marks = marks.takeIf { it.isNotEmpty() }?.joinToString(" · "),
             badges = badges,
+            thinking = thinking,
             size = sizes.avatar,
             onClick = tap?.let { { onMove(it) } },
         )
@@ -1685,7 +1716,7 @@ private fun SeatCard(
     val move = table.taps[ref].unlessActing(stage)
     val anchor = Anchor.Seat(seat.id, position)
 
-    if (anchor in stage.inFlight || stage.isPeeking(anchor)) {
+    if (stage.isInFlight(anchor) || stage.isPeeking(anchor)) {
         // The same footprint the landed card will claim — `CardFace` pads itself out to
         // [TapTarget], so a gap measured at the bare card size grew on landing, and the first
         // card of a deal to arrive re-pitched the whole row: every card still in the air then
@@ -1861,7 +1892,7 @@ private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp:
     // shown off before it goes. Each of those draws the card itself, and a slot that draws it
     // as well is the same card in two places — which is what a played card looked like for
     // the length of its flourish, sitting in the slot and lying on the pile at once.
-    val elsewhere = Anchor.Pending in stage.inFlight ||
+    val elsewhere = stage.isInFlight(Anchor.Pending) ||
         stage.isLeaving(Anchor.Pending) ||
         stage.isFlourishing(Anchor.Pending)
 
@@ -1980,35 +2011,47 @@ private fun TossIn(view: PlayerView) {
         // The same question the rail asks (`tossInTable`) and the room asks (`laggingHumans`),
         // asked once: a window the engine has reopened is open, whatever its own flag says.
         val open = view.tossInIsOpen
-        val pulse = rememberInfiniteTransition(label = "tossWindow")
-        val breath by pulse.animateFloat(
-            initialValue = TossQuiet,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(TossBreathMs, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse,
-            ),
-            label = "tossBreath",
-        )
-        Surface(
-            shape = RoundedCornerShape(Tight),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = TossFill),
-            border = androidx.compose.foundation.BorderStroke(
-                if (open) 2.dp else 1.dp,
-                MaterialTheme.colorScheme.onFelt().copy(alpha = if (open) breath else 1f),
-            ),
-        ) {
-            // On one line, whatever the rank is called. Confined to a card's width, "Joker"
-            // broke across two and read as "Jok / er".
-            Text(
-                toss.ranks.joinToString(" ") { it.serialName },
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onFelt(),
-                maxLines = 1,
-                softWrap = false,
-                modifier = Modifier.padding(horizontal = Gap, vertical = 2.dp),
-            )
+        val ink = MaterialTheme.colorScheme.onFelt()
+        val chip = RoundedCornerShape(Tight)
+        Box {
+            Surface(
+                shape = chip,
+                color = MaterialTheme.colorScheme.surface.copy(alpha = TossFill),
+                // Nothing while the window is open: the breathing ring below is drawing it,
+                // for the same reason `SeatPlate` splits its glow off — a border colour is a
+                // composition value, and a window that carried the breath in one recomposed
+                // this chip and both of its strings on every frame.
+                border = BorderStroke(
+                    if (open) TossRing else TossHair,
+                    if (open) Color.Transparent else ink,
+                ),
+            ) {
+                // On one line, whatever the rank is called. Confined to a card's width,
+                // "Joker" broke across two and read as "Jok / er".
+                Text(
+                    toss.ranks.joinToString(" ") { it.serialName },
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = ink,
+                    maxLines = 1,
+                    softWrap = false,
+                    modifier = Modifier.padding(horizontal = Gap, vertical = 2.dp),
+                )
+            }
+
+            // Composed only while the window is open, so a closed one holds no frame clock.
+            // It was created unconditionally and read only when open — which is exactly the
+            // fault `seatGlow` records fixing for the four seat plates, and it meant this chip
+            // asked for a frame every vsync for as long as it was on the felt.
+            if (open) {
+                val breath = tossBreath()
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .graphicsLayer { alpha = breath.value }
+                        .border(TossRing, ink, chip),
+                )
+            }
         }
 
         Thrown(view, toss)
@@ -2017,9 +2060,35 @@ private fun TossIn(view: PlayerView) {
 
 private const val TossFill = 0.15f
 
+/** The chip's edge: heavier while the window is open for throws, a hairline once it is not. */
+private val TossRing = 2.dp
+private val TossHair = 1.dp
+
 /** The trough of the open window's breath, and its period — see `CardFace`'s pulse. */
 private const val TossQuiet = 0.45f
 private const val TossBreathMs = 1100
+
+/**
+ * The open window's breath, handed back as a `State` so the read happens in the draw phase.
+ *
+ * Its own composable for the two reasons `seatGlow` is one: an infinite transition asks for a
+ * frame every vsync, so it must exist only while there is something to show, and a composable
+ * that returned the *number* would put the read in its caller's scope and recompose the chip
+ * sixty times a second.
+ */
+@Composable
+private fun tossBreath(): State<Float> {
+    val pulse = rememberInfiniteTransition(label = "tossWindow")
+    return pulse.animateFloat(
+        initialValue = TossQuiet,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(TossBreathMs, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "tossBreath",
+    )
+}
 
 /**
  * Seconds left on a service clock, counted down locally between broadcasts.
@@ -2175,12 +2244,17 @@ private fun Pile(label: String, content: @Composable () -> Unit) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .drawBehind {
-                        drawOval(
-                            brush = contactShadow(),
-                            topLeft = Offset(0f, size.height * SHADOW_DROP),
-                            size = Size(size.width, size.height * SHADOW_SQUASH),
-                        )
+                    // The gradient is built once per size rather than once per frame: it is a
+                    // radial `Brush`, and there are two of these piles on the felt.
+                    .drawWithCache {
+                        val shadow = contactShadow()
+                        onDrawBehind {
+                            drawOval(
+                                brush = shadow,
+                                topLeft = Offset(0f, size.height * SHADOW_DROP),
+                                size = Size(size.width, size.height * SHADOW_SQUASH),
+                            )
+                        }
                     },
             )
             content()

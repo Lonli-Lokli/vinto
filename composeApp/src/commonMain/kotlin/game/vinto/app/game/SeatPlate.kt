@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +38,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -152,15 +155,24 @@ private fun Attention.spoken(): StringResource = when (this) {
 }
 
 /**
- * The seat's face, and the badge if a machine is behind it.
+ * The seat's face, and the thought cloud when the table is waiting on it.
  *
- * The badge is on the corner of the portrait rather than beside the name: a plate is capped
- * in width and the name gives way first, so a mark that costs width is a mark that pushes
- * somebody's name to an ellipsis. Three of the four seats are machines and nothing said so —
- * which matters most to the player who has just been beaten by one and wants to know by what.
+ * **The cloud is on the portrait rather than in the marks row, and that is a layout fix as much
+ * as a picture.** It was a badge under the name, in a column capped at [nameRoom] — a *max*, so
+ * the column was as wide as its widest row and a mark that arrived widened the plate. That mark
+ * is the only one that comes and goes every turn (`badgesFor` gives it to whoever's turn it is),
+ * and a plate sits in a `Row` with the hand at `weight(1f, fill = false)`: the width the plate
+ * takes is width the hand does not get, and `HandLine` pitches the cards from exactly that
+ * number. So the pill grew by nine to twenty-eight points on every turn hand-off, and the cards
+ * beside it re-pitched — reported from a phone as the avatar changing size. Drawn over the
+ * portrait it costs no width at all, and `SteadyPlateTest` measures that at every table size.
+ *
+ * It is also where a thought cloud belongs. The durable marks say what a seat *is* and read
+ * under the name like a caption; this one says the seat is working **now**, and a bubble over
+ * the head is the drawing everyone already knows for that.
  */
 @Composable
-private fun Portrait(name: String, size: Dp) {
+private fun Portrait(name: String, size: Dp, thinking: Boolean) {
     val chosen = chosenFace(name)
     Box {
         // The face its owner picked, when there is one. A bot has no profile and keeps its
@@ -182,24 +194,45 @@ private fun Portrait(name: String, size: Dp) {
                 modifier = Modifier.size(size).clip(CircleShape),
             )
         }
+
+        // On the corner, and on a ground of its own. Ink puffs laid straight onto an emblem
+        // are ink on whichever of eight grounds this seat happens to wear, at a size where the
+        // silhouette is the whole of what the mark has — so it carries the plate's own fill
+        // under it and the deck's ink ring around it, and reads on any face. `TopEnd` rather
+        // than `TopRight`: five of the nineteen languages lay the plate out the other way
+        // round, and a thought belongs on the same side as the name it is thinking beside.
+        if (thinking) {
+            Thought(
+                size = maxOf(size * BadgeShare, BadgeLeast),
+                modifier = Modifier.align(Alignment.TopEnd),
+            )
+        }
     }
 }
 
 /**
  * The breath on the seat whose turn it is.
  *
- * Its own composable so it is *only* composed by the branch that uses it — the same shape
- * `CardFace.ringColour` uses, and for the same reason. It was read unconditionally, so all four
- * plates ran an infinite transition for the life of the table while at most one of them could
- * ever show it. An infinite transition asks for a frame every vsync, and a composition that
- * never stops asking for frames is a table that never goes idle: three permanent animations
- * nobody could see, redrawing the screen forever. On a phone that is battery; on the web it is
- * the whole reason the page felt slow with nothing happening on it.
+ * Its own composable so it is *only* composed by the branch that uses it. It was read
+ * unconditionally, so all four plates ran an infinite transition for the life of the table
+ * while at most one of them could ever show it. An infinite transition asks for a frame every
+ * vsync, and a composition that never stops asking for frames is a table that never goes idle:
+ * three permanent animations nobody could see, redrawing the screen forever. On a phone that is
+ * battery; on the web it is the whole reason the page felt slow with nothing happening on it.
+ *
+ * **It hands back the `State`, not the number, and that is the second half of the same fix.**
+ * A composable that returns a value is not restartable, so a state read inside it lands on the
+ * *caller's* scope — this one's caller being [SeatPlate], which therefore recomposed sixty
+ * times a second for the whole of a seat's turn, name, portrait, marks and all. Worse, the
+ * number was feeding `animateColorAsState`, so a colour animation was chasing a target that
+ * moved every frame: twice the work, and it damped the very pulse it was carrying. Returned as
+ * a `State` and dereferenced inside a `graphicsLayer` block, the read happens in the draw phase
+ * and the breath costs one layer's alpha per frame. Same shape as `InFlight` in `CardStage`.
  */
 @Composable
-private fun seatGlow(): Float {
+private fun seatGlow(): State<Float> {
     val pulse = rememberInfiniteTransition(label = "seat")
-    val glow by pulse.animateFloat(
+    return pulse.animateFloat(
         initialValue = GLOW_LOW,
         targetValue = GLOW_HIGH,
         animationSpec = infiniteRepeatable(
@@ -208,7 +241,6 @@ private fun seatGlow(): Float {
         ),
         label = "glow",
     )
-    return glow
 }
 
 /** The marks and the score, under the name, in the order they are worth reading. */
@@ -242,11 +274,14 @@ private fun BadgeRow(badges: List<SeatBadge>, marks: String?, portrait: Dp) {
  *
  * Each of these carries its own words for a screen reader, because a mark nobody can see is
  * exactly the failure the ring already had.
+ *
+ * **Every one of them is durable**, and that is what this list is now for. Whether the table is
+ * *waiting* on a seat used to be in here too, and it is the one thing about a seat that changes
+ * every turn — so a row sized to hold it was a row that changed width every turn, and a plate
+ * that changed width pushed the hand beside it. It is drawn on the portrait instead ([Thought]),
+ * where it costs no width and reads as the seat thinking rather than as another caption.
  */
 enum class SeatBadge {
-    /** The table is waiting on this seat — a bot thinking, or somebody yet to peek or answer. */
-    WAITING,
-
     /** A machine plays this seat. */
     BOT,
 
@@ -275,7 +310,6 @@ enum class SeatBadge {
 private fun Badge(badge: SeatBadge, portrait: Dp) {
     val said = stringResource(badge.spoken())
     val ink = when (badge) {
-        SeatBadge.WAITING -> Slate.ink
         SeatBadge.VINTO -> Slate.gold
         SeatBadge.COALITION -> Signal.coalition
         SeatBadge.AWAY -> Slate.ink.copy(alpha = QUIET)
@@ -286,11 +320,9 @@ private fun Badge(badge: SeatBadge, portrait: Dp) {
         .size(maxOf(portrait * BadgeShare, BadgeLeast))
         .semantics { contentDescription = said }
 
-    // One branch per mark rather than one Canvas over a `when`, because the waiting mark is
-    // the only one that is *about right now* and the only one that moves — and an animation
-    // has to be composed, not drawn.
+    // One branch per mark rather than one Canvas over a `when`, so a mark that ever needs to
+    // move can be a composable rather than a drawing — which is what [Thought] became.
     when (badge) {
-        SeatBadge.WAITING -> Thinking(ink, marked)
         SeatBadge.BOT -> Canvas(marked) { drawRobot(ink) }
         SeatBadge.VINTO -> Canvas(marked) { drawCrown(ink) }
         SeatBadge.COALITION -> Canvas(marked) { drawLink(ink) }
@@ -300,13 +332,13 @@ private fun Badge(badge: SeatBadge, portrait: Dp) {
 }
 
 /**
- * The thought cloud, thinking.
+ * The thought cloud, thinking, on the corner of the portrait it belongs to.
  *
- * Every other mark on a plate is a *fact* — a machine plays this seat, this seat called Vinto
- * — and a fact is a still drawing. This one is the only thing on the felt that says something
- * is happening **now**: a bot deciding, or a player who has not peeked yet. Drawn still, it
- * said that just as well when nothing was happening at all, so a table that had hung and a
- * table that was thinking looked exactly alike, and the only way to tell was to wait and see.
+ * Every mark under the name is a *fact* — a machine plays this seat, this seat called Vinto —
+ * and a fact is a still drawing. This one is the only thing on the felt that says something is
+ * happening **now**: a bot deciding, or a player who has not peeked yet. Drawn still, it said
+ * that just as well when nothing was happening at all, so a table that had hung and a table
+ * that was thinking looked exactly alike, and the only way to tell was to wait and see.
  *
  * So the puffs brighten in turn, bottom to top, the way a thought rises in a comic. It is the
  * progress this moment gets: there is no percentage to show — the search does not know how far
@@ -314,15 +346,24 @@ private fun Badge(badge: SeatBadge, portrait: Dp) {
  * still working.
  *
  * Its own composable so the frame clock is started only by the seats actually being waited on,
- * which is the same reason `seatGlow` is one: an infinite transition asks for a frame every
+ * which is the same reason [seatGlow] is one: an infinite transition asks for a frame every
  * vsync, and plates that never stop asking are a table that never goes idle.
+ *
+ * **[phase] is dereferenced inside the draw lambda, not beside it.** `by` reads the state
+ * wherever the name is mentioned, so mentioning it in `Canvas { }` puts the read in the draw
+ * phase and the wave costs one re-record of this canvas per frame. Read a line higher, into a
+ * local, it would be a *composition* read, and every frame of the wave would recompose the
+ * plate around it — which is the whole of what [seatGlow] used to do.
  */
 @Composable
-private fun Thinking(ink: Color, modifier: Modifier) {
+private fun Thought(size: Dp, modifier: Modifier) {
+    val said = stringResource(Res.string.seat_badge_waiting)
+    val marked = modifier.size(size).semantics { contentDescription = said }
+
     // No movement, same information — and the still cloud is the *whole* cloud at full
     // strength rather than one frame of the wave, exactly as `VintoSpinner` stands still.
     if (LocalReducedMotion.current) {
-        Canvas(modifier) { drawThought(ink, phase = null) }
+        Canvas(marked) { drawThoughtBadge(phase = null) }
         return
     }
 
@@ -338,11 +379,34 @@ private fun Thinking(ink: Color, modifier: Modifier) {
         ),
         label = "puffs",
     )
-    Canvas(modifier) { drawThought(ink, phase) }
+    Canvas(marked) { drawThoughtBadge(phase) }
 }
 
+/**
+ * The cloud on its own disc, so it reads over any of the eight grounds a face can wear.
+ *
+ * The puffs are drawn at [CLOUD_INSET] of the disc and centred on it: [drawThought] lays them
+ * out across its whole box, which is right for a mark standing alone on the plate's fill and
+ * would run them under the ring here.
+ */
+private fun DrawScope.drawThoughtBadge(phase: Float?) {
+    val w = size.minDimension
+    drawCircle(color = Slate.fill, radius = w / 2)
+    drawCircle(color = Slate.ink, radius = w / 2 - w * MARK_EDGE / 2, style = Stroke(w * MARK_EDGE))
+    scale(CLOUD_INSET, pivot = center) { drawThought(Slate.ink, phase) }
+}
+
+/**
+ * How much of its disc the cloud fills, leaving the ring a clear rim to be read against.
+ *
+ * Judged on a phone rather than on a golden: the screenshots render at one device pixel per
+ * point, where a mark this size is four pixels of cloud and looks like a smudge, and no real
+ * screen this ships to is below two. What the number has to buy is a margin the ink ring is
+ * legible in, which is a fraction of the disc and not a count of pixels.
+ */
+private const val CLOUD_INSET = 0.8f
+
 private fun SeatBadge.spoken(): StringResource = when (this) {
-    SeatBadge.WAITING -> Res.string.seat_badge_waiting
     SeatBadge.BOT -> Res.string.seat_is_a_bot
     SeatBadge.VINTO -> Res.string.seat_badge_vinto
     SeatBadge.COALITION -> Res.string.seat_badge_coalition
@@ -616,6 +680,43 @@ private fun BotMark(diameter: Dp) {
 }
 
 /**
+ * The ring's colour, for everything about a seat except the breath.
+ *
+ * A plain function: the four answers depend on nothing but their arguments, and keeping them
+ * out of [SeatPlate] keeps the one composable here readable — the plate is a pill with a
+ * portrait, a name and a ring, and three of those should not be a `when`.
+ */
+private fun edgeFor(
+    pointed: Attention?,
+    breathing: Boolean,
+    clickable: Boolean,
+    resting: Color,
+): Color = when {
+    // Being pointed at wins over everything: it is the table saying *this* seat, now.
+    pointed?.colour() != null -> pointed.colour()!!
+
+    // Green means "you may touch this", here and on a card, and it outranks whose turn it is
+    // because it is the only one of the three that is a *question being asked of you*. A card
+    // you can play breathes green; a seat you may choose does the same, because it is the same
+    // question — and the answer should not depend on whether the thing being asked about is a
+    // card or a person.
+    clickable -> Signal.pick
+
+    // Nothing, because the breathing ring is drawing it. The colour cannot carry the breath:
+    // `animateColorAsState` would be animating towards a target that moves every frame, which
+    // both doubles the work and damps the very pulse it is carrying — see [seatGlow].
+    breathing -> Color.Transparent
+    else -> resting
+}
+
+/** How heavy that ring is drawn: loudest for a seat the table is pointing at. */
+private fun ringFor(pointed: Attention?, active: Boolean, clickable: Boolean): Dp = when {
+    pointed != null -> PointedRing
+    active || clickable -> Ring
+    else -> Hairline
+}
+
+/**
  * A player: portrait and name in one pill, as on the web table.
  *
  * The two together rather than a portrait with a caption under it — it is a name plate, it
@@ -633,70 +734,77 @@ fun SeatPlate(
     modifier: Modifier = Modifier,
     marks: String? = null,
     badges: List<SeatBadge> = emptyList(),
+    /** The table is waiting on this seat — a bot thinking, or somebody yet to peek or answer. */
+    thinking: Boolean = false,
     pointed: Attention? = null,
     size: Dp = 40.dp,
     onClick: (() -> Unit)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
 
-    val edge by animateColorAsState(
-        when {
-            // Being pointed at wins over everything: it is the table saying *this* seat, now.
-            pointed?.colour() != null -> pointed.colour()!!
+    // Whether the ring is the breathing one, decided once and read twice — the `when` below
+    // orders the same three questions, and the two answers must not be able to disagree.
+    val breathing = active && pointed?.colour() == null && onClick == null
 
-            // Green means "you may touch this", here and on a card, and it outranks whose turn
-            // it is because it is the only one of the three that is a *question being asked of
-            // you*. A card you can play breathes green; a seat you may choose does the same,
-            // because it is the same question — and the answer should not depend on whether the
-            // thing being asked about is a card or a person.
-            onClick != null -> Signal.pick
-            active -> Signal.turn.copy(alpha = seatGlow())
-            else -> scheme.onFelt().copy(alpha = QUIET)
-        },
+    val edge by animateColorAsState(
+        edgeFor(pointed, breathing, onClick != null, scheme.onFelt().copy(alpha = QUIET)),
         label = "edge",
     )
 
     val said = pointed?.let { stringResource(it.spoken(), name) }
 
-    Surface(
-        // A plate is a target — a Nine looks at one of these, a Jack swaps into one — so it
-        // is at least a thumb tall even when the portrait inside it is not.
-        modifier = modifier
-            .heightIn(min = PlateTap)
-            .semantics { said?.let { contentDescription = it } },
-        shape = CircleShape,
-        color = Slate.fill.copy(alpha = PLATE_ALPHA),
-        border = BorderStroke(
-            when {
-                pointed != null -> PointedRing
-                active || onClick != null -> Ring
-                else -> Hairline
-            },
-            edge,
-        ),
-        onClick = onClick ?: {},
-        enabled = onClick != null,
-    ) {
-        Row(
-            modifier = Modifier.padding(PlatePad),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(PlateGap),
+    Box(modifier = modifier) {
+        Surface(
+            // A plate is a target — a Nine looks at one of these, a Jack swaps into one — so it
+            // is at least a thumb tall even when the portrait inside it is not.
+            modifier = Modifier
+                .heightIn(min = PlateTap)
+                .semantics { said?.let { contentDescription = it } },
+            shape = CircleShape,
+            color = Slate.fill.copy(alpha = PLATE_ALPHA),
+            border = BorderStroke(ringFor(pointed, active, onClick != null), edge),
+            onClick = onClick ?: {},
+            enabled = onClick != null,
         ) {
-            Portrait(name = name, size = size)
-            // Capped, and the name gives way before the marks do. A plate that grows with
-            // "Vinto · 12" is a plate that pushes the player's own hand onto a second row,
-            // which is the one hand that has to stay in one piece.
-            Column(modifier = Modifier.padding(end = NamePad).widthIn(max = nameRoom(size))) {
-                Text(
-                    text = name,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                    color = if (active) Slate.gold else Slate.ink,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                BadgeRow(badges, marks, size)
+            Row(
+                modifier = Modifier.padding(PlatePad),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(PlateGap),
+            ) {
+                Portrait(name = name, size = size, thinking = thinking)
+                // Capped, and the name gives way before the marks do. A plate that grows with
+                // "Vinto · 12" is a plate that pushes the player's own hand onto a second row,
+                // which is the one hand that has to stay in one piece.
+                Column(
+                    modifier = Modifier.padding(end = NamePad).widthIn(max = nameRoom(size)),
+                ) {
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                        color = if (active) Slate.gold else Slate.ink,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    BadgeRow(badges, marks, size)
+                }
             }
+        }
+
+        // The breath, as a ring of its own laid over the plate's own edge.
+        //
+        // It is a separate node so that the only thing a frame of the pulse costs is this
+        // layer's alpha: the plate keeps its composition, and the portrait, the name and the
+        // marks under it are not touched. Composed only while it is wanted, so no seat holds a
+        // frame clock open for a ring nobody is looking at.
+        if (breathing) {
+            val glow = seatGlow()
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .graphicsLayer { alpha = glow.value }
+                    .border(Ring, Signal.turn, CircleShape),
+            )
         }
     }
 }

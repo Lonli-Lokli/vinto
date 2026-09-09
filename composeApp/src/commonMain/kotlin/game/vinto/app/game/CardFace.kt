@@ -19,11 +19,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -113,7 +116,13 @@ fun CardFace(
 ) {
     val faceUp = card is CardView.Visible
 
-    val turn by animateFloatAsState(
+    // **Kept as the `State`, not unwrapped into a number.** Every frame of a flip changes it,
+    // and a card that read it in composition recomposed on every one of them — `painterResource`,
+    // `stringResource` and the whole modifier chain rebuilt, twenty cards at once at scoring.
+    // Dereferenced inside the `graphicsLayer` block below it is a draw-phase read instead, which
+    // is what `CardStage.InFlight` already says about the flights: "read from the animation
+    // here, in the draw phase, none of it recomposes".
+    val turn = animateFloatAsState(
         targetValue = if (faceUp) HALF_TURN else 0f,
         animationSpec = tween(FLIP_MS, easing = FastOutSlowInEasing),
         label = "flip",
@@ -122,14 +131,20 @@ fun CardFace(
     // Held so the back stays drawn through the first half of the turn: `card` becomes Visible
     // the moment the state changes, and drawing the face immediately would show it a fifth of
     // a second before the card has finished turning.
-    val showingFace = turn > QUARTER_TURN
-    val shape = RoundedCornerShape(TableSizes.Corner)
+    //
+    // Derived rather than computed, because *this* one has to be a composition read — it picks
+    // the painter — and there is no reason for it to be sixty of them. A `derivedStateOf` only
+    // notifies when the answer changes, so a flip costs the two recompositions where the card
+    // turns over rather than one per frame of the turn.
+    val showingFace by remember { derivedStateOf { turn.value > QUARTER_TURN } }
+    // The card's own corner, not a chip's. See [ART_CORNER].
+    val shape = RoundedCornerShape(scale.corner)
     val density = LocalDensity.current
 
     // A hand flinches when a penalty card lands in it. Small and quick — enough to catch the
     // eye of somebody looking elsewhere, which is the entire job: a card appearing in your
     // hand with no explanation is the most confusing thing this game does.
-    val shake by animateFloatAsState(
+    val shake = animateFloatAsState(
         targetValue = if (state.flinching) 1f else 0f,
         animationSpec = tween(FLINCH_MS, easing = FastOutSlowInEasing),
         label = "flinch",
@@ -182,30 +197,42 @@ fun CardFace(
             .semantics { contentDescription = spoken },
         contentAlignment = Alignment.Center,
     ) {
-        Surface(
+        Box(
             modifier = Modifier
                 .size(scale.width, scale.height)
                 .graphicsLayer {
-                    rotationY = turn
+                    rotationY = turn.value
                     // A quarter turn for the seats at the sides of the table, so their cards
                     // lie the way cards lie in front of somebody sitting there.
                     rotationZ = if (state.turned) QUARTER_TURN else 0f
-                    translationX = shake * SHAKE_PX * density.density
+                    translationX = shake.value * SHAKE_PX * density.density
                     cameraDistance = CAMERA * density.density
-                }
-                .clip(shape)
-                .border(state.ringWidth(), state.ringColour(), shape),
-            shape = shape,
-            color = Color.Transparent,
+                },
         ) {
-            Image(
-                painter = painterResource(if (showingFace) card.art() else Res.drawable.card_back),
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                // The back of the layer is a mirror image once past the quarter turn, so the
-                // face is flipped back the other way to read as a card rather than a reflection.
-                modifier = Modifier.graphicsLayer { rotationY = if (showingFace) HALF_TURN else 0f },
-            )
+            Surface(
+                modifier = Modifier.matchParentSize().clip(shape),
+                shape = shape,
+                color = Color.Transparent,
+            ) {
+                Image(
+                    painter = painterResource(
+                        if (showingFace) card.art() else Res.drawable.card_back,
+                    ),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    // The back of the layer is a mirror image once past the quarter turn, so
+                    // the face is flipped back the other way to read as a card rather than a
+                    // reflection.
+                    modifier = Modifier.graphicsLayer {
+                        rotationY = if (showingFace) HALF_TURN else 0f
+                    },
+                )
+            }
+
+            // The ring is a sibling of the card rather than a border on it, so that the one
+            // ring that *moves* can move without the card being rebuilt around it. Inside the
+            // rotation, so it turns and lies sideways with the card it belongs to.
+            CardRing(state, shape, Modifier.matchParentSize())
         }
     }
 }
@@ -215,20 +242,26 @@ fun CardFace(
  * that can be touched.
  *
  * The pulse is what tells a player where to look. Three quarters of the table is untappable at
- * any moment, and the alternative to drawing attention to the few that are is dimming the
- * many that are not — which on a card table reads as a fault rather than a hint.
+ * any moment, and the alternative to drawing attention to the few that are is dimming the many
+ * that are not — which on a card table reads as a fault rather than a hint.
+ *
+ * **The pulse is an alpha on a layer, not a colour in the composition**, and that is the whole
+ * reason this is a composable of its own. It used to be `CardState.ringColour()`, a composable
+ * returning a `Color` — and a composable that returns a value is not restartable, so the read
+ * landed on `CardFace`'s scope and every frame of the pulse recomposed the entire card. There
+ * are five to twenty tappable cards on the felt whenever a Jack, a Queen or a King is asking
+ * for one. Here the frame costs this node's alpha and nothing else.
  */
 @Composable
-private fun CardState.ringColour(): Color {
-    // A declaration answered: green for a right call, red for a wrong one. Loudest, because
-    // it is the one moment in the game that is a gamble on your own memory.
-    verdict?.let { return if (it) Signal.rightCall else Signal.wrongCall }
-    if (chosen) return Signal.chosen
-    if (live) return Signal.live
-    if (!tappable) return Color.Transparent
+private fun CardRing(state: CardState, shape: Shape, modifier: Modifier) {
+    val steady = state.steadyRing()
+    if (steady != null) {
+        Box(modifier.border(state.ringWidth(), steady, shape))
+        return
+    }
 
     val pulse = rememberInfiniteTransition(label = "tappable")
-    val strength by pulse.animateFloat(
+    val strength = pulse.animateFloat(
         initialValue = PULSE_LOW,
         targetValue = PULSE_HIGH,
         animationSpec = infiniteRepeatable(
@@ -237,7 +270,27 @@ private fun CardState.ringColour(): Color {
         ),
         label = "pulse",
     )
-    return Signal.tappable.copy(alpha = strength)
+    Box(
+        modifier
+            .graphicsLayer { alpha = strength.value }
+            .border(state.ringWidth(), Signal.tappable, shape),
+    )
+}
+
+/**
+ * The ring's colour when it holds still, or null for the one that breathes.
+ *
+ * A plain function and not a composable: it reads nothing but the state it is given, which is
+ * what lets [CardRing] decide between a border and a layer before either exists.
+ */
+private fun CardState.steadyRing(): Color? = when {
+    // A declaration answered: green for a right call, red for a wrong one. Loudest, because
+    // it is the one moment in the game that is a gamble on your own memory.
+    verdict != null -> if (verdict) Signal.rightCall else Signal.wrongCall
+    chosen -> Signal.chosen
+    live -> Signal.live
+    tappable -> null
+    else -> Color.Transparent
 }
 
 /** A card with something to say about it wears a ring; the rest wear a hairline. */
@@ -327,7 +380,7 @@ fun EmptySlot(
                 .border(
                     Hairline,
                     MaterialTheme.colorScheme.onFelt().copy(alpha = FAINT),
-                    RoundedCornerShape(TableSizes.Corner),
+                    RoundedCornerShape(scale.corner),
                 ),
             contentAlignment = Alignment.Center,
         ) {
