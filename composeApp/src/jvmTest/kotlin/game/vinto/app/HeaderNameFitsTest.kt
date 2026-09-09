@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
 import game.vinto.app.game.HeaderName
-import game.vinto.app.game.HeaderRoom
 import game.vinto.app.game.TableHeader
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.VintoTheme
@@ -66,12 +65,11 @@ class HeaderNameFitsTest {
                 name.value = stringResource(Res.string.app_name)
                 val need = wordmarkWidth(name.value)
                 Framed(need - PINCH) {
-                    // Every flag true: this is the header saying "there is room for both",
-                    // which is exactly the state the report was in.
+                    // Given less room than the name needs: the state the report was in, and the
+                    // one the header now decides for itself rather than being told about.
                     HeaderName(
                         name = name.value,
                         counter = COUNTER,
-                        fits = HeaderRoom(wide = false, wordmark = true, counter = true),
                         modifier = Modifier.width(need - PINCH),
                     )
                 }
@@ -96,7 +94,6 @@ class HeaderNameFitsTest {
                     HeaderName(
                         name = name.value,
                         counter = COUNTER,
-                        fits = HeaderRoom(wide = false, wordmark = true, counter = true),
                         modifier = Modifier.width(need + ROOM),
                     )
                 }
@@ -147,6 +144,55 @@ class HeaderNameFitsTest {
         )
     }
 
+    /**
+     * And on a PHONE it is actually there — which is the half the sweep above cannot ask.
+     *
+     * That sweep skips a width where the name is absent (`?: return@runComposeUiTest`), because
+     * its question is "is what is drawn legible". So a header that draws its name nowhere passes
+     * it perfectly, and that is exactly what shipped: reported from a phone, a header with a blank
+     * left half and three controls floating on the right.
+     *
+     * The cause was one condition written twice. `headerRoom` decided the words would fit and
+     * subtracted the WIDE header's cost from the room left over — while `TableHeader` drew the
+     * narrow header, because that also needs `maxWidth >= WideHeader`. So the estimate charged a
+     * phone for labels it was never going to draw and reported no room for the wordmark. Two
+     * copies of a rule, disagreeing exactly where nobody was looking.
+     */
+    @Test
+    fun theNameIsDrawnOnAPhone() {
+        val missing = mutableListOf<Dp>()
+
+        PHONES.forEach { width ->
+            runComposeUiTest {
+                val name = mutableStateOf("")
+                setContent {
+                    name.value = stringResource(Res.string.app_name)
+                    Framed(width) {
+                        // `onLeave = null` on purpose: it makes this header THREE controls, which
+                        // is what a phone draws. The JVM this runs on offers the support cup and a
+                        // phone does not (`supportOffer`), so a four-control header here is a
+                        // desktop's geometry — and at 320 points four controls genuinely leave no
+                        // room for a wordmark, which is the header working rather than failing.
+                        TableHeader(
+                            view = teachingSession().view.value,
+                            round = 1,
+                            onHelp = {},
+                            onSettings = {},
+                            onLeave = null,
+                        )
+                    }
+                }
+                waitForIdle()
+                if (onAllNodesWithText(name.value).fetchSemanticsNodes().isEmpty()) missing += width
+            }
+        }
+
+        assertTrue(
+            missing.isEmpty(),
+            "the header shows no wordmark at ordinary phone widths: $missing",
+        )
+    }
+
     // ------------------------------------------------------------------ measuring
 
     /**
@@ -184,6 +230,9 @@ class HeaderNameFitsTest {
         .toList()
 
     private companion object {
+        /** Every phone this app is drawn on, narrowest to widest, in points. */
+        val PHONES = listOf(320.dp, 360.dp, 384.dp, 411.dp, 430.dp)
+
         val FROM = 280.dp
         val TO = 760.dp
         val STEP = 8.dp

@@ -658,10 +658,9 @@ private fun HeaderChip(
  * drawn, and the order they are given up in is the order they matter least.
  */
 @Composable
-private fun headerRoom(labels: List<String>, wordmark: String, counter: String, room: Dp): HeaderRoom {
+private fun headerSaysItsWords(labels: List<String>, room: Dp): Boolean {
     val measurer = rememberTextMeasurer()
     val words = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-    val brand = wordmarkStyle()
     val density = LocalDensity.current
     val widthOf: (String, TextStyle) -> Dp = { text, style ->
         with(density) { measurer.measure(AnnotatedString(text), style, maxLines = 1).size.width.toDp() }
@@ -672,22 +671,25 @@ private fun headerRoom(labels: List<String>, wordmark: String, counter: String, 
     val spoken = labels.fold(0.dp) { sum, label -> sum + widthOf(label, words) } + chrome
     val silent = (HeaderTap + Gap) * labels.size
 
-    // The deck chip is always a chip and never a word, and the row has padding of its own.
-    val fixed = HeaderTap + Gap + HeaderEdge * 2
-    val wide = fixed + spoken <= room
-    val left = room - fixed - if (wide) spoken else silent
+    // The row's own padding, and nothing else.
+    //
+    // This used to reserve a tap target and a gap for the DECK CHIP as well — and the deck chip
+    // left the header for the felt, where it sits under the pile it counts (`DeckAndDiscard`).
+    // Nobody updated the arithmetic, so every header went on paying about 50 points for a control
+    // that was not there: on a 320-point phone that is the difference between room for the
+    // wordmark and none, and the header drew a blank left half with the controls floating on the
+    // right. Reported from a phone, which is the only place narrow enough for it to bite.
+    val fixed = HeaderEdge * 2
 
-    val brandWidth = widthOf(wordmark, brand)
-    val counterWidth = widthOf(counter, words)
-    return HeaderRoom(
-        wide = wide,
-        wordmark = left >= brandWidth,
-        counter = left >= brandWidth + Gap + counterWidth,
-    )
+    // What the header will ACTUALLY draw, floor included.
+    //
+    // The floor belongs here rather than at the call site. It was written in both places —
+    // `wide` here deciding what to charge the row for, `maxWidth >= WideHeader` there deciding
+    // what to draw — so between about 380 points and 700 a phone was charged for words it was
+    // never going to show, and the room left over came out a third of what it really was. One
+    // definition, so the estimate and the drawing cannot disagree.
+    return room >= WideHeader && fixed + spoken <= room
 }
-
-/** Which of the header's three optional pieces there is room for. */
-internal data class HeaderRoom(val wide: Boolean, val wordmark: Boolean, val counter: Boolean)
 
 /** A gear: the ring, eight teeth, and the hub, all strokes. */
 private fun DrawScope.drawGear(ink: Color) {
@@ -795,7 +797,7 @@ private const val BUG_LOW_SPOT = 0.30f
  * being the thing that gave way.
  */
 @Composable
-internal fun HeaderName(name: String, counter: String, fits: HeaderRoom, modifier: Modifier = Modifier) {
+internal fun HeaderName(name: String, counter: String, modifier: Modifier = Modifier) {
     // Measured against the room this group *actually has*, in the style the words are
     // *actually drawn in*. [headerRoom] estimates from the other side — the controls' words,
     // their chrome, the row's padding — and an estimate is all it can be, so the group carries
@@ -814,9 +816,8 @@ internal fun HeaderName(name: String, counter: String, fits: HeaderRoom, modifie
         val label = MaterialTheme.typography.labelLarge
         val nameNeeds = widthOf(name, brand)
         val counterNeeds = widthOf(counter, label)
-        val showName = fits.wordmark && nameNeeds <= room
-        val showCounter = fits.counter &&
-            counterNeeds + (if (showName) nameNeeds + Gap else 0.dp) <= room
+        val showName = nameNeeds <= room
+        val showCounter = counterNeeds + (if (showName) nameNeeds + Gap else 0.dp) <= room
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(Gap),
@@ -887,8 +888,7 @@ internal fun TableHeader(
         val words = listOfNotNull(rules, settings, support, leave.takeIf { onLeave != null })
         val name = stringResource(Res.string.app_name)
         val counter = stringResource(Res.string.table_round_turn, round, view.turnNumber)
-        val fits = headerRoom(words, name, counter, maxWidth)
-        val wideHeader = maxWidth >= WideHeader && fits.wide
+        val wideHeader = headerSaysItsWords(words, maxWidth)
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = HeaderEdge, vertical = Gap),
             horizontalArrangement = Arrangement.spacedBy(Gap),
@@ -901,7 +901,7 @@ internal fun TableHeader(
             // the deck count — the last thing in the row — came out 36 points wide under a
             // 44-point thumb, which `TouchTargetTest` reads as a target nobody can hit. A word
             // may be clipped; a control may not.
-            HeaderName(name, counter, fits, modifier = Modifier.weight(1f))
+            HeaderName(name, counter, modifier = Modifier.weight(1f))
 
             // The rules, in the one place on the screen that never moves.
             //
