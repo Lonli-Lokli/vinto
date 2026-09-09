@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!--
+        Where `sharePicture` writes the QR before handing it to the chooser. Nothing else is
+        exposed: a provider that published the whole cache would be handing every other app the
+        saved game and the seat token beside the picture somebody meant to send.
+    -->
+    <cache-path name="shared" path="share/" />
+</paths>

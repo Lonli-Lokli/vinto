@@ -30,3 +30,36 @@ private fun webShare(title: String, text: String): Boolean = js(
       }
     }""",
 )
+
+/**
+ * The same sheet, carrying a file.
+ *
+ * `navigator.canShare({ files })` is asked first and is not the same question as `navigator.share`
+ * existing: a browser can have the sheet and still refuse an attachment, and calling `share` with
+ * files it will not take throws rather than falling back. When it says no, this returns false and
+ * the caller sends the text — which is the share that matters — instead of nothing.
+ *
+ * The bytes cross into JavaScript one at a time through a callback rather than as a typed array,
+ * because Kotlin/Wasm's `ByteArray` is not a JS object and the interop that would hand it over
+ * whole is not available from a `js()` body. It is one allocation of a few tens of kilobytes on a
+ * tap, which is the cheapest thing on this path by a wide margin.
+ */
+actual fun sharePicture(subject: String, body: String, picture: ByteArray): Boolean =
+    webSharePicture(subject, body, picture.size) { picture[it].toInt() }
+
+@Suppress("UnusedParameter")
+private fun webSharePicture(title: String, text: String, size: Int, byteAt: (Int) -> Int): Boolean = js(
+    """{
+      try {
+        if (!navigator.share || !navigator.canShare) return false;
+        var bytes = new Uint8Array(size);
+        for (var i = 0; i < size; i++) bytes[i] = byteAt(i) & 255;
+        var file = new File([bytes], 'vinto-code.png', { type: 'image/png' });
+        if (!navigator.canShare({ files: [file] })) return false;
+        navigator.share({ title: title, text: text, files: [file] }).catch(function () {});
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }""",
+)

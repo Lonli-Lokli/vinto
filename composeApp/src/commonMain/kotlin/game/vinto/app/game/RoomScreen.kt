@@ -80,9 +80,9 @@ import game.vinto.app.art.toss_clock_moves_on
 import game.vinto.app.art.toss_more_time
 import game.vinto.app.link.inviteLink
 import game.vinto.app.openUrl
+import game.vinto.app.share.CodeToShare
 import game.vinto.app.share.QrChip
 import game.vinto.app.share.VintoQr
-import game.vinto.app.shareText
 import game.vinto.app.storeListingUrl
 import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
@@ -447,13 +447,26 @@ private fun InviteRow(code: String) {
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(Gap)) {
-                GameButton(
-                    label = stringResource(Res.string.invite_share),
-                    tone = ButtonTone.KEEP,
-                    onClick = { if (!shareText(subject, body)) copy() },
-                    compact = true,
+                // The code travels twice: as the link in the text, and as the picture beside
+                // it. Whoever receives the message taps it; whoever is standing next to them
+                // scans it off their screen — and the picture is the half that survives being
+                // screenshotted into a group chat, which is how an invitation actually spreads.
+                CodeToShare(
+                    url = inviteLink(code),
+                    caption = code,
+                    subject = subject,
+                    body = body,
+                    onNoSheet = { copy() },
                     modifier = Modifier.weight(1f),
-                )
+                ) { send ->
+                    GameButton(
+                        label = stringResource(Res.string.invite_share),
+                        tone = ButtonTone.KEEP,
+                        onClick = send,
+                        compact = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 GameButton(
                     label = if (copied) {
                         stringResource(Res.string.invite_copied)

@@ -90,6 +90,28 @@
                 <data android:scheme="vinto" />
             </intent-filter>
         </activity>
+        <!--
+            Serves the shared QR to whichever app the chooser picks, as a `content://` uri.
+
+            Android has refused `file://` between apps since N and throws in the *sender* when one
+            is offered, so without this the share button would take out the screen it sits on
+            rather than quietly doing nothing. `exported="false"` with `grantUriPermissions` is the
+            whole security model: no app may ask this provider for anything, and a chooser target
+            gets a one-file grant that the intent carries and the system revokes.
+
+            It lives here rather than in `composeApp` because the authority has to be the
+            application id, and `composeApp` is a library with a namespace of its own.
+            `Share.android.kt` builds the same string from `context.packageName`.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

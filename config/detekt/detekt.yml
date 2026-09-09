@@ -115,6 +115,16 @@ style:
     active: false
   LoopWithTooManyJumpStatements:
     maxJumpCount: 3
+  TrimMultilineRawString:
+    excludes:
+      # The web actuals, and only them.
+      #
+      # Every raw string this fires on is the body of a `js(...)` call, and Kotlin/Wasm requires
+      # that argument to be a **string literal** — `js("""...""".trimIndent())` is not a constant
+      # expression and does not compile, so the fix the rule asks for is unavailable rather than
+      # merely inconvenient. Three of these sat in the baseline for the same reason; a rule that
+      # cannot be satisfied belongs in the configuration, not in a list of things to fix later.
+      - '**/wasmJsMain/**'
 
 naming:
   MatchingDeclarationName:

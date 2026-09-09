@@ -18,3 +18,22 @@ package game.vinto.app
  *   platform APIs to get right for a job the framework has already done.
  */
 expect fun shareText(subject: String, body: String): Boolean
+
+/**
+ * The same hand-off, with a picture beside the words.
+ *
+ * Two callers, and both of them are an invitation: the room code on the lobby's invite sheet, and
+ * the game itself under About. In each the [picture] is a QR of the very link [body] carries, so
+ * the message works twice — tapped by whoever receives it, scanned by whoever is standing next to
+ * them. That is the shape every other game in the portfolio shares its cards in.
+ *
+ * Kept separate from [shareText] rather than folded into it with a nullable parameter, because
+ * the third caller — a crash report — has no picture and never will, and a `null` there would read
+ * as an omission rather than a decision.
+ *
+ * @return false when this platform has nothing to hand it to, so the caller can fall back to
+ *   [shareText] and then to the clipboard. A picture is the better share and the text is the one
+ *   that must always happen; failing all the way down to a dead button is the answer none of them
+ *   may give.
+ */
+expect fun sharePicture(subject: String, body: String, picture: ByteArray): Boolean

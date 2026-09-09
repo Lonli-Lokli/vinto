@@ -87,6 +87,49 @@ class ManifestTest {
     }
 
     /**
+     * The share provider is declared, and it publishes one directory rather than the cache.
+     *
+     * `sharePicture` writes the QR to the cache and hands the chooser a `content://` uri for it.
+     * Android has refused `file://` between apps since N and throws **in the sender**, so without
+     * this provider the button would take out the screen it sits on rather than quietly failing —
+     * and nothing in Kotlin can see that: the code compiles, every Compose suite passes, and the
+     * only thing that knows is a merged manifest on a phone.
+     *
+     * The second half is the narrower claim and the one worth keeping. `file_paths.xml` names the
+     * `share/` subdirectory alone; a provider pointed at the whole cache would be offering every
+     * other app on the device the saved game and the seat token beside the picture somebody meant
+     * to send.
+     */
+    @Test
+    fun theSharedPictureIsServedThroughAProviderThatPublishesOnlyItsOwnDirectory() {
+        val text = manifest()
+        assertTrue(
+            text.contains("androidx.core.content.FileProvider"),
+            "no FileProvider: sharing the code throws in the sender rather than opening a chooser",
+        )
+        assertTrue(
+            text.contains("android:authorities=\"\${applicationId}.fileprovider\""),
+            "the provider's authority is not \${applicationId}.fileprovider, which Share.android.kt builds",
+        )
+        assertTrue(
+            text.contains("android:exported=\"false\""),
+            "the share provider is exported: any app on the device could ask it for a file",
+        )
+
+        val paths = File("../androidApp/src/main/res/xml/file_paths.xml")
+        assertTrue(paths.exists(), "file_paths.xml is missing; the provider has nothing it may serve")
+        val served = paths.readText()
+        assertTrue(
+            served.contains("path=\"share/\""),
+            "the provider serves something other than the share directory: $served",
+        )
+        assertTrue(
+            !served.contains("path=\".\"") && !served.contains("path=\"\""),
+            "the provider publishes the whole cache, saved game and seat token included: $served",
+        )
+    }
+
+    /**
      * The Compose view on iOS gets the WHOLE screen, and insets it once.
      *
      * SwiftUI lays a `UIViewControllerRepresentable` out INSIDE the container safe area unless
