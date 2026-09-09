@@ -46,7 +46,9 @@ You do not normally change these. They are here so that if you see one, you know
 | Name | What it means | Value now |
 | --- | --- | --- |
 | `ROOM_OPEN` | Whether online play is switched on. `"false"` means the service answers "we are closed" to anybody trying to play. | `"false"` — **see §6, this is the switch that opens the game** |
-| `ANALYTICS` | Where anonymous counts are written, so we can tell how many people play. Writes nothing about any individual person. | `vinto_events` |
+| `ANALYTICS` | Where anonymous counts are written, so we can tell how many people play. Writes nothing about any individual person. It is the **portfolio's** store, shared with the other games — §7. | `kupalinka_events` |
+| `ARCHIVE` | Where a played round is kept for a while, so a question about a specific game can be answered later. Holds the cards, so it is not something to leave lying about — §7c. | `vinto-rounds` |
+| `DOOR` | How many requests one internet address may make per minute before being told to slow down. | 120 a minute |
 | `ROOM` / `REGISTRY` | Internal names for the two pieces of the room service. | fixed, never change |
 | `TEST_SEED` | Makes the cards come out in a fixed order, for testing. **Must never be set on the real service** — it would let people replay the same hand. | not set |
 
@@ -55,9 +57,7 @@ You do not normally change these. They are here so that if you see one, you know
 | Name | What it is | Where you get it |
 | --- | --- | --- |
 | **Cloudflare login** | Permission to publish the room service. | You log in once with a browser — §5 |
-| `ANALYTICS_TOKEN` | Lets the private stats page read the counts. | Cloudflare dashboard — §7 |
-| `ANALYTICS_ACCOUNT_ID` | Which Cloudflare account's counts to read. Not really a secret, but it is set the same way as one. | Cloudflare dashboard — §7 |
-| `DASHBOARD_KEY` | The password on the end of the stats page's web address. Anyone who has it can read the counts. | You invent it — §7 |
+| `RECORDINGS_KEY` | Lets you read back a recorded round when somebody writes in about one. Without it the archive is still written, but nobody can open it. | You invent it — §7c |
 | `SENTRY_DSN` | Where the game reports crashes, so a fault somebody hit at 3am is something we hear about. | Sentry → Settings → Client Keys — §7a |
 | **Android signing key** | Proves an Android app update really came from us. | You create it once — §8 |
 
@@ -260,86 +260,155 @@ set to `false`.
 
 ## 7. The stats page
 
-Anonymous counts only: how many games were played, how many people got as far as pressing
-"Play online", how long a round takes, what a room costs us to run. **No names, no room
-codes, no way to identify anybody** — the code is built so those cannot be recorded even by
-accident, and there is an automatic check that fails the build if anyone tries.
+Anonymous counts only: how many rounds were played, how far people get, how long a round
+takes, what a room costs us to run. **No names, no room codes, no way to identify anybody** —
+the code is built so those cannot be recorded even by accident, and there is an automatic
+check that fails the build if anyone tries.
 
 ### Where the page is
 
-`https://vinto-room.kupalinka.app/counts?key=THE-KEY-YOU-CHOSE`
+`https://stats.kupalinka.app`
 
-Six tables: people opening the app, rounds finished against rounds walked out of, the online
-funnel, how online sessions end, what broke and where, and what a round of online play costs
-us. It is built into the room service itself, so there is nothing extra to publish and the
-reading token never leaves Cloudflare.
+It is the **whole portfolio's** dashboard rather than Vinto's own, and Vinto is one game on
+it. Getting in is a Cloudflare sign-in with an address on the allowed list — there is no
+password to invent, none to look after, and none that ends up in a browser history. The list
+itself lives beside the dashboard, in `workers/px/wrangler.toml` in the `kupalinka` repository.
 
-**Until the three things below are set, that address answers "not found"** — exactly as if the
-page did not exist. That is on purpose: a service that says "you need a password" is telling a
-stranger there is something there.
+### There is nothing to set up
 
-### Setting it up — three things, once
+Not for the room service, not for the website, not for Vinto at all. If you came here from the
+secrets table in §3b looking for the three things this section used to ask for, that is the
+change: there are none now, and the ones that used to be here can be deleted (see the end of
+this section).
 
-> **You can do all three from a phone.** The `wrangler secret put` commands below need a
-> computer, but they are not the only way: in the Cloudflare dashboard, open **Workers & Pages
-> → vinto-room → Settings → Variables and Secrets**, and add each one there with *Encrypt*
-> turned on. Same secrets, same service, no terminal. Use the names exactly as written below.
+Three pieces already fit together, and each of them was published by an ordinary deploy.
 
+| Piece | What it does | How it got there |
+| --- | --- | --- |
+| **The room service** | Writes each round's numbers straight into the shared store. | Its `ANALYTICS` setting (§3a). Deploying it is the whole of the setup — no token, no key, no address. |
+| **The website** | Counts page loads, and the game's own events, through `px.kupalinka.app` — the portfolio's shared counter. | `loader.js`, published with every website deploy (§6c). |
+| **`stats.json`** | Says how Vinto wants its numbers *drawn*: the titles, the groupings, which ones to average. | `composeApp/src/wasmJsMain/resources/stats.json`, published with every website deploy (§6c). |
 
-**1. A token that can read the counts.**
+**The dashboard finds Vinto by itself.** It reads the list of games the portfolio site
+publishes at `kupalinka.app/games.json`, which already names Vinto and points at the
+`stats.json` above. So there is no registry to add a game to and no list to remember to edit on
+launch day — which is exactly when a list maintained by memory turns out to be wrong.
 
-1. Go to the Cloudflare dashboard → **My Profile** → **API Tokens** → **Create Token**.
-2. Choose **Create Custom Token**.
-3. Give it **Account · Account Analytics · Read**. Nothing else. This token cannot change or
-   delete anything.
-4. Copy the token — Cloudflare shows it **once**.
-5. Give it to the service:
+### Changing what the page shows
 
-```sh
-cd worker/cloudflare
-npx wrangler secret put ANALYTICS_TOKEN
-```
+Open `composeApp/src/wasmJsMain/resources/stats.json` and add a few lines. It is a description
+of charts rather than code — a title, which event to count, and how to group it — so adding a
+chart needs no programming and no change to the dashboard. Publish the website (§6c) and the
+new chart is there.
 
-Paste the token when it asks, and press Enter. It is stored by Cloudflare and never appears
-in the code.
-
-**2. Which account to read.** On the Cloudflare dashboard, open **Workers & Pages**; the
-**Account ID** is on the right-hand side of that page. It is a long string of letters and
-numbers. Copy it and run:
-
-```sh
-npx wrangler secret put ANALYTICS_ACCOUNT_ID
-```
-
-**3. A password for the page.** Make up a long random one — 30-odd characters, letters and
-numbers, no words. A password manager will generate one; so will this, if you have a terminal
-open anyway:
-
-```sh
-openssl rand -hex 20
-```
-
-Then:
-
-```sh
-npx wrangler secret put DASHBOARD_KEY
-```
-
-Keep it wherever you keep passwords. The page is a read-only view of anonymous totals, so this
-is a lock on a filing cabinet rather than on a safe — but the address with the key in it will
-end up in your browser history, so do not paste it into anything public, and treat a link to
-it as the key itself.
-
-### If you want to change the password later
-
-Run `npx wrangler secret put DASHBOARD_KEY` again with the new one. The old address stops
-working immediately.
+The events it may name are the ones the game actually sends, and that list lives in the code
+(`Analytics.kt`). Name one that does not exist and the dashboard draws a panel saying so,
+rather than an empty chart that looks like nobody played.
 
 ### A note on what "no counts yet" means
 
 The page reads a store that is filled by people playing. On a service nobody has used, or in
-the first hour after opening, the tables will say **"Nothing yet."** That is the page working.
-Give it a day before concluding anything is wrong.
+the first hour after opening, the panels will say there is nothing to draw. That is the page
+working. Give it a day before concluding anything is wrong.
+
+### What happened to the old page, and what to delete
+
+Vinto used to serve a dashboard of its own at `vinto-room.kupalinka.app/counts?key=…`, and
+setting it up meant making a read token, finding an account id, inventing a password, and
+storing all three as secrets on the room service. **That page is gone, and so are those three
+secrets.** Every game in the portfolio would have needed its own copy of the queries, the
+charts and the setup ritual; one dashboard reads them all instead, and each game publishes a
+small `stats.json` saying how it wants to be drawn.
+
+Two things worth knowing afterwards:
+
+- `ANALYTICS_TOKEN`, `ANALYTICS_ACCOUNT_ID` and `DASHBOARD_KEY` are read by nothing now. If
+  they are still on the service, delete them: Cloudflare dashboard → **Workers & Pages →
+  vinto-room → Settings → Variables and Secrets**. (At the time of writing the service had no
+  secrets on it at all, so there is most likely nothing to delete — and `RECORDINGS_KEY` from
+  §7c is the only one it should ever have.)
+- The store the counts go into is named `kupalinka_events` and is **shared with the other
+  games**. That is deliberate — it is one store with one schema and one privacy story — and it
+  is why the room service needs no key: stores belong to the Cloudflare account, so the
+  setting in §3a *is* the connection.
+
+---
+
+## 7c. The round archive
+
+Separate from §7, and it answers a different kind of question. The stats page answers "how
+many"; this answers "**that** one". Somebody writes in a few days later — *a King was played
+and nobody took a penalty, Tuesday evening some time* — and there is no room code in the
+message, because a room code is a way in and the apps deliberately never put one in a report.
+
+So every round played online is filed away as it finishes, under the clock:
+`2026/09/08/22/S3C9Z6-3.json`. An evening is a prefix rather than a search, and the file is
+the same kind of document the service can replay through the real rules.
+
+**That clock is UTC, not the clock the player was looking at.** Worth remembering when
+somebody says "Tuesday evening": in British summer time you want the hour before the one they
+named, and further afield the day itself can be the one either side.
+
+Rounds played on your own are not filed at all — they never leave the phone.
+
+### Two things to set up, once each
+
+**1. A key to read it with.** Without one, the archive is written but the door answers "not
+found" to everybody, including you.
+
+```sh
+cd worker/cloudflare
+npx wrangler secret put RECORDINGS_KEY
+```
+
+Make up a long random one — 30-odd characters, no words. `openssl rand -hex 20` will produce
+one if you have a terminal open anyway. Keep it wherever you keep passwords.
+
+> It is **its own** key on purpose, not shared with anything else. A recording is every hand at
+> one table, so this key opens something real; what it does *not* open is anything else, which
+> is why it is not the same key as any other.
+>
+> You can also set it without a terminal: Cloudflare dashboard → **Workers & Pages →
+> vinto-room → Settings → Variables and Secrets**, with *Encrypt* turned on, named exactly
+> `RECORDINGS_KEY`.
+
+**2. Make the archive forget after thirty days.**
+
+```sh
+npx wrangler r2 bucket lifecycle add vinto-rounds --name expire-30d --expire-days 30
+```
+
+This one is easy to skip because nothing breaks without it, and it matters anyway: with no
+expiry the service quietly becomes a permanent record of every hand every player has ever
+held. Thirty days answers "last week" and keeps nothing beyond what anybody would expect.
+
+It is set on the store rather than done by the service, so it keeps happening whether or not
+the service is running, and it cannot be forgotten by a room that has shut down.
+
+To check what is set: `npx wrangler r2 bucket lifecycle list vinto-rounds`. A store that has
+only Cloudflare's own *"Default Multipart Abort Rule"* has **not** got the expiry yet.
+
+### Reading a round back
+
+With the key set, ask for an evening and then for one round out of it:
+
+```sh
+curl -H "x-recordings-key: THE-KEY" \
+  "https://vinto-room.kupalinka.app/rounds?from=2026/09/08/22"
+
+curl -H "x-recordings-key: THE-KEY" \
+  "https://vinto-room.kupalinka.app/rounds?at=2026/09/08/22/S3C9Z6-3.json"
+```
+
+`from` can be a day (`2026/09/08`) or an hour (`2026/09/08/22`). Prefer the hour: a listing
+returns a page at a time, and an evening is comfortably inside one.
+
+If a crash report is what you have rather than a time, it names a deal instead, and that works
+too: `?game=THE-DEAL-ID`.
+
+A wrong key, a missing key and a service with no archive all answer the same **not found** —
+a door that says "you need a key" has told a stranger there is something here worth having one
+for.
 
 ---
 
@@ -473,11 +542,11 @@ app, and the room code is still printed in the invitation for typing in. There i
 
 ## 7b. Page-load statistics for the website
 
-Separate from §7, and it answers a different question. The stats page counts what happens
-*inside* the game — rounds played, how far people get. This counts what happens *before*:
-how many people loaded the page at all, where they came from, and how fast it loaded for
-them. Somebody whose browser is too old to run the game never reaches the game's own counter,
-and they are exactly the people worth knowing about.
+Separate from §7, and **optional** — §7 already counts visits. `loader.js` runs before the game
+itself loads, so somebody whose browser cannot manage a 3.7 MB game is counted anyway, and how
+long people stayed is already drawn on the dashboard. What this would add is the part that
+counter deliberately does not collect: where visitors arrived from, and how fast the page was
+for them.
 
 **It is a switch in the Cloudflare dashboard, not something in the code.**
 

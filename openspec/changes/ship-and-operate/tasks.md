@@ -101,11 +101,15 @@ app — which is why the `vinto://` scheme is there and works today.
 - [ ] 4.3 Switch on Cloudflare Web Analytics for the real site. **Needs the dashboard.** Not a
       code change either way, but 4.2 is what makes the instruction lead somewhere
       (was analytics 5.3)
-- [ ] 4.4 The three dashboard secrets — `ANALYTICS_TOKEN`, `ANALYTICS_ACCOUNT_ID`,
-      `DASHBOARD_KEY`. **Needs the dashboard**, and they can be added from a phone.
-      `GET /counts?key=…` is built and gated by `gate-dashboard.mjs` (51 checks); what it cannot
-      cover is a single number, the WAE SQL API being the one part of Analytics Engine
-      `wrangler dev` does not emulate (was analytics 5.1)
+- [x] 4.4 ~~The three dashboard secrets — `ANALYTICS_TOKEN`, `ANALYTICS_ACCOUNT_ID`,
+      `DASHBOARD_KEY`.~~ **Dropped, not done: there is nothing left to set.** `GET /counts?key=…`
+      and `gate-dashboard.mjs` were deleted in cffc972 — a per-game dashboard, with per-game SQL,
+      that every other game in the portfolio would have needed a copy of. The counts go to the
+      shared `kupalinka_events` dataset now and are drawn at `stats.kupalinka.app`, which finds
+      Vinto through `kupalinka.app/games.json` and reads the `stats.json` the website publishes.
+      Analytics Engine datasets are account-scoped, so the room's binding IS the connection: no
+      token, no account id, no password. `DEPLOYMENT.md` §7 is rewritten around that, and says
+      which secrets to delete if they were ever set (was analytics 5.1)
 - [ ] 4.5 Revisit the sampling rates in §A8 and the cost model in 2.3 against real volume and
       the actual bill. **Needs a week of traffic**, which can accrue now the room is open
       (was analytics 5.4)
