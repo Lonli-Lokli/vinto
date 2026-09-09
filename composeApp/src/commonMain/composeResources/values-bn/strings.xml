@@ -82,6 +82,11 @@
     <string name="invite_copied">কপি হয়েছে</string>
     <string name="invite_read_it_out">অথবা মুখে বলে দিন: ছয়টি অক্ষর, তাতে O বা I নেই।</string>
 
+    <string name="invited_title">আপনাকে আমন্ত্রণ জানানো হয়েছে</string>
+    <string name="invited_detail">রুম %1$s আপনার জন্য অপেক্ষা করছে। যোগ দিলে এর চারটি আসনের একটি নেওয়া হবে।</string>
+    <string name="invited_join">আসন নিন</string>
+    <string name="invited_in_app">পরিবর্তে অ্যাপে এটি খুলুন</string>
+
     <string name="lobby_title">রুম %1$s</string>
     <string name="lobby_seat_open">খালি আসন</string>
     <string name="lobby_seat_you">%1$s — আপনি</string>

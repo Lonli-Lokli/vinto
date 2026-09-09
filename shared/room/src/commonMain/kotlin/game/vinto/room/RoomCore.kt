@@ -99,6 +99,20 @@ private const val COUNTDOWN_MS = 10_000.0
 private const val SEAT_GRACE_MS = 30_000.0
 
 /**
+ * The same, before the deal — and four times as long, because the two graces are protecting
+ * opposite things.
+ *
+ * In a game the clock is short because three people are waiting on a fourth who has gone; the
+ * seat is held either way, so nothing is lost by covering it quickly. In a lobby nothing is
+ * waiting and the seat is *given back* when this runs out, so the cost of being brisk lands on
+ * the one person most likely to be away: the host, who stepped into a share sheet to send the
+ * invitation and would come back to find their own chair taken. Two minutes is longer than
+ * that errand and far shorter than [LOBBY_TTL_MS], which is how long a stranger's glance at an
+ * invitation used to hold a seat.
+ */
+private const val LOBBY_SEAT_GRACE_MS = 120_000.0
+
+/**
  * How long a running session survives with fewer than two humans connected.
  *
  * Separate from the seat grace and answering a different question: seat grace asks whether the
@@ -1217,6 +1231,14 @@ internal data class LifecycleResult(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val started: Boolean = false,
     /** Seats a bot has just taken over, so their owners can be told when they return. */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val tookOver: List<Int> = emptyList(),
+    /**
+     * Seats given back to the lobby, so the caller knows to redraw it.
+     *
+     * The counterpart of [tookOver] and never the same seat: before the deal a seat nobody is
+     * connected to is emptied, after it a seat is played. A lobby that changed and said nothing
+     * is a table showing a chair that is no longer taken.
+     */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val gaveBack: List<Int> = emptyList(),
 )
 
 /**
@@ -1386,7 +1408,13 @@ fun updatePresence(stateJson: String, connectedSeatsCsv: String, nowMs: Double):
                 seat.index in connected -> acc - seat.index
                 acc.containsKey(seat.index) -> acc
                 seat.isBot -> acc // already taken over; nothing further to schedule
-                else -> acc + (seat.index to nowMs + SEAT_GRACE_MS)
+                // Which grace depends on what the seat is holding — see [LOBBY_SEAT_GRACE_MS].
+                // Read at the moment the socket goes rather than when it expires, because a
+                // seat that empties in a lobby and a seat that empties mid-hand are two
+                // different promises to the person who left.
+                else -> acc + (
+                    seat.index to nowMs + if (present.inSession) SEAT_GRACE_MS else LOBBY_SEAT_GRACE_MS
+                    )
             }
         }
 
@@ -1546,26 +1574,10 @@ internal fun onAlarmTracked(stateJson: String, nowMs: Double): TrackedAlarm {
         }
     }
 
-    // 6. Seats whose grace has run out are played by bots. The seat keeps its token — it is
-    //    held for its owner, not handed to anybody else (design R2a).
+    // 6. Seats whose grace has run out. What that means depends on whether there is a hand in
+    //    them, and the two answers are opposites — see [graceExpired].
     val expired = state.seatGrace.filterValues { nowMs >= it }.keys
-    if (expired.isNotEmpty()) {
-        val seats = state.seats.map {
-            if (it.index in expired) it.copy(isBot = true, botPlayedWhileAway = true) else it
-        }
-        state = state.copy(seats = seats, seatGrace = state.seatGrace - expired)
-        val played = playBotsTracked(state)
-        state = withPacing(played.state, nowMs, watching = played.steps.size)
-        return TrackedAlarm(
-            LifecycleResult(
-                state,
-                nextAlarmAtEpochMs = state.nextAlarmAt,
-                tookOver = expired.toList(),
-            ),
-            steps = played.steps,
-            said = played.said,
-        )
-    }
+    if (expired.isNotEmpty()) return graceExpired(state, expired, nowMs)
 
     // 7. Pacing (9.4): a clock the table was being held by has run out. All three live in
     //    `pacingDue`, together, because they are one subject and reading them as a group is
@@ -1579,6 +1591,44 @@ internal fun onAlarmTracked(stateJson: String, nowMs: Double): TrackedAlarm {
     //    hand anybody more time; what it does is stop one outliving what it was waiting for.
     val paced = withPacing(state, nowMs)
     return TrackedAlarm(LifecycleResult(paced, nextAlarmAtEpochMs = paced.nextAlarmAt))
+}
+
+/**
+ * A seat whose owner's socket has been gone for the grace: given back, or played.
+ *
+ * **Before the deal the chair goes back to the table.** The grace exists so that a *hand* a bot
+ * is keeping warm comes back to its owner, and a lobby seat holds no hand — so holding it buys
+ * nobody anything and costs the table a quarter of itself. Reported from a real room: an
+ * invitation opened by something that was only looking at it — a scanner's preview, a browser
+ * beside the app — was seated as a stranger, and the seat was then held for a token that would
+ * never be sent again. Half a minute later it was a bot, and a bot holding a token is not
+ * `isFiller`, so it could not be removed either. `withCountdown` re-decides the start: a room
+ * that was counting down on four full seats is a lobby again the moment one of them empties.
+ *
+ * **Once the cards are out the seat keeps its token** — it is held for its owner, not handed to
+ * anybody else (design R2a) — and a bot plays the hand until they are back.
+ */
+private fun graceExpired(state: RoomState, expired: Set<Int>, nowMs: Double): TrackedAlarm {
+    val without = state.seatGrace - expired
+
+    if (state.phase == RoomPhase.LOBBY || state.phase == RoomPhase.STARTING) {
+        val emptied = state.seats.map { if (it.index in expired) Seat(index = it.index) else it }
+        val given = withCountdown(state.copy(seats = emptied, seatGrace = without), nowMs)
+        return TrackedAlarm(
+            LifecycleResult(given, nextAlarmAtEpochMs = given.nextAlarmAt, gaveBack = expired.sorted()),
+        )
+    }
+
+    val covered = state.seats.map {
+        if (it.index in expired) it.copy(isBot = true, botPlayedWhileAway = true) else it
+    }
+    val played = playBotsTracked(state.copy(seats = covered, seatGrace = without))
+    val next = withPacing(played.state, nowMs, watching = played.steps.size)
+    return TrackedAlarm(
+        LifecycleResult(next, nextAlarmAtEpochMs = next.nextAlarmAt, tookOver = expired.sorted()),
+        steps = played.steps,
+        said = played.said,
+    )
 }
 
 /**

@@ -96,6 +96,11 @@
     <string name="invite_copied">Скопировано</string>
     <string name="invite_read_it_out">Или продиктуйте: шесть символов, без букв O и I.</string>
 
+    <string name="invited_title">Вас пригласили</string>
+    <string name="invited_detail">Комната %1$s ждёт вас. Присоединение займёт одно из четырёх мест.</string>
+    <string name="invited_join">Занять место</string>
+    <string name="invited_in_app">Открыть в приложении</string>
+
     <string name="lobby_title">Комната %1$s</string>
     <string name="lobby_seat_open">Свободное место</string>
     <string name="lobby_seat_you">%1$s — вы</string>

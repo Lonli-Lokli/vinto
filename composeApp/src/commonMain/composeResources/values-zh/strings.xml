@@ -82,6 +82,11 @@
     <string name="invite_copied">已复制</string>
     <string name="invite_read_it_out">或者直接念出来：六位字符，不含字母 O 或 I。</string>
 
+    <string name="invited_title">您已收到邀请</string>
+    <string name="invited_detail">房间 %1$s 正在等您加入。加入将占用四个座位中的一个。</string>
+    <string name="invited_join">入座</string>
+    <string name="invited_in_app">改为在应用中打开</string>
+
     <string name="lobby_title">房间 %1$s</string>
     <string name="lobby_seat_open">空座位</string>
     <string name="lobby_seat_you">%1$s——你</string>

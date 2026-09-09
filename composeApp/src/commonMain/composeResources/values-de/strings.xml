@@ -82,6 +82,11 @@
     <string name="invite_copied">Kopiert</string>
     <string name="invite_read_it_out">Oder vorlesen: sechs Zeichen, ohne O oder I.</string>
 
+    <string name="invited_title">Sie wurden eingeladen</string>
+    <string name="invited_detail">Raum %1$s erwartet Sie. Der Beitritt belegt einen der vier Plätze.</string>
+    <string name="invited_join">Platz nehmen</string>
+    <string name="invited_in_app">Stattdessen in der App öffnen</string>
+
     <string name="lobby_title">Raum %1$s</string>
     <string name="lobby_seat_open">Freier Platz</string>
     <string name="lobby_seat_you">%1$s — Sie</string>

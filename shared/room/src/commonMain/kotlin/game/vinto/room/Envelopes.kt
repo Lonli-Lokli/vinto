@@ -53,6 +53,8 @@ internal data class AlarmEnvelopes(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val deleted: Boolean = false,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val started: Boolean = false,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val tookOver: List<Int> = emptyList(),
+    /** Seats the lobby got back — see `LifecycleResult.gaveBack`. The caller redraws it. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val gaveBack: List<Int> = emptyList(),
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val messages: Map<Int, String> = emptyMap(),
 )
 
@@ -145,6 +147,7 @@ fun alarmEnvelopes(stateJson: String, nowMs: Double): String {
             deleted = result.deleted,
             started = result.started,
             tookOver = result.tookOver,
+            gaveBack = result.gaveBack,
             messages = messages,
         ),
     )

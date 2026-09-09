@@ -87,6 +87,14 @@
     <string name="invite_copied">تم النسخ</string>
     <string name="invite_read_it_out">أو اقرأه بصوت عالٍ: ستة أحرف، بلا حرف O أو I فيها.</string>
 
+    <!-- The card an invitation lands on where a link can be opened by something that is only
+         LOOKING at it: a scanner's preview, an in-app browser, a second tab. Joining costs the
+         table one of its four seats, so it is a tap rather than a consequence of a page load. -->
+    <string name="invited_title">لقد تمت دعوتك</string>
+    <string name="invited_detail">الغرفة %1$s بانتظارك. الانضمام يشغل أحد مقاعدها الأربعة.</string>
+    <string name="invited_join">خذ مقعدًا</string>
+    <string name="invited_in_app">افتحها في التطبيق بدلًا من ذلك</string>
+
     <!-- The lobby: who is in, what everybody is waiting for. -->
     <string name="lobby_title">الغرفة %1$s</string>
     <string name="lobby_seat_open">مقعد شاغر</string>

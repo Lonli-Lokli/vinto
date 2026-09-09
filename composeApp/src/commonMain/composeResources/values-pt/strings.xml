@@ -87,6 +87,11 @@
     <string name="invite_copied">Copiado</string>
     <string name="invite_read_it_out">Ou dita-o em voz alta: seis caracteres, sem O nem I.</string>
 
+    <string name="invited_title">Recebeste um convite</string>
+    <string name="invited_detail">A sala %1$s está à tua espera. Entrar ocupa um dos quatro lugares.</string>
+    <string name="invited_join">Ocupar um lugar</string>
+    <string name="invited_in_app">Abrir na aplicação</string>
+
     <!-- The lobby: who is in, what everybody is waiting for. -->
     <string name="lobby_title">Sala %1$s</string>
     <string name="lobby_seat_open">Lugar livre</string>

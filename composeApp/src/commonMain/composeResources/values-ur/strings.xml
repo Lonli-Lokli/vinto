@@ -87,6 +87,11 @@
     <string name="invite_copied">کاپی ہو گیا</string>
     <string name="invite_read_it_out">یا اسے پڑھ کر سنائیں: چھ حروف، جن میں O یا I نہیں ہے۔</string>
 
+    <string name="invited_title">آپ کو مدعو کیا گیا ہے</string>
+    <string name="invited_detail">روم %1$s آپ کا منتظر ہے۔ شامل ہونے پر اس کی چار نشستوں میں سے ایک لی جائے گی۔</string>
+    <string name="invited_join">نشست سنبھالیں</string>
+    <string name="invited_in_app">اس کے بجائے ایپ میں کھولیں</string>
+
     <!-- The lobby: who is in, what everybody is waiting for. -->
     <string name="lobby_title">روم %1$s</string>
     <string name="lobby_seat_open">خالی نشست</string>

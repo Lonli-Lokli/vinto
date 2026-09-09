@@ -23,6 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
+import game.vinto.app.art.invited_detail
+import game.vinto.app.art.invited_in_app
+import game.vinto.app.art.invited_join
+import game.vinto.app.art.invited_title
 import game.vinto.app.art.online_back
 import game.vinto.app.art.online_browse
 import game.vinto.app.art.online_browse_detail
@@ -45,6 +49,8 @@ import game.vinto.app.art.online_visibility
 import game.vinto.app.art.online_visibility_detail
 import game.vinto.app.art.online_visibility_private
 import game.vinto.app.art.online_visibility_public
+import game.vinto.app.link.INVITE_SCHEME
+import game.vinto.app.link.invitationsAskFirst
 import game.vinto.app.link.roomCodeFrom
 import game.vinto.app.theme.ActionTile
 import game.vinto.app.theme.BackChevron
@@ -216,6 +222,48 @@ fun OnlineScreen(
             detail = stringResource(Res.string.online_browse_detail),
             onClick = { leaveWith(onBrowse) },
             enabled = door.open,
+        )
+    }
+}
+
+/**
+ * An invitation, before it becomes a seat.
+ *
+ * Only reached where [invitationsAskFirst] says a link can arrive without anybody having
+ * decided to come here — the web, where a URL is opened by scanners' previews, in-app browsers
+ * and curious taps. On a phone an App Link means somebody tapped an invitation, and that walks
+ * straight in as it always did.
+ *
+ * What it does NOT show is how many seats are free. Asking would mean a round trip before the
+ * person has agreed to anything, and there is no way to ask about a private room without
+ * joining it — which is the very thing this screen exists to stop doing by accident. The code
+ * is here instead, because it is the one thing a person can check against the message they
+ * were sent.
+ */
+@Composable
+fun InvitationScreen(code: String, onJoin: () -> Unit, onBack: () -> Unit) {
+    Scaffold(title = stringResource(Res.string.invited_title), onBack = onBack) {
+        Text(
+            text = stringResource(Res.string.invited_detail, code),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onFelt(),
+        )
+
+        GameButton(
+            label = stringResource(Res.string.invited_join),
+            tone = ButtonTone.PLAY,
+            onClick = onJoin,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        // The better answer for somebody who has the game: their app holds the seat token for
+        // this room, so it returns to the seat they already have instead of taking a second
+        // one. The custom scheme rather than the https link, which would land back here.
+        GameButton(
+            label = stringResource(Res.string.invited_in_app),
+            tone = ButtonTone.NEUTRAL,
+            onClick = { openUrl("$INVITE_SCHEME://r/$code") },
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

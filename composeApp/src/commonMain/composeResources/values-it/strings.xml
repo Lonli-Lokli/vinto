@@ -88,6 +88,14 @@
     <string name="invite_copied">Copiato</string>
     <string name="invite_read_it_out">Oppure leggilo ad alta voce: sei caratteri, senza O né I.</string>
 
+    <!-- The card an invitation lands on where a link can be opened by something that is only
+         LOOKING at it: a scanner's preview, an in-app browser, a second tab. Joining costs the
+         table one of its four seats, so it is a tap rather than a consequence of a page load. -->
+    <string name="invited_title">Hai ricevuto un invito</string>
+    <string name="invited_detail">La stanza %1$s ti aspetta. Partecipare occupa uno dei suoi quattro posti.</string>
+    <string name="invited_join">Prendi posto</string>
+    <string name="invited_in_app">Aprilo invece nell'app</string>
+
     <!-- The lobby: who is in, what everybody is waiting for. -->
     <string name="lobby_title">Stanza %1$s</string>
     <string name="lobby_seat_open">Posto libero</string>

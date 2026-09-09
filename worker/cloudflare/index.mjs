@@ -631,6 +631,13 @@ export class Room {
     await this.#reflectInRegistry(JSON.stringify(result.state));
     this.#observe(stateJson, result.state);
 
+    // A lobby that got a seat back has changed for everyone looking at it, and there are no
+    // per-seat messages to carry it: before the deal the seats ARE the lobby. Without this the
+    // chair stays drawn as taken until something else happens to broadcast one.
+    if (result.gaveBack.length > 0) {
+      this.#broadcastLobby(JSON.stringify(result.state));
+    }
+
     // Anything the alarm produced messages for — a deal, a takeover's moves, a pacing
     // expiry's — goes out; the room decided what, this layer only delivers.
     if (Object.keys(result.messages).length > 0) {

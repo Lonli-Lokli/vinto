@@ -90,6 +90,11 @@
     <string name="invite_copied">Kopyalandı</string>
     <string name="invite_read_it_out">Ya da sesli oku: altı karakter, içinde O ya da I yok.</string>
 
+    <string name="invited_title">Davet edildiniz</string>
+    <string name="invited_detail">Oda %1$s sizi bekliyor. Katılmak dört koltuktan birini alır.</string>
+    <string name="invited_join">Koltuğa geç</string>
+    <string name="invited_in_app">Bunun yerine uygulamada aç</string>
+
     <!-- The lobby: who is in, what everybody is waiting for. -->
     <string name="lobby_title">Oda %1$s</string>
     <string name="lobby_seat_open">Boş koltuk</string>

@@ -98,6 +98,11 @@
     <string name="invite_copied">Скапіявана</string>
     <string name="invite_read_it_out">Або прадыктуйце: шэсць сімвалаў, без літар O і I.</string>
 
+    <string name="invited_title">Вас запрасілі</string>
+    <string name="invited_detail">Пакой %1$s чакае вас. Далучэнне зойме адно з чатырох месцаў.</string>
+    <string name="invited_join">Заняць месца</string>
+    <string name="invited_in_app">Адкрыць у дадатку</string>
+
     <string name="lobby_title">Пакой %1$s</string>
     <string name="lobby_seat_open">Вольнае месца</string>
     <string name="lobby_seat_you">%1$s — вы</string>

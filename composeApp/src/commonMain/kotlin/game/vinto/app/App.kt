@@ -28,6 +28,8 @@ import game.vinto.app.crash.Crashes
 import game.vinto.app.game.GameScreen
 import game.vinto.app.game.RoomScreen
 import game.vinto.app.game.TeachScreen
+import game.vinto.app.link.Invitations
+import game.vinto.app.link.invitationsAskFirst
 import game.vinto.app.link.roomCodeFrom
 import game.vinto.app.link.takeOpenedLink
 import game.vinto.app.net.platformRoomConnector
@@ -152,10 +154,15 @@ fun App(
     fun enterRoom(code: String, nickname: String): Screen =
         roomScreen(connector, vault, appScope, code, nickname)
 
-    Startup(vault, sink, seeds, marketing, ::enterRoom) { loaded, where ->
+    fun invitedScreen(code: String): Screen = invitationLands(code, vault, seeds, ::enterRoom)
+
+    Startup(vault, sink, marketing, ::invitedScreen) { loaded, where ->
         settings = loaded
         screen = where
     }
+
+    // And the ones that arrive after the launch.
+    InvitationsWhileRunning(screen, ::invitedScreen) { screen = it }
 
     // Every change is written down as it is made. There is no "save" button in a settings
     // screen worth having, and four values are not worth batching.
@@ -314,8 +321,9 @@ private fun homeAfterLeaving(vault: Vault): Screen {
 private fun surfaceOf(screen: Screen): Surface = when (screen) {
     is Screen.Playing -> Surface.SOLO
     Screen.Teaching -> Surface.LESSON
-    Screen.Online, is Screen.OpenRoom, is Screen.JoinByCode, is Screen.Discover, is Screen.InRoom ->
-        Surface.ONLINE
+    Screen.Online, is Screen.OpenRoom, is Screen.JoinByCode, is Screen.Discover, is Screen.InRoom,
+    is Screen.Invited,
+    -> Surface.ONLINE
     Screen.Opening, is Screen.Home, is Screen.Settings -> Surface.MENU
 }
 
@@ -425,6 +433,15 @@ private sealed interface Screen {
      */
     data class Discover(val nickname: String) : Screen, OnlineWay
 
+    /**
+     * An invitation that has not been accepted yet — the web's landing, never a phone's.
+     *
+     * A screen rather than a dialog because it is where the app *is*: a browser opened at
+     * `/r/CODE` has no screen behind this one to go back to, and Back from here is the front
+     * door like everywhere else.
+     */
+    data class Invited(val code: String) : Screen, OnlineWay
+
     /** Inside one: the lobby until the deal, the table after. */
     data class InRoom(val room: RemoteRoom) : Screen
 }
@@ -505,6 +522,23 @@ private fun rememberSink(scope: kotlinx.coroutines.CoroutineScope): Analytics = 
 }
 
 /**
+ * What an invitation means, which is not the same on every client.
+ *
+ * On a phone it means go: the system resolved a link somebody tapped, and this device's vault
+ * already holds the seat token for any room it has been in, so walking in returns to the seat
+ * it has rather than taking a second one. In a browser a URL is opened by things that are only
+ * looking — a scanner's preview, an in-app browser, a second tab — so it means *ask*, and
+ * [invitationsAskFirst] is where that difference is written down.
+ */
+private fun invitationLands(
+    code: String,
+    vault: Vault,
+    seeds: () -> Long,
+    enterRoom: (String, String) -> Screen,
+): Screen =
+    if (invitationsAskFirst) Screen.Invited(code) else enterRoom(code, vault.identity { seeds() }.nickname)
+
+/**
  * One way into a room, whether the code was typed, tapped off the public list, or arrived in
  * an invitation.
  *
@@ -548,9 +582,8 @@ private fun roomScreen(
 private fun Startup(
     vault: Vault,
     sink: Analytics,
-    seeds: () -> Long,
     marketing: String?,
-    enterRoom: (String, String) -> Screen,
+    invitedScreen: (String) -> Screen,
     onReady: (Settings, Screen) -> Unit,
 ) {
     LaunchedEffect(Unit) {
@@ -566,13 +599,32 @@ private fun Startup(
                 stagedScreen(staged, vault)
             }
             invited != null -> {
-                enterRoom(invited, vault.identity { seeds() }.nickname)
+                invitedScreen(invited)
             }
             else -> {
                 Screen.Home(canContinue = vault.loadGame() != null)
             }
         }
         onReady(settings, where)
+    }
+}
+
+/**
+ * Invitations arriving while the app is up, wired to where it is.
+ *
+ * Extracted for the reason [AtTheTable] and [Startup] were: `App`'s body is at its length
+ * limit, and a branch with a lambda in it is what pushes it over. The rule is here rather than
+ * in `link/`, which knows nothing about screens.
+ *
+ * Held until the opening screen is behind us, so `Startup` and this cannot both read one link.
+ * The room being left is *stepped out of* — `leave` closes the socket and keeps the seat, so
+ * its token still leads back, exactly as `backedOutOf` does.
+ */
+@Composable
+private fun InvitationsWhileRunning(screen: Screen, invited: (String) -> Screen, go: (Screen) -> Unit) {
+    Invitations(screen !is Screen.Opening, { (screen as? Screen.InRoom)?.room?.code }) { code ->
+        (screen as? Screen.InRoom)?.room?.leave()
+        go(invited(code))
     }
 }
 
@@ -711,6 +763,14 @@ private fun OnlineFlow(
         is Screen.Discover -> DiscoverScreen(
             connector = connector,
             onJoin = { go(enterRoom(it, where.nickname)) },
+            onBack = { go(Screen.Online) },
+        )
+
+        // The seat is taken by the tap and by nothing else, which is the whole of this fix:
+        // the screen appearing costs the table nothing.
+        is Screen.Invited -> InvitationScreen(
+            code = where.code,
+            onJoin = { go(enterRoom(where.code, vault.identity { freshSeed() }.nickname)) },
             onBack = { go(Screen.Online) },
         )
     }

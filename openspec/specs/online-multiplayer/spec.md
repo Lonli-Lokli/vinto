@@ -182,7 +182,10 @@ which recovers a second human remains playable.
 A room SHALL schedule an alarm on every state change and SHALL delete itself when: no human
 socket has been connected for the room TTL; the game never started within the lobby TTL; or
 the session finished and the finished TTL elapsed. A seat whose last socket closes SHALL be
-played by a bot after a grace period, and SHALL remain reserved for its token.
+played by a bot after a grace period **once the round is dealt**, and SHALL remain reserved for
+its token. **Before the deal it SHALL instead be given back to the lobby** after a longer grace:
+the reservation exists to return a hand a bot is keeping warm to its owner, and a lobby seat
+holds no hand, so holding it only costs the table one of its four chairs.
 
 #### Scenario: An abandoned room disappears
 
@@ -198,6 +201,13 @@ played by a bot after a grace period, and SHALL remain reserved for its token.
 
 - **WHEN** a player's socket closes and the grace period elapses while the game continues
 - **THEN** a bot plays that seat, and a later reconnect with the same token resumes it and is told the hand changed
+
+#### Scenario: A seat nobody is connected to in a lobby goes back to the table
+
+- **WHEN** a socket closes before the deal and the lobby's grace elapses with nobody reconnecting
+- **THEN** the seat is empty and unnamed again, is not a bot, and can be taken by somebody else — so
+  an invitation opened by something that was only looking at it does not hold a chair for the
+  life of the lobby
 
 ### Requirement: Abuse limits bound the cost of a hostile client
 

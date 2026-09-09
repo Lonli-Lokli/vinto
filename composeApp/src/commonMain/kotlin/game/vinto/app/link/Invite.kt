@@ -1,6 +1,10 @@
 package game.vinto.app.link
 
 import game.vinto.protocol.looksLikeRoomCode
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 
 /**
  * Invitations, as links rather than as codes to transcribe.
@@ -102,13 +106,43 @@ private fun pathCodeOf(url: String): String? {
  * Set from a platform entry point (`MainActivity.onCreate`/`onNewIntent`, iOS's
  * `application(_:continue:)`, `location.pathname` on the web) rather than read by one, so
  * `commonMain` never learns what an `Intent` is.
+ *
+ * **Observable, and that is the fix rather than a refinement.** It was a plain `var`, and the
+ * only thing that ever read it was the startup effect — which runs once per composition. So a
+ * link arriving while the app was *already running* was filed and never read: the second
+ * invitation of an evening did nothing at all, which is precisely what `onNewIntent` and the
+ * manifest's `singleTop` were added for, and it stayed pending for whichever cold start came
+ * next. A `StateFlow` lets the running app hear one.
  */
-private var opened: String? = null
+private val opened = MutableStateFlow<String?>(null)
+
+/** The pending link, for whoever is listening while the app runs. See [Invitations]. */
+val openedLink: StateFlow<String?> = opened.asStateFlow()
 
 /** Called by a platform entry point when the app is handed a URL. */
 fun offerOpenedLink(link: String?) {
-    if (roomCodeFrom(link) != null) opened = link
+    if (roomCodeFrom(link) != null) opened.value = link
 }
 
-/** The pending link, once. Null when the app was opened normally. */
-fun takeOpenedLink(): String? = opened.also { opened = null }
+/**
+ * The pending link, once. Null when the app was opened normally.
+ *
+ * `getAndUpdate` rather than a read and a write, because there are two readers now — the
+ * startup effect and the running app's listener — and a link handed to both would open the
+ * room twice.
+ */
+fun takeOpenedLink(): String? = opened.getAndUpdate { null }
+
+/**
+ * The room an opened link means *given where the app already is*, or null for nothing to do.
+ *
+ * The one case worth naming: a link for the room you are sitting in is not a journey. Scanning
+ * your own invitation is the way that happens — the host shares a code, then reads their own QR
+ * back — and walking in again would be, at best, a screen rebuilt for no reason.
+ *
+ * Everything else an invitation says is honoured, including a *different* room while at a
+ * table: somebody who taps an invitation has asked to be somewhere, and the app doing nothing
+ * visible is the bug this is part of fixing.
+ */
+fun invitationFrom(link: String?, atRoom: String?): String? =
+    roomCodeFrom(link)?.takeUnless { it.equals(atRoom, ignoreCase = true) }

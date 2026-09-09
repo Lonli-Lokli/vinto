@@ -87,6 +87,14 @@
     <string name="invite_copied">कॉपी हो गया</string>
     <string name="invite_read_it_out">या इसे बोलकर बताएं: छह अक्षर, जिनमें O या I नहीं है।</string>
 
+    <!-- The card an invitation lands on where a link can be opened by something that is only
+         LOOKING at it: a scanner's preview, an in-app browser, a second tab. Joining costs the
+         table one of its four seats, so it is a tap rather than a consequence of a page load. -->
+    <string name="invited_title">आपको आमंत्रित किया गया है</string>
+    <string name="invited_detail">रूम %1$s आपका इंतज़ार कर रहा है। शामिल होने पर इसकी चार सीटों में से एक सीट भर जाएगी।</string>
+    <string name="invited_join">सीट लें</string>
+    <string name="invited_in_app">इसके बजाय ऐप में खोलें</string>
+
     <!-- The lobby: who is in, what everybody is waiting for. -->
     <string name="lobby_title">रूम %1$s</string>
     <string name="lobby_seat_open">खाली सीट</string>

@@ -33,6 +33,7 @@ internal const val STRANGER = "token-mallory"
 
 /** `RoomCore`'s private deadlines, pinned. A drift there fails the test that reads it. */
 internal const val SEAT_GRACE_MS = 30_000.0
+internal const val LOBBY_SEAT_GRACE_MS = 120_000.0
 internal const val LONELY_GRACE_MS = 60_000.0
 internal const val ROOM_TTL_MS = 120_000.0
 internal const val FINISHED_TTL_MS = 600_000.0

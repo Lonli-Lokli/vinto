@@ -82,6 +82,11 @@
     <string name="invite_copied">복사됐어요</string>
     <string name="invite_read_it_out">또는 소리 내 알려주세요: 여섯 자리이고, O나 I는 없어요.</string>
 
+    <string name="invited_title">초대를 받았어요</string>
+    <string name="invited_detail">방 %1$s에서 기다리고 있어요. 참가하면 네 자리 중 하나를 차지해요.</string>
+    <string name="invited_join">자리에 앉기</string>
+    <string name="invited_in_app">대신 앱에서 열기</string>
+
     <string name="lobby_title">방 %1$s</string>
     <string name="lobby_seat_open">빈 자리</string>
     <string name="lobby_seat_you">%1$s — 나</string>

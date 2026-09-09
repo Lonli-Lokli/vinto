@@ -733,6 +733,43 @@ itself is **not** a second `expect`: Compose carries one on all four targets, an
 hand-written platform implementations would be four APIs to get right for a job the framework
 has already done.
 
+### And an invitation that asks before it takes a seat
+
+Reported from a real room: a host opened a table, shared it, then read their own QR back — and
+found themselves at their own table **twice**, the second seat under a name they had never seen.
+
+The mechanism is worth reading slowly, because none of the three parts is obviously wrong on its
+own. A seat belongs to a **token in that client's vault** (`Identity.kt`), which is what makes
+reconnecting safe and is per-client by design. The scan opened the invitation in a browser rather
+than in the app — a QR scanner's preview or a messaging app's in-app browser does not trigger App
+Links — and the web client is the same `commonMain`, so it does not look like a different client
+at all. It had no token, so the room seated it as a stranger. One person, two vaults, two of the
+room's four chairs.
+
+Nothing can link the two, and the app→app path was never broken: a second way into a room this
+device already sits in carries the vaulted token and comes back to the same seat, which is now a
+test. So the fix is not to recognise the person. It is three narrower things:
+
+- **On the web an invitation asks first.** `/r/CODE` lands on a card naming the room, with one
+  button that takes a seat and one that hands the link to the app instead. `invitationsAskFirst`
+  is the whole platform difference and says why in its own doc: in a browser a URL is opened by
+  previews, in-app browsers, second tabs and curious taps, and every one of those used to cost a
+  table a chair. On a phone a resolved App Link means somebody tapped an invitation, so that walks
+  straight in as it always did. The card does **not** show how many seats are free: there is no way
+  to ask about a private room without joining it, which is the thing being stopped.
+- **An invitation that arrives while the app is running is acted on.** `onNewIntent` and iOS's
+  `HandleOpenedLink` both handed the link to a `var` whose only reader was the startup effect,
+  which runs once per composition — so the second invitation of an evening did nothing at all,
+  which is exactly what those two entry points were added for. It is a `StateFlow` now, and
+  `Invitations` listens. A link for the room you are already sitting in is *answered* by staying
+  put, and consumed either way rather than left to be honoured by some later launch.
+- **A lobby seat nobody is connected to goes back to the table** (`RoomCore.graceExpired`). The
+  seat grace exists to return a hand a bot is keeping warm; before the deal there is no hand, and
+  the seat was being held for a token that would never be sent again — then turned into a bot that,
+  holding a token, is not `isFiller` and could not be removed either. Two minutes rather than
+  thirty seconds, because the person most likely to be away in a lobby is the host, who stepped
+  into a share sheet to send the invitation.
+
 ## 6n. The endgame, which was being skipped
 
 Calling Vinto took the player straight from the button to "Round over". The bots' final turns

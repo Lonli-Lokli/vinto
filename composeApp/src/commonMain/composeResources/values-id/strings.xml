@@ -87,6 +87,11 @@
     <string name="invite_copied">Disalin</string>
     <string name="invite_read_it_out">Atau bacakan langsung: enam karakter, tanpa huruf O atau I.</string>
 
+    <string name="invited_title">Anda telah diundang</string>
+    <string name="invited_detail">Ruangan %1$s menunggu Anda. Bergabung akan mengisi satu dari empat kursinya.</string>
+    <string name="invited_join">Ambil kursi</string>
+    <string name="invited_in_app">Buka di aplikasi saja</string>
+
     <!-- The lobby: who is in, what everybody is waiting for. -->
     <string name="lobby_title">Ruangan %1$s</string>
     <string name="lobby_seat_open">Kursi kosong</string>

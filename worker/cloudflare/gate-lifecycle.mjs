@@ -71,6 +71,28 @@ check(
 );
 check('and a stranger cannot take it', parse(joinRoom(takenOver, 'token-stranger', 'Zed', T0)).error !== null);
 
+// --- a lobby seat is given back rather than held ----------------------------------------------
+// The grace is protecting a *hand* here. Before the deal there is none, so a seat nobody is
+// connected to goes back to the table: an invitation opened by something that was only looking
+// at it used to hold a chair for the whole ten minutes a lobby lives.
+{
+  let lobby = newRoom('life-lobby', 99, 'moderate', T0);
+  lobby = JSON.stringify(parse(joinRoom(lobby, A, 'Ada', T0)).state);
+  lobby = JSON.stringify(parse(joinRoom(lobby, B, 'Bo', T0)).state);
+  const dropped = parse(updatePresence(lobby, '0', T0));       // Bo's socket goes
+  check('a lobby seat gets the longer grace', dropped.state.seatGrace['1'] === T0 + 2 * MINUTE,
+    JSON.stringify(dropped.state.seatGrace));
+
+  const given = parse(onAlarm(JSON.stringify(dropped.state), T0 + 2 * MINUTE + SECOND));
+  check('and when it expires the chair is empty again', given.gaveBack.includes(1), `${given.gaveBack}`);
+  check('with nothing left of whoever was in it', given.state.seats[1].tokenHash === null);
+  check('not a bot nobody can remove', given.state.seats[1].isBot === false);
+  check(
+    'so somebody else can sit down',
+    parse(joinRoom(JSON.stringify(given.state), 'token-cara', 'Cara', T0 + 3 * MINUTE)).seat === 1,
+  );
+}
+
 // --- coming back ------------------------------------------------------------------------------
 result = parse(joinRoom(takenOver, B, 'Bo', T0 + 40 * SECOND));
 check('the owner reconnects to the same seat', result.seat === 1, `seat ${result.seat}`);

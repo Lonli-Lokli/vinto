@@ -89,6 +89,14 @@
     <string name="invite_copied">コピーしました</string>
     <string name="invite_read_it_out">読み上げる場合はこちら: 6文字で、OとIは使われていません。</string>
 
+    <!-- The card an invitation lands on where a link can be opened by something that is only
+         LOOKING at it: a scanner's preview, an in-app browser, a second tab. Joining costs the
+         table one of its four seats, so it is a tap rather than a consequence of a page load. -->
+    <string name="invited_title">招待されました</string>
+    <string name="invited_detail">ルーム%1$sがお待ちしています。参加すると4席のうち1席が埋まります。</string>
+    <string name="invited_join">参加する</string>
+    <string name="invited_in_app">アプリで開く</string>
+
     <!-- The lobby: who is in, what everybody is waiting for. -->
     <string name="lobby_title">ルーム %1$s</string>
     <string name="lobby_seat_open">空席</string>
