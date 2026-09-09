@@ -7,7 +7,10 @@
       "namespace": "android_app",
       "package_name": "app.kupalinka.vinto",
       "sha256_cert_fingerprints": [
-        "EC:D8:8D:F5:AB:93:6B:DE:E6:9D:AD:C7:C4:6D:23:09:BE:54:13:89:C6:DD:C9:5B:86:EA:C6:F4:54:C0:BD:26"
+        "EC:D8:8D:F5:AB:93:6B:DE:E6:9D:AD:C7:C4:6D:23:09:BE:54:13:89:C6:DD:C9:5B:86:EA:C6:F4:54:C0:BD:26",
+        "4F:67:CA:EF:DA:05:F2:68:FC:26:1C:26:C1:1D:13:27:EC:E1:A0:F3:70:40:E2:51:43:BF:85:EF:98:CB:D2:59",
+        "21:AD:13:D7:70:44:ED:D1:55:34:AC:95:52:48:C8:20:E9:6C:6D:E7:63:29:E3:53:E8:80:1A:EF:B6:EA:1B:93",
+        "B4:C5:A2:98:F3:EA:42:D0:CF:A5:57:53:B4:FF:8F:F5:EB:4C:05:CE:14:A4:E0:17:30:9F:BB:D7:57:A0:6E:C6"
       ]
     }
   }
