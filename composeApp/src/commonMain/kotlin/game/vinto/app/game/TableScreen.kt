@@ -871,12 +871,18 @@ internal fun TableHeader(
     onLeave: (() -> Unit)?,
     /** The window's shape. With [host] it is the whole of what decides this header. */
     landscape: Boolean = false,
+    /**
+     * What this header shows, defaulted from the two facts that decide it.
+     *
+     * A parameter only so a test can ask for a shape this machine is not — the web's cup cannot
+     * otherwise be rendered anywhere it can be looked at, and the order of the controls beside it
+     * is exactly what `HeaderOrderTest` is for.
+     */
+    style: HeaderStyle = headerStyle(host, landscape),
 ) {
     val settings = stringResource(Res.string.header_settings)
     val leave = stringResource(Res.string.header_leave)
     val rules = stringResource(Res.string.header_rules)
-    // Three known shapes, chosen by fact rather than measured — see [HeaderStyle].
-    val style = headerStyle(host, landscape)
     val wideHeader = style.labelled
     val name = stringResource(Res.string.app_name)
     val counter = stringResource(Res.string.table_round_turn, round, view.turnNumber)
@@ -932,7 +938,9 @@ internal fun TableHeader(
 
         if (style.cup) SupportGlyph(wide = wideHeader)
 
-        // The way out, last in the row and on the end of it.
+        // The way out, LAST IN THE ROW WHATEVER ELSE IS IN IT, and `HeaderOrderTest` holds it
+        // there for every shape the header has — including the web's, where the cup arrives
+        // between the settings and this and would be the obvious thing to append after.
         //
         // Android answers the back gesture and is handed no [onLeave] at all; the web, the
         // desktop and iOS answer nothing, and a solo round there could only be left by
