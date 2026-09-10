@@ -195,6 +195,22 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      # First, because it takes a fifth of a second and it is the check most likely to be the
+      # reason a locale is wrong. It lives here rather than in `kmp-android` because it is
+      # Node, and this is the Node-shaped Linux job.
+      #
+      # It overlaps the Kotlin suites deliberately and is not made redundant by them:
+      # `TranslationShapeTest` holds the arguments a line takes and `StringEscapeTest` the
+      # `\'` escape, but neither knows about `%%` or a double-escaped entity, and `%%` is the
+      # one that shipped — a stats line read "66%% won" on a store screenshot, in twenty
+      # locales at once, because every translator copied the source's escape faithfully.
+      - name: Every locale against the English source
+        run: node tools/check-translations.mjs
+
       - uses: actions/setup-java@v6
         with:
           distribution: temurin

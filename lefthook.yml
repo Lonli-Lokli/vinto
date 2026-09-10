@@ -31,3 +31,19 @@ pre-commit:
     detekt:
       glob: '*.{kt,kts}'
       run: ./gradlew detekt
+
+    # Every locale against the English source. Globbed on the resource files, so it costs
+    # nothing on a commit that touches no strings — and, more to the point, it costs nothing
+    # to *remember*, which is what it was relying on until now.
+    #
+    # It is here rather than only in CI because of what it catches that the Kotlin suites do
+    # not. `TranslationShapeTest` and `StringEscapeTest` cover the arguments a line takes and
+    # the `\'` escape, and both run in `kmp-android`; nothing anywhere covered `%%` or a
+    # double-escaped entity, and `%%` is not hypothetical — it reached a store screenshot in
+    # twenty locales at once, because every translator faithfully copied the source's escape.
+    #
+    # The whole file set, not the staged files: a locale is checked against the source, so
+    # "which files did this commit touch" is the wrong question to ask of it.
+    translations:
+      glob: '*strings.xml'
+      run: node tools/check-translations.mjs
