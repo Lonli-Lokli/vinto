@@ -284,6 +284,7 @@
     <string name="rail_aim_second">দ্বিতীয়</string>
     <string name="card_discarded_live">বাতিল করা হয়েছে %1$s, কার্যক্রম অব্যবহৃত</string>
     <string name="card_in_hand">আপনার হাতের তাস</string>
+    <string name="card_drawn_by">%1$s তুলেছেন %2$s</string>
 
     <string name="score_round">রাউন্ড %1$d</string>
     <string name="score_caller_won">Vinto ডাক টিকে গেছে</string>

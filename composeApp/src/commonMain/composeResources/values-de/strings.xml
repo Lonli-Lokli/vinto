@@ -17,7 +17,7 @@
     <string name="home_unofficial">Inoffizielle App. Das Original gibt es auf vinto.game</string>
     <string name="home_unofficial_action">vinto.game öffnen, die offizielle Seite des Kartenspiels</string>
     <string name="home_other_games">Weitere Spiele</string>
-    <string name="home_other_games_action">kupalinka.app öffnen – die anderen Spiele desselben Machers</string>
+    <string name="home_other_games_action">kupalinka.app öffnen – die anderen Spiele desselben Studios</string>
 
     <string name="online_screen_title">Online spielen</string>
     <string name="online_nickname">Ihr Name am Tisch</string>
@@ -284,6 +284,7 @@
     <string name="rail_aim_second">Zweite</string>
     <string name="card_discarded_live">%1$s abgelegt, Aktion ungenutzt</string>
     <string name="card_in_hand">die Karte in Ihrer Hand</string>
+    <string name="card_drawn_by">%1$s zog %2$s</string>
 
     <string name="score_round">Runde %1$d</string>
     <string name="score_caller_won">Der Vinto-Ruf hat sich gehalten</string>
@@ -354,7 +355,7 @@
     <string name="beat_every_turn_starts_title">Jeder Zug beginnt gleich</string>
     <string name="beat_every_turn_starts_body">Ein Zug beginnt mit dem Nehmen einer Karte. Der Stapel liegt verdeckt, also ist es eine Überraschung, was dabei herauskommt — das ist das Risiko, das sich auszahlt.</string>
     <string name="beat_welcome_title">Vier Spielende, je fünf Karten</string>
-    <string name="beat_welcome_body">Jede Karte zählt gegen Sie, und die niedrigste Hand gewinnt. Ihre fünf liegen verdeckt vor Ihnen, und Sie dürfen sie nicht ansehen — das Spiel besteht darin zu wissen, was man hält. Das ist eine echte Runde gegen drei echte Gegner; die Anleitung geht nur nebenher mit.</string>
+    <string name="beat_welcome_body">Jede Karte zählt gegen Sie, und die niedrigste Hand gewinnt. Ihre fünf liegen verdeckt vor Ihnen, und Sie dürfen sie nicht ansehen — das Spiel besteht darin zu wissen, was man hält. Das ist eine echte Runde gegen drei echte Mitspielende; die Anleitung geht nur nebenher mit.</string>
     <string name="beat_memory_title">Die eigenen Karten kennen</string>
     <string name="beat_memory_body">Zwei Ihrer fünf sehen Sie vor Rundenbeginn, die anderen drei nur, wenn eine Karte es erlaubt. Die Runde wird also auf dem gespielt, was Sie sich merken: welche Plätze Sie kennen, und was darin liegt. Das verändert, was eine hohe Karte wert ist. Früh im Spiel ist eine 9 oder 10, die einen Blick verschafft, ein guter Tausch — Sie wissen, was es ist, und können es später ablegen und benennen. Die Karte, die Ihnen die Runde kostet, ist die, die Sie nie kennengelernt haben.</string>
     <string name="beat_cards_numbers_title">2 bis 6 — einfache Karten</string>
@@ -372,7 +373,7 @@
     <string name="beat_cards_king_name_title">Was Sie benennen, dürfen Sie spielen</string>
     <string name="beat_cards_king_name_body">Sie wählen also eigentlich eine Aktion, aus den Karten, die Sie gesehen haben. Eine 7 oder 8 benannt, gibt einen Blick auf eine eigene Karte. Ein Bube benannt, gibt den blinden Tausch — und Sie wählen beide Karten, so kommt ein entdeckter Joker zu Ihnen und Ihre schlechteste Karte geht den anderen Weg. Eine Dame benannt, zeigt zwei Karten, bevor entschieden wird, ob getauscht wird.</string>
     <string name="beat_cards_king_whose_title">Und wessen Karte Sie benennen</string>
-    <string name="beat_cards_king_whose_body">Wer auch immer sie hielt, die benannte Karte verlässt diese Hand. Die eigene 10 zu benennen, nimmt zehn Punkte von der eigenen Summe; den Joker einer Gegnerin oder eines Gegners zu benennen, nimmt ihm sein Minus-eins weg und lässt ihn mit einer Karte weniger zurück. Ein König, zwei Aufgaben — welche wichtiger ist, ist die eigentliche Frage.</string>
+    <string name="beat_cards_king_whose_body">Wer auch immer sie hielt, die benannte Karte verlässt diese Hand. Die eigene 10 zu benennen, nimmt zehn Punkte von der eigenen Summe; den Joker einer gegnerischen Person zu benennen, nimmt ihr das Minus-eins weg und lässt sie mit einer Karte weniger zurück. Ein König, zwei Aufgaben — welche wichtiger ist, ist die eigentliche Frage.</string>
     <string name="beat_cards_odd_title">Ass und Joker</string>
     <string name="beat_cards_odd_body">Ein Ass ist 1 wert und lässt die gewählte Person eine Strafkarte ziehen. Ein Joker ist minus eins wert — die beste Karte im Stapel, und die, die man nie hergibt.</string>
     <string name="beat_tour_title">Der Stapel und die Ablage</string>
@@ -388,7 +389,7 @@
     <string name="beat_coalition_body">Sie und die beiden, die nicht gerufen haben, sind die Koalition: je ein Zug, und nur Ihre eine beste Hand wird mit der der rufenden Person verglichen — also ein Team gegen eine Hand. Tippen Sie auf eine beliebige Karte, um zu sagen, was Sie darin vermuten — und sagen Sie es auch dann, wenn Sie sich nur an die zwei Ränge erinnern, aber nicht, welcher wo liegt. Eine Karte einzuwerfen kostet Sie keinen Zug und ist der günstigste Weg, eine Hand zu senken. Niemand darf die Karten der rufenden Person berühren, und das Spiel lässt es gar nicht erst zu.</string>
     <string name="beat_your_turn_to_call_body">Am Ende jedes eigenen Zuges ist der goldene Knopf da: drücken, wenn Sie glauben, die niedrigste Hand am Tisch zu haben. Er war beim Lernen verborgen, weil er die Runde für alle beendet — von nun an gehört er Ihnen, und ihn zu früh zu drücken, ist der häufigste Grund, das erste Spiel zu verlieren.</string>
     <string name="beat_session_title">Und das war eine Runde</string>
-    <string name="beat_session_body">Ein Spiel besteht aus Runden, eine nach der anderen, mit Punkten, die von Runde zu Runde mitgenommen werden, gespielt gegen eine vorher vereinbarte Uhr — üblich ist eine halbe Stunde. Läuft die Zeit ab, wird die laufende Runde noch beendet, und wer die meisten Punkte hat, wird Erster für 5 Spielpunkte, Zweiter für 3, Dritter für 2. Eine Runde, die mit drei Punkten gewonnen wird, zählt gleich, egal ob mit einem Punkt oder mit zwanzig Vorsprung.</string>
+    <string name="beat_session_body">Ein Spiel besteht aus Runden, eine nach der anderen, mit Punkten, die von Runde zu Runde mitgenommen werden, gespielt gegen eine vorher vereinbarte Uhr — üblich ist eine halbe Stunde. Läuft die Zeit ab, wird die laufende Runde noch beendet, und nach Punkten gibt es für Platz eins 5 Spielpunkte, für Platz zwei 3, für Platz drei 2. Eine Runde, die mit drei Punkten gewonnen wird, zählt gleich, egal ob mit einem Punkt oder mit zwanzig Vorsprung.</string>
     <string name="beat_scoring_title">Jede Hand wird aufgedeckt</string>
     <string name="beat_scoring_body">Die Hand der rufenden Person wird der besten Hand aller anderen gegenübergestellt. Niedriger: +3 für die rufende Person, −1 für alle anderen. Gleichstand zählt für die rufende Person: +3, niemand verliert etwas. Geschlagen: −1 für die rufende Person, +3 für jede der anderen.</string>
     <string name="beat_vinto_body">Das ist die Wette, dass die eigene Hand die niedrigste am Tisch ist. Es beendet die Runde: Alle anderen bekommen genau noch einen Zug, dann werden alle Hände aufgedeckt.</string>
@@ -623,7 +624,7 @@
     <string name="signal_turn">Ein goldener Ring um einen Platz</string>
     <string name="signal_turn_meaning">Wer am Zug ist. Er atmet, wenn der Zug kommt, denn drei Bots ziehen zwischen zwei Tipps.</string>
     <string name="signal_pick">Ein grüner Ring um einen Platz</string>
-    <string name="signal_pick_meaning">Diesen Spieler dürfen Sie wählen. Grün heißt am Platz dasselbe wie auf einer Karte: das hier lässt sich jetzt antippen.</string>
+    <string name="signal_pick_meaning">Diese Person dürfen Sie wählen. Grün heißt am Platz dasselbe wie auf einer Karte: das hier lässt sich jetzt antippen.</string>
     <string name="signal_penalty">Ein roter Ring, und eine Hand, die zuckt</string>
     <string name="signal_penalty_meaning">Dort ist gerade eine Strafkarte gelandet — eine falsche Vermutung oder ein falscher Einwurf.</string>
     <string name="signal_live">Ein goldener Ring auf der Ablage</string>

@@ -2,7 +2,7 @@
 <!--
     Русский.
 
-    Три решения, принятые один раз и выдержанные по всему файлу:
+    Четыре решения, принятые один раз и выдержанные по всему файлу:
 
     * `app_name` здесь нет. «Vinto!» — это имя игры, оно набрано шрифтом Cinzel, в котором
       только латиница, и `FontCoverageTest` это проверяет. Ключ отсутствует и подставляется
@@ -13,6 +13,13 @@
       «%1$d cards» склеивается само, в русском для 1, 2–4 и 5+ нужны три разные формы,
       а множественных чисел в этом формате ресурсов пока нет. Двоеточие снимает вопрос
       и читается как обычная надпись в интерфейсе, а не как обрубленная фраза.
+    * Род игрока неизвестен, поэтому глаголы прошедшего времени, обращённые к третьему лицу
+      («%1$s» — имя соперника, бота или человека), поставлены в настоящем времени:
+      «%1$s подкидывает» вместо «%1$s подкинул(а)». Двусмысленных форм с «(а)» здесь нет
+      намеренно. Та же логика распространяется и на причастия и краткие роли без плейсхолдера:
+      объявивший Винто игрок назван не «объявившим», а «тот, кто объявил Винто» — «кто» здесь
+      грамматически требует мужского глагола независимо от пола игрока, так что форма остаётся
+      нейтральной, не утверждая ничего о том, кто именно объявил.
 -->
 <resources>
     <string name="app_name">Vinto!</string>
@@ -218,7 +225,7 @@
     <string name="toss_more_time">Ещё время</string>
     <string name="table_toss_in_summary">Окно подкидывания, совпадение по %1$s</string>
     <string name="table_tossed">Подкинуто (%1$d)</string>
-    <string name="card_thrown_by">%1$s сбросил(а) %2$s</string>
+    <string name="card_thrown_by">%1$s сбрасывает %2$s</string>
     <string name="table_you">Вы</string>
     <string name="table_vinto_mark">Винто</string>
     <string name="table_leads_mark">ведёт</string>
@@ -226,15 +233,15 @@
     <string name="seat_pointed_turn">Ходит %1$s</string>
     <string name="seat_is_a_bot">бот</string>
     <string name="seat_badge_waiting">стол ждёт это место</string>
-    <string name="seat_badge_vinto">объявил Vinto</string>
+    <string name="seat_badge_vinto">объявляет Vinto</string>
     <string name="seat_badge_coalition">в коалиции</string>
-    <string name="seat_badge_away">отошёл от стола</string>
+    <string name="seat_badge_away">не за столом</string>
     <string name="seat_badge_barred">больше не может подкидывать</string>
-    <string name="seat_pointed_vinto">%1$s объявил(а) Винто</string>
+    <string name="seat_pointed_vinto">%1$s объявляет Винто</string>
     <string name="seat_pointed_penalty">%1$s берёт карту из колоды</string>
     <string name="seat_pointed_coalition">%1$s ведёт коалицию</string>
     <string name="table_final_round">Последний круг</string>
-    <string name="detail_ace_hurts_your_side">Карты объявившего неприкосновенны, поэтому Туз заставит взять карту только кого-то из вашей стороны.</string>
+    <string name="detail_ace_hurts_your_side">Карты того, кто объявил Винто, неприкосновенны, поэтому Туз заставит взять карту только кого-то из вашей стороны.</string>
     <string name="talk_low">Вы говорите: у вас — низкая рука.</string>
     <string name="talk_low_they">%1$s говорит, что своя рука — низкая.</string>
     <string name="talk_high">Вы говорите: ваша рука — высокая, присылайте плохие карты сюда.</string>
@@ -266,7 +273,7 @@
     <string name="table_final_last_turn">последний ход</string>
     <string name="table_final_coalition">У вас троих одна рука — против %1$s.</string>
     <string name="table_final_side_coalition">Вместе</string>
-    <string name="table_final_side_caller">Объявил</string>
+    <string name="table_final_side_caller">Объявляет</string>
     <string name="table_final_versus">против</string>
     <string name="table_see_score">Посмотреть счёт</string>
 
@@ -298,6 +305,7 @@
     <string name="rail_aim_second">Вторая</string>
     <string name="card_discarded_live">сброшена %1$s, действие не использовано</string>
     <string name="card_in_hand">карта у вас в руке</string>
+    <string name="card_drawn_by">%1$s берёт %2$s</string>
 
     <string name="score_round">Раунд %1$d</string>
     <string name="score_caller_won">Заявка на Винто устояла</string>
@@ -306,13 +314,13 @@
     <string name="score_deck_out">Никто не объявлял</string>
     <string name="score_versus">Винто %1$d против их лучшей %2$d</string>
     <string name="score_versus_none">Считали все руки, никто не платил</string>
-    <string name="score_role_caller">объявил(а) Винто</string>
+    <string name="score_role_caller">объявляет Винто</string>
     <string name="score_role_best">лучшая у остальных</string>
     <string name="score_column_hand">рука</string>
     <string name="score_column_round">раунд</string>
     <string name="score_column_game">игра</string>
     <string name="score_you_called">Винто объявили вы, поэтому вашу руку сравнили с лучшей у остальных.</string>
-    <string name="score_they_called">Винто объявил(а) %1$s, поэтому его руку сравнили с лучшей у вас.</string>
+    <string name="score_they_called">Винто объявляет %1$s, поэтому эту руку сравнили с лучшей у вас.</string>
     <string name="score_deck_ended">Винто никто не объявил — кончилась колода, раунд закрыли и посчитали все руки.</string>
     <string name="score_next_round">Раздать следующий раунд</string>
     <string name="score_stop">Остановиться</string>
@@ -337,8 +345,8 @@
     <string name="beat_do_not_guess_title">Не гадайте</string>
     <string name="beat_do_not_guess_body">Эту карту вы не смотрели, так что назвать её — значит гадать, а ошибка стоит штрафной карты. Положите её молча.</string>
     <string name="beat_final_play_title">%1$s разыгрывает: %2$s</string>
-    <string name="beat_final_play_ace">Туз заставляет одного игрока взять карту из колоды рубашкой вверх, а лишняя карта — лишние очки против него. В вас его сейчас навести нельзя — карты объявившего неприкосновенны, — так что он ляжет на сторону самой коалиции. Смотрите, кому придётся брать.</string>
-    <string name="beat_final_play_king">Король указывает на карту и называет её, и назвать нужно верно. Верно — карта уходит из той руки, где лежала, а её действие разыгрывается. Неверно — все видят, чем она была, а назвавший берёт штрафную. Называют карту, которую видели, — часто свою, чтобы от неё избавиться. В последнем круге Король — инструмент только коалиции: объявивший не может подкидывать, так что названное им достоинство способно покинуть только руки самой коалиции.</string>
+    <string name="beat_final_play_ace">Туз заставляет одного игрока взять карту из колоды рубашкой вверх, а лишняя карта — лишние очки против него. В вас его сейчас навести нельзя — карты того, кто объявил Винто, неприкосновенны, — так что он ляжет на сторону самой коалиции. Смотрите, кому придётся брать.</string>
+    <string name="beat_final_play_king">Король указывает на карту и называет её, и назвать нужно верно. Верно — карта уходит из той руки, где лежала, а её действие разыгрывается. Неверно — все видят, чем она была, и это стоит штрафной карты. Называют карту, которую видели, — часто свою, чтобы от неё избавиться. В последнем круге Король — инструмент только коалиции: тот, кто объявил Винто, не может подкидывать, так что названное в этот ход достоинство способно покинуть только руки самой коалиции.</string>
     <string name="beat_final_play_look">Девятка или десятка смотрит одну карту в чужой руке. В последнем круге так коалиция узнаёт, что у неё на руках, — ваши карты под запретом, — а что узнал один, могут использовать все.</string>
     <string name="beat_final_play_other">Смотрите, что она делает: эту карту вы ещё не держали, а окошко последних ходов под столом расскажет, что произошло.</string>
     <string name="beat_swap_them_title">Меняйте</string>
@@ -399,16 +407,16 @@
     <string name="beat_disagreement_body">Два заявления об одной карте не могут быть верны оба сразу, поэтому карта носит оба, помеченные как спор. Игра никогда не решает, кто прав, — карты переворачивают в конце, и это решает дело. А до тех пор спросите себя, чья память свежее: обычно верить стоит тому, кто смотрел последним.</string>
     <string name="beat_coalition_title">Все остальные играют как один</string>
     <string name="beat_your_turn_to_call_title">Вы тоже можете объявить</string>
-    <string name="beat_coalition_body">Вы и двое, кто не объявлял, — это коалиция: по одному ходу у каждого, и с рукой объявившего сравнивается только ваша единственная лучшая рука — то есть команда против одной руки. Коснитесь любой карты, чтобы сказать, что это по-вашему, и говорите это, даже если помните только два достоинства, но не знаете, какое где. Подкинуть карту — не значит потратить ход, и это самый дешёвый способ облегчить руку. Никто не может трогать карты объявившего, и игра не даст даже попытаться.</string>
+    <string name="beat_coalition_body">Вы и двое, кто не объявлял, — это коалиция: по одному ходу у каждого, и с рукой того, кто объявил Винто, сравнивается только ваша единственная лучшая рука — то есть команда против одной руки. Коснитесь любой карты, чтобы сказать, что это по-вашему, и говорите это, даже если помните только два достоинства, но не знаете, какое где. Подкинуть карту — не значит потратить ход, и это самый дешёвый способ облегчить руку. Никто не может трогать карты того, кто объявил Винто, и игра не даст даже попытаться.</string>
     <string name="beat_your_turn_to_call_body">В конце любого своего хода есть золотая кнопка: нажмите её, когда поверите, что ваша рука за столом самая младшая. Пока вы учились, её прятали — она заканчивает раунд для всех. Дальше она ваша, и именно ранним нажатием большинство проигрывает первую партию.</string>
     <string name="beat_session_title">Вот и весь раунд</string>
     <string name="beat_session_body">Игра — это раунды один за другим, очки переходят между ними, а играют до времени, о котором договорились заранее: обычно полчаса. Когда время вышло, начатый раунд доигрывают, и у кого больше всего очков — тот первый и берёт 5 игровых очков, второй 3, третий 2. Выигранный раунд считается одинаково, выиграли вы его в одно очко или в двадцать.</string>
     <string name="beat_scoring_title">Все руки идут лицом вверх</string>
-    <string name="beat_scoring_body">Руку объявившего сравнивают с лучшей рукой среди всех остальных. Младше — объявивший берёт +3, а каждый из остальных теряет по 1. Поровну считается за объявившего: ему +3, никто ничего не теряет. Побили — объявивший теряет 1, а каждый из остальных берёт +3.</string>
+    <string name="beat_scoring_body">Руку того, кто объявил Винто, сравнивают с лучшей рукой среди всех остальных. Младше — тот, кто объявил Винто, берёт +3, а каждый из остальных теряет по 1. Поровну считается в пользу того, кто объявил Винто: +3, никто ничего не теряет. Побили — тот, кто объявил Винто, теряет 1, а каждый из остальных берёт +3.</string>
     <string name="beat_vinto_body">Это ставка на то, что его рука за столом самая младшая. Раунд на этом заканчивается: у всех остальных ровно по одному ходу, а потом все руки вскрывают.</string>
-    <string name="beat_vinto_title">%1$s объявил(а) Винто</string>
+    <string name="beat_vinto_title">%1$s объявляет Винто</string>
 
-    <string name="beat_toss_in_also">%1$s только что подкинул(а). </string>
+    <string name="beat_toss_in_also">У %1$s только что было подкидывание. </string>
     <string name="list_join_and"> и </string>
     <string name="beat_vinto_somebody">Кто-то</string>
     <string name="beat_strayed_body">Стол ваш, не мой — неправильных ходов здесь нет. Урок продолжится оттуда, куда вы его заведёте.</string>
@@ -461,9 +469,9 @@
     <string name="explains_card_plain">%1$s. Стоит %2$d. Действия у неё нет, так что ей одна дорога — к вам в руку или в сброс.</string>
     <string name="explains_card_action">%1$s. Стоит %2$d. %3$s. %4$s</string>
     <string name="explains_setup">Посмотрите на две свои карты и запомните их — с началом раунда они снова лягут рубашкой вверх. Всё дальнейшее держится на памяти.</string>
-    <string name="explains_scoring">Все руки вскрыты. Раунд выигрывает самая младшая сумма, а руку объявившего Винто сравнивают с лучшей рукой среди всех остальных.</string>
+    <string name="explains_scoring">Все руки вскрыты. Раунд выигрывает самая младшая сумма, а руку того, кто объявил Винто, сравнивают с лучшей рукой среди всех остальных.</string>
     <string name="explains_toss_in">Любой, у кого есть карта того же достоинства, может её подкинуть — и она уходит из руки просто так. Ошибётесь достоинством — возьмёте штрафную и до конца раунда подкидывать больше не сможете.</string>
-    <string name="explains_final_round">Винто объявлено. Все остальные играют последний ход как коалиция, и против объявившего идёт только их лучшая рука.</string>
+    <string name="explains_final_round">Винто объявлено. Все остальные играют последний ход как коалиция, и против того, кто объявил Винто, идёт только их лучшая рука.</string>
     <string name="explains_turn">Возьмите карту из колоды или верхнюю из сброса, если это карта с неразыгранным действием. Оставляйте то, что уменьшает вашу сумму; объявляйте Винто, когда решите, что она самая младшая.</string>
 
     <string name="detail_card_does">%1$s, ценность %2$d: %3$s</string>
@@ -474,7 +482,7 @@
     <string name="detail_wrong_costs">Ошибка стоит вам штрафной карты.</string>
     <string name="detail_barred_card">На этой карте вы не угадали, так что она для вас закрыта. Следующая упавшая даст новый шанс.</string>
     <string name="detail_barred">Вы не угадали, а в последнем круге это до конца раунда.</string>
-    <string name="detail_scored_against">Винто объявил(а) %1$s, поэтому раунд считали против его руки.</string>
+    <string name="detail_scored_against">Винто объявляет %1$s, поэтому раунд считали против этой руки.</string>
     <string name="detail_deck_ran_out">Кончилась колода, раунд закрыли и посчитали все руки.</string>
 
     <string name="ask_or"> или </string>
@@ -506,9 +514,9 @@
     <string name="detail_shed_risk_pushed">Ваша рука — та, что коалиция выдвигает вперёд. Ошибка в подкидывании стоит команде карты и лишает её права подкидывать до конца раунда — подкидывайте только то, что видели.</string>
     <string name="detail_claim_was_wrong">Этот шаг был построен на утверждении, которое карты с тех пор опровергли. Это не ошибка, а игра как она есть: кто-то запомнил карту не так, как она лежит на самом деле.</string>
     <string name="board_outcome_wins">Наша лучшая рука — %1$d против их %2$d: это победа.</string>
-    <string name="board_outcome_level">Наша лучшая рука — %1$d против их %2$d: поровну, а поровну засчитывается объявившему.</string>
+    <string name="board_outcome_level">Наша лучшая рука — %1$d против их %2$d: поровну, а поровну засчитывается тому, кто объявил Винто.</string>
     <string name="board_outcome_loses">Наша лучшая рука — %1$d против их %2$d: этого не хватает.</string>
-    <string name="board_outcome_unseen">%1$d карт объявившего никто не видел.</string>
+    <string name="board_outcome_unseen">%1$d карт того, кто объявил Винто, никто не видел.</string>
     <string name="board_verdict_wins">победа</string>
     <string name="board_verdict_level">поровну</string>
     <string name="board_verdict_loses">не хватает</string>
@@ -590,11 +598,11 @@
 
     <string name="log_you">Вы</string>
     <string name="log_drew_known">Вы взяли %1$s</string>
-    <string name="log_drew_known_they">%1$s взял %2$s</string>
+    <string name="log_drew_known_they">%1$s берёт %2$s</string>
     <string name="log_draw_you">Вы берёте карту</string>
     <string name="log_draw_they">%1$s берёт карту</string>
-    <string name="log_took">%1$s взял(а) %2$s</string>
-    <string name="log_took_unknown">%1$s взял(а) верхнюю карту</string>
+    <string name="log_took">%1$s берёт %2$s</string>
+    <string name="log_took_unknown">%1$s берёт верхнюю карту</string>
     <string name="log_swap_you">Вы меняете карту %1$d</string>
     <string name="log_swap_they">%1$s меняет карту %2$d</string>
     <string name="log_swap_dropping_you">Вы меняете карту %1$d, сбрасывая %2$s</string>
@@ -607,18 +615,18 @@
     <string name="log_play_they">%1$s играет %2$s</string>
     <string name="log_play_unknown_you">Вы играете карту</string>
     <string name="log_play_unknown_they">%1$s играет карту</string>
-    <string name="log_tossed_in">%1$s подкинул(а) %2$s</string>
-    <string name="log_tossed_in_unknown">%1$s подкинул(а) карту</string>
-    <string name="log_toss_in_missed">%1$s подкинул(а) %2$s — мимо, и это стоило штрафной карты</string>
-    <string name="log_toss_in_missed_unknown">%1$s подкинул(а) не ту карту — штрафная карта</string>
-    <string name="log_called_vinto">%1$s объявил(а) Винто</string>
-    <string name="log_swapped_two">%1$s поменял(а) две карты</string>
-    <string name="log_swapped_two_named">%1$s поменял(а) местами: %2$s и %3$s</string>
-    <string name="log_left_alone">%1$s оставил(а) их как есть</string>
-    <string name="log_declared">%1$s назвал(а) %2$s</string>
+    <string name="log_tossed_in">%1$s подкидывает %2$s</string>
+    <string name="log_tossed_in_unknown">%1$s подкидывает карту</string>
+    <string name="log_toss_in_missed">%1$s подкидывает %2$s — мимо, и это стоит штрафной карты</string>
+    <string name="log_toss_in_missed_unknown">%1$s подкидывает не ту карту — штрафная карта</string>
+    <string name="log_called_vinto">%1$s объявляет Винто</string>
+    <string name="log_swapped_two">%1$s меняет две карты</string>
+    <string name="log_swapped_two_named">%1$s меняет местами: %2$s и %3$s</string>
+    <string name="log_left_alone">%1$s оставляет их как есть</string>
+    <string name="log_declared">%1$s называет %2$s</string>
     <string name="log_made_draw_you">Вы заставили %1$s взять карту</string>
-    <string name="log_made_you_draw">%1$s заставил вас взять карту</string>
-    <string name="log_made_draw_they">%1$s заставил %2$s взять карту</string>
+    <string name="log_made_you_draw">%1$s заставляет вас взять карту</string>
+    <string name="log_made_draw_they">%1$s заставляет %2$s взять карту</string>
     <string name="log_round_begins">раунд начинается</string>
     <string name="log_seat_covered">Место %1$s занял бот</string>
     <string name="log_seat_covered_you">Пока вас не было, за вашим местом играл бот</string>

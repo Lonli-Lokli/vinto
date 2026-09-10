@@ -258,7 +258,7 @@
 
     <string name="header_support">Postaw mi kawę</string>
     <string name="header_report">Zgłoś problem</string>
-    <string name="settings_report_detail">Wysyła rundę, w której byłeś: rozdanie, każdy ruch po kolei, bez nazw. To właśnie czyni błąd odtwarzalnym.</string>
+    <string name="settings_report_detail">Wysyła rundę z twoim udziałem: rozdanie, każdy ruch po kolei, bez nazw. To właśnie czyni błąd odtwarzalnym.</string>
     <string name="settings_report_send">Zgłoś</string>
     <string name="header_settings">Ustawienia</string>
     <string name="header_rules">Zasady</string>
@@ -267,7 +267,7 @@
     <string name="header_deck_badge">%1$d w talii — co to znaczy</string>
 
     <string name="deck_title">Talia</string>
-    <string name="deck_body">Zostało %1$d kart do dobrania.\n\nGdy się skończą, stos odrzuconych kart zostaje potasowany z powrotem do talii, a wszystko, czego ktoś dowiedział się z obserwowania tego stosu, przestaje mieć znaczenie — łącznie z tym, czego dowiedziałeś się ty. Runda, w której talia się kończy, to dobra runda, by zawołać Vinto.</string>
+    <string name="deck_body">Zostało %1$d kart do dobrania.\n\nGdy się skończą, stos odrzuconych kart zostaje potasowany z powrotem do talii, a wszystko, czego ktoś dowiedział się z obserwowania tego stosu, przestaje mieć znaczenie — łącznie z twoją wiedzą o nim. Runda, w której talia się kończy, to dobra runda, by zawołać Vinto.</string>
     <string name="deck_dismiss">Rozumiem</string>
 
     <string name="card_described">%1$s, warta %2$d</string>
@@ -284,6 +284,7 @@
     <string name="rail_aim_second">Druga</string>
     <string name="card_discarded_live">odrzucono %1$s, akcja niewykorzystana</string>
     <string name="card_in_hand">karta w twojej ręce</string>
+    <string name="card_drawn_by">%1$s dobiera %2$s</string>
 
     <string name="score_round">Runda %1$d</string>
     <string name="score_caller_won">Wołanie Vinto się utrzymało</string>
@@ -372,7 +373,7 @@
     <string name="beat_cards_king_name_title">To, co nazwiesz, to zagrywasz</string>
     <string name="beat_cards_king_name_body">Naprawdę wybiera się więc akcję spośród widzianych kart. Nazwij 7 albo 8, a przychodzi spojrzenie na jedną własną kartę. Nazwij Waleta, a przychodzi jego ślepa zamiana — i to ty wybierasz obie karty, dzięki czemu zauważony Joker trafia do ciebie, a najgorsza karta idzie w drugą stronę. Nazwij Damę, a można spojrzeć na dwie karty, zanim padnie decyzja o zamianie.</string>
     <string name="beat_cards_king_whose_title">I czyją kartę nazywasz</string>
-    <string name="beat_cards_king_whose_body">Karta, którą nazwiesz, opuszcza rękę tego, kto ją trzymał, kimkolwiek jest. Nazwanie własnej Dziesiątki zdejmuje dziesięć punktów z sumy; nazwanie Jokera przeciwnika zabiera mu jego minus jeden i zostawia go z gorszą kartą. Jeden Król, dwa zadania — które z nich ważniejsze, to już odczytanie sytuacji.</string>
+    <string name="beat_cards_king_whose_body">Karta, którą nazwiesz, opuszcza rękę tego, kto ją trzymał, kimkolwiek jest. Nazwanie własnej Dziesiątki zdejmuje dziesięć punktów z sumy; nazwanie Jokera przeciwnika zabiera tej osobie jej minus jeden i zostawia ją z gorszą kartą. Jeden Król, dwa zadania — które z nich ważniejsze, to już odczytanie sytuacji.</string>
     <string name="beat_cards_odd_title">As i Joker</string>
     <string name="beat_cards_odd_body">As jest wart 1 i zmusza wybraną osobę do dobrania karty karnej. Joker jest wart minus jeden — najlepsza karta w talii, i ta, której nigdy nie warto oddać.</string>
     <string name="beat_tour_title">Talia i stos</string>
@@ -489,8 +490,8 @@
     <string name="label_plan_clear">Wyczyść</string>
     <string name="label_plan_shed">Dorzuć</string>
     <string name="ask_which_rank_throw_in">Jaką rangę dorzucisz, jeśli się pojawi?</string>
-    <string name="detail_shed_risk">Tylko rangę, którą widziałeś we własnej ręce — błędny dorzut kosztuje kartę i wyklucza cię do końca rundy.</string>
-    <string name="detail_shed_risk_pushed">Twoja ręka to ta, którą popycha koalicja. Błędny dorzut kosztuje ją kartę i wyklucza ją do końca rundy — dorzucaj tylko to, co widziałeś.</string>
+    <string name="detail_shed_risk">Tylko rangę widzianą we własnej ręce — błędny dorzut kosztuje kartę i wyklucza cię do końca rundy.</string>
+    <string name="detail_shed_risk_pushed">Twoja ręka to ta, którą popycha koalicja. Błędny dorzut kosztuje ją kartę i wyklucza ją do końca rundy — dorzucaj tylko to, co zostało widziane.</string>
     <string name="detail_claim_was_wrong">Krok tu powstał na twierdzeniu, które karty od tamtej pory obaliły. To gra działa poprawnie, nie pomyłka — ktoś zapamiętał kartę inaczej, niż ona leży.</string>
     <string name="board_outcome_wins">Nasza najlepsza ręka %1$d przeciw ich %2$d: to wygrywa.</string>
     <string name="board_outcome_level">Nasza najlepsza ręka %1$d przeciw ich %2$d: remis, a remis płaci wołającemu.</string>
@@ -670,7 +671,7 @@
     <string name="card_help_jack">Wybierz dwie karty od różnych graczy, aby zamienić ich miejsca — możesz uwzględnić własne karty albo tylko karty przeciwników. Nie można wybrać dwóch kart tego samego gracza. Możesz zresetować wybór albo pominąć tę akcję.</string>
     <string name="card_help_queen">1. Podejrzyj dwie karty od różnych graczy (mogą być twoje własne lub przeciwników, ale muszą pochodzić od dwóch różnych graczy)\n2. Po podejrzeniu obu kart zdecyduj, czy je zamienić</string>
     <string name="card_help_king">Wybierz, którą akcję karty wykonać: 7 (podejrzyj własną), 8 (podejrzyj własną), 9/10 (podejrzyj przeciwnika), J (zamiana), Q (podejrzyj i zamień), A (wymuś dobranie). Możesz też zadeklarować karty bez akcji (2-6, K, Joker).</string>
-    <string name="card_help_ace">Wybierz przeciwnika, aby zmusić go do dobrania karty karnej z talii. Zwiększa to liczbę kart w jego ręce i sumę punktów. Możesz pominąć tę akcję, jeśli wolisz.</string>
+    <string name="card_help_ace">Wybierz przeciwnika, aby zmusić tę osobę do dobrania karty karnej z talii. Zwiększa to liczbę kart w tej ręce i sumę punktów. Możesz pominąć tę akcję, jeśli wolisz.</string>
     <string name="card_help_joker">Joker o wartości -1</string>
     <string name="invite_scan">Albo zeskanuj ten kod</string>
     <string name="settings_share_scan">Zeskanuj, aby otworzyć Vinto</string>

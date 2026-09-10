@@ -157,7 +157,7 @@
     <string name="settings_original">Арыгінальная гульня</string>
     <string name="settings_original_detail">Vinto! — не наша гульня. Гэта неафіцыйны дадатак для яе, а сама гульня, яе правілы і людзі, якія яе прыдумалі, — на vinto.game.</string>
     <string name="settings_studio">Пра гэты дадатак</string>
-    <string name="settings_studio_detail">Хто зрабіў гэты дадатак, што яшчэ ёсць на паліцы і як ён уладкаваны.</string>
+    <string name="settings_studio_detail">Хто стаіць за гэтым дадаткам, што яшчэ ёсць на паліцы і як ён уладкаваны.</string>
     <string name="settings_rate">Ацаніць гульню</string>
     <string name="settings_rate_detail">Пакіньце водгук у краме, адкуль усталявалі гульню. Невялікай гульні гэта дапамагае знайсціся больш за ўсё астатняе.</string>
     <string name="settings_open">Адкрыць</string>
@@ -228,9 +228,9 @@
     <string name="seat_pointed_turn">Ходзіць %1$s</string>
     <string name="seat_is_a_bot">бот</string>
     <string name="seat_badge_waiting">стол чакае гэтае месца</string>
-    <string name="seat_badge_vinto">абвясціў Vinto</string>
+    <string name="seat_badge_vinto">Vinto абвешчана</string>
     <string name="seat_badge_coalition">у кааліцыі</string>
-    <string name="seat_badge_away">адышоў ад стала</string>
+    <string name="seat_badge_away">па-за сталом</string>
     <string name="seat_badge_barred">больш не можа падкідаць</string>
     <string name="seat_pointed_vinto">%1$s абвяшчае Vinto</string>
     <string name="seat_pointed_penalty">%1$s бярэ картку з калоды</string>
@@ -300,6 +300,7 @@
     <string name="rail_aim_second">Другая</string>
     <string name="card_discarded_live">скінута %1$s, дзеянне не выкарыстана</string>
     <string name="card_in_hand">картка ў вас у руцэ</string>
+    <string name="card_drawn_by">%1$s цягне %2$s</string>
 
     <string name="score_round">Раунд %1$d</string>
     <string name="score_caller_won">Заклік Vinto ўстаяў</string>
@@ -331,7 +332,7 @@
     <string name="beat_only_look_body">Кожны можа зірнуць на дзве свае карты перад пачаткам раунда, адзін раз. Далей гульня ідзе на памяць: вашай супраць памяці трох іншых людзей.</string>
     <string name="beat_peeks_end_body">Яны зноў ляглі рубашкай уверх — запомніце, дзе што было. Астатнія таксама паглядзелі на дзве свае.</string>
     <string name="beat_name_only_seen_title">Называйце толькі тое, што бачылі</string>
-    <string name="beat_name_only_seen_body">Гэтую картку вы глядзелі, значыць, ведаеце яе. Угадалі правільна — гуляеце яе дзеянне бясплатна. Памыліліся — бераце штрафную картку. Таму называйце толькі тое, у чым упэўнены.</string>
+    <string name="beat_name_only_seen_body">Гэтую картку вы глядзелі, значыць, ведаеце яе. Угадалі правільна — гуляеце яе дзеянне бясплатна. Памыліліся — бераце штрафную картку. Таму называйце толькі тое, у чым упэўненыя.</string>
     <string name="beat_toss_in_title">Такі намінал можа падкінуць кожны</string>
     <string name="beat_toss_in_body">Як толькі картка лягла тварам уверх, у ўсіх з'яўляецца шанец пазбавіцца ад такой жа — і разыграць яе дзеянне. Памыліліся наміналам — штрафная картка, і гэтая картка для вас закрытая; наступная ўпалая дасць новы шанец. Варта рабіць дзеля карткі, якая ідзе вам у мінус; кароль нічога не каштуе трымаць.</string>
     <string name="beat_watching_body">Глядзіце, што бяруць і што кладуць. Гэта і радкі ўнізе — усё, што вам наогул дадзена ведаць пра іх рукі.</string>
@@ -358,7 +359,7 @@
     <string name="beat_remember_it_title">Запомніце яе</string>
     <string name="beat_remember_it_body">Вось што купіў вам гэты погляд. Запомніце, дзе яна ляжыць і што гэта, і пакладзіце назад — з гэтага моманту гэта вядомая вам картка, а на такіх і будуецца гульня.</string>
     <string name="beat_give_up_worst_title">Аддайце горшую картку</string>
-    <string name="beat_give_up_worst_body">Новая картка кладзецца рубашкай уверх, а тая, якую яна замяніла, сыходзіць у скід тварам уверх — яе прачытае ўвесь стол. Аддавайце тую, якую менш за ўсё хочаце трымаць, — самую старэйшую з тых, што ведаеце. Калі ў яе ёсць дзеянне і вы ў ім упэўнены, назавіце яе, калі яна кладзецца: яе дзеянне дастанецца вам бясплатна.</string>
+    <string name="beat_give_up_worst_body">Новая картка кладзецца рубашкай уверх, а тая, якую яна замяніла, сыходзіць у скід тварам уверх — яе прачытае ўвесь стол. Аддавайце тую, якую менш за ўсё хочаце трымаць, — самую старэйшую з тых, што ведаеце. Калі ў яе ёсць дзеянне і вы ў ім упэўненыя, назавіце яе, калі яна кладзецца: яе дзеянне дастанецца вам бясплатна.</string>
     <string name="beat_swap_blind_title">Памяняйце на тую, што не бачылі</string>
     <string name="beat_swap_blind_body">Сярод картак, якія вы ведаеце, няма горшай за гэтую, так што мяняць яе на адну з іх — выкідваць веды. Пакладзіце яе на месца, куды яшчэ не заглядвалі: невядомая картка хутчэй горшая, чым лепшая, і ў любым выпадку пасля гэтага вы будзеце ведаць на адну сваю картку больш.</string>
     <string name="beat_nothing_worse_title">Мяняць тут няма чаго</string>

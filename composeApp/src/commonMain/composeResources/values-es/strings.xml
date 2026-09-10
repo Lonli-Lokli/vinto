@@ -10,7 +10,7 @@
     <!-- ================================================================ home -->
     <string name="home_tagline">Recuerda más. Guarda menos.</string>
     <!-- `%1$s` is the bot difficulty, which is chosen in Settings and only shown here. -->
-    <string name="home_solo_title">Un jugador · tres bots · %1$s</string>
+    <string name="home_solo_title">Una persona · tres bots · %1$s</string>
     <string name="home_continue">Continuar</string>
     <string name="home_new_game">Partida nueva</string>
     <string name="home_play">Jugar</string>
@@ -36,10 +36,10 @@
     <string name="online_code_detail">Seis caracteres, de quien abrió la sala.</string>
     <string name="online_join">Unirse a la sala</string>
     <string name="online_create">Abrir una sala nueva</string>
-    <string name="online_offline">Sin conexión ahora mismo. Jugar en línea necesita una; el modo un jugador y la lección funcionan igual.</string>
+    <string name="online_offline">Sin conexión ahora mismo. Jugar en línea necesita una; el modo en solitario y la lección funcionan igual.</string>
     <string name="trouble_offline">Sin conexión con el servicio de salas. Comprueba la red e inténtalo de nuevo.</string>
     <string name="trouble_no_such_room">No hay ninguna sala con ese código. Comprueba los seis caracteres e inténtalo de nuevo.</string>
-    <string name="trouble_closed">El juego en línea aún no está abierto. El modo un jugador y la lección funcionan igual.</string>
+    <string name="trouble_closed">El juego en línea aún no está abierto. El modo en solitario y la lección funcionan igual.</string>
     <string name="trouble_busy">Esa mesa está completa. Prueba con otra, o abre una tuya.</string>
     <string name="trouble_refused">El servicio de salas no aceptó eso.</string>
     <string name="trouble_update_needed">Esta versión del juego es demasiado antigua para jugar en línea. Actualízala desde la tienda.</string>
@@ -57,7 +57,7 @@
     <string name="online_browse">Explorar salas públicas</string>
     <string name="online_open_detail">Cuatro asientos, un código para compartir, y bots para quien no llegue.</string>
     <string name="online_join_detail">Seis caracteres, de quien abrió la sala.</string>
-    <string name="online_browse_detail">Salas cuyos anfitriones eligieron ser listados. Cualquiera puede sentarse.</string>
+    <string name="online_browse_detail">Salas listadas por quien las abrió. Cualquiera puede sentarse.</string>
     <string name="online_return_title">Volver a tu sala</string>
     <string name="online_return_detail">Saliste de %1$s y tu asiento sigue ahí. Se pierde cuando pulsas Salir.</string>
     <string name="online_open_title">Abrir una sala</string>
@@ -91,7 +91,7 @@
     <string name="invite_copied">Copiado</string>
     <string name="invite_read_it_out">O léelo en voz alta: seis caracteres, sin O ni I.</string>
 
-    <string name="invited_title">Ha sido invitado</string>
+    <string name="invited_title">Te han invitado</string>
     <string name="invited_detail">La sala %1$s le está esperando. Unirse ocupa uno de sus cuatro asientos.</string>
     <string name="invited_join">Ocupar un asiento</string>
     <string name="invited_in_app">Abrirlo en la aplicación</string>
@@ -165,7 +165,7 @@
 
     <!-- Telling somebody about the game. -->
     <string name="settings_share">Contárselo a alguien</string>
-    <string name="settings_share_detail">Envía el juego a un amigo. Cuatro asientos, y tres pueden ser bots.</string>
+    <string name="settings_share_detail">Envía el juego a alguien. Cuatro asientos, y tres pueden ser bots.</string>
     <string name="settings_share_subject">Vinto</string>
     <string name="settings_share_body">Vinto — el juego de cartas de recordar más y guardar menos. Gratis, en el navegador, sin registro: %1$s</string>
     <string name="settings_back">Atrás</string>
@@ -309,6 +309,7 @@
     <!-- The same card, still carrying its action, which the next player may take and play. -->
     <string name="card_discarded_live">descartó %1$s, acción sin usar</string>
     <string name="card_in_hand">la carta en tu mano</string>
+    <string name="card_drawn_by">%1$s sacó %2$s</string>
 
     <!-- ================================================================ the score sheet -->
     <string name="score_round">Ronda %1$d</string>
@@ -343,7 +344,7 @@
     <string name="beat_only_look_body">Todos pueden mirar dos de sus propias cartas antes de que empiece la ronda, una sola vez. A partir de aquí el juego es memoria: la tuya contra otras tres personas.</string>
     <string name="beat_peeks_end_body">Vuelven a quedar boca abajo — recuerda dónde estaban. Los demás también han mirado dos de las suyas.</string>
     <string name="beat_name_only_seen_title">Nombra solo una que hayas visto</string>
-    <string name="beat_name_only_seen_body">Miraste esta carta, así que sabes qué es. Acierta su nombre y juegas su acción gratis. Fallas y te llevas una carta de penalización — así que nombra solo una de la que estés seguro.</string>
+    <string name="beat_name_only_seen_body">Miraste esta carta, así que sabes qué es. Acierta su nombre y juegas su acción gratis. Fallas y te llevas una carta de penalización — así que nombra solo una de la que tengas certeza.</string>
     <string name="beat_toss_in_title">Quien tenga esa carta puede lanzarla</string>
     <string name="beat_toss_in_body">En cuanto una carta cae boca arriba, todos tienen ocasión de deshacerse de una igual — y de usar su acción. Fallar el palo te cuesta una carta de penalización y te cierra esa carta — la siguiente que caiga abre una ocasión nueva. Vale la pena con una carta que suma en tu contra; un Rey no cuesta nada guardarlo.</string>
     <string name="beat_watching_body">Observa qué toman y qué sueltan. Eso, y la línea a línea de aquí abajo, es todo lo que llegas a saber de sus manos.</string>
@@ -370,7 +371,7 @@
     <string name="beat_remember_it_title">Recuérdala</string>
     <string name="beat_remember_it_body">Eso es lo que te compró la mirada. Fija dónde está y qué es, y vuelve a colocarla — de aquí en adelante es una carta que conoces, y el juego se juega con esas.</string>
     <string name="beat_give_up_worst_title">Suelta tu peor carta</string>
-    <string name="beat_give_up_worst_body">La carta nueva entra boca abajo, y la que reemplaza queda boca arriba en la pila para que todos la lean. Suelta la carta que menos quieres tener — la más alta que conozcas. Si tiene acción y estás seguro de cuál es, nómbrala al soltarla: su acción es entonces tuya, gratis.</string>
+    <string name="beat_give_up_worst_body">La carta nueva entra boca abajo, y la que reemplaza queda boca arriba en la pila para que todos la lean. Suelta la carta que menos quieres tener — la más alta que conozcas. Si tiene acción y sabes con certeza cuál es, nómbrala al soltarla: su acción es entonces tuya, gratis.</string>
     <string name="beat_swap_blind_title">Cámbiala por una que no has visto</string>
     <string name="beat_swap_blind_body">Nada de lo que conoces es peor que esta carta, así que cambiarla por una de esas sería tirar conocimiento. Colócala en una casilla que nunca has mirado: una carta que no has visto es más probable que sea peor que mejor, y en cualquier caso conocerás una carta más de las tuyas después.</string>
     <string name="beat_nothing_worse_title">Aquí nada necesita cambiarse</string>
@@ -381,8 +382,8 @@
     <string name="beat_two_ways_to_start_body">Del mazo, sin ver nada — o de la pila, pero solo una carta de acción que nadie haya usado, y entonces debes jugarla de inmediato en vez de quedártela.</string>
     <string name="beat_every_turn_starts_title">Todo turno empieza igual</string>
     <string name="beat_every_turn_starts_body">Un turno empieza tomando una carta. El mazo está boca abajo, así que lo que obtienes es una sorpresa — ese es el riesgo por el que te pagan.</string>
-    <string name="beat_welcome_title">Cuatro jugadores, cinco cartas cada uno</string>
-    <string name="beat_welcome_body">Cada carta suma en tu contra y gana la mano más baja. Tus cinco cartas quedan boca abajo delante de ti, y no puedes mirarlas — el juego es saber qué tienes. Esta es una ronda real contra tres oponentes reales; el guía solo camina a tu lado.</string>
+    <string name="beat_welcome_title">Cuatro personas, cinco cartas cada una</string>
+    <string name="beat_welcome_body">Cada carta suma en tu contra y gana la mano más baja. Tus cinco cartas quedan boca abajo delante de ti, y no puedes mirarlas — el juego es saber qué tienes. Esta es una ronda real contra tres oponentes reales; el tutorial solo te acompaña.</string>
     <string name="beat_memory_title">Conoce tus propias cartas</string>
     <string name="beat_memory_body">Verás dos de tus cinco antes de que empiece la ronda, y las otras tres solo si una carta te lo permite. Así que la ronda se juega con lo que recuerdas: qué casillas has mirado, y qué hay en ellas. Eso cambia lo que vale una carta alta. Al principio, un 9 o un 10 que te compra una mirada es un buen trato — sabes qué es, así que puedes soltarla y nombrarla más tarde. La carta que te hace perder la ronda es la que nunca llegaste a conocer.</string>
     <string name="beat_cards_numbers_title">2 a 6 — cartas simples</string>
@@ -392,9 +393,9 @@
     <string name="beat_cards_theirs_title">9 y 10 — mira una de las suyas</string>
     <string name="beat_cards_theirs_body">La misma mirada, apuntada al revés: una carta en la mano de otro. Recuerda dónde estaba — dos turnos después te dice si cantar, o dónde apuntar con una Jota. Valen 9 y 10, y siguen valiendo la pena al principio: una carta alta que sabes que tienes es una que puedes soltar y nombrar, y una baja que no puedes ver es solo una apuesta.</string>
     <string name="beat_cards_jack_title">Jota — cambia dos cartas, a ciegas</string>
-    <string name="beat_cards_jack_body">Vale 10. Cambia dos cartas que pertenecen a dos jugadores distintos — nunca dos de una misma persona — y nadie mira ninguna antes. Buena para colar una carta que sabes que es mala en la mano de otro; una apuesta con cualquier cosa que sepas que es buena.</string>
+    <string name="beat_cards_jack_body">Vale 10. Cambia dos cartas que pertenecen a dos personas distintas — nunca dos de una misma persona — y nadie mira ninguna antes. Buena para colar una carta que sabes que es mala en la mano de otro; una apuesta con cualquier cosa que sepas que es buena.</string>
     <string name="beat_cards_queen_title">Dama — mira dos, y luego decide</string>
-    <string name="beat_cards_queen_body">También vale 10, y es la carta más fuerte del juego: mira dos cartas de dos jugadores distintos, y solo entonces decide si cambiarlas. La Jota apuesta. La Dama sabe.</string>
+    <string name="beat_cards_queen_body">También vale 10, y es la carta más fuerte del juego: mira dos cartas de dos personas distintas, y solo entonces decide si cambiarlas. La Jota apuesta. La Dama sabe.</string>
     <string name="beat_cards_king_title">Rey — no vale nada, y hace de todo</string>
     <string name="beat_cards_king_body">No vale nada en absoluto, lo cual ya lo hace valioso de conservar. Su acción apunta a cualquier carta de la mesa — tuya o de cualquiera — y la nombra. Correcto: esa carta sale de la mano en la que estaba, y su acción pasa a ser tuya para jugar. Incorrecto: todos ven qué era en realidad, y te llevas una carta de penalización.</string>
     <string name="beat_cards_king_name_title">Lo que nombras es lo que juegas</string>
@@ -408,7 +409,7 @@
     <string name="beat_seats_title">Ember, Tide y Dune</string>
     <string name="beat_seats_body">Tres bots, cada uno con cinco cartas que ven no mejor que tú. La placa que se ilumina en verde es de quien juega.</string>
     <string name="beat_help_title">El ? siempre está ahí</string>
-    <string name="beat_help_body">Explica el momento en que estás y qué hace cada carta. El juego de mesa trae cartas de recordatorio para justo esto, una por jugador — a nadie se le pide recordar catorce cartas de memoria, ni aquí ni en una mesa real.</string>
+    <string name="beat_help_body">Explica el momento en que estás y qué hace cada carta. El juego de mesa trae cartas de recordatorio para justo esto, una por persona — a nadie se le pide recordar catorce cartas de memoria, ni aquí ni en una mesa real.</string>
     <string name="beat_disagreement_title">Dos lo recuerdan de forma distinta</string>
     <string name="beat_disagreement_body">Dos versiones sobre una misma carta no pueden ser ambas ciertas, así que la carta lleva las dos, marcada como disputa. El juego nunca decide quién tiene razón — las cartas se voltean al final y lo resuelven. Hasta entonces, pregúntate cuál es el recuerdo más reciente: quien la miró en último lugar suele ser quien hay que creer.</string>
     <string name="beat_coalition_title">Los demás juegan como uno solo</string>
@@ -416,7 +417,7 @@
     <string name="beat_coalition_body">Tú, junto con los dos que no cantaron, sois la coalición: un turno cada uno, y solo se compara vuestra mejor mano con la de quien cantó — así que es un equipo contra una mano. Toca cualquier carta para decir qué crees que es, y dilo incluso cuando solo recuerdes los dos palos pero no cuál es cuál. Lanzar una carta no te cuesta el turno y es la forma más barata de bajar una mano. Nadie puede tocar las cartas de quien cantó, y el juego no te dejará intentarlo.</string>
     <string name="beat_your_turn_to_call_body">Al final de cualquier turno tuyo, el botón dorado está ahí: púlsalo cuando creas que tu mano es la más baja de la mesa. Estuvo oculto mientras aprendías porque termina la ronda para todos — de aquí en adelante es tuyo para pulsar, y pulsarlo demasiado pronto es como la mayoría pierde su primera partida.</string>
     <string name="beat_session_title">Y eso es una ronda</string>
-    <string name="beat_session_body">Una partida son rondas, una tras otra, con esos puntos acumulándose entre ellas, jugadas contra un reloj acordado de antemano — media hora es lo habitual. Cuando se acaba el tiempo, la ronda en curso termina, y quien tenga más puntos queda primero por 5 puntos de partida, segundo por 3, tercero por 2. Una ronda ganada por tres cuenta igual que si se ganó por uno o por veinte.</string>
+    <string name="beat_session_body">Una partida son rondas, una tras otra, con esos puntos acumulándose entre ellas, jugadas contra un reloj acordado de antemano — media hora es lo habitual. Cuando se acaba el tiempo, la ronda en curso termina, y quien tenga más puntos se lleva el primer puesto por 5 puntos de partida, el segundo por 3, el tercero por 2. Una ronda ganada por tres cuenta igual que si se ganó por uno o por veinte.</string>
     <string name="beat_scoring_title">Todas las manos quedan boca arriba</string>
     <string name="beat_scoring_body">La mano de quien cantó se compara con la mejor mano entre los demás. Más baja, y quien cantó se lleva +3 mientras los demás pierden 1 cada uno. Empate cuenta como de quien cantó: +3 para ellos, nadie pierde nada. Superada, y quien cantó pierde 1 mientras cada uno de los demás se lleva +3.</string>
     <string name="beat_vinto_body">Esa es la apuesta de que su mano es la más baja de la mesa. Termina la ronda: todos los demás juegan exactamente un turno más, y luego todas las manos se voltean.</string>
@@ -505,7 +506,7 @@
     <string name="ask_or"> o </string>
     <string name="ask_look_at_two_of_yours">Mira dos de tus cartas</string>
     <string name="ask_one_more_to_look_at">Una carta más que mirar</string>
-    <string name="ask_ready">Listo cuando quieras</string>
+    <string name="ask_ready">Empieza cuando quieras</string>
     <string name="ask_your_turn">Tu turno</string>
     <string name="ask_you_drew">Robaste el %1$s</string>
     <string name="ask_you_drew_unknown">Robaste una carta</string>
@@ -543,8 +544,8 @@
     <string name="ask_what_should_they_do">¿Qué debería hacer %1$s en su turno?</string>
     <string name="ask_which_rank_will_you_declare">¿Qué rango declararás con el Rey?</string>
     <string name="ask_which_rank_should_they_declare">¿Qué rango debería declarar %1$s con el Rey?</string>
-    <string name="ask_which_card_will_you_put_down">¿Qué carta dejarás para que un compañero de equipo lance la suya?</string>
-    <string name="ask_which_card_should_they_put_down">¿Qué carta debería dejar %1$s para que un compañero de equipo lance la suya?</string>
+    <string name="ask_which_card_will_you_put_down">¿Qué carta dejarás para que alguien del equipo lance la suya?</string>
+    <string name="ask_which_card_should_they_put_down">¿Qué carta debería dejar %1$s para que alguien del equipo lance la suya?</string>
     <string name="detail_plan_asks">El plan: %1$s.</string>
     <string name="detail_draw_beats_plan">Tu %1$s mejora el plan: quédate con ella en lugar de la carta %2$d.</string>
     <string name="detail_plan_is_a_suggestion">Un plan es una sugerencia. Decide quien tenga el turno.</string>
@@ -578,10 +579,10 @@
     <string name="ask_what_do_you_say">¿Qué dices que es esta carta?</string>
     <string name="ask_say_and_play">Di qué es, y juega la acción de esa carta</string>
     <string name="ask_look_at_one_of_yours">Mira una de tus propias cartas</string>
-    <string name="ask_look_at_one_of_theirs">Mira una carta de otro jugador</string>
+    <string name="ask_look_at_one_of_theirs">Mira una carta de otra persona</string>
     <string name="ask_choose_any_card">Elige cualquier carta</string>
-    <string name="ask_choose_two">Elige dos cartas, de dos jugadores distintos</string>
-    <string name="ask_look_at_two">Mira dos cartas, de dos jugadores distintos</string>
+    <string name="ask_choose_two">Elige dos cartas, de dos personas distintas</string>
+    <string name="ask_look_at_two">Mira dos cartas, de dos personas distintas</string>
     <string name="ask_swap_them">¿Las cambias?</string>
     <string name="ask_remember_it">Recuérdala</string>
     <string name="ask_who_draws">¿Quién roba una carta?</string>
@@ -661,17 +662,17 @@
     <string name="signal_turn">Un anillo dorado en un asiento</string>
     <string name="signal_turn_meaning">De quién es el turno. Respira cuando llega, porque tres bots juegan el suyo entre un toque y el siguiente.</string>
     <string name="signal_pick">Un anillo verde en un asiento</string>
-    <string name="signal_pick_meaning">Puedes elegir a este jugador. El verde significa lo mismo en un asiento que en una carta: esto se puede tocar ahora.</string>
+    <string name="signal_pick_meaning">Puedes elegir a esta persona. El verde significa lo mismo en un asiento que en una carta: esto se puede tocar ahora.</string>
     <string name="signal_penalty">Un aro rojo, y una mano que se estremece</string>
     <string name="signal_penalty_meaning">Una carta de penalización acaba de llegar ahí — una apuesta fallida, o un lanzamiento equivocado.</string>
     <string name="signal_live">Un aro dorado en el descarte</string>
-    <string name="signal_live_meaning">Esa carta se soltó sin usar su acción, así que el siguiente jugador puede tomarla y jugarla en vez de robar. Una carta cuya acción *sí* se jugó no tiene aro.</string>
+    <string name="signal_live_meaning">Esa carta se soltó sin usar su acción, así que quien juegue después puede tomarla y jugarla en vez de robar. Una carta cuya acción *sí* se jugó no tiene aro.</string>
     <string name="signal_tappable">Una carta que respira</string>
     <string name="signal_tappable_meaning">Se puede tocar ahora mismo. Si nada respira, la mesa está esperando a otra persona.</string>
     <string name="signal_reshuffle">Cartas volviendo al mazo</string>
     <string name="signal_reshuffle_meaning">El mazo se agotó, así que la pila se mezcló de nuevo en él. Todo lo que alguien había aprendido observando esa pila ha quedado desfasado.</string>
     <string name="signal_peek">Una carta que se levanta hacia el centro</string>
-    <string name="signal_peek_meaning">Alguien la está mirando. Todos ven *qué* carta se miró — solo el jugador con derecho a ella ve la cara.</string>
+    <string name="signal_peek_meaning">Alguien la está mirando. Todos ven *qué* carta se miró — solo quien tiene derecho a verla ve la cara.</string>
 
 
     <!-- The cards, in words. -->
@@ -692,11 +693,11 @@
 
     <string name="card_long_seven">Mira una de tus propias cartas</string>
     <string name="card_long_eight">Mira una de tus propias cartas</string>
-    <string name="card_long_nine">Mira una carta de otro jugador</string>
-    <string name="card_long_ten">Mira una carta de otro jugador</string>
-    <string name="card_long_jack">Cambia dos cartas boca abajo de dos jugadores distintos</string>
-    <string name="card_long_queen">Mira dos cartas de dos jugadores distintos, y luego decide si cambiarlas</string>
-    <string name="card_long_king">Declara la acción de otra carta de cualquier jugador (7-A)</string>
+    <string name="card_long_nine">Mira una carta de otra persona</string>
+    <string name="card_long_ten">Mira una carta de otra persona</string>
+    <string name="card_long_jack">Cambia dos cartas boca abajo de dos personas distintas</string>
+    <string name="card_long_queen">Mira dos cartas de dos personas distintas, y luego decide si cambiarlas</string>
+    <string name="card_long_king">Declara la acción de otra carta de cualquier persona (7-A)</string>
     <string name="card_long_ace">Obliga a un oponente a robar una carta de penalización</string>
 
     <string name="card_help_two">Carta numérica con valor 2</string>
@@ -708,8 +709,8 @@
     <string name="card_help_eight">Toca una de tus cartas para revelarla brevemente y memorizar su valor. Puedes omitir esta acción si lo prefieres.</string>
     <string name="card_help_nine">Toca la carta de un oponente para revelarla brevemente y ver su valor. Puedes omitir esta acción si lo prefieres.</string>
     <string name="card_help_ten">Toca la carta de un oponente para revelarla brevemente y ver su valor. Puedes omitir esta acción si lo prefieres.</string>
-    <string name="card_help_jack">Selecciona dos cartas de jugadores distintos para intercambiar sus posiciones - puedes incluir tus propias cartas o solo las de oponentes. No puedes seleccionar dos cartas del mismo jugador. Puedes reiniciar tu selección u omitir esta acción.</string>
-    <string name="card_help_queen">1. Mira dos cartas de jugadores distintos (pueden ser tuyas o de oponentes, pero deben ser de jugadores distintos)\n2. Después de ver ambas cartas, decide si las cambias</string>
+    <string name="card_help_jack">Selecciona dos cartas de personas distintas para intercambiar sus posiciones - puedes incluir tus propias cartas o solo las de oponentes. No puedes seleccionar dos cartas de la misma persona. Puedes reiniciar tu selección u omitir esta acción.</string>
+    <string name="card_help_queen">1. Mira dos cartas de personas distintas (pueden ser tuyas o de oponentes, pero deben ser de personas distintas)\n2. Después de ver ambas cartas, decide si las cambias</string>
     <string name="card_help_king">Elige qué acción de carta ejecutar: 7 (mirar propia), 8 (mirar propia), 9/10 (mirar de oponente), J (cambiar), Q (mirar y cambiar), A (forzar robo). También puedes declarar cartas sin acción (2-6, K, Comodín).</string>
     <string name="card_help_ace">Selecciona a un oponente para obligarlo a robar una carta de penalización del mazo. Esto aumenta el tamaño de su mano y su total de puntos. Puedes omitir esta acción si lo prefieres.</string>
     <string name="card_help_joker">Comodín con valor -1</string>

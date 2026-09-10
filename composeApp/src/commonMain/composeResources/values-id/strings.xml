@@ -296,6 +296,7 @@
     <string name="rail_aim_second">Kedua</string>
     <string name="card_discarded_live">membuang %1$s, aksi belum digunakan</string>
     <string name="card_in_hand">kartu di tangan Anda</string>
+    <string name="card_drawn_by">%1$s menarik %2$s</string>
 
     <!-- ================================================================ the score sheet -->
     <string name="score_round">Ronde %1$d</string>

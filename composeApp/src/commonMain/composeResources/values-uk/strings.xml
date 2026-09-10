@@ -230,9 +230,9 @@
     <string name="seat_pointed_turn">Ходить %1$s</string>
     <string name="seat_is_a_bot">бот</string>
     <string name="seat_badge_waiting">стіл чекає на це місце</string>
-    <string name="seat_badge_vinto">оголосив Vinto</string>
+    <string name="seat_badge_vinto">заявка на Вінто</string>
     <string name="seat_badge_coalition">у коаліції</string>
-    <string name="seat_badge_away">відійшов від столу</string>
+    <string name="seat_badge_away">не за столом</string>
     <string name="seat_badge_barred">більше не може підкидати</string>
     <string name="seat_pointed_vinto">%1$s оголошує Вінто</string>
     <string name="seat_pointed_penalty">%1$s бере карту з колоди</string>
@@ -302,6 +302,7 @@
     <string name="rail_aim_second">Друга</string>
     <string name="card_discarded_live">скинуто %1$s, дію не використано</string>
     <string name="card_in_hand">карта у вас у руці</string>
+    <string name="card_drawn_by">%1$s тягне %2$s</string>
 
     <string name="score_round">Раунд %1$d</string>
     <string name="score_caller_won">Заявка на Вінто встояла</string>

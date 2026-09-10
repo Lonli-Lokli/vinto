@@ -303,6 +303,7 @@
     <!-- The same card, still carrying its action, which the next player may take and play. -->
     <string name="card_discarded_live">atılan %1$s, eylemi kullanılmadı</string>
     <string name="card_in_hand">elindeki kart</string>
+    <string name="card_drawn_by">%1$s %2$s çekti</string>
 
     <!-- ================================================================ the score sheet -->
     <string name="score_round">Tur %1$d</string>

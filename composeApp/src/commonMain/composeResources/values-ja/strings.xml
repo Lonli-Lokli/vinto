@@ -301,6 +301,7 @@
     <string name="rail_aim_second">2枚目</string>
     <string name="card_discarded_live">%1$sを捨てました、アクション未使用</string>
     <string name="card_in_hand">手札のカード</string>
+    <string name="card_drawn_by">%1$sが%2$sを引きました</string>
 
     <!-- ================================================================ the score sheet -->
     <string name="score_round">ラウンド%1$d</string>

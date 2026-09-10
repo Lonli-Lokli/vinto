@@ -284,6 +284,7 @@
     <string name="rail_aim_second">두 번째</string>
     <string name="card_discarded_live">%1$s를 버림, 능력 미사용</string>
     <string name="card_in_hand">손에 든 카드</string>
+    <string name="card_drawn_by">%1$s가 %2$s를 뽑았어요</string>
 
     <string name="score_round">%1$d라운드</string>
     <string name="score_caller_won">Vinto 선언이 성공했어요</string>

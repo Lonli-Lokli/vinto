@@ -8,7 +8,7 @@
 
     <!-- ================================================================ home -->
     <string name="home_tagline">Guarda menos. Sabe mais.</string>
-    <string name="home_solo_title">Um jogador · três bots · %1$s</string>
+    <string name="home_solo_title">Uma pessoa · três bots · %1$s</string>
     <string name="home_continue">Continuar</string>
     <string name="home_new_game">Novo jogo</string>
     <string name="home_play">Jogar</string>
@@ -295,6 +295,7 @@
     <string name="rail_aim_second">Segunda</string>
     <string name="card_discarded_live">descartou %1$s, ação por usar</string>
     <string name="card_in_hand">a carta na tua mão</string>
+    <string name="card_drawn_by">%1$s comprou %2$s</string>
 
     <!-- ================================================================ the score sheet -->
     <string name="score_round">Ronda %1$d</string>
@@ -337,8 +338,8 @@
     <string name="beat_do_not_guess_title">Não adivinhes</string>
     <string name="beat_do_not_guess_body">Nunca olhaste para esta carta, por isso nomeá-la é um palpite, e um palpite errado custa-te uma carta de penalização. Coloca-a sem dizer nada.</string>
     <string name="beat_final_play_title">%1$s joga o %2$s</string>
-    <string name="beat_final_play_ace">Um Ás faz um jogador tirar uma carta do baralho, virada para baixo, e mais uma carta é mais uma carta a contar contra ele. Não pode ser apontado a ti agora — as cartas de quem chamou estão fora de alcance — por isso recai sobre o lado da própria coligação. Observa quem tem de tirar.</string>
-    <string name="beat_final_play_king">Um Rei aponta a uma carta e nomeia-a, e o nome tem de estar certo. Certo: a carta sai da mão onde estava e a sua ação é jogada. Errado: todos veem o que era realmente, e quem nomeou tira uma carta de penalização. Um jogador nomeia uma carta que já viu — muitas vezes uma sua, para se livrar dela. Na ronda final o Rei é ferramenta só da coligação: quem chamou não pode atirar nada, por isso qualquer valor que ele nomeie só pode sair das mãos da própria coligação.</string>
+    <string name="beat_final_play_ace">Um Ás faz alguém tirar uma carta do baralho, virada para baixo, e mais uma carta é mais uma carta a contar contra essa pessoa. Não pode ser apontado a ti agora — as cartas de quem chamou estão fora de alcance — por isso recai sobre o lado da própria coligação. Observa quem tem de tirar.</string>
+    <string name="beat_final_play_king">Um Rei aponta a uma carta e nomeia-a, e o nome tem de estar certo. Certo: a carta sai da mão onde estava e a sua ação é jogada. Errado: todos veem o que era realmente, e quem nomeou tira uma carta de penalização. Quem nomeia escolhe uma carta que já viu — muitas vezes uma sua, para se livrar dela. Na ronda final o Rei é ferramenta só da coligação: quem chamou não pode atirar nada, por isso qualquer valor nomeado só pode sair das mãos da própria coligação.</string>
     <string name="beat_final_play_look">Um 9 ou um 10 olha para uma carta na mão de outra pessoa. Na ronda final é assim que a coligação descobre o que tem, já que a tua está fora de alcance — e o que um deles descobre, todos podem usar.</string>
     <string name="beat_final_play_other">Observa o que faz: é uma carta que ainda não tiveste, e a caixa de jogadas recentes por baixo da mesa diz o que aconteceu.</string>
     <string name="beat_swap_them_title">Troca-as</string>
@@ -366,9 +367,9 @@
     <string name="beat_two_ways_to_start_title">Duas formas de começar uma jogada</string>
     <string name="beat_two_ways_to_start_body">Do baralho, sem veres o que vem — ou da pilha, mas só uma carta de ação que ninguém usou, e nesse caso tens de a jogar de imediato em vez de a guardar.</string>
     <string name="beat_every_turn_starts_title">Toda a jogada começa da mesma forma</string>
-    <string name="beat_every_turn_starts_body">Uma jogada começa por tirar uma carta. O baralho está virado para baixo, por isso o que recebes é uma surpresa — é esse o risco que estás a ser pago para correr.</string>
-    <string name="beat_welcome_title">Quatro jogadores, cinco cartas cada</string>
-    <string name="beat_welcome_body">Todas as cartas contam contra ti e a mão mais baixa ganha. As tuas cinco estão viradas para baixo à tua frente, e não podes olhar para elas — o jogo é saber o que tens. Esta é uma ronda real contra três adversários reais; o guia só caminha ao teu lado.</string>
+    <string name="beat_every_turn_starts_body">Uma jogada começa por tirar uma carta. O baralho está virado para baixo, por isso o que recebes é uma surpresa — é esse o risco que compensa a quem o corre.</string>
+    <string name="beat_welcome_title">Quatro pessoas, cinco cartas cada</string>
+    <string name="beat_welcome_body">Todas as cartas contam contra ti e a mão mais baixa ganha. As tuas cinco estão viradas para baixo à tua frente, e não podes olhar para elas — o jogo é saber o que tens. Esta é uma ronda real contra três oponentes reais; o guia só caminha ao teu lado.</string>
     <string name="beat_memory_title">Conhece as tuas próprias cartas</string>
     <string name="beat_memory_body">Vais ver duas das tuas cinco antes de a ronda começar, e as outras três só se uma carta to permitir. Por isso a ronda joga-se com o que te lembras: que posições já viste, e o que está nelas. Isso muda o valor de uma carta alta. No início, um 9 ou um 10 que te dá um olhar é uma troca justa — sabes o que é, por isso podes colocá-la e nomeá-la mais tarde. A carta que te faz perder a ronda é aquela que nunca chegaste a conhecer.</string>
     <string name="beat_cards_numbers_title">2 a 6 — cartas simples</string>
@@ -378,15 +379,15 @@
     <string name="beat_cards_theirs_title">9 e 10 — olha para uma deles</string>
     <string name="beat_cards_theirs_body">O mesmo olhar, mas ao contrário: uma carta na mão de outra pessoa. Lembra-te onde estava — duas jogadas depois é isso que te diz se deves chamar, ou onde apontar um Valete. Vale 9 e 10, e continua a valer a pena tirar cedo: uma carta alta que sabes que tens é uma que podes colocar e nomear, e uma carta baixa que não vês é apenas um palpite.</string>
     <string name="beat_cards_jack_title">Valete — troca duas cartas, às cegas</string>
-    <string name="beat_cards_jack_body">Vale 10. Troca duas cartas pertencentes a dois jogadores diferentes — nunca duas de uma só pessoa — e ninguém olha para nenhuma delas primeiro. Bom para empurrar uma carta que sabes ser má para a mão de outra pessoa; um risco com qualquer coisa que sabes ser boa.</string>
+    <string name="beat_cards_jack_body">Vale 10. Troca duas cartas pertencentes a duas pessoas diferentes — nunca duas de uma só pessoa — e ninguém olha para nenhuma delas primeiro. Bom para empurrar uma carta que sabes ser má para a mão de outra pessoa; um risco com qualquer coisa que sabes ser boa.</string>
     <string name="beat_cards_queen_title">Dama — olha para duas, depois decide</string>
-    <string name="beat_cards_queen_body">Também vale 10, e é a carta mais forte do jogo: olha para quaisquer duas cartas de dois jogadores diferentes, e só depois decide se as troca. O Valete arrisca. A Dama sabe.</string>
+    <string name="beat_cards_queen_body">Também vale 10, e é a carta mais forte do jogo: olha para quaisquer duas cartas de duas pessoas diferentes, e só depois decide se as troca. O Valete arrisca. A Dama sabe.</string>
     <string name="beat_cards_king_title">Rei — não vale nada, e faz qualquer coisa</string>
     <string name="beat_cards_king_body">Não vale absolutamente nada, o que por si só o torna valioso de guardar. A sua ação aponta a qualquer carta na mesa — tua ou de qualquer pessoa — e nomeia-a. Certo: essa carta sai da mão onde estava, e a sua ação passa a ser tua para jogar. Errado: todos veem o que era realmente, e tu recebes uma carta de penalização.</string>
     <string name="beat_cards_king_name_title">O que nomeias é o que podes jogar</string>
     <string name="beat_cards_king_name_body">Na verdade, estás a escolher uma ação, de entre as cartas que já viste. Nomeia um 7 ou um 8 e ganhas um olhar sobre uma das tuas. Nomeia um Valete e ganhas a sua troca às cegas — e escolhes as duas cartas, o que é como um Joker que localizaste vem até ti e a tua pior carta segue no sentido contrário. Nomeia uma Dama e olhas para duas antes de decidir se trocas.</string>
     <string name="beat_cards_king_whose_title">E de quem é a carta que nomeias</string>
-    <string name="beat_cards_king_whose_body">Seja quem for que a tinha, a carta que nomeias sai da mão dessa pessoa. Nomear o teu próprio 10 tira dez pontos ao teu total; nomear o Joker de um adversário tira-lhe o menos um e deixa-o com uma carta pior. Um Rei, duas funções — qual delas importa mais é a leitura a fazer.</string>
+    <string name="beat_cards_king_whose_body">Seja quem for que a tinha, a carta que nomeias sai da mão dessa pessoa. Nomear o teu próprio 10 tira dez pontos ao teu total; nomear o Joker de outra pessoa tira-lhe o menos um e deixa-a com uma carta pior. Um Rei, duas funções — qual delas importa mais é a leitura a fazer.</string>
     <string name="beat_cards_odd_title">Ás e Joker</string>
     <string name="beat_cards_odd_body">Um Ás vale 1 e faz quem escolheres tirar uma carta de penalização. Um Joker vale menos um — a melhor carta do baralho, e a que nunca deves entregar.</string>
     <string name="beat_tour_title">O baralho e a pilha</string>
@@ -394,7 +395,7 @@
     <string name="beat_seats_title">Ember, Tide e Dune</string>
     <string name="beat_seats_body">Três bots, cada um com cinco cartas que veem tão mal como tu. A placa que acende a verde é a de quem está a jogar.</string>
     <string name="beat_help_title">O ? está sempre disponível</string>
-    <string name="beat_help_body">Explica o momento em que estás e o que cada carta faz. O jogo de tabuleiro vem com cartas de lembrete exatamente para isto, uma por jogador — ninguém tem de guardar catorze valores de cabeça, aqui ou numa mesa a sério.</string>
+    <string name="beat_help_body">Explica o momento em que estás e o que cada carta faz. O jogo de tabuleiro vem com cartas de lembrete exatamente para isto, uma por pessoa — ninguém tem de guardar catorze valores de cabeça, aqui ou numa mesa a sério.</string>
     <string name="beat_disagreement_title">Dois deles lembram-se de forma diferente</string>
     <string name="beat_disagreement_body">Duas afirmações sobre a mesma carta não podem ser ambas verdadeiras, por isso a carta fica com as duas, marcada como disputada. O jogo nunca decide quem tem razão — as cartas viram-se no final e resolvem isso. Até lá, pergunta-te de quem é a memória mais recente: quem olhou para ela por último costuma ser quem acreditar.</string>
     <string name="beat_coalition_title">Todos os outros jogam como um só</string>
@@ -559,10 +560,10 @@
     <string name="ask_what_do_you_say">O que dizes que esta carta é?</string>
     <string name="ask_say_and_play">Diz o que é, e joga a ação dessa carta</string>
     <string name="ask_look_at_one_of_yours">Olha para uma das tuas cartas</string>
-    <string name="ask_look_at_one_of_theirs">Olha para uma carta de outro jogador</string>
+    <string name="ask_look_at_one_of_theirs">Olha para uma carta de outra pessoa</string>
     <string name="ask_choose_any_card">Escolhe qualquer carta</string>
-    <string name="ask_choose_two">Escolhe duas cartas, de dois jogadores diferentes</string>
-    <string name="ask_look_at_two">Olha para duas cartas, de dois jogadores diferentes</string>
+    <string name="ask_choose_two">Escolhe duas cartas, de duas pessoas diferentes</string>
+    <string name="ask_look_at_two">Olha para duas cartas, de duas pessoas diferentes</string>
     <string name="ask_swap_them">Trocá-las?</string>
     <string name="ask_remember_it">Memoriza-a</string>
     <string name="ask_who_draws">Quem tira uma carta?</string>
@@ -641,17 +642,17 @@
     <string name="signal_turn">Um anel dourado num lugar</string>
     <string name="signal_turn_meaning">De quem é a vez. Respira quando a vez chega, porque três bots jogam a sua entre dois toques.</string>
     <string name="signal_pick">Um anel verde num lugar</string>
-    <string name="signal_pick_meaning">Pode escolher este jogador. O verde quer dizer num lugar o mesmo que numa carta: isto pode ser tocado agora.</string>
+    <string name="signal_pick_meaning">Pode escolher este lugar. O verde quer dizer num lugar o mesmo que numa carta: isto pode ser tocado agora.</string>
     <string name="signal_penalty">Um anel vermelho, e uma mão que estremece</string>
     <string name="signal_penalty_meaning">Uma carta de penalização acabou de pousar ali — um palpite errado, ou um atirar errado.</string>
     <string name="signal_live">Um anel dourado na pilha de descarte</string>
-    <string name="signal_live_meaning">Essa carta foi colocada sem a sua ação ser usada, por isso o próximo jogador pode apanhá-la e jogá-la em vez de tirar do baralho. Uma carta cuja ação *foi* jogada não tem anel.</string>
+    <string name="signal_live_meaning">Essa carta foi colocada sem a sua ação ser usada, por isso quem joga a seguir pode apanhá-la e jogá-la em vez de tirar do baralho. Uma carta cuja ação *foi* jogada não tem anel.</string>
     <string name="signal_tappable">Uma carta que pulsa</string>
     <string name="signal_tappable_meaning">Pode ser tocada agora. Se nada pulsar, a mesa está à espera de outra pessoa.</string>
     <string name="signal_reshuffle">Cartas a voltar para o baralho</string>
     <string name="signal_reshuffle_meaning">O baralho esgotou-se, por isso a pilha foi baralhada de volta para dentro dele. Tudo o que alguém tinha aprendido a observar essa pilha está agora desatualizado.</string>
     <string name="signal_peek">Uma carta que se ergue em direção ao centro</string>
-    <string name="signal_peek_meaning">Alguém está a olhar para ela. Todos veem *qual* carta foi observada — só o jogador com direito a isso vê a face.</string>
+    <string name="signal_peek_meaning">Alguém está a olhar para ela. Todos veem *qual* carta foi observada — só quem tem direito a isso vê a face.</string>
 
 
     <!-- The cards, in words. -->
@@ -672,12 +673,12 @@
 
     <string name="card_long_seven">Espreita uma das tuas próprias cartas</string>
     <string name="card_long_eight">Espreita uma das tuas próprias cartas</string>
-    <string name="card_long_nine">Espreita uma carta de outro jogador</string>
-    <string name="card_long_ten">Espreita uma carta de outro jogador</string>
-    <string name="card_long_jack">Troca quaisquer duas cartas viradas para baixo de dois jogadores diferentes</string>
-    <string name="card_long_queen">Espreita quaisquer duas cartas de dois jogadores diferentes, e opcionalmente troca-as</string>
-    <string name="card_long_king">Declara a ação de outra carta de qualquer jogador (7-Ás)</string>
-    <string name="card_long_ace">Obriga um adversário a tirar uma carta de penalização</string>
+    <string name="card_long_nine">Espreita uma carta de outra pessoa</string>
+    <string name="card_long_ten">Espreita uma carta de outra pessoa</string>
+    <string name="card_long_jack">Troca quaisquer duas cartas viradas para baixo de duas pessoas diferentes</string>
+    <string name="card_long_queen">Espreita quaisquer duas cartas de duas pessoas diferentes, e opcionalmente troca-as</string>
+    <string name="card_long_king">Declara a ação de outra carta de qualquer pessoa (7-Ás)</string>
+    <string name="card_long_ace">Obriga alguém a tirar uma carta de penalização</string>
 
     <string name="card_help_two">Carta numérica com valor 2</string>
     <string name="card_help_three">Carta numérica com valor 3</string>
@@ -686,12 +687,12 @@
     <string name="card_help_six">Carta numérica com valor 6</string>
     <string name="card_help_seven">Toca numa das tuas cartas para a revelar temporariamente e memorizar o seu valor. Podes ignorar esta ação se preferires.</string>
     <string name="card_help_eight">Toca numa das tuas cartas para a revelar temporariamente e memorizar o seu valor. Podes ignorar esta ação se preferires.</string>
-    <string name="card_help_nine">Toca numa carta de um adversário para a revelar temporariamente e ver o seu valor. Podes ignorar esta ação se preferires.</string>
-    <string name="card_help_ten">Toca numa carta de um adversário para a revelar temporariamente e ver o seu valor. Podes ignorar esta ação se preferires.</string>
-    <string name="card_help_jack">Seleciona duas cartas de jogadores diferentes para trocar as suas posições — podes incluir as tuas próprias cartas ou só as dos adversários. Não podes selecionar duas cartas do mesmo jogador. Podes repor a seleção ou ignorar esta ação.</string>
-    <string name="card_help_queen">1. Espreita duas cartas de jogadores diferentes (podem ser tuas ou de adversários, mas têm de ser de jogadores diferentes)\n2. Depois de espreitares as duas cartas, decide se as trocas</string>
-    <string name="card_help_king">Escolhe qual a ação de carta a executar: 7 (espreitar própria), 8 (espreitar própria), 9/10 (espreitar adversário), J (trocar), Q (espreitar &amp; trocar), Ás (forçar a tirar). Também podes declarar cartas sem ação (2-6, Rei, Joker).</string>
-    <string name="card_help_ace">Seleciona um adversário para o obrigar a tirar uma carta de penalização do baralho. Isto aumenta o tamanho da mão e o total de cartas dele. Podes ignorar esta ação se preferires.</string>
+    <string name="card_help_nine">Toca numa carta de outra pessoa para a revelar temporariamente e ver o seu valor. Podes ignorar esta ação se preferires.</string>
+    <string name="card_help_ten">Toca numa carta de outra pessoa para a revelar temporariamente e ver o seu valor. Podes ignorar esta ação se preferires.</string>
+    <string name="card_help_jack">Seleciona duas cartas de pessoas diferentes para trocar as suas posições — podes incluir as tuas próprias cartas ou só as de outras pessoas. Não podes selecionar duas cartas da mesma pessoa. Podes repor a seleção ou ignorar esta ação.</string>
+    <string name="card_help_queen">1. Espreita duas cartas de pessoas diferentes (podem ser tuas ou de outras pessoas, mas têm de ser de pessoas diferentes)\n2. Depois de espreitares as duas cartas, decide se as trocas</string>
+    <string name="card_help_king">Escolhe qual a ação de carta a executar: 7 (espreitar própria), 8 (espreitar própria), 9/10 (espreitar outra pessoa), J (trocar), Q (espreitar &amp; trocar), Ás (forçar a tirar). Também podes declarar cartas sem ação (2-6, Rei, Joker).</string>
+    <string name="card_help_ace">Seleciona uma pessoa para a obrigar a tirar uma carta de penalização do baralho. Isto aumenta o tamanho da mão e o total de cartas dessa pessoa. Podes ignorar esta ação se preferires.</string>
     <string name="card_help_joker">Joker com valor -1</string>
     <string name="invite_scan">Ou leia este código</string>
     <string name="settings_share_scan">Leia para abrir o Vinto</string>

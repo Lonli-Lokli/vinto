@@ -284,6 +284,7 @@
     <string name="rail_aim_second">第二张</string>
     <string name="card_discarded_live">弃掉了 %1$s，动作尚未使用</string>
     <string name="card_in_hand">你手中的这张牌</string>
+    <string name="card_drawn_by">%1$s 抽到了 %2$s</string>
 
     <string name="score_round">第 %1$d 局</string>
     <string name="score_caller_won">Vinto 判定成立</string>

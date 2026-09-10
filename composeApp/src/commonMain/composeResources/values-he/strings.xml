@@ -221,9 +221,9 @@
     <string name="seat_pointed_coalition">הובלת הקואליציה בידי %1$s</string>
     <string name="table_final_round">הסיבוב הסופי</string>
     <string name="detail_ace_hurts_your_side">הקלפים של מי שהכריז מחוץ להישג יד, כך שאס יכול לגרום רק למישהו מהצד שלכם למשוך קלף.</string>
-    <string name="talk_low">טענה שהיד שלך היא הנמוכה.</string>
+    <string name="talk_low">טענה שהיד שלכם היא הנמוכה.</string>
     <string name="talk_low_they">טענה שהיד של %1$s היא הנמוכה.</string>
-    <string name="talk_high">טענה שהיד שלך היא הגבוהה — יש לשלוח לכאן את הקלפים הפחות טובים.</string>
+    <string name="talk_high">טענה שהיד שלכם היא הגבוהה — יש לשלוח לכאן את הקלפים הפחות טובים.</string>
     <string name="talk_high_they">טענה שהיד של %1$s היא הגבוהה — יש לשלוח לשם את הקלפים הפחות טובים.</string>
     <string name="talk_bin">הודעה על יציאה מהמרוץ, עם הצעה לשמש כפח האשפה.</string>
     <string name="talk_bin_they">הודעה על יציאת %1$s מהמרוץ, עם הצעה לשמש כפח האשפה.</string>
@@ -233,10 +233,10 @@
     <string name="talk_play_for_they">הצעה של %1$s לשחק לטובת %2$s.</string>
     <string name="talk_give_me">בקשת קלף מספר %2$d מ־%1$s.</string>
     <string name="talk_give_me_they">בקשה של %1$s מ־%2$s לקלף מספר %3$d.</string>
-    <string name="talk_take_this">הצעת קלף מספר %1$d שלך.</string>
+    <string name="talk_take_this">הצעת קלף מספר %1$d שלכם.</string>
     <string name="talk_take_this_they">הצעת קלף מספר %2$d מאת %1$s.</string>
-    <string name="talk_suggests">יש לך הצעה עבור %1$s.</string>
-    <string name="talk_suggests_they">יש ל־%1$s הצעה עבורך.</string>
+    <string name="talk_suggests">יש לכם הצעה עבור %1$s.</string>
+    <string name="talk_suggests_they">יש ל־%1$s הצעה עבורכם.</string>
     <string name="talk_will_move">הודעה על הצעד הבא.</string>
     <string name="talk_will_move_they">הודעה של %1$s על הצעד הבא.</string>
     <string name="talk_yes">תשובה חיובית.</string>
@@ -245,7 +245,7 @@
     <string name="talk_no_they">תשובה שלילית מצד %1$s.</string>
     <string name="talk_wait">בקשה להמתין רגע.</string>
     <string name="talk_wait_they">בקשה מצד %1$s להמתין רגע.</string>
-    <string name="talk_worse">טענה שזה יחליש את המצב שלך.</string>
+    <string name="talk_worse">טענה שזה יחליש את המצב שלכם.</string>
     <string name="talk_worse_they">טענה שזה יחליש את המצב של %1$s.</string>
     <string name="table_final_caller">כל השאר משחקים יד אחת ביניהם, נגד שלכם.</string>
     <string name="table_final_turns_left">%1$d תורות עד לחשיפה</string>
@@ -284,6 +284,7 @@
     <string name="rail_aim_second">שני</string>
     <string name="card_discarded_live">הושלך %1$s, הפעולה לא נוצלה</string>
     <string name="card_in_hand">הקלף שביד שלכם</string>
+    <string name="card_drawn_by">%2$s נשלף בידי %1$s</string>
 
     <string name="score_round">סיבוב %1$d</string>
     <string name="score_caller_won">קריאת ה-Vinto החזיקה מעמד</string>
