@@ -367,6 +367,11 @@
     <!-- The same card, still carrying its action, which the next player may take and play. -->
     <string name="card_discarded_live">discarded %1$s, action unused</string>
     <string name="card_in_hand">the card in your hand</string>
+    <!--
+      The same slot, holding somebody else's draw — a drawn card is revealed to the whole
+      table, so the slot shows whoever's. `%1$s` is the seat that drew it, `%2$s` the rank.
+    -->
+    <string name="card_drawn_by">%1$s drew %2$s</string>
 
     <!-- ================================================================ the score sheet -->
     <string name="score_round">Round %1$d</string>

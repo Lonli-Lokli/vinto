@@ -81,6 +81,8 @@ import game.vinto.app.art.board_summary_empty
 import game.vinto.app.art.board_title
 import game.vinto.app.art.card_discarded
 import game.vinto.app.art.card_discarded_live
+import game.vinto.app.art.card_drawn_by
+import game.vinto.app.art.card_face_down
 import game.vinto.app.art.card_in_hand
 import game.vinto.app.art.card_position
 import game.vinto.app.art.card_thrown_by
@@ -136,6 +138,7 @@ import game.vinto.client.finalRoundTurnsLeft
 import game.vinto.client.isPlayedByAMachine
 import game.vinto.client.seatName
 import game.vinto.engine.CardView
+import game.vinto.engine.PendingActionView
 import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.engine.cardInPlay
@@ -1907,11 +1910,37 @@ private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp:
                 drawn.card,
                 sizes.theirs,
                 modifier = slot,
-                label = stringResource(Res.string.card_in_hand),
+                label = drawnLabel(view, drawn),
                 onClick = { onHelp((drawn.card as? CardView.Visible)?.card?.rank) },
             )
         }
     }
+}
+
+/**
+ * What the drawn slot says it is holding, which depends on whose card is in it.
+ *
+ * The slot holds whoever's card has just been drawn — the rules reveal one publicly, and that
+ * is the point of drawing it here rather than beside its owner's hand. What it *said* never
+ * moved with it: every card in the slot was announced as "the card in your hand", so a player
+ * who is listening rather than looking was told a bot's 8 was theirs, on three turns out of
+ * four.
+ *
+ * Somebody else's is named for the seat that drew it, in the same words a thrown card uses.
+ * Your own stays "yours" rather than becoming "You drew 8", which is a sentence about a
+ * stranger.
+ */
+@Composable
+private fun drawnLabel(view: PlayerView, drawn: PendingActionView): String {
+    if (drawn.playerId == view.viewerId) return stringResource(Res.string.card_in_hand)
+
+    val who = view.players.firstOrNull { it.id == drawn.playerId }?.nickname ?: "—"
+    // A pending card is public in every way one can arise (`projectView`), so the face-down
+    // case is unreachable rather than impossible — and a slot that says "a face-down card" is
+    // still true, where one that names a rank it was not given would not be.
+    val card = (drawn.card as? CardView.Visible)?.card?.rank?.serialName
+        ?: stringResource(Res.string.card_face_down)
+    return stringResource(Res.string.card_drawn_by, who, card)
 }
 
 /**
@@ -2189,18 +2218,20 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (
         return
     }
 
+    // Unused, so takeable: the difference between a card somebody played and one they only
+    // put down, which is otherwise invisible the moment it lands.
+    val onOffer = pileIsOnOffer(face, view.cardInPlay)
+
     CardFace(
         card = CardView.Visible(face),
         scale = sizes.theirs,
         modifier = pile,
         state = CardState(
             verdict = stage.verdictAt(Anchor.Discard),
-            // Unused, so takeable: the difference between a card somebody played and one
-            // they only put down, which is otherwise invisible the moment it lands.
-            live = face.actionIsLive(),
+            live = onOffer,
         ),
         label = stringResource(
-            if (face.actionIsLive()) Res.string.card_discarded_live else Res.string.card_discarded,
+            if (onOffer) Res.string.card_discarded_live else Res.string.card_discarded,
             face.rank.serialName,
         ),
         // What does this one do — asked of the card itself, answered about the card itself.
@@ -2229,6 +2260,22 @@ internal fun pileFace(top: Card?, covered: Card?, inPlay: Card?, landing: Boolea
     inPlay != null -> inPlay
     else -> top
 }
+
+/**
+ * Whether the card on the pile is one the next player may take and play (Option B).
+ *
+ * **Not the same question as `actionIsLive()`, and the difference is the whole function.** The
+ * engine marks a card played when it *records* the discard, which is when the action finishes
+ * — so for the whole of an action the card lying on the pile still says its action is unused.
+ * It is not: it is being spent, by the seat playing it, right now.
+ *
+ * Reported from a phone as a card on the discard that "looks like another pending card": a
+ * player threw away a 6, a bot drew an 8 and played it, and the 8 lay on the pile wearing the
+ * ring that means *this is yours to take*. Where it lay was right — that is what makes the
+ * toss-in window open for its rank legible ([cardInPlay]) — and how it lay was not.
+ */
+internal fun pileIsOnOffer(face: Card, inPlay: Card?): Boolean =
+    face.actionIsLive() && face.id != inPlay?.id
 
 @Composable
 private fun Pile(label: String, content: @Composable () -> Unit) {
