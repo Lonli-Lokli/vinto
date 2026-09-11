@@ -85,6 +85,7 @@ enum class MarketingScene(val id: String) {
      * ones through the ordinary validator rather than a puppet show.
      */
     DEMO("demo"),
+
     ;
 
     companion object {
@@ -170,46 +171,44 @@ private const val MAX_NUDGES = 12
  * the real engine reaching a real final round, not a table arranged to look like one.
  */
 internal suspend fun coalitionGame(vault: Vault): LocalGame {
-    // Off the main thread, unlike the other staged scenes. This one plays thirteen real turns
-    // to reach a bot's call, which is a few hundred milliseconds on a developer's machine and
-    // tens of seconds on a software-rendered emulator — long enough for Android to put up
-    // "Vinto! isn't responding" over a capture. The dispatcher only moves where the search
-    // runs; every dispatch is still awaited, so the round is the same one every time.
+    // Off the main thread, unlike the other staged scenes. This one plays a dozen real turns to
+    // reach a bot's call, which is a few hundred milliseconds on a developer's machine and tens
+    // of seconds on a software-rendered emulator — long enough for Android to put up "Vinto!
+    // isn't responding" over a capture. The dispatcher only moves where the search runs; every
+    // dispatch is still awaited, so the round is the same one every time.
     val game = LocalGame.start(vault, COALITION_SEED, Difficulty.EASY, botDispatcher = Dispatchers.Default)
     val me = game.playerId
     game.session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
     game.session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
     game.session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
 
-    var turns = 0
-    while (game.session.view.value.vintoCallerId == null && turns < MAX_TURNS) {
+    // One action per pass, and the loop stops the instant the call lands. A pass that sent a
+    // whole turn's worth would run past the moment being staged: every dispatch is *acting*, and
+    // acting is what closes the coalition's window.
+    var acted = 0
+    while (game.session.view.value.vintoCallerId == null && acted < MAX_ACTIONS) {
         val view = game.session.view.value
+        val mine = view.players.getOrNull(view.currentPlayerIndex)?.id == me
         when {
-            // The window after every discard. Nobody's turn advances until this seat says it
-            // is done with it, and a staged round that never says so is a round that stops on
-            // its second lap — which is exactly how this scene first came out blank.
-            view.subPhase == GameSubPhase.TOSS_QUEUE_ACTIVE -> {
+            view.subPhase == GameSubPhase.TOSS_QUEUE_ACTIVE ->
                 game.session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(me)))
-            }
 
-            view.players.getOrNull(view.currentPlayerIndex)?.id == me -> {
-                game.session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+            view.pendingAction?.playerId == me ->
                 game.session.dispatch(GameAction.DiscardCard(PlayerIdPayload(me)))
-            }
+
+            mine -> game.session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+
+            else -> game.session.dispatch(GameAction.ProcessAiTurn(PlayerIdPayload(me)))
         }
-        game.session.dispatch(GameAction.ProcessAiTurn(PlayerIdPayload(me)))
-        turns++
+        acted++
     }
 
     val caller = game.session.view.value.vintoCallerId
-    check(caller != null && caller != me) { "no bot called Vinto in $MAX_TURNS turns (caller=$caller)" }
+    check(caller != null && caller != me) { "no bot called Vinto in $MAX_ACTIONS moves (caller=$caller)" }
 
-    // The call is not the picture: an empty board saying "no plan yet" is. What makes this
-    // screen worth photographing is the coalition having spoken — each bot declaring what it
-    // holds, and the board seeded from what they said — which is the first thing that happens
-    // after a call and takes a few passes of the bot loop to come out.
-    // The window the coalition talks in. The bots declare inside it and the board is seeded
-    // when it closes, so a scene that never says "done" photographs a table still conferring.
+    // For the picture, the call is not it: an empty board saying "no plan yet" is. What makes
+    // that screen worth photographing is the coalition having spoken and the board seeded from
+    // what they said, which is the first thing that happens once the window closes.
     game.session.doneConferring()
 
     var settling = 0
@@ -224,10 +223,10 @@ internal suspend fun coalitionGame(vault: Vault): LocalGame {
 private const val COALITION_SEED = 20_260_079L
 
 /**
- * A bound, not a budget: this deal reaches a bot's call on its thirteenth pass, and a round
- * that has not by twice that is a round where something else has gone wrong.
+ * A bound, not a budget: this deal reaches a bot's call in a fraction of it, and a round that
+ * has not by here is a round where something else has gone wrong.
  */
-private const val MAX_TURNS = 30
+private const val MAX_ACTIONS = 200
 
 /** Long enough for three declarations and the seeding that follows them; not a whole round. */
 private const val SETTLING_PASSES = 8

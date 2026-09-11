@@ -54,6 +54,52 @@ class BoardProposalsTest {
         vintoCallerId = caller,
     ).let { it.copy(currentPlayerIndex = it.players.indexOfFirst { p -> p.id == caller }) }
 
+    /**
+     * A coalition of nothing but bots still writes its plan down, because the caller reads it.
+     *
+     * The one round where the person is on the *other* side: they called Vinto, so the three
+     * seats against them are all bots. Nothing was seeded at all — the seeding stopped where
+     * there was no human *in the coalition* to seed it for — so the caller called, watched three
+     * bots take their turns, and never saw a word of what they intended.
+     *
+     * The plan is public and the caller may read it (design D12): it is built from claims the
+     * table has already heard, so there is nothing in it to hide. And it is the whole tension of
+     * the round they just started — "will they beat me?" — which is the one question the screen
+     * was answering with a blank. Reported from a phone: *"I as vinto do not see bots plan"*.
+     */
+    @Test
+    fun aCoalitionOfNothingButBotsStillWritesItsPlanDownForTheCallerToRead() {
+        // The person calls, so the three seats against them are bots.
+        val called = table().let { state ->
+            state.copy(
+                players = state.players.map { it.copy(isVintoCaller = it.id == me) },
+                vintoCallerId = me,
+                currentPlayerIndex = state.players.indexOfFirst { it.id == me },
+            )
+        }
+
+        val seeded = seedTheBoard(called, plan = null)
+        val coalition = coalitionInTurnOrder(called.players.map { it.id }, me)
+        assertEquals(listOf(caller, nina, don), coalition, "the coalition is not the three bots")
+
+        assertTrue(
+            coalition.any { seeded.plan.laneOf(it)?.step != null },
+            "an all-bot coalition planned nothing, so the caller has nothing to read",
+        )
+        assertTrue(
+            seeded.plan.lanes.all { lane -> lane.step.cardsTouched().none { it == me } },
+            "a proposal reached for the caller's cards",
+        )
+        assertTrue(seeded.said.isNotEmpty(), "the bots agreed a line without saying anything about it")
+    }
+
+    /** Whose cards a step names, for the check above. */
+    private fun Step?.cardsTouched(): List<String> = when (this) {
+        is Step.Swap -> listOf(from.seat, to.seat)
+        is Step.PutDown -> listOf(card.seat)
+        else -> emptyList()
+    }
+
     @Test
     fun theBotsFillLanesWhileATradeStillLowersTheLowestHandAndThenStop() {
         // The first lane gets the trade that leaves one hand on two. After that no trade can

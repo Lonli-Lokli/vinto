@@ -225,6 +225,8 @@
     <string name="seat_badge_coalition">na coligação</string>
     <string name="seat_badge_away">ausente da mesa</string>
     <string name="seat_badge_barred">já não pode descartar</string>
+    <string name="seat_badge_agreed">concordou com o plano</string>
+    <string name="seat_badge_will_shed">tem uma carta pronta para descartar</string>
     <string name="seat_pointed_vinto">%1$s chamou Vinto</string>
     <string name="seat_pointed_penalty">%1$s está a tirar uma carta do baralho</string>
     <string name="seat_pointed_coalition">%1$s lidera a coligação</string>
@@ -256,13 +258,8 @@
     <string name="talk_wait_they">%1$s pede-te um momento de espera.</string>
     <string name="talk_worse">Dizes que isso te deixaria pior.</string>
     <string name="talk_worse_they">%1$s diz que isso pioraria a sua posição.</string>
-    <string name="table_final_caller">Todos os outros jogam uma única mão entre eles, contra a tua.</string>
     <string name="table_final_turns_left">%1$d jogadas até à revelação</string>
     <string name="table_final_last_turn">última jogada</string>
-    <string name="table_final_coalition">Vocês os três jogam uma única mão, contra %1$s.</string>
-    <string name="table_final_side_coalition">Juntos</string>
-    <string name="table_final_side_caller">Chamou</string>
-    <string name="table_final_versus">vs</string>
     <string name="table_see_score">Ver a pontuação</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -431,6 +428,10 @@
     <string name="teach_done">Concluído</string>
 
     <!-- ================================================================ help -->
+    <string name="help_tab_cards">Cartas</string>
+    <string name="help_tab_rings">Anéis</string>
+    <string name="help_tab_badges">Emblemas</string>
+    <string name="help_tab_more">Mais</string>
     <string name="help_right_now">Agora</string>
     <string name="help_the_cards">As cartas</string>
     <string name="help_signals">O que a mesa te está a dizer</string>
@@ -500,9 +501,10 @@
     <string name="label_agree">Concordar</string>
     <string name="label_do_as_planned">Fazer como planeado</string>
     <string name="label_keep_it_instead">Guardar em vez disso</string>
-    <string name="label_plan_swap">Trocar duas cartas</string>
+    <string name="label_play_the_card">Jogá-la</string>
+    <string name="label_keep_the_card">Guardá-la</string>
+    <string name="label_let_the_card_go">Descartá-la</string>
     <string name="label_plan_declare">Declarar um valor</string>
-    <string name="label_plan_put_down">Colocar uma carta</string>
     <string name="label_plan_take_discard">Tirar do descarte</string>
     <string name="label_plan_clear">Limpar</string>
     <string name="label_plan_shed">Descartar</string>
@@ -511,14 +513,6 @@
     <string name="detail_shed_risk_pushed">A tua é a mão que a coligação está a apoiar. Um descarte errado custa-lhe uma carta e impede-a de participar pelo resto da ronda — descarta só o que já viste.</string>
     <string name="detail_claim_was_wrong">Um passo aqui foi construído sobre uma afirmação que as cartas entretanto provaram errada. É o jogo a funcionar, não um erro: alguém recordava uma carta de forma diferente da que ela é.</string>
     <!-- Where the plan would leave the round. Level is said as losing: a tie pays the caller. -->
-    <string name="board_outcome_wins">A nossa melhor mão, %1$d, contra a deles, %2$d: isso vence.</string>
-    <string name="board_outcome_level">A nossa melhor mão, %1$d, contra a deles, %2$d: empate, e o empate paga a quem chamou.</string>
-    <string name="board_outcome_loses">A nossa melhor mão, %1$d, contra a deles, %2$d: isso não chega.</string>
-    <string name="board_outcome_unseen">%1$d das cartas de quem chamou que ninguém viu.</string>
-    <string name="board_verdict_wins">vence</string>
-    <string name="board_verdict_level">empate</string>
-    <string name="board_verdict_loses">não chega</string>
-    <string name="label_plan_rehearse">Ver o plano</string>
     <string name="table_rehearsal">Ensaio — nada se moveu</string>
     <string name="ask_what_will_you_do">O que vais fazer na tua jogada?</string>
     <string name="ask_what_should_they_do">O que deve %1$s fazer na sua jogada?</string>
@@ -530,24 +524,42 @@
     <string name="detail_draw_beats_plan">%1$s supera o plano: fica com ela em vez da carta %2$d.</string>
     <string name="detail_plan_is_a_suggestion">Um plano é uma sugestão. Decide quem estiver a jogar.</string>
     <string name="board_title">O plano</string>
-    <string name="board_summary_empty">Ainda sem plano — toca para planear em conjunto</string>
-    <string name="board_summary">O plano: %1$d de %2$d jogadas definidas, %3$d de %4$d concordam</string>
+    <string name="label_plan_open">Plano</string>
+    <string name="label_plan_run">Reproduzir</string>
+    <string name="label_plan_halt">Parar</string>
+    <string name="label_plan_back">Anterior</string>
+    <string name="label_plan_on">Seguinte</string>
+    <string name="label_plan_rewind">Início</string>
+    <string name="board_turn_planned">Jogada %1$d, %2$s: %3$s</string>
+    <string name="board_played">%1$s, jogada</string>
+    <string name="board_now">Agora</string>
+    <string name="board_unplayable">Esta jogada já não pode ser feita a partir daqui: uma carta que ela refere já não está lá.</string>
+    <string name="board_broken">Uma afirmação por trás desta jogada já foi provada errada.</string>
+    <string name="board_carry_hint">Leve a carta até onde ela deve ir — ou toque nela e depois toque no lugar.</string>
+    <string name="board_arrival_title">Onde isto nos deixa</string>
+    <string name="board_arrival_ours">A nossa melhor mão: %1$d</string>
+    <string name="board_arrival_theirs">Acredita-se que tem: %1$d</string>
+    <string name="board_arrival_unseen">Ninguém falou sobre %1$d das suas cartas.</string>
     <string name="board_your_call">a tua decisão</string>
-    <string name="board_in_play">em jogo</string>
     <string name="board_owner_you">que é tua</string>
     <string name="board_owner_named">que é de %1$s</string>
     <string name="board_step_swap">trocar a carta %2$d, %1$s, pela carta %4$d, %3$s</string>
     <string name="board_step_declare">declarar %1$s com um Rei</string>
     <string name="board_step_take_discard">tirar do descarte</string>
+    <string name="board_from_the_deck">tirar do baralho</string>
+    <string name="board_part_end">%1$s %2$d</string>
+    <string name="board_part_card">carta %1$d</string>
+    <string name="board_part_card_called">carta %1$d = %2$s</string>
+    <string name="board_nobody_throws_in">ninguém atira ainda</string>
+    <string name="board_step_bin">descartar a carta</string>
+    <string name="board_step_use_it">jogar o que for</string>
     <string name="board_step_put_down">colocar a carta %2$d, %1$s</string>
     <string name="board_step_put_down_known">colocar a carta %2$d, %1$s, o %3$s</string>
     <string name="board_would_rather">%1$s preferia %2$s</string>
     <string name="board_shed">%1$s vai atirar um %2$s</string>
     <string name="board_edited_by">última alteração de %1$s</string>
-    <string name="board_nod_yes">%1$s concordou</string>
-    <string name="board_nod_not_yet">%1$s ainda não concordou</string>
-    <string name="board_lane">%1$s: %2$s</string>
     <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <string name="badge_plain">o que alguém diz que esta carta é</string>
     <string name="badge_disputed">disputada</string>
     <string name="badge_paired">uma de um par, ordem desconhecida</string>
     <string name="badge_right">certa</string>

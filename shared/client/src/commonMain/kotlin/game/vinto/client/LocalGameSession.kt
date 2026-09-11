@@ -21,6 +21,7 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.PlanEditOutcome
+import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.actorId
 import game.vinto.shapes.agreeing
@@ -84,6 +85,21 @@ class LocalGameSession(
      * every game but the lesson. See [BotDirector].
      */
     private val director: BotDirector? = null,
+    /**
+     * Whether the last bot at the table calls Vinto the moment its turn comes, whatever it holds.
+     *
+     * **A testing rig, and off by default.** The coalition's final round is the part of this game
+     * hardest to get at deliberately: it needs a bot to *decide* to call, which needs a good hand
+     * and a search that agrees, so reaching it means playing rounds and hoping — and the round
+     * you get by playing is usually the one you called yourself, which is the other side of the
+     * table. With this on, the seat before the person's calls at once and the person is next.
+     *
+     * **Local games only**, by construction: this is `LocalGameSession`, and a room deals its own
+     * bots. And debug builds only, by where it is switched on — `MainActivity` has a `src/debug`
+     * twin that answers true and a `src/release` twin that answers false, so the shipped binary
+     * cannot reach it however the flag is threaded.
+     */
+    private val theLastBotCallsVinto: Boolean = false,
 ) : GameSession {
 
     // Internal rather than private so the tests can drive the *person's* seat with the same
@@ -290,11 +306,46 @@ class LocalGameSession(
      * happens next and the learner is being taught rather than conferring, so a window would
      * be an interruption asking them to do something nobody has explained yet.
      */
-    private fun inACoalitionFinalRound(): Boolean =
+    private fun inACoalitionFinalRound(): Boolean = coalitionFinalRoundIn(state)
+
+    /** A final round with a coalition in it, whoever the viewer is. See [hasACoalition]. */
+    private fun aCoalitionFinalRound(): Boolean = director == null && state.hasACoalition()
+
+    /**
+     * Whether the bots must stop at [from] and let the person speak.
+     *
+     * @param already whether the window was open before this batch began; one that is open
+     *   stays open until the person closes it, wherever the batch has got to.
+     */
+    private fun holdingTheWindow(from: GameState, already: Boolean): Boolean = when {
+        already -> true
+        conferred -> false
+        else -> coalitionFinalRoundIn(from)
+    }
+
+    /**
+     * The same question as [inACoalitionFinalRound], about a state that is not [state] yet.
+     *
+     * Asked of the position the bots' loop has reached rather than the one it started from,
+     * because the call that puts the table into a coalition final round happens *inside* that
+     * loop — see [playBots].
+     */
+
+    private fun coalitionFinalRoundIn(from: GameState): Boolean =
         director == null &&
-            state.phase == GamePhase.FINAL &&
-            state.vintoCallerId != null &&
-            state.vintoCallerId != playerId
+            from.phase == GamePhase.FINAL &&
+            from.vintoCallerId != null &&
+            from.vintoCallerId != playerId
+
+    /**
+     * A final round with a coalition in it, said of any state and about nobody in particular.
+     *
+     * The **table's** question, where [coalitionFinalRoundIn] is the *member's*: am I one of
+     * them, and so owed a window to confer in. The caller answers no to that one and yes to this,
+     * which is the distinction the board turned on — a window is a member's, a board is the
+     * table's, and the caller reads it (design D12).
+     */
+    private fun GameState.hasACoalition(): Boolean = phase == GamePhase.FINAL && vintoCallerId != null
 
     private fun overhear(talk: TableTalk) {
         _talk.tryEmit(talk)
@@ -325,17 +376,25 @@ class LocalGameSession(
     override suspend fun doneConferring(): String? {
         conferring = false
         conferred = true
+        // The view first here, unlike `dispatch`'s tail: what it publishes is the *window
+        // closing*, which is this seat's own answer and must not wait on a bot's search.
         _view.value = myView()
         playBots().takeIf { it.isNotEmpty() }?.let { _frames.tryEmit(it) }
         return null
     }
 
     override suspend fun dispatch(action: GameAction): String? {
-        // Acting ends the conversation. A player who has started playing has finished
-        // talking, so the window does not need a second gesture to dismiss it — the button
-        // exists for the other case, ending it *without* acting so the bots may go first.
-        // Talk does not close it: saying things is what the window is for.
-        if (conferring) {
+        // Acting ends the conversation. A player who has started playing has finished talking,
+        // so the window does not need a second gesture to dismiss it — the button exists for
+        // the other case, ending it *without* acting so the bots may go first.
+        //
+        // **A declaration is not acting**, and the line above said so long before it was true:
+        // "talk does not close it: saying things is what the window is for". A claim is a
+        // `GameAction` like any other and came through here, so the first card a person named
+        // shut the window they were naming it in — the bots took their turns and there was no
+        // way to say a second thing. Reported from a phone, and it is what the window exists
+        // for, so it is the one action that leaves it open.
+        if (conferring && action !is GameAction.DeclareCards) {
             conferring = false
             conferred = true
         }
@@ -410,9 +469,15 @@ class LocalGameSession(
         _frames.tryEmit(seen.toList())
 
         val bots = playBots()
+
+        // **The frames before the view.** They are how the screen catches up to it, so handing
+        // them over first means the stage has something to hold the table with before the view
+        // that would jump it past every bot's turn arrives. It narrows a race rather than
+        // closing one — the hold in `CardStage` is what actually closes it, and
+        // `ThinkingAheadTest` is the report both halves answer.
+        if (bots.isNotEmpty()) _frames.tryEmit(bots)
         // After the bots, because opening the confer window is something `playBots` decides.
         _view.value = myView()
-        if (bots.isNotEmpty()) _frames.tryEmit(bots)
         return null
     }
 
@@ -451,11 +516,8 @@ class LocalGameSession(
      * pace instead of jumping to the end and explaining afterwards.
      */
     private suspend fun playBots(): List<Frame> {
-        // The coalition's window opens here rather than on a clock, because a local game has
-        // none — see `conferring`.
-        if (!conferred && inACoalitionFinalRound()) conferring = true
-
         val start = state
+        val held = conferring
         var moves = 0
         val told = mutableListOf<BotMove>()
         val overheard = mutableListOf<TableTalk>()
@@ -467,7 +529,15 @@ class LocalGameSession(
                 // confers in order to pool what it knows, so a window that silenced the bots
                 // would be a conversation with nothing in it — the person would be asked to
                 // plan against three hands nobody had described.
-                if (conferring && nextBotAction(working) !is GameAction.DeclareCards) break
+                //
+                // **Asked of `working`, every pass.** It used to be read once, above the loop,
+                // and the call that opens the window is a move *in* the loop — a bot ends its
+                // turn with Vinto. So the batch that carried the call carried the rest of the
+                // round behind it, and the person was asked afterwards with nothing left to
+                // confer about. Reported from a phone as the bots playing on without waiting to
+                // be told anything.
+                val holding = holdingTheWindow(working, held)
+                if (holding && nextBotAction(working) !is GameAction.DeclareCards) break
 
                 // Anything the bots have to say about the position they are in, before they
                 // move in it. Talk is not a move — it changes no state and is not counted
@@ -487,13 +557,25 @@ class LocalGameSession(
             working
         }
 
+        // The window the loop stopped for, recorded now that the position it stopped in is
+        // known. Out here rather than inside the loop because the loop runs on the bot
+        // dispatcher, and `conferring` is read by the seat's own thread. It opens on a clock
+        // nowhere: a local game has none — see `conferring`.
+        if (holdingTheWindow(next, already = false)) conferring = true
+
         overheard.forEach(::overhear)
 
         // The bots' proposals on the board, for the person to read, agree to or change — built
         // after the bots have declared, so the picture they are built on is the one the person
         // sees. Fills empty lanes and stops once the person has edited anything, so it is cheap
         // to repeat on every pass.
-        if (inACoalitionFinalRound()) {
+        //
+        // **Whether or not the viewer is in the coalition.** This asked the question the confer
+        // *window* asks, which excludes the caller — so the one round the person called, where
+        // all three opponents are bots, seeded nothing and the caller watched three turns go by
+        // without ever seeing what they were for. The window is a member's; the board is the
+        // table's, and the caller reads it (design D12).
+        if (aCoalitionFinalRound()) {
             val standing = _plan.value ?: CoalitionPlan()
             val seeded = seedTheBoard(next, _plan.value)
             if (seeded.plan != standing) {
@@ -542,7 +624,27 @@ class LocalGameSession(
      * have it. The last is not defensive — a bot the validator refuses is a bug worth seeing
      * as a stuck game rather than one papered over by trying the next move.
      */
+
+    /**
+     * The seat rigged to call Vinto at once, when a debug build has asked for one.
+     *
+     * The **last** bot, which is the seat before the person's own turn comes round again — so
+     * calling there puts the person first in the coalition, which is the position worth testing.
+     */
+    private fun riggedCaller(): String? =
+        if (theLastBotCallsVinto) state.players.lastOrNull { it.isBot }?.id else null
+
     private fun nextBotAction(from: GameState): GameAction? {
+        // The rig, above the search and above the lesson's director: it answers "call now" for
+        // one seat and nothing at all for any other, and the call still goes through the
+        // validator below like every other proposed move.
+        riggedCaller()?.let { rigged ->
+            if (from.vintoCallerId == null && from.players.getOrNull(from.currentPlayerIndex)?.id == rigged) {
+                val call = GameAction.CallVinto(PlayerIdPayload(rigged))
+                if (ActionValidator.validate(from, call) is Validation.Valid) return call
+            }
+        }
+
         // The director speaks first, and only the lesson has one. A move it names still has to
         // pass the validator below, and a refused one falls through to the search — a script
         // that has drifted should cost the lesson its shape, not the game.

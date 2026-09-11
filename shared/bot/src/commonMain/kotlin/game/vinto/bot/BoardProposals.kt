@@ -84,15 +84,25 @@ private class Proposers(
 }
 
 /**
- * Null when the bots have nothing to propose about: no final round, no bot in the coalition,
- * nobody but bots in it, or a person who has already edited the board.
+ * Null when the bots have nothing to propose about: no final round, no bot in the coalition, no
+ * person at the table to read the board, or a person who has already edited it.
+ *
+ * **A coalition of nothing but bots still writes its plan down**, which it did not: the test was
+ * for a human *in the coalition*, so the round the person called — the one round where all three
+ * opponents are bots — seeded nothing, and the caller watched three turns go by without ever
+ * seeing what they were for. The plan is public and the caller may read it (design D12): it is
+ * built from claims the table has already heard, so there is nothing in it to hide, and it is the
+ * whole tension of the round they just started.
  */
 private fun proposers(state: GameState, plan: CoalitionPlan?): Proposers? {
     val caller = state.vintoCallerId ?: return null
     if (state.phase != GamePhase.FINAL) return null
     val coalition = coalitionInTurnOrder(state.players.map { it.id }, caller)
     val bots = coalition.filter { id -> state.players.first { it.id == id }.isBot }
-    if (bots.isEmpty() || bots.size == coalition.size) return null
+    if (bots.isEmpty()) return null
+    // Somebody has to be reading it. Four bots and nobody watching is a solver talking to itself,
+    // and the board is a thing the *people* at the table read.
+    if (state.players.none { it.isHuman }) return null
     // A person has been here: the board is theirs now, and the bots only answer.
     if (plan?.editedBy != null && plan.editedBy !in bots) return null
     return Proposers(state, coalition, bots, state.players.getOrNull(state.currentPlayerIndex)?.id)

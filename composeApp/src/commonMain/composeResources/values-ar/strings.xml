@@ -228,6 +228,8 @@
     <string name="seat_badge_coalition">في التحالف</string>
     <string name="seat_badge_away">غياب عن الطاولة</string>
     <string name="seat_badge_barred">ممنوع الرمي مجدداً</string>
+    <string name="seat_badge_agreed">موافق على الخطة</string>
+    <string name="seat_badge_will_shed">لديه بطاقة جاهزة للرمي</string>
     <string name="seat_pointed_vinto">نداء %1$s بـ Vinto</string>
     <string name="seat_pointed_penalty">أخذ %1$s بطاقة من المكدس</string>
     <string name="seat_pointed_coalition">قيادة %1$s للتحالف</string>
@@ -259,13 +261,8 @@
     <string name="talk_wait_they">طلب من %1$s بالانتظار قليلاً.</string>
     <string name="talk_worse">تصريح بأن ذلك سيجعل وضعك أسوأ.</string>
     <string name="talk_worse_they">تصريح من %1$s بأن ذلك سيؤدي إلى نتيجة أسوأ.</string>
-    <string name="table_final_caller">يلعب الجميع يدًا واحدة بينهم، في مواجهة يدك.</string>
     <string name="table_final_turns_left">%1$d أدوار حتى الكشف</string>
     <string name="table_final_last_turn">الدور الأخير</string>
-    <string name="table_final_coalition">يد واحدة بينكم الثلاثة، في مواجهة %1$s.</string>
-    <string name="table_final_side_coalition">معًا</string>
-    <string name="table_final_side_caller">نداء Vinto</string>
-    <string name="table_final_versus">مقابل</string>
     <string name="table_see_score">شاهد النتيجة</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -434,6 +431,10 @@
     <string name="teach_done">تم</string>
 
     <!-- ================================================================ help -->
+    <string name="help_tab_cards">بطاقات</string>
+    <string name="help_tab_rings">حلقات</string>
+    <string name="help_tab_badges">شارات</string>
+    <string name="help_tab_more">المزيد</string>
     <string name="help_right_now">الآن</string>
     <string name="help_the_cards">البطاقات</string>
     <string name="help_signals">ما تخبرك به الطاولة</string>
@@ -506,9 +507,10 @@
     <string name="label_agree">أوافق</string>
     <string name="label_do_as_planned">لننفّذ الخطة</string>
     <string name="label_keep_it_instead">الاحتفاظ بها بدلًا من ذلك</string>
-    <string name="label_plan_swap">مبادلة بطاقتين</string>
+    <string name="label_play_the_card">لعبها</string>
+    <string name="label_keep_the_card">الاحتفاظ بها</string>
+    <string name="label_let_the_card_go">تركها</string>
     <string name="label_plan_declare">إعلان رتبة</string>
-    <string name="label_plan_put_down">وضع بطاقة</string>
     <string name="label_plan_take_discard">أخذ بطاقة التخلص</string>
     <string name="label_plan_clear">مسح</string>
     <string name="label_plan_shed">رمي مطابق</string>
@@ -517,14 +519,6 @@
     <string name="detail_shed_risk_pushed">يدك هي التي يدفعها التحالف. رمية خاطئة تكلّفها بطاقة وتمنعها لبقية الجولة — فارمِ فقط ما رأيته فعلًا.</string>
     <string name="detail_claim_was_wrong">خطوة هنا بُنيت على قول أثبتت البطاقات خطأه لاحقًا. هذا عمل اللعبة كما ينبغي، لا خطأ: تذكّر أحدهم بطاقة على غير ما هي عليه.</string>
 
-    <string name="board_outcome_wins">أفضل يدنا بـ %1$d في مواجهة %2$d لهم: هذا يفوز.</string>
-    <string name="board_outcome_level">أفضل يدنا بـ %1$d في مواجهة %2$d لهم: تعادل، والتعادل يُدفَع فيه للمنادي.</string>
-    <string name="board_outcome_loses">أفضل يدنا بـ %1$d في مواجهة %2$d لهم: هذا يقصّر.</string>
-    <string name="board_outcome_unseen">%1$d من بطاقات المنادي لم يرها أحد.</string>
-    <string name="board_verdict_wins">يفوز</string>
-    <string name="board_verdict_level">تعادل</string>
-    <string name="board_verdict_loses">يقصّر</string>
-    <string name="label_plan_rehearse">مشاهدة الخطة</string>
     <string name="table_rehearsal">بروفة — لا شيء تحرك</string>
     <string name="ask_what_will_you_do">ماذا سيُفعل في دورك؟</string>
     <string name="ask_what_should_they_do">ماذا سيُفعل في دور %1$s؟</string>
@@ -536,23 +530,41 @@
     <string name="detail_draw_beats_plan">بطاقة %1$s التي سحبتها أفضل من الخطة: احتفظ بها بدلًا من البطاقة رقم %2$d.</string>
     <string name="detail_plan_is_a_suggestion">الخطة اقتراح لا أكثر. القرار لمن يملك الدور.</string>
     <string name="board_title">الخطة</string>
-    <string name="board_summary_empty">لا خطة بعد — اضغطوا للتخطيط معًا</string>
-    <string name="board_summary">الخطة: %1$d من %2$d أدوار محدَّدة، %3$d من %4$d وافقوا</string>
+    <string name="label_plan_open">الخطة</string>
+    <string name="label_plan_run">تشغيل</string>
+    <string name="label_plan_halt">إيقاف</string>
+    <string name="label_plan_back">السابق</string>
+    <string name="label_plan_on">التالي</string>
+    <string name="label_plan_rewind">البداية</string>
+    <string name="board_turn_planned">الدور %1$d، %2$s: %3$s</string>
+    <string name="board_played">%1$s، تم لعبها</string>
+    <string name="board_now">الآن</string>
+    <string name="board_unplayable">لا يمكن تنفيذ هذا الدور من هنا: إحدى البطاقات التي يذكرها لم تعد موجودة.</string>
+    <string name="board_broken">تبيّن أن ادعاءً تحت هذا الدور غير صحيح.</string>
+    <string name="board_carry_hint">تُنقل البطاقة إلى مكانها — أو تُلمس البطاقة، ثم يُلمس المكان.</string>
+    <string name="board_arrival_title">إلى أين تصل بنا الخطة</string>
+    <string name="board_arrival_ours">أفضل يد لدينا: %1$d</string>
+    <string name="board_arrival_theirs">يُعتقد أنه يملك: %1$d</string>
+    <string name="board_arrival_unseen">لم يُذكر شيء عن %1$d من بطاقاته.</string>
     <string name="board_your_call">قرارك</string>
-    <string name="board_in_play">قيد اللعب</string>
     <string name="board_owner_you">لك</string>
     <string name="board_owner_named">لـ%1$s</string>
     <string name="board_step_swap">مبادلة البطاقة رقم %2$d التي %1$s مع البطاقة رقم %4$d التي %3$s</string>
     <string name="board_step_declare">إعلان %1$s بالملك</string>
     <string name="board_step_take_discard">أخذ بطاقة التخلص</string>
+    <string name="board_from_the_deck">السحب من المكدس</string>
+    <string name="board_part_end">%1$s %2$d</string>
+    <string name="board_part_card">بطاقة رقم %1$d</string>
+    <string name="board_part_card_called">بطاقة رقم %1$d = %2$s</string>
+    <string name="board_nobody_throws_in">لا أحد يرمي بعد</string>
+    <string name="board_step_bin">ترك البطاقة</string>
+    <string name="board_step_use_it">لعبها أيًا كانت</string>
     <string name="board_step_put_down">وضع البطاقة رقم %2$d التي %1$s</string>
     <string name="board_step_put_down_known">وضع البطاقة رقم %2$d التي %1$s، وهي %3$s</string>
     <string name="board_would_rather">الخيار الأفضل عند %1$s: %2$s</string>
     <string name="board_shed">الرمي القادم: %1$s لـ%2$s</string>
     <string name="board_edited_by">آخر تعديل: %1$s</string>
-    <string name="board_nod_yes">موافقة %1$s</string>
-    <string name="board_nod_not_yet">بانتظار موافقة %1$s</string>
-    <string name="board_lane">%1$s: %2$s</string>
+    <string name="badge_plain">ما يُزعم أن هذه الورقة هي</string>
     <string name="badge_disputed">متنازع عليها</string>
     <string name="badge_paired">واحدة من زوج، الترتيب غير معروف</string>
     <string name="badge_right">صحيحة</string>

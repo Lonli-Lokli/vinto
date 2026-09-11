@@ -43,6 +43,22 @@ object Pacing {
     const val BETWEEN_SCENES_MS = 140L
 
     /**
+     * The pause before a frame, given the move drawn before it.
+     *
+     * The same answer as the overload below in every case but one: **a throw following a throw
+     * gets no beat at all.** A toss-in window belongs to the whole table at once — which is why
+     * [tossedTogether] merges the throws that arrive together — and a hand that comes down a
+     * moment later is still part of that scramble rather than a new event to be introduced.
+     * Paced out one card at a time, four players throwing reads as four people taking turns.
+     */
+    fun thinkBefore(frame: Frame, previous: Frame?, previousActor: String?, viewerId: String): Long =
+        if (previous?.isAThrownCard() == true && frame.isAThrownCard()) {
+            0L
+        } else {
+            thinkBefore(frame, previousActor, viewerId)
+        }
+
+    /**
      * The pause before a frame is played.
      *
      * Only for somebody else's move, and only when the turn has changed hands: your own moves

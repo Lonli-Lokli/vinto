@@ -65,6 +65,15 @@ class AnimationQueue<T>(
     fun next(): T? = waiting.removeFirstOrNull()
 
     /**
+     * The next item without taking it, or null when there is nothing waiting.
+     *
+     * For the caller that has to decide whether the next thing belongs *with* the one it is
+     * holding — a toss-in window is one scramble however many hands are in it, and the only
+     * way to know a throw has company is to look before playing it.
+     */
+    fun peek(): T? = waiting.firstOrNull()
+
+    /**
      * Abandons everything pending.
      *
      * For the two moments where the past has stopped mattering: a reconnect, and a new round.

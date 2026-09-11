@@ -2,17 +2,23 @@ package game.vinto.app.game
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,6 +27,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.Pages
 import game.vinto.app.art.Res
+import game.vinto.app.art.badge_disputed
+import game.vinto.app.art.badge_paired
+import game.vinto.app.art.badge_plain
+import game.vinto.app.art.badge_right
+import game.vinto.app.art.badge_wrong
 import game.vinto.app.art.deck_body
 import game.vinto.app.art.deck_title
 import game.vinto.app.art.help_card_worth
@@ -36,8 +47,10 @@ import game.vinto.app.art.help_right_now
 import game.vinto.app.art.help_rules_action
 import game.vinto.app.art.help_rules_body
 import game.vinto.app.art.help_rules_title
-import game.vinto.app.art.help_signals
-import game.vinto.app.art.help_the_cards
+import game.vinto.app.art.help_tab_badges
+import game.vinto.app.art.help_tab_cards
+import game.vinto.app.art.help_tab_more
+import game.vinto.app.art.help_tab_rings
 import game.vinto.app.art.signal_live
 import game.vinto.app.art.signal_live_meaning
 import game.vinto.app.art.signal_peek
@@ -58,12 +71,15 @@ import game.vinto.app.explained
 import game.vinto.app.openUrl
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.CardWhite
+import game.vinto.app.theme.ChoiceRow
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Signal
 import game.vinto.app.theme.Slate
 import game.vinto.app.theme.VintoSheet
+import game.vinto.client.Badge
 import game.vinto.client.Explains
+import game.vinto.client.Verdict
 import game.vinto.shapes.CardConfig
 import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardConfig
@@ -97,106 +113,149 @@ fun HelpSheet(open: Boolean, now: Explains?, left: Int, onDismiss: () -> Unit, f
     }
 
     VintoSheet(open = open, onDismiss = onDismiss) {
-        LazyColumn(
-            modifier = Modifier.padding(horizontal = Pad).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(RowGap),
-        ) {
-            now?.let {
-                item {
-                    Surface(
-                        shape = RoundedCornerShape(Corner),
-                        color = Rail.fill,
-                        border = BorderStroke(1.dp, Rail.line),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Column(modifier = Modifier.padding(Gap)) {
-                            Text(
-                                text = stringResource(Res.string.help_right_now),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = TitleSize,
-                            )
-                            Text(explained(it), fontSize = BodySize, color = Rail.inkDim)
-                        }
-                    }
+        var tab by rememberSaveable { mutableStateOf(HelpTab.CARDS) }
+
+        Column(modifier = Modifier.padding(horizontal = Pad).fillMaxWidth()) {
+            // Above the tabs, not inside one. "What am I being asked right now" is the reason a
+            // player opens this sheet mid-turn, and an answer filed under a category is an
+            // answer they have to go looking for.
+            now?.let { RightNow(it) }
+
+            ChoiceRow(
+                options = HelpTab.entries,
+                selected = tab,
+                label = { stringResource(it.title) },
+                onChoose = { tab = it },
+                modifier = Modifier.padding(vertical = Gap),
+            )
+
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(RowGap),
+            ) {
+                when (tab) {
+                    HelpTab.CARDS -> theCards()
+                    HelpTab.RINGS -> theRings()
+                    HelpTab.BADGES -> theBadges()
+                    HelpTab.MORE -> theRest(left)
                 }
             }
-
-            item {
-                Text(
-                    stringResource(Res.string.help_the_cards),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = TitleSize,
-                    modifier = Modifier.padding(top = Gap),
-                )
-            }
-
-            // Grouped by what a card *does*, because that is how a player has to think about
-            // them at the table: is this worth points, does it look, does it move cards, or is
-            // it one of the odd ones. Fourteen ranks in one column is a list to scroll past.
-            GROUPS.forEach { group ->
-                item {
-                    Text(
-                        stringResource(group.title),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = BodySize,
-                        color = Rail.inkDim,
-                        modifier = Modifier.padding(top = Gap),
-                    )
-                }
-                items(group.ranks) { rank -> RankRow(getCardConfig(rank)) }
-            }
-
-            item {
-                Text(
-                    stringResource(Res.string.help_signals),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = TitleSize,
-                    modifier = Modifier.padding(top = Gap),
-                )
-            }
-
-            items(SIGNALS) { signal -> SignalRow(signal) }
-
-            item {
-                Text(
-                    stringResource(Res.string.help_closing),
-                    fontSize = BodySize,
-                    color = Rail.inkDim,
-                    modifier = Modifier.padding(vertical = Pad),
-                )
-            }
-
-            // Task 4.5. Last, because nobody opens this sheet to read it — and present,
-            // because the one place a player will look for the answer is the sheet they
-            // already open to ask what a card does. Said in the app's own words rather than
-            // linked to a policy: the whole claim is small enough to fit in a paragraph.
-            item {
-                Text(
-                    stringResource(Res.string.help_counts_title),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = TitleSize,
-                    modifier = Modifier.padding(top = Gap),
-                )
-            }
-
-            item {
-                Text(
-                    stringResource(Res.string.help_counts_body),
-                    fontSize = BodySize,
-                    color = Rail.inkDim,
-                    modifier = Modifier.padding(vertical = Pad),
-                )
-            }
-
-            item { TheDeck(left) }
-
-            // The rulebook, and deliberately not in here. This sheet answers the question a
-            // player has mid-turn — what does this card do — with a card waiting and one hand
-            // free. `VINTO_RULES.md` runs to four pages, and the answer to "what are the rules"
-            // belongs with the people whose game it is: one authoritative copy, theirs.
-            item { RulesLink() }
         }
     }
+}
+
+/**
+ * The four things a player can be looking for in here, as four tabs.
+ *
+ * It was one column and the reason it stopped working is arithmetic: thirteen ranks, seven
+ * rings, and four paragraphs at the foot is a screen and a half of scrolling to reach a legend.
+ * A player opens this sheet with a card waiting and one hand free, so what they came for has to
+ * be one press away rather than one hunt away.
+ */
+private enum class HelpTab(val title: StringResource) {
+    CARDS(Res.string.help_tab_cards),
+    RINGS(Res.string.help_tab_rings),
+    BADGES(Res.string.help_tab_badges),
+    MORE(Res.string.help_tab_more),
+}
+
+/** What the table is asking of this player at this moment, in its own words. */
+@Composable
+private fun RightNow(now: Explains) {
+    Surface(
+        shape = RoundedCornerShape(Corner),
+        color = Rail.fill,
+        border = BorderStroke(1.dp, Rail.line),
+        modifier = Modifier.fillMaxWidth().padding(top = Gap),
+    ) {
+        Column(modifier = Modifier.padding(Gap)) {
+            Text(
+                text = stringResource(Res.string.help_right_now),
+                fontWeight = FontWeight.Bold,
+                fontSize = TitleSize,
+            )
+            Text(explained(now), fontSize = BodySize, color = Rail.inkDim)
+        }
+    }
+}
+
+/**
+ * Every rank, grouped by what a card *does*.
+ *
+ * That is how a player has to think about them at the table: is this worth points, does it
+ * look, does it move cards, or is it one of the odd ones.
+ */
+private fun LazyListScope.theCards() {
+    GROUPS.forEach { group ->
+        item {
+            Text(
+                stringResource(group.title),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = BodySize,
+                color = Rail.inkDim,
+                modifier = Modifier.padding(top = Gap),
+            )
+        }
+        items(group.ranks) { rank -> RankRow(getCardConfig(rank)) }
+    }
+}
+
+/** The colours the table draws round a card or a seat, and only the ones it still draws. */
+private fun LazyListScope.theRings() {
+    items(SIGNALS) { signal -> SignalRow(signal) }
+}
+
+/**
+ * The marks a seat and a card wear, which are facts rather than alarms.
+ *
+ * Colour is down to the three things a player must react to *now*; everything else about a seat
+ * or a card is said in a mark, and a mark nobody can read is a mark that is not saying anything.
+ * Each row draws the **real** thing — the same composable the table uses — beside the same
+ * sentence a screen reader is given for it, so the legend cannot drift from the table.
+ */
+private fun LazyListScope.theBadges() {
+    items(SEAT_MARKS) { mark -> SeatMarkRow(mark) }
+    items(CLAIM_MARKS) { mark -> ClaimMarkRow(mark) }
+}
+
+/** Everything that is neither a card nor a mark: the round, the count, the deck, the rules. */
+private fun LazyListScope.theRest(left: Int) {
+    item {
+        Text(
+            stringResource(Res.string.help_closing),
+            fontSize = BodySize,
+            color = Rail.inkDim,
+            modifier = Modifier.padding(vertical = Pad),
+        )
+    }
+
+    // Task 4.5. Present because the one place a player will look for the answer is the sheet
+    // they already open to ask what a card does. Said in the app's own words rather than linked
+    // to a policy: the whole claim is small enough to fit in a paragraph.
+    item {
+        Text(
+            stringResource(Res.string.help_counts_title),
+            fontWeight = FontWeight.Bold,
+            fontSize = TitleSize,
+            modifier = Modifier.padding(top = Gap),
+        )
+    }
+    item {
+        Text(
+            stringResource(Res.string.help_counts_body),
+            fontSize = BodySize,
+            color = Rail.inkDim,
+            modifier = Modifier.padding(vertical = Pad),
+        )
+    }
+
+    item { TheDeck(left) }
+
+    // The rulebook, and deliberately not in here. This sheet answers the question a player has
+    // mid-turn — what does this card do — with a card waiting and one hand free.
+    // `VINTO_RULES.md` runs to four pages, and the answer to "what are the rules" belongs with
+    // the people whose game it is: one authoritative copy, theirs.
+    item { RulesLink() }
 }
 
 /**
@@ -328,6 +387,61 @@ private val SIGNALS = listOf(
         Res.string.signal_reshuffle_meaning,
     ),
 )
+
+/**
+ * The marks a seat plate wears, in the order a player meets them.
+ *
+ * The list is the enum minus the one mark that is not durable: whether the table is *waiting*
+ * on a seat changes every turn and is drawn on the portrait rather than in the row, so a legend
+ * entry for it would name something a reader cannot find beside the others.
+ */
+private val SEAT_MARKS = SeatBadge.entries.toList()
+
+/** The claims a card can wear, as the table draws them. */
+private val CLAIM_MARKS = listOf(
+    Badge(text = "Q", speakers = emptyList()),
+    Badge(text = "Q", speakers = emptyList(), disputed = true),
+    Badge(text = "Q", speakers = emptyList(), paired = true),
+    Badge(text = "Q", speakers = emptyList(), verdict = Verdict.RIGHT),
+    Badge(text = "Q", speakers = emptyList(), verdict = Verdict.WRONG),
+)
+
+/** One seat mark: the real glyph, and the sentence a screen reader is given for it. */
+@Composable
+private fun SeatMarkRow(mark: SeatBadge) {
+    LegendRow(said = stringResource(mark.spoken())) { SeatMark(mark, MarkSize) }
+}
+
+/** One claim mark, drawn by the same composable the felt draws it with. */
+@Composable
+private fun ClaimMarkRow(mark: Badge) {
+    LegendRow(said = claimMeaning(mark)) { ClaimBadge(mark) }
+}
+
+/** What a claim badge is saying, in the words the card itself uses. */
+@Composable
+private fun claimMeaning(mark: Badge): String = when {
+    mark.verdict == Verdict.RIGHT -> stringResource(Res.string.badge_right)
+    mark.verdict == Verdict.WRONG -> stringResource(Res.string.badge_wrong)
+    mark.disputed -> stringResource(Res.string.badge_disputed)
+    mark.paired -> stringResource(Res.string.badge_paired)
+    else -> stringResource(Res.string.badge_plain)
+}
+
+/** A mark beside what it means, laid out like every other row in this sheet. */
+@Composable
+private fun LegendRow(said: String, mark: @Composable () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(RowGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(modifier = Modifier.size(Chip), contentAlignment = Alignment.Center) { mark() }
+        Text(said, fontSize = BodySize, color = Rail.ink, modifier = Modifier.weight(1f))
+    }
+}
+
+private val MarkSize = 18.dp
 
 @Composable
 private fun SignalRow(signal: Cue) {

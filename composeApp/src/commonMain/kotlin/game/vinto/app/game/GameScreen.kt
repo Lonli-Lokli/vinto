@@ -139,6 +139,10 @@ fun GameScreen(
             opening = opening,
             recent = log,
         ) { shown, told ->
+            // Read once and handed to both the screen and the router: which table this is
+            // decides what a touch on a card means (design D2), and the two must not be
+            // deciding it from different values a frame apart.
+            val table = holder.tableAsShown(shown, drawn = LocalStage.current.drawn)
             Column(modifier = Modifier.fillMaxSize()) {
                 TableScreen(
                     // `shown` rather than the live view: while the bots' moves are being played
@@ -146,7 +150,7 @@ fun GameScreen(
                     // catches up the moment there is nothing left to animate.
                     state = TableState(
                         view = shown,
-                        table = holder.tableAsShown(shown),
+                        table = table,
                         refusal = holder.refusal,
                         // Solo has no wire, so `sending` stays false and the rail says nothing
                         // about one — but the press is just as unavailable while the engine and
@@ -156,7 +160,7 @@ fun GameScreen(
                         round = round,
                     ),
                     layout = layout,
-                    onMove = act.unlessRehearsing(),
+                    onMove = act.routed(table),
                     onHelp = help::show,
                     onSettings = onSettings,
                     // The whole game, in the format the replay harness already reads. A bug

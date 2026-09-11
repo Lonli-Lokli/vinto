@@ -131,7 +131,12 @@ private fun applied(
 
             is Step.PutDown -> working = putDown(working, step.card, view)
 
-            Step.TakeTheDiscard, null -> Unit
+            // Neither moves a card between hands, so neither changes what the round is scored
+            // on. Binning protects a hand rather than improving it.
+            // None of them moves a card between hands, so none changes what the round is
+            // scored on. Binning protects a hand rather than improving it, and using a card
+            // nobody has seen cannot be priced at all.
+            Step.TakeTheDiscard, Step.Bin, Step.UseIt, null -> Unit
         }
     }
 

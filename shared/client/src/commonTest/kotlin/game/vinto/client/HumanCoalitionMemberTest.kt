@@ -116,6 +116,41 @@ class HumanCoalitionMemberTest {
     }
 
     @Test
+    fun sayingWhatYouHoldDoesNotEndTheWindowYouAreSayingItIn() = runTest {
+        // The window exists so the coalition can pool what it knows. Declaring a card is the
+        // *only* thing it is for — so closing it on the first claim let the bots take their
+        // turns before the person had finished speaking, and there was no way to say a second
+        // thing. Reported from a phone: *"the bot started playing without me confirming, he
+        // didn't even wait until I declare my card knowledge"*.
+        val session = LocalGameSession(
+            seed = 5L,
+            difficulty = Difficulty.MODERATE,
+            resuming = finalRound(callerId = "bot-2", leaderId = null, currentPlayerIndex = 2),
+        )
+        val me = session.playerId
+
+        session.dispatch(GameAction.Empty(JsonNull))
+        assertNotNull(session.view.value.conferMsRemaining, "the window never opened")
+        val before = session.view.value.turnNumber
+
+        session.dispatch(saying(me, me, Claim(me, listOf(0), listOf(Rank.NINE))))
+
+        assertNotNull(
+            session.view.value.conferMsRemaining,
+            "saying what you hold closed the window you were saying it in",
+        )
+        assertEquals(
+            before,
+            session.view.value.turnNumber,
+            "a bot took its turn while the coalition was still talking",
+        )
+
+        // And the window still closes when the player says they are done with it.
+        session.doneConferring()
+        assertNull(session.view.value.conferMsRemaining, "the window would not close")
+    }
+
+    @Test
     fun aBotVintoCallStartsTheFinalRoundWithNothingToVoteOn() = runTest {
         val session = LocalGameSession(
             seed = 5L,

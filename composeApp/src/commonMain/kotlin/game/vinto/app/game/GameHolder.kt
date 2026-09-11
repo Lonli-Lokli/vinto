@@ -17,7 +17,7 @@ import game.vinto.client.GameSession
 import game.vinto.client.Move
 import game.vinto.client.Question
 import game.vinto.client.Table
-import game.vinto.client.rehearse
+import game.vinto.client.rehearsal
 import game.vinto.client.tableFor
 import game.vinto.engine.PlayerView
 import game.vinto.engine.PublicReveal
@@ -119,13 +119,20 @@ class GameHolder(
      * The table as a SCREEN should draw it: [tableFor] the view on the felt, minus the taps that
      * would land on a hand the engine has already changed.
      *
-     * One function because the two screens had drifted. Solo applied [withoutStaleTaps] and the
+     * One function because the two screens had drifted. Solo applied [withoutStaleOffers] and the
      * room did not — and the room is the worse place to leave it out: it applies whatever index
      * arrives, `ClientMessage.Action` carries no id to dedupe by, and the validator never checks
-     * whether this seat has already thrown. `withoutStaleTaps`'s own KDoc names that case ("which,
+     * whether this seat has already thrown. `withoutStaleOffers`'s own KDoc names that case ("which,
      * online, is the moment two people throw at once") and it was never wired there.
      */
-    fun tableAsShown(shown: PlayerView): Table = tableFor(shown).withoutStaleTaps(shown, current)
+
+    /**
+     * @param drawn how far the *screen* has got, which is not always where [shown] is: between
+     *   the two batches a dispatch emits, the stage has let go of its lag and is drawing the
+     *   live table while the bots' turns are still to come. Null before anything is animated.
+     */
+    fun tableAsShown(shown: PlayerView, drawn: PlayerView? = null): Table =
+        tableFor(shown).withoutStaleOffers(shown, drawn ?: shown, current)
 
     /** One sentence off the channel, for the holder to keep if it is addressed here. */
     fun heard(talk: TableTalk) {
@@ -138,11 +145,30 @@ class GameHolder(
      * A question is answered here and goes no further; a move goes to the engine and, if it
      * lands, wipes the question — the screen's half-finished thought is finished.
      */
+
+    /**
+     * The plan's film, when the transport has been asked to run.
+     *
+     * The frames are the plan's own, from where the head is parked; the screen parks it at the
+     * end once the felt has finished drawing them (`PlanRunner`), because only the animation
+     * knows how long that takes — it depends on the pace dial, on reduced motion, and on how
+     * much each turn actually moves. Nothing leaves the phone: these are ghosts off the view
+     * this seat already holds.
+     */
+    private suspend fun film(focus: Question.ThePlan) {
+        val target = focus.runningTo ?: return
+        val standing = plan.value ?: return
+        rehearsals.emit(rehearsal(view.value, standing).between(focus.at, target))
+    }
+
     suspend fun act(move: Move) {
         when (move) {
             is Move.Ask -> {
                 question = move.question
                 refusal = null
+
+                // Starting the plan's film is the one question that also has something to play.
+                (move.question as? Question.ThePlan)?.let { film(it) }
             }
 
             // One at a time, and the second tap is dropped rather than queued. Locally this
@@ -178,13 +204,6 @@ class GameHolder(
             is Move.Agree -> {
                 refusal = session.agreePlan(move.agree)
                 if (refusal == null) question = Question.None
-            }
-
-            // Nothing leaves the phone: the plan is played back on this felt as ghosts, off the
-            // view this seat holds, and the stage snaps back to the live table after.
-            is Move.Rehearse -> {
-                val standing = plan.value ?: return
-                rehearsals.emit(rehearse(view.value, standing))
             }
 
             is Move.Send -> {
@@ -254,9 +273,11 @@ fun rememberActor(
     val feedback = LocalFeedback.current
 
     LaunchedEffect(rehearseFor) {
-        if (rehearseFor == Question.ThePlan) {
+        if (rehearseFor is Question.ThePlan) {
             delay(REHEARSE_AFTER_MS)
-            holder.act(Move.Rehearse)
+            // The transport's own last stop, so a capture records the plan exactly as a player
+            // watches it — one way to play the film, not a second one kept for the camera.
+            holder.table.board?.transport?.stops?.lastOrNull()?.go?.let { holder.act(it) }
         }
     }
 
@@ -275,22 +296,65 @@ fun rememberActor(
 }
 
 /**
- * The table's taps, minus the ones that would land on a hand the engine has already changed.
+ * The table, minus everything it offers that belongs to a position the engine has left.
  *
- * The screen draws the table as it was after the move being animated, and the taps are built
- * from that same picture. While the picture lags the engine — a toss-in flying to the pile —
- * a tap on "card 3" names card 3 *as shown*, and the engine reads card 3 *as it is now*: a
- * hand that lost a card has slid, and the second tap on the same slot threw a different card,
- * which cost a penalty. Reported from a phone, twice on one window.
+ * The screen draws the table as it was after the move being animated, and everything the rail
+ * offers is built from that same picture. Two different things go wrong with that while the
+ * picture lags, and both were reported from a phone.
  *
- * Only the viewer's own hand is checked, and only their own taps are withheld: another seat's
- * throw changes nothing about where this player's cards are, so their window stays open while
- * the felt catches up — which, online, is the moment two people throw at once.
+ * **The taps.** A tap on "card 3" names card 3 *as shown*, and the engine reads card 3 *as it
+ * is now*: a hand that lost a card has slid, and a second tap on the same slot threw a
+ * different card, which cost a penalty. Only the viewer's own hand is checked and only their
+ * own taps are withheld — another seat's throw changes nothing about where this player's cards
+ * are, so their window stays open while the felt catches up, which online is the moment two
+ * people throw at once.
+ *
+ * **The buttons.** A position the screen has not reached can still be a position with something
+ * to press:
+ * a toss-in window the player has already closed replays with its button, so a control the
+ * player was finished with reappears for as long as it takes the next card to move, then goes
+ * again. Nobody touched anything and the app changed its mind twice. So a table drawn from a
+ * position the live game is no longer in offers nothing that would *act* on the game —
+ * [Move.Send] and nothing else, because a question the screen is asking itself is about the
+ * screen rather than about the round. `ControlBlinkTest` is the report.
  */
-internal fun Table.withoutStaleTaps(shown: PlayerView, live: PlayerView): Table {
-    if (shown.showsTheSameHandAs(live)) return this
-    return copy(taps = taps.filterKeys { it.playerId != shown.viewerId })
+internal fun Table.withoutStaleOffers(shown: PlayerView, drawn: PlayerView, live: PlayerView): Table {
+    var table = this
+    if (!shown.showsTheSameHandAs(live)) {
+        table = table.copy(taps = table.taps.filterKeys { it.playerId != shown.viewerId })
+    }
+    // Against what has been **drawn**, not against what is being shown. When the stage has let
+    // go of its lag the two are the same, and asking `shown` could never answer — it *is* the
+    // live view. What has been drawn is the honest measure of how far the player has been
+    // shown, and between a dispatch's two batches it is a whole turn short.
+    if (!drawn.offersTheSameMovesAs(live)) {
+        table = table.copy(
+            choices = table.choices.filterNot { it.move is Move.Send },
+            ranks = table.ranks.filterNot { it.move is Move.Send },
+            seats = table.seats.filterNot { it.move is Move.Send },
+            taps = table.taps.filterValues { it !is Move.Send },
+        )
+    }
+    return table
 }
+
+/**
+ * Whether the position on screen still allows what the live one allows.
+ *
+ * Not "are these views equal" — they differ constantly and harmlessly, by a card's position in
+ * a pile or a count on the deck. Two things decide whether a *control* is still real: **whose
+ * turn** the picture is of, and **which window** is open in it. Both are the difference between
+ * a control the player may still use and one belonging to a position they have been carried
+ * past.
+ *
+ * The sub-phase is deliberately **not** among them, and that is not an oversight. Your own turn
+ * walks through several of them — idle, drawing, choosing — and comparing it withheld the
+ * buttons of your own move for as long as its card took to fly, which is a second of a dead
+ * rail nobody asked for. `TableUiTest` is what said so: it presses Draw and expects Discard.
+ */
+internal fun PlayerView.offersTheSameMovesAs(live: PlayerView): Boolean =
+    currentPlayerIndex == live.currentPlayerIndex &&
+        activeTossIn?.ranks == live.activeTossIn?.ranks
 
 /**
  * Whether the hand drawn on screen is still the hand the engine holds.

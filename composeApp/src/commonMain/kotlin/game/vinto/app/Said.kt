@@ -126,21 +126,16 @@ import game.vinto.app.art.beat_you_called_body
 import game.vinto.app.art.beat_you_called_title
 import game.vinto.app.art.beat_your_turn_to_call_body
 import game.vinto.app.art.beat_your_turn_to_call_title
-import game.vinto.app.art.board_outcome_level
-import game.vinto.app.art.board_outcome_loses
-import game.vinto.app.art.board_outcome_unseen
-import game.vinto.app.art.board_outcome_wins
 import game.vinto.app.art.board_owner_named
 import game.vinto.app.art.board_owner_you
+import game.vinto.app.art.board_step_bin
 import game.vinto.app.art.board_step_declare
 import game.vinto.app.art.board_step_put_down
 import game.vinto.app.art.board_step_put_down_known
 import game.vinto.app.art.board_step_swap
 import game.vinto.app.art.board_step_take_discard
+import game.vinto.app.art.board_step_use_it
 import game.vinto.app.art.board_title
-import game.vinto.app.art.board_verdict_level
-import game.vinto.app.art.board_verdict_loses
-import game.vinto.app.art.board_verdict_wins
 import game.vinto.app.art.card_position
 import game.vinto.app.art.choice_back
 import game.vinto.app.art.choice_call_vinto
@@ -188,13 +183,14 @@ import game.vinto.app.art.label_do_as_planned
 import game.vinto.app.art.label_do_as_suggested
 import game.vinto.app.art.label_done_talking
 import game.vinto.app.art.label_keep_it_instead
+import game.vinto.app.art.label_keep_the_card
+import game.vinto.app.art.label_let_the_card_go
 import game.vinto.app.art.label_not_sure_which_way
 import game.vinto.app.art.label_plan_clear
 import game.vinto.app.art.label_plan_declare
-import game.vinto.app.art.label_plan_put_down
 import game.vinto.app.art.label_plan_shed
-import game.vinto.app.art.label_plan_swap
 import game.vinto.app.art.label_plan_take_discard
+import game.vinto.app.art.label_play_the_card
 import game.vinto.app.art.label_standing_bin
 import game.vinto.app.art.label_standing_high
 import game.vinto.app.art.label_standing_low
@@ -270,7 +266,6 @@ import game.vinto.client.Detail
 import game.vinto.client.Explains
 import game.vinto.client.Gloss
 import game.vinto.client.Label
-import game.vinto.client.PlanOutcome
 import game.vinto.client.Say
 import game.vinto.client.Speaker
 import game.vinto.client.StepLine
@@ -468,10 +463,11 @@ fun labelled(label: Label): String = when (label) {
     Label.Done -> stringResource(Res.string.choice_done)
     Label.Agree -> stringResource(Res.string.label_agree)
     Label.DoAsPlanned -> stringResource(Res.string.label_do_as_planned)
-    Label.PlanAPutDown -> stringResource(Res.string.label_plan_put_down)
     Label.KeepItInstead -> stringResource(Res.string.label_keep_it_instead)
-    Label.PlanASwap -> stringResource(Res.string.label_plan_swap)
     Label.PlanADeclare -> stringResource(Res.string.label_plan_declare)
+    Label.PlayTheCard -> stringResource(Res.string.label_play_the_card)
+    Label.KeepTheCard -> stringResource(Res.string.label_keep_the_card)
+    Label.LetTheCardGo -> stringResource(Res.string.label_let_the_card_go)
     Label.PlanTakeTheDiscard -> stringResource(Res.string.label_plan_take_discard)
     Label.ClearLane -> stringResource(Res.string.label_plan_clear)
     Label.PlanAShed -> stringResource(Res.string.label_plan_shed)
@@ -620,39 +616,6 @@ fun detailed(detail: Detail): String = when (detail) {
 }
 
 /**
- * Where the plan would leave the round, as one sentence: the two totals and whether that wins.
- *
- * Level is said as losing, because a tie pays the caller; and how much of the caller's hand
- * nobody has seen is said beside it, because a believed total without that is a number pretending
- * to be information (design D8).
- */
-@Composable
-fun outcomeWords(outcome: PlanOutcome): String {
-    val verdict = when {
-        outcome.wins -> stringResource(Res.string.board_outcome_wins, outcome.ourBest, outcome.theirBelieved)
-        outcome.level ->
-            stringResource(Res.string.board_outcome_level, outcome.ourBest, outcome.theirBelieved)
-        else -> stringResource(Res.string.board_outcome_loses, outcome.ourBest, outcome.theirBelieved)
-    }
-    return if (outcome.unseen == 0) {
-        verdict
-    } else {
-        verdict + " " + stringResource(
-            Res.string.board_outcome_unseen,
-            outcome.unseen,
-        )
-    }
-}
-
-/** The verdict alone, for the one-line summary on the felt. */
-@Composable
-fun verdictWord(outcome: PlanOutcome): String = when {
-    outcome.wins -> stringResource(Res.string.board_verdict_wins)
-    outcome.level -> stringResource(Res.string.board_verdict_level)
-    else -> stringResource(Res.string.board_verdict_loses)
-}
-
-/**
  * A question about somebody's turn: the "you" form for the viewer's own, the named form for
  * anybody else's. Two resources rather than one with a name in it, because "What will you do"
  * and "What should Nina do" are different sentences in most of the nineteen languages.
@@ -680,6 +643,8 @@ fun stepWords(step: StepLine): String = when (step) {
 
     is StepLine.Declare -> stringResource(Res.string.board_step_declare, step.rank.serialName)
     StepLine.TakeTheDiscard -> stringResource(Res.string.board_step_take_discard)
+    StepLine.Bin -> stringResource(Res.string.board_step_bin)
+    StepLine.UseIt -> stringResource(Res.string.board_step_use_it)
     is StepLine.PutDown -> {
         // Bound locally: a smart cast on a property from another module is not allowed.
         val rank = step.rank

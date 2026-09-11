@@ -114,7 +114,7 @@ class PlanBoardTest {
         val summary = assertNotNull(window.planSummary, "a member has no way to open the board")
         assertEquals(0, summary.lanesSet)
         assertEquals(3, summary.lanes)
-        assertEquals(Move.Ask(Question.ThePlan), summary.open)
+        assertEquals(Move.Ask(Question.ThePlan()), summary.open)
 
         val plan = CoalitionPlan(
             lanes = listOf(Lane(nina, Step.TakeTheDiscard)),
@@ -129,15 +129,19 @@ class PlanBoardTest {
 
     @Test
     fun aMemberSeesOneLanePerTurnInTurnOrderEvenBeforeAnythingIsPlanned() {
-        val opened = tableFor(view(), question = Question.ThePlan, plan = null)
-        assertEquals(Ask.ThePlan, opened.prompt)
+        val opened = tableFor(view(), question = Question.ThePlan(), plan = null)
+        // The prompt names the turn being read rather than the plan as a whole: the rail's job
+        // in plan mode is the *selected* turn's words, since the plan itself is on the felt.
+        assertIs<Ask.WhatShouldTheyDo>(opened.prompt, "the rail does not say whose turn is being read")
         val board = assertNotNull(opened.board, "a member has no board to plan on")
 
         assertEquals(listOf(Speaker.Named("Bot3"), Speaker.Named("Bot4"), Speaker.You), board.lanes.map { it.who })
         assertTrue(board.lanes.all { it.step == null }, "an empty board had steps on it")
-        assertTrue(board.lanes.all { it.move != null }, "an empty lane cannot be tapped to start planning")
+        assertNotNull(board.building?.composer, "an empty turn cannot be composed at all")
         assertTrue(opened.choices.none { it.label == Label.Agree }, "nothing on the board, nothing to agree to")
-        assertTrue(opened.choices.any { it.label == Label.Back }, "no way to close the board")
+        // No "Back" among them: the switch in the header is the plan's one way in and out, and
+        // a second control that closes it is a second thing to learn.
+        assertTrue(opened.choices.none { it.label == Label.Back }, "the plan grew a second way out")
     }
 
     @Test
@@ -145,9 +149,9 @@ class PlanBoardTest {
         assertNull(tableFor(view(viewer = caller), plan = null).planSummary, "the caller was offered an empty board")
 
         val plan = CoalitionPlan(lanes = listOf(Lane(nina, Step.TakeTheDiscard)), agreed = listOf(me), editedBy = me)
-        val opened = tableFor(view(viewer = caller), question = Question.ThePlan, plan = plan)
+        val opened = tableFor(view(viewer = caller), question = Question.ThePlan(), plan = plan)
         val board = assertNotNull(opened.board, "the caller cannot see the plan")
-        assertTrue(board.lanes.all { it.move == null }, "the caller could edit the coalition's plan")
+        assertTrue(board.lanes.all { it.composer == null }, "the caller could edit the coalition's plan")
         assertTrue(
             opened.choices.none { it.label == Label.Agree },
             "the caller was asked to agree to the plan against them",
@@ -156,20 +160,25 @@ class PlanBoardTest {
     }
 
     @Test
-    fun aLockedLaneAndTheTurnInProgressCannotBeTapped() {
+    fun aLockedLaneAndTheTurnInProgressCannotBeComposed() {
         val plan = CoalitionPlan(
             lanes = listOf(Lane(nina, Step.TakeTheDiscard, locked = true), Lane(don, Step.Declare(Rank.KING))),
             agreed = listOf(me),
             editedBy = me,
         )
-        val board = assertNotNull(
-            tableFor(view(finalRound(onPlay = don)), question = Question.ThePlan, plan = plan).board,
-        )
+        val here = view(finalRound(onPlay = don))
 
-        assertNull(board.lanes.first { it.who == Speaker.Named("Bot3") }.move, "a locked lane was tappable")
-        assertTrue(board.lanes.first { it.who == Speaker.Named("Bot3") }.locked)
-        assertNull(board.lanes.first { it.who == Speaker.Named("Bot4") }.move, "the turn in progress was tappable")
-        assertNotNull(board.lanes.first { it.who == Speaker.You }.move, "a later lane was frozen too")
+        // Parked on each turn in turn, because a composer belongs to the turn being read and to
+        // no other — three of them at once would be three ways to edit one plan. A stop names
+        // the turn it *ends*, so turn `n` is read at stop `n + 1`.
+        fun composerAt(turn: Int) =
+            assertNotNull(tableFor(here, question = Question.ThePlan(at = turn + 1), plan = plan).board)
+                .lanes[turn]
+                .composer
+
+        assertNull(composerAt(0), "a locked lane could be composed")
+        assertNull(composerAt(1), "the turn already in progress could be composed")
+        assertNotNull(composerAt(2), "a later turn was frozen too")
     }
 
     @Test
@@ -179,11 +188,11 @@ class PlanBoardTest {
             agreed = listOf(nina),
             editedBy = nina,
         )
-        val before = tableFor(view(), question = Question.ThePlan, plan = plan)
+        val before = tableFor(view(), question = Question.ThePlan(), plan = plan)
         assertEquals(Move.Agree(true), before.choices.first { it.label == Label.Agree }.move)
         assertEquals(listOf(true, false, false), assertNotNull(before.board).nods.map { it.agreed })
 
-        val after = tableFor(view(), question = Question.ThePlan, plan = plan.copy(agreed = listOf(nina, me)))
+        val after = tableFor(view(), question = Question.ThePlan(), plan = plan.copy(agreed = listOf(nina, me)))
         assertTrue(after.choices.none { it.label == Label.Agree }, "asked to agree twice")
         assertTrue(assertNotNull(after.board).nods.first { it.who == Speaker.You }.agreed)
     }
@@ -191,43 +200,29 @@ class PlanBoardTest {
     // ------------------------------------------------------------------ the composer
 
     @Test
-    fun tappingALaneOpensTheComposerForThatSeat() {
-        val board = assertNotNull(tableFor(view(), question = Question.ThePlan).board)
-        val tap = assertIs<Move.Ask>(board.lanes.first { it.who == Speaker.Named("Bot3") }.move)
-        assertEquals(Question.Planning(nina), tap.question)
-
-        val composer = tableFor(view(), question = Question.Planning(nina))
-        assertEquals(Ask.WhatShouldTheyDo(Speaker.Named("Bot3")), composer.prompt)
-        assertTrue(composer.choices.any { it.label == Label.PlanASwap })
-        assertTrue(composer.choices.any { it.label == Label.PlanADeclare })
-        assertTrue(
-            composer.choices.none { it.label == Label.PlanTakeTheDiscard },
-            "a three on the pile is nothing to take",
-        )
-        assertTrue(composer.choices.none { it.label == Label.ClearLane }, "nothing to clear yet")
-    }
-
-    @Test
-    fun aSwapIsTwoTapsOnTwoHandsAndNeverOnTheCallers() {
-        // The person has read their own second card, so it is on the palette beside Nina's
-        // claimed first; nothing else about their hand has been said.
+    fun aTurnIsComposedByCarryingACardAndTheCallersAreNeverOnOffer() {
+        // The Jack's own gesture, on the felt: this card goes there. The caller's cards are not
+        // a source and not a destination — the coalition may not touch them, and the door would
+        // refuse the step anyway, so they are simply never lit.
         val read = view(
             finalRound().let { s ->
                 s.copy(players = s.players.map { p -> if (p.id == me) p.copy(knownCardPositions = listOf(1)) else p })
             },
         )
-        val first = tableFor(read, question = Question.Planning(nina, StepKind.SWAP))
-        assertEquals(Ask.ChooseTwoFromDifferentPlayers, first.prompt)
-        assertTrue(first.taps.keys.none { it.playerId == caller }, "the caller's cards were on offer")
-        assertTrue(first.taps.keys.any { it.playerId == nina } && first.taps.keys.any { it.playerId == me })
+        val composer = assertNotNull(
+            assertNotNull(tableFor(read, question = Question.ThePlan(), plan = null).board).lanes[0].composer,
+        )
 
-        val pickNina = assertIs<Move.Ask>(first.taps.getValue(CardRef(nina, 0)))
-        val second = tableFor(read, question = pickNina.question)
-        assertTrue(second.taps.keys.none { it.playerId == nina }, "the same hand was offered for the second card")
-        assertEquals(1, second.aim?.first?.slot, "the first card is not shown in the aim column")
+        assertTrue(composer.sources.none { it.playerId == caller }, "the caller's cards were on offer")
+        assertTrue(
+            composer.drops.values.none { drops ->
+                drops.keys.filterIsInstance<PlanTarget.Card>().any { it.ref.playerId == caller }
+            },
+            "a card could be carried onto the caller's hand",
+        )
 
-        val done = assertIs<Move.Plan>(second.taps.getValue(CardRef(me, 1)))
-        val edit = assertIs<PlanEdit.SetLane>(done.edit)
+        val onto = PlanTarget.Card(CardRef(me, 1))
+        val edit = assertIs<PlanEdit.SetLane>(assertNotNull(composer.drops[CardRef(nina, 0)]?.get(onto)).edit)
         assertEquals(nina, edit.seat)
         val step = assertIs<Step.Swap>(edit.step)
         assertEquals(
@@ -239,8 +234,31 @@ class PlanBoardTest {
     }
 
     @Test
+    fun theSameSwapComesOutOfTouchingTwoCardsAsOutOfCarryingOne() {
+        // The non-dragging path is the same edit reached another way, not a reduced one (design
+        // D5): a screen reader, a keyboard and a switch device compose the identical `PlanEdit`.
+        val read = view(
+            finalRound().let { s ->
+                s.copy(players = s.players.map { p -> if (p.id == me) p.copy(knownCardPositions = listOf(1)) else p })
+            },
+        )
+        val opened = Question.ThePlan()
+        val composer = assertNotNull(
+            assertNotNull(tableFor(read, question = opened, plan = null).board).lanes[0].composer,
+        )
+        val carried = assertNotNull(composer.drops[CardRef(nina, 0)]?.get(PlanTarget.Card(CardRef(me, 1))))
+
+        val picked = assertIs<Move.Ask>(tableFor(read, question = opened, plan = null).taps.getValue(CardRef(nina, 0)))
+        val holding = assertIs<Question.ThePlan>(picked.question)
+        val touched = tableFor(read, question = holding, plan = null).taps.getValue(CardRef(me, 1))
+
+        assertEquals(carried, touched, "carrying a card and touching two made different edits")
+    }
+
+    @Test
     fun aDeclareIsOneRankOffTheRail() {
-        val table = tableFor(view(), question = Question.Planning(don, StepKind.DECLARE))
+        // The one step with no destination to carry a card to: a King names a *rank*.
+        val table = tableFor(view(), question = Question.Planning(don))
         assertEquals(Ask.WhichRankShouldTheyDeclare(Speaker.Named("Bot4")), table.prompt)
         val king = assertIs<Move.Plan>(table.ranks.first { it.rank == Rank.KING }.move)
         assertEquals(PlanEdit.SetLane(don, Step.Declare(Rank.KING)), king.edit)
@@ -248,6 +266,7 @@ class PlanBoardTest {
         // there, muted, the way a King's own rail draws a rank with nothing to do.
         assertTrue(!table.ranks.first { it.rank == Rank.FIVE }.muted, "a rank the coalition holds is muted")
         assertTrue(table.ranks.first { it.rank == Rank.KING }.muted, "a rank nobody is known to hold is not muted")
+        assertNotNull(table.board, "naming a rank closed the plan behind it")
     }
 
     @Test
@@ -256,18 +275,22 @@ class PlanBoardTest {
         // person's cards or Don's — so the only card a swap may name is Nina's first and, once
         // the person has read one of their own, that one. Saying what a card is puts it on the
         // palette, which is what makes declaring worth doing (design D7).
-        val nothingRead = tableFor(view(), question = Question.Planning(nina, StepKind.SWAP))
-        assertEquals(setOf(CardRef(nina, 0)), nothingRead.taps.keys, "an unspoken card was on the palette")
+        val nothingRead = assertNotNull(
+            assertNotNull(tableFor(view(), question = Question.ThePlan()).board).lanes[0].composer,
+        )
+        assertEquals(setOf(CardRef(nina, 0)), nothingRead.drops.keys, "an unspoken card was on the palette")
 
         val read = view(
             finalRound().let { s ->
                 s.copy(players = s.players.map { p -> if (p.id == me) p.copy(knownCardPositions = listOf(1)) else p })
             },
         )
-        val mine = tableFor(read, question = Question.Planning(nina, StepKind.SWAP))
+        val mine = assertNotNull(
+            assertNotNull(tableFor(read, question = Question.ThePlan()).board).lanes[0].composer,
+        )
         assertEquals(
             setOf(CardRef(nina, 0), CardRef(me, 1)),
-            mine.taps.keys,
+            mine.drops.keys,
             "a card of your own you have read is not on the palette",
         )
     }
@@ -279,12 +302,21 @@ class PlanBoardTest {
             agreed = listOf(me),
             editedBy = me,
         )
-        val table = tableFor(view(finalRound(discardTop = Rank.JACK)), question = Question.Planning(nina), plan = plan)
+        val table = tableFor(
+            view(finalRound(discardTop = Rank.JACK)),
+            question = Question.ThePlan(),
+            plan = plan,
+        )
 
         val take = assertIs<Move.Plan>(table.choices.first { it.label == Label.PlanTakeTheDiscard }.move)
         assertEquals(PlanEdit.SetLane(nina, Step.TakeTheDiscard), take.edit)
         val clear = assertIs<Move.Plan>(table.choices.first { it.label == Label.ClearLane }.move)
         assertEquals(PlanEdit.ClearLane(nina), clear.edit)
+
+        // A three on the pile is nothing to take, and an empty turn is nothing to clear.
+        val bare = tableFor(view(), question = Question.ThePlan())
+        assertTrue(bare.choices.none { it.label == Label.PlanTakeTheDiscard })
+        assertTrue(bare.choices.none { it.label == Label.ClearLane })
     }
 
     // ------------------------------------------------------------------ the readout and the decay
@@ -299,7 +331,7 @@ class PlanBoardTest {
             agreed = listOf(nina),
             editedBy = nina,
         )
-        val opened = tableFor(view(), question = Question.ThePlan, plan = plan)
+        val opened = tableFor(view(), question = Question.ThePlan(), plan = plan)
 
         val outcome = assertNotNull(assertNotNull(opened.board).outcome, "the board says nothing about the outcome")
         assertEquals(2, outcome.unseen, "the caller's unspoken cards are not counted as unseen")
@@ -324,39 +356,23 @@ class PlanBoardTest {
             editedBy = me,
         )
 
-        val sound = tableFor(view(), question = Question.ThePlan, plan = plan)
+        val sound = tableFor(view(), question = Question.ThePlan(), plan = plan)
         assertEquals(StepHealth.LIVE, assertNotNull(sound.board).lanes.first { it.who == Speaker.You }.health)
         assertEquals(Detail.APlanIsASuggestion, sound.detail)
 
-        val broken = tableFor(view(), question = Question.ThePlan, plan = plan, reveals = listOf(nineNotFive))
+        val broken = tableFor(view(), question = Question.ThePlan(), plan = plan, reveals = listOf(nineNotFive))
         assertEquals(StepHealth.BROKEN, assertNotNull(broken.board).lanes.first { it.who == Speaker.You }.health)
         assertEquals(Detail.AClaimWasWrong, broken.detail, "a broken step was not explained")
-    }
-
-    @Test
-    fun thePlanCanBeWatchedOnceItHasAStepToShow() {
-        // Watching beats reading (design D8), and there is nothing to watch on an empty board.
-        assertNull(assertNotNull(tableFor(view(), question = Question.ThePlan).board).rehearse)
-
-        val plan = CoalitionPlan(
-            lanes = listOf(Lane(nina, Step.TakeTheDiscard)),
-            agreed = listOf(nina),
-            editedBy = nina,
-        )
-        assertEquals(
-            Move.Rehearse,
-            assertNotNull(tableFor(view(), question = Question.ThePlan, plan = plan).board).rehearse,
-        )
     }
 
     // ------------------------------------------------------------------ sheds
 
     @Test
     fun aShedIsOneRankOffTheRailInTheViewersOwnNameAndOnlyItsOwnerTakesItBack() {
-        val opened = tableFor(view(), question = Question.ThePlan)
+        val opened = tableFor(view(), question = Question.ThePlan())
         assertTrue(opened.choices.any { it.label == Label.PlanAShed }, "no way to say what you will throw in")
 
-        val shedding = tableFor(view(), question = Question.Shedding)
+        val shedding = tableFor(view(), question = Question.Shedding(me))
         assertEquals(Ask.WhichRankWillYouThrowIn, shedding.prompt)
         val seven = assertIs<Move.Plan>(shedding.ranks.first { it.rank == Rank.SEVEN }.move)
         assertEquals(PlanEdit.AddShed(Shed(me, Rank.SEVEN)), seven.edit, "a shed in somebody else's name")
@@ -366,7 +382,7 @@ class PlanBoardTest {
             agreed = listOf(me),
             editedBy = me,
         )
-        val board = assertNotNull(tableFor(view(), question = Question.ThePlan, plan = plan).board)
+        val board = assertNotNull(tableFor(view(), question = Question.ThePlan(), plan = plan).board)
         assertNotNull(board.sheds.first { it.who == Speaker.You }.move, "the viewer cannot take back their own shed")
         assertNull(board.sheds.first { it.who == Speaker.Named("Bot3") }.move, "the viewer could take back Nina's shed")
     }
@@ -375,10 +391,10 @@ class PlanBoardTest {
     fun theShedsRiskIsSharperForTheHandTheCoalitionIsPushing() {
         // Don holds one unspoken card and everybody else two, so as far as the table has been
         // told his is the lowest hand — the one the coalition is pushing — and mine is not.
-        val mine = tableFor(view(), question = Question.Shedding)
+        val mine = tableFor(view(), question = Question.Shedding(me))
         assertEquals(Detail.ShedRisk(pushed = false), mine.detail)
 
-        val dons = tableFor(view(viewer = don), question = Question.Shedding)
+        val dons = tableFor(view(viewer = don), question = Question.Shedding(don))
         assertEquals(
             Detail.ShedRisk(pushed = true),
             dons.detail,
@@ -389,25 +405,31 @@ class PlanBoardTest {
     @Test
     fun aLaneCanPutDownACardTheTableKnowsForATeammateToThrowInOn() {
         // 3.14's other half: the proposal that sets a shed up. Nina has said her first card is a
-        // five, so that card — and only that card — can be put down from her lane.
-        val menu = tableFor(view(), question = Question.Planning(nina))
-        assertTrue(menu.choices.any { it.label == Label.PlanAPutDown }, "no way to plan a put-down")
+        // five, so that card — and only that card — can be carried onto the pile from her turn.
+        val composer = assertNotNull(
+            assertNotNull(tableFor(view(), question = Question.ThePlan()).board).lanes[0].composer,
+        )
+        assertEquals(nina, composer.seat, "the first turn of this round is not Nina's")
 
-        val composer = tableFor(view(), question = Question.Planning(nina, StepKind.PUT_DOWN))
-        assertEquals(setOf(CardRef(nina, 0)), composer.taps.keys, "a card nobody could name was on offer")
-        val step = ((composer.taps[CardRef(nina, 0)] as Move.Plan).edit as PlanEdit.SetLane).step
-        assertEquals(CardAt(nina, 0), (step as Step.PutDown).card.copy(anchor = null))
+        val down = assertNotNull(
+            composer.drops[CardRef(nina, 0)]?.get(PlanTarget.Discard),
+            "a card the table can name could not be put down",
+        )
+        val step = assertIs<Step.PutDown>(assertIs<PlanEdit.SetLane>(down.edit).step)
+        assertEquals(CardAt(nina, 0), step.card.copy(anchor = null))
+
+        // Nothing else of Nina's has been spoken about, so nothing else may go on the pile.
+        assertTrue(
+            composer.drops.filterValues { it.containsKey(PlanTarget.Discard) }.keys == setOf(CardRef(nina, 0)),
+            "a card nobody could name was offered to the pile",
+        )
 
         val plan = CoalitionPlan(lanes = listOf(Lane(nina, step)), agreed = listOf(nina), editedBy = nina)
-        val board = assertNotNull(tableFor(view(), question = Question.ThePlan, plan = plan).board)
+        val board = assertNotNull(tableFor(view(), question = Question.ThePlan(), plan = plan).board)
         assertEquals(
             StepLine.PutDown(Speaker.Named("Bot3"), 1, Rank.FIVE),
             board.lanes.first { it.who == Speaker.Named("Bot3") }.step,
         )
-
-        // Don has said nothing about his hand, so there is nothing of his to put down.
-        val dons = tableFor(view(), question = Question.Planning(don))
-        assertTrue(dons.choices.none { it.label == Label.PlanAPutDown }, "a put-down of a mystery was offered")
     }
 
     @Test
@@ -422,14 +444,14 @@ class PlanBoardTest {
             editedBy = me,
         )
 
-        val board = assertNotNull(tableFor(view(), question = Question.ThePlan, plan = plan).board)
+        val board = assertNotNull(tableFor(view(), question = Question.ThePlan(), plan = plan).board)
         val lane = board.lanes.first { it.who == Speaker.Named("Bot3") }
         assertEquals(StepLine.Swap(Speaker.Named("Bot3"), 2, Speaker.Named("Bot4"), 1), lane.suggestion)
         assertEquals(Move.Plan(PlanEdit.SetLane(nina, rather)), lane.useSuggestion)
 
         // Once that turn has started the lane is closed, suggestion included.
         val locked = plan.copy(lanes = listOf(Lane(nina, set, locked = true, suggestion = rather)))
-        val closed = assertNotNull(tableFor(view(), question = Question.ThePlan, plan = locked).board)
+        val closed = assertNotNull(tableFor(view(), question = Question.ThePlan(), plan = locked).board)
         assertNull(closed.lanes.first { it.who == Speaker.Named("Bot3") }.useSuggestion)
     }
 

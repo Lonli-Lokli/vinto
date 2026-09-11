@@ -224,4 +224,73 @@ class PlanEditTest {
         val text = VintoJson.encodeToString(PlanEdit.serializer(), edit)
         assertEquals(edit, VintoJson.decodeFromString(PlanEdit.serializer(), text))
     }
+
+    /**
+     * A turn is built a part at a time, and neither part wipes the other.
+     *
+     * A turn is a *sequence*: take a card from one of the two piles, then do something with it.
+     * Three of the four steps never recorded which pile, so "take the King off the pile **and**
+     * declare fives" could not be said at all — a lane held one step and that was the whole turn.
+     * The opening is its own edit because it is its own decision, and the first one; setting it
+     * must leave an agreed step standing, and choosing a step must not silently pick a pile.
+     */
+    @Test
+    fun theOpeningAndTheStepAreTwoPartsOfOneTurnAndNeitherWipesTheOther() {
+        val opened = edited(null, PlanEdit.OpenLane(ann, Opening.TAKE_THE_DISCARD), by = ann)
+        assertEquals(Opening.TAKE_THE_DISCARD, opened.laneOf(ann)?.opening)
+        assertNull(opened.laneOf(ann)?.step, "opening a turn invented something to do with it")
+        assertFalse(opened.isEmpty, "a turn with a pile chosen reads as nothing planned")
+
+        val both = edited(opened, PlanEdit.SetLane(ann, Step.Declare(Rank.FIVE)), by = ann)
+        assertEquals(Opening.TAKE_THE_DISCARD, both.laneOf(ann)?.opening, "choosing a step lost the pile")
+        assertEquals(Step.Declare(Rank.FIVE), both.laneOf(ann)?.step)
+
+        val reopened = edited(both, PlanEdit.OpenLane(ann, Opening.DRAW), by = ann)
+        assertEquals(Opening.DRAW, reopened.laneOf(ann)?.opening)
+        assertEquals(Step.Declare(Rank.FIVE), reopened.laneOf(ann)?.step, "changing the pile wiped the step")
+
+        // And clearing still takes the whole turn back to "your call", both parts of it.
+        val cleared = edited(reopened, PlanEdit.ClearLane(ann), by = ann)
+        assertNull(cleared.laneOf(ann), "clearing left half a turn behind")
+    }
+
+    /**
+     * The opening is refused exactly where a step is: it is the same turn.
+     *
+     * A lane whose turn has begun must not change under the hand of the person executing it, and
+     * the caller plans nothing. Both rules live in one place, so a new part of a turn cannot
+     * quietly arrive without them.
+     */
+    @Test
+    fun theOpeningAnswersToTheSameDoorTheStepDoes() {
+        assertEquals(
+            "only the coalition may plan",
+            refused(null, PlanEdit.OpenLane(ann, Opening.DRAW), by = caller),
+        )
+        assertEquals(
+            "that turn has already started",
+            refused(null, PlanEdit.OpenLane(ann, Opening.DRAW), by = bob, onPlay = ann),
+        )
+    }
+
+    /**
+     * A put-down can carry the guess the rules let a player make.
+     *
+     * Swapping a card out lets its owner name its rank: right, they play that card's action for
+     * free; wrong, they take a penalty card. A real decision with a real price, so it belongs on
+     * the board rather than being sprung by one member — and it is **not** the King's declare,
+     * which names a rank for everybody to throw in.
+     */
+    @Test
+    fun aPutDownCarriesItsGuessAndIsStillOnlyEverYourOwnCard() {
+        val guessed = Step.PutDown(CardAt(ann, 2), guess = Rank.SEVEN)
+        val plan = edited(null, PlanEdit.SetLane(ann, guessed), by = ann)
+        assertEquals(guessed, plan.laneOf(ann)?.step)
+        assertEquals(Rank.SEVEN, (plan.laneOf(ann)?.step as? Step.PutDown)?.guess)
+
+        assertEquals(
+            "you can only put down your own card",
+            refused(null, PlanEdit.SetLane(ann, Step.PutDown(CardAt(bob, 0), guess = Rank.SEVEN)), by = ann),
+        )
+    }
 }

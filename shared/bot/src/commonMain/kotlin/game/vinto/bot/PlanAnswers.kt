@@ -119,6 +119,19 @@ fun answerForLane(state: GameState, seat: String, step: Step?, askedBy: String):
             val slot = Slot(step.card.seat, step.card.position)
             if (hands.holds(slot)) minScore(hands.puttingDown(slot).values.toList()) else null
         }
+
+        // Letting the card go touches nothing, so the hands are what they were. A yes — which
+        // is right: "don't touch your hand" is a real instruction to the seat holding the best
+        // one, and a bot asked to leave its hand alone has no grounds to object.
+        Step.Bin -> {
+            before
+        }
+
+        // Neither says what the card will be, so neither can be priced. No worse than now,
+        // which is a yes: a bot told to use whatever it draws has nothing to object to.
+        Step.UseIt -> {
+            before
+        }
     }
 
     return when {

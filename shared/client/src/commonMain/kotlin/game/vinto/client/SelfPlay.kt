@@ -25,6 +25,20 @@ suspend fun LocalGameSession.playItselfOut(seed: Long, moveLimit: Int = MOVE_LIM
     var moves = 0
 
     while (!isOver && moves < moveLimit) {
+        // **Closing the coalition's window is not a move**, so a drive that only dispatches
+        // actions cannot get past one: the bots hold their final turns until the person says
+        // they are done conferring, and the person here is this loop. A real seat presses a
+        // button; this presses the same thing underneath it.
+        //
+        // It became reachable when the window started opening at the call rather than one
+        // dispatch after it (`TheCallOpensTheWindowTest`). Before that a drive walked past a
+        // window that had not opened yet, which is not the same as a drive that can close one.
+        if (view.value.conferMsRemaining != null) {
+            doneConferring()
+            moves++
+            continue
+        }
+
         // Every seat marked playable, so the brain will answer for the person's. The bots'
         // own moves never reach dispatch: each accepted action plays them forward before it
         // returns, so the next thing wanted is always the person's again.

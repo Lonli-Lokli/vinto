@@ -172,12 +172,16 @@ with credentials and hardware can do, in this order:
 ./gradlew :composeApp:jvmTest --tests game.vinto.app.ScreenshotTest --rerun  # proves them stable
 ```
 
-Commit the eight goldens `ScreenshotTest` writes (`composeApp/src/jvmTest/goldens/`). CI does
-**not** run that suite — on a fresh runner it would write its own goldens and pass, asserting
-nothing, and a maintainer's images would not survive a different JVM's glyph rasterization
-anyway (the exclusion, and its reasoning, is on the test task in `composeApp/build.gradle.kts`;
-`-Pscreenshots` forces it back on). Run the desktop app once and listen: four sounds — a deal, a landing, a thud on a penalty, a chime at
-the round's end — and none anywhere else.
+**Look at the ten goldens** `ScreenshotTest` writes (`composeApp/src/jvmTest/goldens/`) and
+commit them. They travel in the repository, so a visual change turns up in a review as a
+picture; that look is the check, and no assertion can stand in for it. CI does **not** run the
+suite — on a fresh runner it would write its own goldens and pass, asserting nothing, and a
+maintainer's images would not survive a different JVM's glyph rasterization anyway (the
+exclusion, and its reasoning, is on the test task in `composeApp/build.gradle.kts`;
+`-Pscreenshots` forces it back on).
+
+Run the desktop app once and listen: four sounds — a deal, a landing, a thud on a penalty, a
+chime at the round's end — and none anywhere else.
 
 **2. Exercise the rewired worker against `wrangler dev`.** `index.mjs` now sends prebuilt
 per-seat envelopes and files recordings; the gate scripts import the *unchanged* exports and

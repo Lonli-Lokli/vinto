@@ -216,6 +216,8 @@
     <string name="seat_badge_coalition">בקואליציה</string>
     <string name="seat_badge_away">מחוץ לשולחן</string>
     <string name="seat_badge_barred">לא יכול להשליך שוב</string>
+    <string name="seat_badge_agreed">הסכמה לתוכנית</string>
+    <string name="seat_badge_will_shed">יש קלף מוכן להשלכה</string>
     <string name="seat_pointed_vinto">הכרזת Vinto מאת %1$s</string>
     <string name="seat_pointed_penalty">לקיחת קלף עונש בידי %1$s</string>
     <string name="seat_pointed_coalition">הובלת הקואליציה בידי %1$s</string>
@@ -247,13 +249,8 @@
     <string name="talk_wait_they">בקשה מצד %1$s להמתין רגע.</string>
     <string name="talk_worse">טענה שזה יחליש את המצב שלכם.</string>
     <string name="talk_worse_they">טענה שזה יחליש את המצב של %1$s.</string>
-    <string name="table_final_caller">כל השאר משחקים יד אחת ביניהם, נגד שלכם.</string>
     <string name="table_final_turns_left">%1$d תורות עד לחשיפה</string>
     <string name="table_final_last_turn">התור האחרון</string>
-    <string name="table_final_coalition">יד אחת בין שלושתכם, נגד %1$s.</string>
-    <string name="table_final_side_coalition">יחד</string>
-    <string name="table_final_side_caller">ההכרזה</string>
-    <string name="table_final_versus">נגד</string>
     <string name="table_see_score">צפייה בניקוד</string>
 
     <string name="header_support">קניית קפה בשבילי</string>
@@ -414,6 +411,10 @@
     <string name="teach_go_on">הבא</string>
     <string name="teach_done">סיום</string>
 
+    <string name="help_tab_cards">קלפים</string>
+    <string name="help_tab_rings">טבעות</string>
+    <string name="help_tab_badges">תגים</string>
+    <string name="help_tab_more">עוד</string>
     <string name="help_right_now">עכשיו</string>
     <string name="help_the_cards">הקלפים</string>
     <string name="help_signals">מה השולחן אומר לכם</string>
@@ -482,9 +483,10 @@
     <string name="label_agree">להסכים</string>
     <string name="label_do_as_planned">לבצע כמתוכנן</string>
     <string name="label_keep_it_instead">להשאיר אותו במקום</string>
-    <string name="label_plan_swap">להחליף שני קלפים</string>
+    <string name="label_play_the_card">לשחק אותו</string>
+    <string name="label_keep_the_card">לשמור אותו</string>
+    <string name="label_let_the_card_go">לוותר עליו</string>
     <string name="label_plan_declare">להכריז דרגה</string>
-    <string name="label_plan_put_down">להניח קלף</string>
     <string name="label_plan_take_discard">לקחת מערמת ההשלכה</string>
     <string name="label_plan_clear">לנקות</string>
     <string name="label_plan_shed">לזרוק פנימה</string>
@@ -492,14 +494,6 @@
     <string name="detail_shed_risk">רק דרגה שראיתם ביד שלכם: זריקה שגויה עולה קלף עונש ומוציאה אתכם מהזריקות עד סוף הסיבוב.</string>
     <string name="detail_shed_risk_pushed">היד שלכם היא זו שהקבוצה דוחפת. זריקה שגויה עולה לה קלף עונש ומוציאה אותה מהזריקות עד סוף הסיבוב — זרקו פנימה רק מה שראיתם.</string>
     <string name="detail_claim_was_wrong">צעד זה נבנה על טענה שהקלפים כבר הפריכו. זה המשחק פועל כשורה, לא טעות: מישהו זכר קלף אחרת ממה שהוא באמת.</string>
-    <string name="board_outcome_wins">היד הטובה ביותר שלנו, %1$d, מול %2$d שלהם: זה ניצחון.</string>
-    <string name="board_outcome_level">היד הטובה ביותר שלנו, %1$d, מול %2$d שלהם: תיקו, ותיקו משלם למכריז.</string>
-    <string name="board_outcome_loses">היד הטובה ביותר שלנו, %1$d, מול %2$d שלהם: זה לא מספיק.</string>
-    <string name="board_outcome_unseen">%1$d מקלפי המכריז שאיש לא ראה.</string>
-    <string name="board_verdict_wins">ניצחון</string>
-    <string name="board_verdict_level">תיקו</string>
-    <string name="board_verdict_loses">פיגור</string>
-    <string name="label_plan_rehearse">לצפות בתוכנית</string>
     <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
     <string name="table_rehearsal">חזרה — אף קלף לא זז</string>
     <string name="ask_what_will_you_do">מה תעשו בתור שלכם?</string>
@@ -512,24 +506,42 @@
     <string name="detail_draw_beats_plan">ה-%1$s שלכם עדיף על התוכנית: השאירו אותו במקום קלף %2$d.</string>
     <string name="detail_plan_is_a_suggestion">תוכנית היא רק הצעה. ההחלטה היא של מי שבתורם לשחק.</string>
     <string name="board_title">התוכנית</string>
-    <string name="board_summary_empty">עדיין אין תוכנית — הקישו כדי לתכנן יחד</string>
-    <string name="board_summary">התוכנית: %1$d מתוך %2$d תורות נקבעו, %3$d מתוך %4$d הסכימו</string>
+    <string name="label_plan_open">תוכנית</string>
+    <string name="label_plan_run">הפעלה</string>
+    <string name="label_plan_halt">עצירה</string>
+    <string name="label_plan_back">אחורה</string>
+    <string name="label_plan_on">הבא</string>
+    <string name="label_plan_rewind">התחלה</string>
+    <string name="board_turn_planned">תור %1$d, %2$s: %3$s</string>
+    <string name="board_played">%1$s, הושחק</string>
+    <string name="board_now">כעת</string>
+    <string name="board_unplayable">לא ניתן לשחק תור זה מכאן: קלף שמוזכר בו כבר אינו קיים.</string>
+    <string name="board_broken">טענה בתור הזה הוכחה כשגויה.</string>
+    <string name="board_carry_hint">אפשר לגרור קלף אל היעד שלו — או לגעת בו, ואז לגעת במקום.</string>
+    <string name="board_arrival_title">לאן זה מוביל אותנו</string>
+    <string name="board_arrival_ours">היד הטובה ביותר שלנו: %1$d</string>
+    <string name="board_arrival_theirs">מוערך שבידיהם: %1$d</string>
+    <string name="board_arrival_unseen">לא דובר על %1$d מהקלפים שלהם.</string>
     <string name="board_your_call">אצלכם</string>
-    <string name="board_in_play">פעיל</string>
     <string name="board_owner_you">שלכם</string>
     <string name="board_owner_named">של %1$s</string>
     <string name="board_step_swap">להחליף את קלף %1$s מספר %2$d בקלף %3$s מספר %4$d</string>
     <string name="board_step_declare">להכריז %1$s עם מלך</string>
     <string name="board_step_take_discard">לקחת מערמת ההשלכה</string>
+    <string name="board_from_the_deck">למשוך מהחפיסה</string>
+    <string name="board_part_end">%1$s %2$d</string>
+    <string name="board_part_card">קלף %1$d</string>
+    <string name="board_part_card_called">קלף %1$d = %2$s</string>
+    <string name="board_nobody_throws_in">אף אחד עדיין לא זורק פנימה</string>
+    <string name="board_step_bin">לוותר על הקלף</string>
+    <string name="board_step_use_it">לשחק אותו, יהיה אשר יהיה</string>
     <string name="board_step_put_down">להניח את קלף %1$s מספר %2$d</string>
     <string name="board_step_put_down_known">להניח את קלף %1$s מספר %2$d, %3$s</string>
     <string name="board_would_rather">%1$s מעדיפים: %2$s</string>
     <string name="board_shed">הבטחה של %1$s לזרוק פנימה %2$s</string>
     <string name="board_edited_by">השינוי האחרון בידי %1$s</string>
-    <string name="board_nod_yes">%1$s הסכימו</string>
-    <string name="board_nod_not_yet">%1$s עדיין לא הסכימו</string>
-    <string name="board_lane">%1$s: %2$s</string>
     <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <string name="badge_plain">מה שנטען לגבי הקלף</string>
     <string name="badge_disputed">שנוי במחלוקת</string>
     <string name="badge_paired">אחד מזוג, הסדר לא ידוע</string>
     <string name="badge_right">נכון</string>

@@ -228,6 +228,8 @@
     <string name="seat_badge_coalition">koalisyonda</string>
     <string name="seat_badge_away">masadan uzakta</string>
     <string name="seat_badge_barred">bir daha atamaz</string>
+    <string name="seat_badge_agreed">planı kabul etti</string>
+    <string name="seat_badge_will_shed">atmaya hazır bir kartı var</string>
     <string name="seat_pointed_vinto">%1$s Vinto dedi</string>
     <string name="seat_pointed_penalty">%1$s desteden kart alıyor</string>
     <string name="seat_pointed_coalition">%1$s koalisyona öncülük ediyor</string>
@@ -259,13 +261,8 @@
     <string name="talk_wait_they">%1$s sizden biraz beklemenizi istiyor.</string>
     <string name="talk_worse">Bunun sizi daha kötü bir duruma sokacağını söylüyorsunuz.</string>
     <string name="talk_worse_they">%1$s, bunun kendisini daha kötü bir duruma sokacağını söylüyor.</string>
-    <string name="table_final_caller">Diğer herkes seninkine karşı tek bir eli birlikte oynuyor.</string>
     <string name="table_final_turns_left">Açılışa %1$d el kaldı</string>
     <string name="table_final_last_turn">son el</string>
-    <string name="table_final_coalition">Üçünüz, %1$s'e karşı tek bir eli birlikte oynuyorsunuz.</string>
-    <string name="table_final_side_coalition">Birlikte</string>
-    <string name="table_final_side_caller">Çağırdı</string>
-    <string name="table_final_versus">karşı</string>
     <string name="table_see_score">Skoru gör</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -439,6 +436,10 @@
     <string name="teach_done">Bitti</string>
 
     <!-- ================================================================ help -->
+    <string name="help_tab_cards">Kartlar</string>
+    <string name="help_tab_rings">Halkalar</string>
+    <string name="help_tab_badges">Rozetler</string>
+    <string name="help_tab_more">Diğer</string>
     <string name="help_right_now">Şu anda</string>
     <string name="help_the_cards">Kartlar</string>
     <string name="help_signals">Masa sana ne söylüyor</string>
@@ -510,9 +511,10 @@
     <string name="label_agree">Katılıyorum</string>
     <string name="label_do_as_planned">Planlandığı gibi yap</string>
     <string name="label_keep_it_instead">Bunun yerine bunu tut</string>
-    <string name="label_plan_swap">İki kartı değiştir</string>
+    <string name="label_play_the_card">Oyna</string>
+    <string name="label_keep_the_card">Tut</string>
+    <string name="label_let_the_card_go">Bırak</string>
     <string name="label_plan_declare">Bir değer söyle</string>
-    <string name="label_plan_put_down">Bir kart koy</string>
     <string name="label_plan_take_discard">Atım yığınından al</string>
     <string name="label_plan_clear">Temizle</string>
     <string name="label_plan_shed">Bir değer at</string>
@@ -521,14 +523,6 @@
     <string name="detail_shed_risk_pushed">Koalisyonun öne sürdüğü el seninki. Yanlış bir atış ona bir ceza kartına mal olur ve tur boyunca onu dışlar — yalnızca gördüğünü at.</string>
     <string name="detail_claim_was_wrong">Buradaki bir adım, kartların sonradan yanlış çıkardığı bir iddiaya dayanıyordu. Bu bir hata değil, oyunun işleyişi: biri bir kartı gerçekte durduğundan farklı hatırlamış.</string>
     <!-- Where the plan would leave the round. Level is said as losing: a tie pays the caller. -->
-    <string name="board_outcome_wins">En iyi elimiz %1$d, onlarınkine karşı %2$d: bu kazanıyor.</string>
-    <string name="board_outcome_level">En iyi elimiz %1$d, onlarınkine karşı %2$d: berabere — ve berabere çağıranın lehinedir.</string>
-    <string name="board_outcome_loses">En iyi elimiz %1$d, onlarınkine karşı %2$d: bu geride kalıyor.</string>
-    <string name="board_outcome_unseen">Çağıranın %1$d kartını kimse görmedi.</string>
-    <string name="board_verdict_wins">kazanıyor</string>
-    <string name="board_verdict_level">berabere</string>
-    <string name="board_verdict_loses">geride kalıyor</string>
-    <string name="label_plan_rehearse">Planı izle</string>
     <string name="table_rehearsal">Prova — hiçbir şey hareket etmedi</string>
     <string name="ask_what_will_you_do">Sırada ne yapacaksın?</string>
     <string name="ask_what_should_they_do">%1$s sırasında ne yapmalı?</string>
@@ -540,23 +534,41 @@
     <string name="detail_draw_beats_plan">%1$s planı geride bırakır: %2$d numaralı kartın yerine bunu tut.</string>
     <string name="detail_plan_is_a_suggestion">Plan bir öneridir. Karar, sırası kimdeyse onundur.</string>
     <string name="board_title">Plan</string>
-    <string name="board_summary_empty">Henüz plan yok — birlikte planlamak için dokun</string>
-    <string name="board_summary">Plan: %2$d elden %1$d belirlendi, %4$d kişiden %3$d onayladı</string>
+    <string name="label_plan_open">Plan</string>
+    <string name="label_plan_run">Oynat</string>
+    <string name="label_plan_halt">Durdur</string>
+    <string name="label_plan_back">Geri</string>
+    <string name="label_plan_on">İleri</string>
+    <string name="label_plan_rewind">Başa dön</string>
+    <string name="board_turn_planned">%1$d. tur, %2$s: %3$s</string>
+    <string name="board_played">%1$s, oynandı</string>
+    <string name="board_now">Şimdi</string>
+    <string name="board_unplayable">Bu tur artık buradan oynanamaz: adı geçen kart elden çıkmış.</string>
+    <string name="board_broken">Bu turun dayandığı iddia yanlış çıktı.</string>
+    <string name="board_carry_hint">Kartı gitmesi gereken yere taşıyın; ya da önce karta, sonra oraya dokunun.</string>
+    <string name="board_arrival_title">Bizi nereye götürüyor</string>
+    <string name="board_arrival_ours">En iyi elimiz: %1$d</string>
+    <string name="board_arrival_theirs">Elinde bulunduğu düşünülen: %1$d</string>
+    <string name="board_arrival_unseen">Kartlarının %1$d tanesi hakkında henüz bir şey konuşulmadı.</string>
     <string name="board_your_call">senin kararın</string>
-    <string name="board_in_play">oyunda</string>
     <string name="board_owner_you">senin</string>
     <string name="board_owner_named">%1$s adlı oyuncunun</string>
     <string name="board_step_swap">%1$s %2$d numaralı kartını %3$s %4$d numaralı kartıyla değiştir</string>
     <string name="board_step_declare">Papaz ile %1$s söyle</string>
     <string name="board_step_take_discard">atım yığınından al</string>
+    <string name="board_from_the_deck">desteden çek</string>
+    <string name="board_part_end">%1$s %2$d</string>
+    <string name="board_part_card">%1$d numaralı kart</string>
+    <string name="board_part_card_called">%1$d numaralı kart = %2$s</string>
+    <string name="board_nobody_throws_in">henüz kimse atmıyor</string>
+    <string name="board_step_bin">kartı bırak</string>
+    <string name="board_step_use_it">ne çıkarsa oynansın</string>
     <string name="board_step_put_down">%1$s %2$d numaralı kartını atım yığınına koy</string>
     <string name="board_step_put_down_known">%1$s %2$d numaralı kartını (%3$s) atım yığınına koy</string>
     <string name="board_would_rather">%1$s şunu tercih ederdi: %2$s</string>
     <string name="board_shed">%1$s bir %2$s atacak</string>
     <string name="board_edited_by">son değiştiren: %1$s</string>
-    <string name="board_nod_yes">%1$s onayladı</string>
-    <string name="board_nod_not_yet">%1$s henüz onaylamadı</string>
-    <string name="board_lane">%1$s: %2$s</string>
+    <string name="badge_plain">bu kartın ne olduğuna dair iddia</string>
     <string name="badge_disputed">tartışmalı</string>
     <string name="badge_paired">bir çiftten biri, sırası belirsiz</string>
     <string name="badge_right">doğru</string>

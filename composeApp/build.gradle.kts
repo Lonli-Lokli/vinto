@@ -188,12 +188,11 @@ compose.resources {
  * The golden screenshots are excluded on CI, and the exclusion is not laziness.
  *
  * `ScreenshotTest` writes any missing golden from the live rendering and passes — the
- * bootstrap protocol described in `src/jvmTest/goldens/README.md`. On a runner that starts
- * from a clean checkout every golden is missing, so the suite would write eight PNGs into a
- * container that is about to be deleted and report success: a green check that asserted
- * nothing. Committing goldens would not fix it either, because glyph rasterization differs
- * between JVMs and hosts, so the maintainer's images and the runner's would disagree by
- * more than the tolerance allows.
+ * bootstrap protocol described in `src/jvmTest/goldens/README.md`. The goldens *are* committed
+ * — a picture nobody but its author can see is not a review — but committing them does not
+ * make the check runnable here: glyph rasterization differs between JVMs and hosts, so a
+ * runner's rendering and a maintainer's would disagree by more than the tolerance allows, and
+ * a runner that deleted the goldens first would simply write its own and report success.
  *
  * Every other Compose suite — the composition tests, `FullGameUiTest`, the contrast and
  * font-coverage checks — runs on CI, because those assert behaviour rather than pixels.

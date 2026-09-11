@@ -129,6 +129,26 @@ data class Table(
     val planSummary: PlanSummary? = null,
 )
 
+/**
+ * Which table the felt is drawing, and therefore what touching a card means (design D1).
+ *
+ * The plan cannot be an overlay: the felt would be showing live cards and ghosts at once and
+ * lying about one of them. So it is a **mode**, and this is the whole of it — a function of
+ * the table and of nothing else. No animation puts the screen into [PLAN] and none takes it
+ * out, which is what makes "a tap in plan mode is never a move" a property that can be walked
+ * over a whole round rather than a rule somebody has to remember at each call site.
+ */
+enum class TableMode {
+    /** The table as it is. A tap is a move, resolved through [Table.taps]. */
+    LIVE,
+
+    /** The plan, open. A tap edits the coalition's draft and can never reach the engine. */
+    PLAN,
+}
+
+/** Which of the two this table is. See [TableMode]. */
+val Table.mode: TableMode get() = if (board != null) TableMode.PLAN else TableMode.LIVE
+
 /** A card on the table: whose, and which slot. */
 data class CardRef(val playerId: String, val position: Int)
 
@@ -230,8 +250,19 @@ enum class Tone {
  * once as `SWAP_CARD` with a position and possibly a declared rank.
  */
 sealed interface Move {
+    /**
+     * A move that cannot reach the engine, as a type rather than as a check.
+     *
+     * Plan mode gives a tap on a card a meaning it never had — it edits the coalition's draft
+     * — and the thing that must never happen is one of those taps turning into a move on the
+     * real round (design D2). The guard is this interface: the plan composer is *declared* to
+     * return a [Quiet], and [Send] is not one, so a routing bug that dispatched a `GameAction`
+     * from a hypothetical table does not compile. `PlanIsQuietTest` reads the hierarchy back.
+     */
+    sealed interface Quiet : Move
+
     data class Send(val action: GameAction) : Move
-    data class Ask(val question: Question) : Move
+    data class Ask(val question: Question) : Move, Quiet
 
     /**
      * Say something, rather than do something.
@@ -258,16 +289,10 @@ sealed interface Move {
      * not a question the screen is asking itself — a shared draft the room keeps, which the
      * door in `CoalitionPlan.edited` decides about. Every other seat sees the result.
      */
-    data class Plan(val edit: PlanEdit) : Move
+    data class Plan(val edit: PlanEdit) : Move, Quiet
 
     /** Yes or no to the plan as a whole. A yes is also [Done]: agreeing is how you finish talking. */
-    data class Agree(val agree: Boolean) : Move
-
-    /**
-     * Watch the plan run (design D8): its steps played on the felt as ghosts, then the table
-     * snaps back. Nothing is sent anywhere and nothing changes; it is the board, read aloud.
-     */
-    data object Rehearse : Move
+    data class Agree(val agree: Boolean) : Move, Quiet
 }
 
 /**
@@ -306,23 +331,71 @@ sealed interface Question {
         val ranks: List<Rank> = emptyList(),
     ) : Question
 
-    /** Final round: the board is open. */
-    data object ThePlan : Question
-
-    /** Final round: I am saying which rank I will throw in if one lands. */
-    data object Shedding : Question
+    /**
+     * Final round: the plan is open, and this is where it is being read from.
+     *
+     * Every field here is the **screen's**, never the plan's (design D3): which turn a member
+     * is looking at is not part of the plan and must not travel, because two members reading
+     * different turns of one plan is normal and a shared cursor would fight. `CoalitionPlan`
+     * gains nothing for any of it.
+     */
+    data class ThePlan(
+        /**
+         * The transport's position (design D14): 0 is the table now, *k* is the table after the
+         * plan's *k*th turn — and therefore the turn *k* names is the one being built, since a
+         * stop named "Tide" is where Tide's turn has just happened.
+         *
+         * **Defaults to the first turn, not to now.** Opening the plan lands where there is
+         * something to do; "now" is a place to go back to, not a place to start. At 0 there is
+         * no turn to build, which is correct and is not where anybody should arrive.
+         */
+        val at: Int = 1,
+        /** The card a select-then-select edit has picked up, if one has (design D5). */
+        val picked: CardRef? = null,
+        /**
+         * The position the transport is travelling to, or null when it is parked.
+         *
+         * A *destination* rather than a flag, because the transport is a set of named stops
+         * now: pressing ② from the table now means "play me the first two turns", and the
+         * screen has to know where to stop as well as that it is going. It was a Boolean, and
+         * a run always ran to the end — which is why there was no way to watch one turn.
+         *
+         * Editing sleeps while it is set (design D14): a card halfway between two seats is at
+         * no position, so there is nothing to drop onto and nothing to drag.
+         */
+        val runningTo: Int? = null,
+    ) : Question {
+        /** Whether the transport is moving. See [runningTo]. */
+        val running: Boolean get() = runningTo != null
+    }
 
     /**
-     * Final round: I am composing what [seat] should do with their turn.
+     * Final round: naming a rank [seat] will throw in if one lands.
      *
-     * [kind] is which sort of step, once chosen; [from] the first card of a swap, once tapped.
-     * The answer is one `PlanEdit` for one lane — a part of the board, never the whole draft.
+     * **Any coalition seat, not only your own.** The plan is one shared thing — every member
+     * reads the same board — so who throws in on a turn is a part of that turn like any other,
+     * set in the belt beside it. It was your own hand or nothing, which made it a floating
+     * button about you rather than a part of the turn it pays off.
      */
-    data class Planning(
-        val seat: String,
-        val kind: StepKind? = null,
-        val from: CardRef? = null,
-    ) : Question
+    data class Shedding(val seat: String, val at: Int = 0) : Question
+
+    /**
+     * Final round: I am naming the rank [seat] should declare with a King.
+     *
+     * The one step of a plan with no destination to carry a card to, so the one that is still
+     * a rail rather than a gesture (design D5). The answer is a single `PlanEdit` for a single
+     * turn — a part of the plan, never the whole draft.
+     */
+    data class Planning(val seat: String, val at: Int = 0) : Question
+
+    /**
+     * Final round: what should [seat] do with the card their turn takes?
+     *
+     * The middle part of a turn — play it, keep it, or let it go — asked as its own question
+     * because it is its own decision. A turn is a sequence and the belt draws it as one, so
+     * each part of the row opens the choice that part is about.
+     */
+    data class Doing(val seat: String, val at: Int = 0) : Question
 }
 
 /** How many cards a single claim may pair. Three would be six orderings, which nobody reads. */
@@ -449,20 +522,42 @@ private fun tableBody(
 
     // The board is open, or a lane of it is being composed. Above the window too: planning is
     // what the window is for, and both take the table over the way a claim does.
-    planTable(view, question, plan, away, reveals)?.let { return it.showing(view) }
+    // `showing` reads the view for which cards may be turned over and which wear a claim, and
+    // the plan draws a *different* table — the one the transport is parked on. Read off that,
+    // or a King that emptied a rank leaves every badge behind it one card out of step.
+    planTable(view, question, plan, away, reveals)?.let { return it.showing(it.board?.felt ?: view) }
+
+    // The player is saying what they believe about somebody's cards.
+    //
+    // **Above the confer window, and it used to be below it.** The window offers a tap on every
+    // claimable card and that tap asks exactly this question — so with the window's table
+    // winning, a member who touched a card got the window back and nothing else. The taps were
+    // there, the picker they opened was unreachable, and the felt gave no sign either way:
+    // "not clear how I should declare mine or other cards" is that bug, reported. The picker
+    // *is* what the window is for, so it takes the table over the way the plan does.
+    if (question is Question.Claiming && mayDeclare(view)) {
+        return claimingTable(view, question).showing(view)
+    }
+
+    // **A card on the pile, before the window the call opened.**
+    //
+    // Vinto is declared at the *end* of a turn, and that turn ended with a card landing face up
+    // — so the throw and the call arrive together. With the confer window winning, the moment a
+    // bot called, the screen became the coalition's planning band: the window was open at the
+    // engine, the cards still matched, and there was no way on the screen to use either.
+    //
+    // The throw goes first because it is **priced and timed**. It belongs to the whole table at
+    // once, a wrong guess costs a card and bars the seat for the rest of the final round, and it
+    // closes. The confer window has no clock in a solo game — it ends when the person says it
+    // does — so it loses nothing by waiting, and the plan it is for is about turns that have not
+    // happened yet.
+    tossInTable(view)?.let { return it.showing(view) }
 
     // The coalition's window: talk only, and a way out of it. Before the round's first turn,
     // so it comes above every table below — a window a player cannot see or end is a stall.
     if (view.conferMsRemaining != null && mayDeclare(view)) {
         return conferringTable(view).showing(view)
     }
-
-    // The player is saying what they believe about somebody's cards.
-    if (question is Question.Claiming && mayDeclare(view)) {
-        return claimingTable(view, question).showing(view)
-    }
-
-    tossInTable(view)?.let { return it.showing(view) }
 
     val pending = view.pendingAction
     if (pending != null && pending.playerId == view.viewerId) {
@@ -497,9 +592,12 @@ private fun planTable(
     away: Set<String>,
     reveals: List<PublicReveal>,
 ): Table? = when {
-    question is Question.ThePlan && view.phase == GamePhase.FINAL -> boardTable(view, plan, away, reveals)
-    question is Question.Planning && mayDeclare(view) -> planningTable(view, question, plan)
-    question is Question.Shedding && mayDeclare(view) -> sheddingTable(view)
+    question is Question.ThePlan && view.phase == GamePhase.FINAL ->
+        boardTable(view, plan, away, reveals, question)
+
+    question is Question.Planning && mayDeclare(view) -> planningTable(view, question, plan, away, reveals)
+    question is Question.Doing && mayDeclare(view) -> doingTable(view, question, plan, away, reveals)
+    question is Question.Shedding && mayDeclare(view) -> sheddingTable(view, question, plan, away, reveals)
     else -> null
 }
 
@@ -551,18 +649,26 @@ private fun mayDeclare(view: PlayerView): Boolean =
  * modal — the felt stays readable underneath, because what a coalition is deciding is written
  * on it.
  */
-private fun conferringTable(view: PlayerView): Table = Table(
-    prompt = Ask.SayWhatYouKnow,
-    detail = Detail.TapACardToSayWhatItIs,
-    // Where this hand stands, then the way out. The three come first because they are what the
-    // window is *for*: the coalition is scored on its lowest hand, and until the table knows
-    // whose that is, nothing else anybody says here can be acted on.
-    choices = TableTalk.Standing.Where.entries.map { where ->
-        Choice(Label.SayStanding(where), Move.Say(TableTalk.Standing(view.viewerId, where)))
-    } + Choice(Label.DoneTalking, Move.Done),
-    taps = declareTaps(view),
-    waiting = false,
-)
+private fun conferringTable(view: PlayerView): Table {
+    val claimable = declareTaps(view)
+    return Table(
+        prompt = Ask.SayWhatYouKnow,
+        // "Tap one of your cards to say what you think it is" — but only where there is a card
+        // to tap. With nothing claimable the sentence pointed at nothing, on a felt where the
+        // instruction is in the rail and the thing it names is on the table. The cards that can
+        // be claimed wear a ring for as long as the question stands; when none can, the
+        // instruction goes with them rather than sending somebody hunting.
+        detail = Detail.TapACardToSayWhatItIs.takeIf { claimable.isNotEmpty() },
+        // Where this hand stands, then the way out. The three come first because they are what
+        // the window is *for*: the coalition is scored on its lowest hand, and until the table
+        // knows whose that is, nothing else anybody says here can be acted on.
+        choices = TableTalk.Standing.Where.entries.map { where ->
+            Choice(Label.SayStanding(where), Move.Say(TableTalk.Standing(view.viewerId, where)))
+        } + Choice(Label.DoneTalking, Move.Done),
+        taps = claimable,
+        waiting = false,
+    )
+}
 
 /**
  * Saying what you believe, built by tapping rather than composed as a sentence.
@@ -700,7 +806,7 @@ private fun pairingTable(
     ),
 )
 
-private fun saying(speaker: String, about: String, vararg claims: Claim) =
+internal fun saying(speaker: String, about: String, vararg claims: Claim) =
     GameAction.DeclareCards(DeclareCardsPayload(speaker, about, claims.toList()))
 
 private fun exact(speaker: String, position: Int, rank: Rank) =

@@ -2,6 +2,7 @@ package game.vinto.app.game
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -11,22 +12,24 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +60,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -64,7 +68,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,9 +79,6 @@ import game.vinto.app.art.badge_disputed
 import game.vinto.app.art.badge_paired
 import game.vinto.app.art.badge_right
 import game.vinto.app.art.badge_wrong
-import game.vinto.app.art.board_summary
-import game.vinto.app.art.board_summary_empty
-import game.vinto.app.art.board_title
 import game.vinto.app.art.card_discarded
 import game.vinto.app.art.card_discarded_live
 import game.vinto.app.art.card_drawn_by
@@ -91,17 +91,12 @@ import game.vinto.app.art.header_leave
 import game.vinto.app.art.header_rules
 import game.vinto.app.art.header_settings
 import game.vinto.app.art.header_support
+import game.vinto.app.art.label_plan_open
 import game.vinto.app.art.table_discard
 import game.vinto.app.art.table_draw
-import game.vinto.app.art.table_final_caller
-import game.vinto.app.art.table_final_coalition
 import game.vinto.app.art.table_final_last_turn
 import game.vinto.app.art.table_final_round
-import game.vinto.app.art.table_final_side_caller
-import game.vinto.app.art.table_final_side_coalition
 import game.vinto.app.art.table_final_turns_left
-import game.vinto.app.art.table_final_versus
-import game.vinto.app.art.table_rehearsal
 import game.vinto.app.art.table_round_turn
 import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_toss_in_summary
@@ -113,7 +108,7 @@ import game.vinto.app.speakerName
 import game.vinto.app.supportOffer
 import game.vinto.app.theme.GeneratedAvatar
 import game.vinto.app.theme.Rail
-import game.vinto.app.theme.Slate
+import game.vinto.app.theme.Signal
 import game.vinto.app.theme.Wordmark
 import game.vinto.app.theme.contactShadow
 import game.vinto.app.theme.feltEdge
@@ -123,12 +118,14 @@ import game.vinto.app.theme.feltShade
 import game.vinto.app.theme.onFelt
 import game.vinto.app.theme.pressable
 import game.vinto.app.theme.rememberFeltWeave
-import game.vinto.app.verdictWord
 import game.vinto.client.Anchor
 import game.vinto.client.Badge
+import game.vinto.client.Board
 import game.vinto.client.CardRef
 import game.vinto.client.Move
+import game.vinto.client.PlanComposer
 import game.vinto.client.PlanSummary
+import game.vinto.client.Question
 import game.vinto.client.Say
 import game.vinto.client.Speaker
 import game.vinto.client.Table
@@ -294,6 +291,16 @@ fun TableScreen(
     val stage = LocalStage.current
     SideEffect { stage.acting = state.busy }
 
+    // And which table this is (design D1), for everything too deep to be handed it: the
+    // rehearsal marking, a card deciding whether it may be carried. Here rather than in the two
+    // screens above, because this is the composable that has the `Table` — the router keeps
+    // taking it directly, since *that* one has to be right in the frame the plan opens.
+    TellTheStage(state.table)
+
+    // And here for the same reason: the plan's film runs on the solo table and on a room's
+    // alike, so the one composable both screens go through is where it belongs.
+    PlanRunner(state.table, onMove)
+
     if (layout.landscape) {
         // Centred, not stretched: the felt column is [TableLayout.feltWidth] wide — the
         // whole remainder on a rotated phone, a capped table on a tablet or desktop — and
@@ -319,7 +326,16 @@ fun TableScreen(
                 horizontalArrangement = Arrangement.Center,
             ) {
                 Column(modifier = Modifier.width(layout.feltWidth)) {
-                    TableHeader(state.view, state.round, onHelp, onSettings, onLeave, landscape = true)
+                    TableHeader(
+                        state.view,
+                        state.round,
+                        onHelp,
+                        onSettings,
+                        onLeave,
+                        plan = state.table.planSummary,
+                        onMove = onMove,
+                        landscape = true,
+                    )
                     FeltTable(
                         state = state,
                         sizes = layout.sizes,
@@ -333,8 +349,7 @@ fun TableScreen(
                 // landscape the felt has no height to spare for a banner, and "who plays for
                 // whom" is read next to the controls that ask what to do about it anyway.
                 Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
-                    RehearsalLine()
-                    FinalRoundLine(state.view, state.table.planSummary, onMove)
+                    FinalRoundLine(state.view, state.table.board, onMove)
                     ControlPanel(
                         state = state,
                         onMove = onMove,
@@ -346,10 +361,18 @@ fun TableScreen(
         }
     } else {
         Column(modifier = modifier.fillMaxSize()) {
-            TableHeader(state.view, state.round, onHelp, onSettings, onLeave, landscape = false)
+            TableHeader(
+                state.view,
+                state.round,
+                onHelp,
+                onSettings,
+                onLeave,
+                plan = state.table.planSummary,
+                onMove = onMove,
+                landscape = false,
+            )
 
-            RehearsalLine()
-            FinalRoundLine(state.view, state.table.planSummary, onMove)
+            FinalRoundLine(state.view, state.table.board, onMove)
 
             FeltTable(
                 state = state,
@@ -367,6 +390,19 @@ fun TableScreen(
         }
     }
 }
+
+/**
+ * The composer for the turn being built, or null when nothing is.
+ *
+ * At most one lane ever has one — the turn the lit stop names — so this is a lookup rather than
+ * a search, and it is null for every live table, for the caller, for a locked lane and for the
+ * whole of a run.
+ *
+ * **Asked of the board rather than worked out here.** It indexed the lanes by the transport's
+ * own position, which stopped being the same number the day a stop started naming the turn it
+ * *ends* — and the felt then lit one turn's cards while the taps edited another's.
+ */
+internal fun Table.composerNow(): PlanComposer? = board?.building?.composer
 
 /** The four chairs, clockwise from the viewer's own. */
 private const val NEAR_CHAIR = 0
@@ -414,7 +450,11 @@ private fun FeltTable(
     onHelp: (Rank?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val view = state.view
+    // While the plan is open the felt draws the table the transport is parked on rather than
+    // the live one (design D1): the plan's whole content is *where cards go*, and a picture of
+    // that has to show the hands as the turns so far leave them. Built by transforming the
+    // view, so nothing here can turn over a card this seat was not shown.
+    val view = state.table.board?.felt ?: state.view
     val table = state.table
 
     // Nullable, and the felt is drawn either way.
@@ -875,6 +915,16 @@ internal fun TableHeader(
     onHelp: (Rank?) -> Unit,
     onSettings: () -> Unit,
     onLeave: (() -> Unit)?,
+    /**
+     * The coalition's plan, when there is one to open, and the way to open it.
+     *
+     * **In the top row rather than in the final round's band below it**, because that is where
+     * every control that is always there already lives — the rules, the settings, the way out —
+     * and a switch that appears in a band of its own reads as part of the round's commentary
+     * rather than as something to press. Asked for from a phone.
+     */
+    plan: PlanSummary? = null,
+    onMove: (Move) -> Unit = {},
     /** The window's shape. With [host] it is the whole of what decides this header. */
     landscape: Boolean = false,
     /**
@@ -906,6 +956,10 @@ internal fun TableHeader(
         // 44-point thumb, which `TouchTargetTest` reads as a target nobody can hit. A word
         // may be clipped; a control may not.
         HeaderName(name, counter.takeIf { style.counter }, modifier = Modifier.weight(1f))
+
+        // Before the three glyphs, because it is the only one of the four that is about the
+        // round rather than about the app.
+        plan?.let { PlanSwitch(LocalStage.current.planning, it, onMove, labelled = wideHeader) }
 
         // The rules, in the one place on the screen that never moves.
         //
@@ -964,205 +1018,172 @@ internal fun TableHeader(
 }
 
 /**
- * Who is playing for whom, once Vinto has been called.
+ * The final round's band: how close the reveal is, and the switch that opens the plan.
  *
- * The final round is the one moment the rules change under the player: the other three stop
- * being three opponents and become one hand, and only that hand is compared. The table says
- * so in colour already — blue rings on the coalition, gold on the caller — but a colour is
- * only as good as the player's memory of the legend, and this is the point of the game where
- * they have least attention to spare for remembering it. So it is also said in words, for as
- * long as it is true.
+ * **Only what changes.** There used to be four rows here and two of them were decoration — a
+ * "Together … vs … Called it" row repeating what the seat plates already show (the caller wears
+ * a crown), and a one-time sentence explaining the round. They said the same thing on the
+ * fortieth second as on the first, above a felt that has four hands to fit on a phone. What is
+ * left is the countdown, which moves, and the plan, which is the only thing anybody does in
+ * this round.
  *
- * Nothing is drawn before the coalition has picked who plays its hand, because until then the
- * sentence has no subject — and the panel is asking that very question.
+ * **With the plan open the band is the transport and nothing else.** The heading said "FINAL
+ * ROUND" over a felt that had said so for the last five minutes, and under it ran a line reading
+ * "REHEARSAL — NOTHING HAS MOVED" that said the same thing on the fortieth second as on the
+ * first. Neither could be pressed, and a player asked for controls rather than commentary.
  *
- * The coalition's plan lives here too, in one line with a tap (design D7a): this is where the
- * coalition is already named, and the rail has no line to spare — beside the prompt the plan
- * starved the log strip, and on the foot it pushed the buttons under the edge of the screen.
+ * What marks the mode now is what the mode *is*: the band ruled top and bottom in the
+ * coalition's colour, the switch lit in the header above it, and a stop naming which table is on
+ * the felt. All three change when the mode does and two of them are controls — which matters,
+ * because the felt below is showing cards that have not moved and a player who thinks a plan has
+ * happened is worse off than one who never planned.
  */
 @Composable
-private fun FinalRoundLine(view: PlayerView, plan: PlanSummary?, onMove: (Move) -> Unit) {
+private fun FinalRoundLine(view: PlayerView, board: Board?, onMove: (Move) -> Unit) {
     if (view.phase == GamePhase.SCORING) return
-    val caller = view.players.firstOrNull { it.id == view.vintoCallerId } ?: return
-
-    // Two lines, because there are two chairs to be in. There used to be four, keyed on who
-    // the coalition had nominated to play its hand — but only the lowest hand counts, whoever
-    // holds it, so there is nobody to nominate and nothing to say about it.
-    val said = if (caller.id == view.viewerId) {
-        stringResource(Res.string.table_final_caller)
-    } else {
-        stringResource(Res.string.table_final_coalition, caller.nickname)
-    }
+    if (view.players.none { it.id == view.vintoCallerId }) return
+    val open = LocalStage.current.planning
+    val stops = board?.transport?.takeIf { open && it.stops.isNotEmpty() }
 
     Column(modifier = Modifier.fillMaxWidth().background(Rail.fill)) {
+        if (open) PlanRule()
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(Gap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                stringResource(Res.string.table_final_round).uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp,
-                color = Rail.gold,
-                modifier = Modifier.semantics { heading() },
-            )
-            Text(
-                said,
-                style = MaterialTheme.typography.labelMedium,
-                color = Rail.ink,
-                modifier = Modifier.weight(1f, fill = true),
-            )
-
-            // How close the reveal is. Three coalition turns can pass in under a second when
-            // the bots hold them all, and a player who looked away for one has no other way to
-            // know how much of the final round is left.
-            finalRoundTurnsLeft(view)?.let { left ->
-                Text(
-                    if (left == 1) {
-                        stringResource(Res.string.table_final_last_turn)
-                    } else {
-                        stringResource(Res.string.table_final_turns_left, left)
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Rail.gold,
-                )
-            }
+            if (stops != null) PlanStops(stops, onMove) else Countdown(view)
         }
 
-        plan?.let { PlanLine(it, onMove) }
-        Sides(view, caller)
+        if (open) PlanRule()
     }
 }
 
 /**
- * Over the felt while the plan is being played back (design D8): the cards moving are ghosts,
- * and the one thing this line has to do is stop a player believing a plan has happened. Gold
- * on the rail's fill, the final-round line's own dress, so it clears the same contrast bar.
+ * The final round, and how close the reveal is.
+ *
+ * Three coalition turns can pass in under a second when the bots hold them all, and a player who
+ * looked away for one has no other way to know how much of the round is left. Its own function
+ * so the band above stays inside the complexity a reviewer can hold at once.
  */
 @Composable
-private fun RehearsalLine() {
-    if (!LocalStage.current.rehearsing) return
-    Row(
-        modifier = Modifier.fillMaxWidth().background(Rail.fill).padding(horizontal = 14.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            stringResource(Res.string.table_rehearsal).uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp,
-            color = Rail.gold,
-            modifier = Modifier.semantics { heading() },
-        )
-    }
-}
-
-/** The plan in one line: how much of the board is set, how many have nodded, and the way in. */
-@Composable
-private fun PlanLine(summary: PlanSummary, onMove: (Move) -> Unit) {
-    val words = if (summary.lanesSet == 0) {
-        stringResource(Res.string.board_summary_empty)
-    } else {
-        stringResource(
-            Res.string.board_summary,
-            summary.lanesSet,
-            summary.lanes,
-            summary.agreed,
-            summary.lanes,
-        ) + (summary.outcome?.let { " · " + verdictWord(it) } ?: "")
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = { onMove(summary.open) })
-            .markedAs(LocalStage.current, "choice:plan")
-            .padding(horizontal = 14.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(Gap),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            stringResource(Res.string.board_title).uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp,
-            color = Rail.gold,
-        )
-        Text(
-            words,
-            style = MaterialTheme.typography.labelMedium,
-            color = Rail.ink,
-            modifier = Modifier.weight(1f, fill = true),
-        )
-    }
-}
-
-/**
- * Who is on which side, as faces.
- *
- * Taken from the web client, which draws the final round as two named columns — COALITION
- * against VINTO CALLER — and is plainly better than a sentence at the one moment the game's
- * shape changes. What is *not* taken is its layout: two stacked lists of names is a panel's
- * worth of height, and here this sits above a felt that has four hands to fit on a phone.
- *
- * So it is one line of portraits, which is the same information in a tenth of the room and
- * reads faster besides: three of the four players are bots the person has been watching for
- * ten minutes and knows by face before they know by name.
- *
- * One of the three used to wear a gold ring for leading the coalition. Nobody leads it: only
- * the lowest hand counts, whoever holds it, so a ring would be marking a distinction the
- * rules do not make.
- */
-@Composable
-private fun Sides(view: PlayerView, caller: PlayerSeatView) {
-    // The caller arrives as a *seat* rather than an id, so there is nothing to look up and
-    // nothing to be missing. Looking it up here worked — the only call site found it with a
-    // `firstOrNull` first — and "it happens to be safe two frames up" is exactly the reasoning
-    // that put a `first {}` on the felt in the first place. `PartialFunctionTest` refuses it.
-    val coalition = view.players.filter { it.id != caller.id }
-    val spoken = stringResource(Res.string.table_final_coalition, caller.nickname)
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 14.dp, end = 14.dp, bottom = 6.dp)
-            // One sentence for the whole row, because four portraits read out one at a time
-            // are four names with no relationship between them — and the relationship is the
-            // only thing this row is for.
-            .semantics {
-                contentDescription = spoken
-            },
-        horizontalArrangement = Arrangement.spacedBy(Tight),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        SideLabel(stringResource(Res.string.table_final_side_coalition), Rail.brand)
-        coalition.forEach { seat -> Face(seat.nickname, ringed = false) }
-
-        Text(
-            stringResource(Res.string.table_final_versus),
-            style = MaterialTheme.typography.labelSmall,
-            color = Rail.inkDim,
-            modifier = Modifier.weight(1f, fill = true).padding(horizontal = Tight),
-            textAlign = TextAlign.Center,
-        )
-
-        Face(caller.nickname, ringed = true, ring = Slate.gold)
-        SideLabel(stringResource(Res.string.table_final_side_caller), Slate.gold)
-    }
-}
-
-@Composable
-private fun SideLabel(text: String, colour: Color) {
+private fun RowScope.Countdown(view: PlayerView) {
     Text(
-        text = text.uppercase(),
+        stringResource(Res.string.table_final_round).uppercase(),
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.Bold,
         letterSpacing = 1.sp,
-        color = colour,
+        color = Rail.gold,
+        modifier = Modifier.semantics { heading() },
+    )
+
+    val left = finalRoundTurnsLeft(view) ?: return
+    Text(
+        if (left == 1) {
+            stringResource(Res.string.table_final_last_turn)
+        } else {
+            stringResource(Res.string.table_final_turns_left, left)
+        },
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.Bold,
+        color = Rail.gold,
     )
 }
+
+/** The rule that closes the band top and bottom while the plan is open. Decorative. */
+@Composable
+private fun PlanRule() {
+    Box(modifier = Modifier.fillMaxWidth().height(PlanRuleHigh).background(Signal.coalition))
+}
+
+/**
+ * The way into the plan and the way out of it: one **switch**, not two buttons.
+ *
+ * A switch rather than a button because the plan is a *mode*, and a mode wants a control that
+ * shows its own state — a button labelled "Plan" that becomes "Close the plan" is two controls
+ * a player has to read to tell which one they are looking at, and it says nothing at all at a
+ * glance. This one is lit when the plan is on and dark when it is off, in the coalition's own
+ * colour, and it is announced as a switch: a screen reader says "Plan, on" rather than reading
+ * out a different word each time.
+ *
+ * Present with an empty plan exactly as with a full one — the empty plan is the one a member
+ * most needs to open — and sized like every other control this app offers a finger
+ * (`TouchTargetTest`).
+ */
+@Composable
+private fun PlanSwitch(
+    open: Boolean,
+    summary: PlanSummary,
+    onMove: (Move) -> Unit,
+    /**
+     * Whether there is room for the word beside the track.
+     *
+     * The same rule the rest of the header follows. In the band below it there was room for
+     * both; up here the switch shares a row with the wordmark, the round counter and three
+     * glyphs, and the row squeezes from the end — so keeping the word cost the counter, which
+     * is the one thing in that row that *changes*. The switch is announced as "Plan, on"
+     * either way, so nothing is lost to a screen reader.
+     */
+    labelled: Boolean = true,
+) {
+    val stage = LocalStage.current
+    val spoken = stringResource(Res.string.label_plan_open)
+    val travel by animateDpAsState(
+        targetValue = if (open) SwitchTrack - SwitchThumb - SwitchSeat * 2 else 0.dp,
+        animationSpec = tween(SwitchMs, easing = FastOutSlowInEasing),
+        label = "plan",
+    )
+
+    Row(
+        modifier = Modifier
+            .heightIn(min = TapTarget)
+            .toggleable(
+                value = open,
+                role = Role.Switch,
+                onValueChange = { onMove(if (open) Move.Ask(Question.None) else summary.open) },
+            )
+            .semantics { contentDescription = spoken }
+            .markedAs(stage, "choice:plan")
+            .padding(horizontal = Tight),
+        horizontalArrangement = Arrangement.spacedBy(Tight),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(SwitchTrack, SwitchHigh)
+                .clip(CircleShape)
+                .background(if (open) Signal.coalition else Rail.line)
+                .border(Hairline, Rail.edge, CircleShape),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(SwitchSeat)
+                    .offset(x = travel)
+                    .size(SwitchThumb)
+                    .clip(CircleShape)
+                    .background(if (open) Rail.fill else Rail.ink),
+            )
+        }
+        if (labelled) {
+            Text(
+                stringResource(Res.string.label_plan_open).uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+                color = Rail.ink,
+            )
+        }
+    }
+}
+
+private val PlanRuleHigh = 2.dp
+private val SwitchTrack = 34.dp
+private val SwitchHigh = 20.dp
+private val SwitchThumb = 14.dp
+private val SwitchSeat = 3.dp
+private val Hairline = 1.dp
+private const val SwitchMs = 180
 
 /**
  * Whoever said this, at badge size — the face they chose, or the emblem their name picks.
@@ -1189,36 +1210,6 @@ private fun SpeakerFace(name: String?) {
 }
 
 /** One player's portrait, at roster size. Named for a screen reader, since it is the label. */
-@Composable
-private fun Face(name: String, ringed: Boolean, ring: Color = Rail.brand) {
-    val chosen = chosenFace(name)
-    if (chosen != null) {
-        GeneratedAvatar(
-            traits = chosen.traits(),
-            ground = chosen.ground(),
-            size = FaceSize,
-            description = name,
-            modifier = if (ringed) Modifier.border(FaceRing, ring, CircleShape) else Modifier,
-        )
-        return
-    }
-    Image(
-        painter = painterResource(portraitFor(name)),
-        contentDescription = name,
-        contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .size(FaceSize)
-            .clip(CircleShape)
-            .then(
-                if (ringed) {
-                    Modifier.border(FaceRing, ring, CircleShape)
-                } else {
-                    Modifier
-                },
-            ),
-    )
-}
-
 /**
  * The chair nearest the player, counted among the opponents.
  *
@@ -1326,7 +1317,7 @@ private fun MiddleRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SideSeat(left, view, table, sizes, plateFirst = true, onMove = onMove)
-            Piles(view, sizes, onHelp)
+            Piles(view, sizes, table.board, onHelp)
             SideSeat(right, view, table, sizes, plateFirst = false, onMove = onMove)
         }
     }
@@ -1643,6 +1634,20 @@ private fun badgesFor(
     if (seat.coalitionWith.isNotEmpty()) add(SeatBadge.COALITION)
     if (seat.id in table.away) add(SeatBadge.AWAY)
     if (seat.id in view.barredFromTossIn) add(SeatBadge.BARRED)
+    addAll(planMarks(seat.id, table.planSummary))
+}
+
+/**
+ * What the coalition's plan says about this *seat* rather than about a turn (design D7).
+ *
+ * A nod is about a member and a shed costs nobody a turn, so neither belongs in the sequence of
+ * turns — putting them there would say they are the same kind of thing as a step. Both are
+ * durable facts, which is what everything in this row has to be.
+ */
+private fun planMarks(seat: String, plan: PlanSummary?): List<SeatBadge> = buildList {
+    if (plan == null) return@buildList
+    if (seat in plan.nodded) add(SeatBadge.AGREED)
+    if (seat in plan.shedding) add(SeatBadge.WILL_SHED)
 }
 
 /** The two cards the rules tell every player to look at before the round starts. */
@@ -1719,6 +1724,13 @@ private fun SeatCard(
     val move = table.taps[ref].unlessActing(stage)
     val anchor = Anchor.Seat(seat.id, position)
 
+    // Plan mode gives this card a second gesture: carried to where the plan should put it
+    // (design D5). The composer is the one being composed — at most one lane has one, and none
+    // has one while the transport runs — so outside plan mode this is null and adds nothing.
+    val composer = table.composerNow()
+    val wanted = wantedNow(ref, table.board, composer)
+    val carrying = stage.carrying == ref || table.board?.picked == ref
+
     if (stage.isInFlight(anchor) || stage.isPeeking(anchor)) {
         // The same footprint the landed card will claim — `CardFace` pads itself out to
         // [TapTarget], so a gap measured at the bare card size grew on landing, and the first
@@ -1730,7 +1742,7 @@ private fun SeatCard(
         return
     }
 
-    Box(modifier = Modifier.anchoredAt(stage, anchor, scale)) {
+    Box(modifier = Modifier.anchoredAt(stage, anchor, scale).carriable(ref, composer, onMove)) {
         CardFace(
             // Face-up only where the table says so. The view carries more than that —
             // everything this seat *knows* — and drawing all of it would hand the player a
@@ -1745,9 +1757,15 @@ private fun SeatCard(
             scale = scale,
             state = CardState(
                 tappable = move != null,
-                chosen = ref.isTargeted(view),
+                // Aimed at by the action in play, or named by the turn the plan is parked on:
+                // the same mark, because they are the same statement — this card is what the
+                // thing on screen is about.
+                chosen = ref.isTargeted(view) || ref in table.board?.marks.orEmpty(),
                 turned = turned,
                 flinching = stage.isFlinching(anchor),
+                wanted = wanted,
+                carrying = carrying,
+                unseen = ref in table.board?.fresh.orEmpty(),
             ),
             label = stringResource(Res.string.card_position, seat.nickname, position + 1),
             onClick = move?.let { { onMove(it) } },
@@ -1772,7 +1790,7 @@ private fun SeatCard(
  * colours — the caller's bluffs on exactly the same terms (design D12).
  */
 @Composable
-private fun ClaimBadge(badge: Badge, modifier: Modifier = Modifier) {
+internal fun ClaimBadge(badge: Badge, modifier: Modifier = Modifier) {
     val warn = badge.disputed || badge.verdict == Verdict.WRONG
     val scheme = MaterialTheme.colorScheme
     val fill = if (warn) scheme.errorContainer else scheme.secondaryContainer
@@ -1826,7 +1844,8 @@ private val BadgeFace = 10.dp
 
 /** The deck and the discard, labelled as on the web table, with the toss-in rank beneath. */
 @Composable
-private fun Piles(view: PlayerView, sizes: TableSizes, onHelp: (Rank?) -> Unit) {
+private fun Piles(view: PlayerView, sizes: TableSizes, board: Board?, onHelp: (Rank?) -> Unit) {
+    val composer = board?.let { it.lanes.getOrNull(it.at)?.composer }
     val stage = LocalStage.current
 
     // The web app's two-by-two, and the reason for it: what a player draws is public, so it
@@ -1855,7 +1874,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes, onHelp: (Rank?) -> Unit) 
             }
 
             Pile(stringResource(Res.string.table_discard)) {
-                Discard(view, sizes, stage, onHelp)
+                Discard(view, sizes, stage, board, composer, onHelp)
             }
         }
 
@@ -2177,8 +2196,21 @@ private val ThrownRow = 44.dp
  *   it at both ends makes the eye follow the copy rather than the movement.
  */
 @Composable
-private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (Rank?) -> Unit) {
+private fun Discard(
+    view: PlayerView,
+    sizes: TableSizes,
+    stage: Stage,
+    board: Board?,
+    composer: PlanComposer?,
+    onHelp: (Rank?) -> Unit,
+) {
     val pile = Modifier.anchoredAt(stage, Anchor.Discard, sizes.theirs)
+
+    // In plan mode the pile is somewhere a card can be *carried*: a put-down, so a teammate has
+    // a rank to throw in on. It lights up while a card that could be put down is in the air, and
+    // stays dark for one that could not, which is how an illegal drop is refused before it
+    // happens rather than after (design D5).
+    val wanted = discardWanted(board, composer)
 
     // The pile draws every card that is lying on it, and never one that is somewhere else.
     //
@@ -2229,6 +2261,7 @@ private fun Discard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (
         state = CardState(
             verdict = stage.verdictAt(Anchor.Discard),
             live = onOffer,
+            wanted = wanted,
         ),
         label = stringResource(
             if (onOffer) Res.string.card_discarded_live else Res.string.card_discarded,

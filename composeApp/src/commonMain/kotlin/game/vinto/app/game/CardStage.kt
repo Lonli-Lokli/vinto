@@ -10,7 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -56,10 +59,15 @@ import game.vinto.client.CardRef
 import game.vinto.client.Frame
 import game.vinto.client.Move
 import game.vinto.client.Pacing
+import game.vinto.client.PlanTarget
 import game.vinto.client.Say
 import game.vinto.client.Scene
+import game.vinto.client.Table
+import game.vinto.client.TableMode
 import game.vinto.client.Target
 import game.vinto.client.heldUp
+import game.vinto.client.isAThrownCard
+import game.vinto.client.mode
 import game.vinto.client.revealedTo
 import game.vinto.client.tossedTogether
 import game.vinto.engine.CardView
@@ -67,9 +75,12 @@ import game.vinto.engine.PlayerView
 import game.vinto.shapes.Card
 import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardConfig
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -214,6 +225,43 @@ class Stage {
     internal var rehearsing: Boolean by mutableStateOf(false)
 
     /**
+     * Which table the felt is drawing (design D1): the round, or the coalition's plan.
+     *
+     * Beside [rehearsing] and not the same thing. `rehearsing` says the *frame* on the felt is
+     * a ghost, which is true only while one is playing; this says the whole screen is the plan,
+     * which stays true between frames, at rest on a turn boundary, and with an empty plan that
+     * has no frames at all. It is set from [game.vinto.client.mode] — the table and nothing
+     * else — so no animation can put the screen into the plan or take it out of one.
+     */
+    internal var mode: TableMode by mutableStateOf(TableMode.LIVE)
+
+    /** Whether the felt is drawing the plan rather than the round. */
+    internal val planning: Boolean get() = mode == TableMode.PLAN
+
+    /**
+     * The card being carried across the felt to somewhere in the plan (design D5), and where
+     * it currently is.
+     *
+     * On the stage rather than in the felt's own state for the same reason [rehearsing] is: a
+     * card two composables deep has to know whether it is the one in the air, and the discard
+     * pile — a different subtree entirely — has to know whether a finger is over it. Cleared
+     * on release, whether or not the release landed anywhere.
+     */
+    internal var carrying: CardRef? by mutableStateOf(null)
+
+    /** Where the finger is, in the stage's own coordinates. Meaningless with nothing carried. */
+    internal var carriedTo: Offset by mutableStateOf(Offset.Zero)
+
+    /**
+     * The place under the finger, of the ones the composer allows — null over anything else.
+     *
+     * Resolved as the drag moves rather than on release, because the whole point is that the
+     * player can see what a release would do before letting go: a drop somewhere no step could
+     * be made simply never lights up (design D5).
+     */
+    internal var carriedOver: PlanTarget? by mutableStateOf(null)
+
+    /**
      * Whether a move of this player's is in flight — dispatched, not yet answered.
      *
      * Beside [rehearsing] because it is the same kind of truth and it is read the same way: one
@@ -229,6 +277,32 @@ class Stage {
 
     /** How many cards the deck has just taken back, while that is being drawn. */
     internal var refilling: Int by mutableStateOf(0)
+
+    /**
+     * The table as the screen has actually drawn it, which is not always where the engine is.
+     *
+     * A session publishes the view its whole dispatch arrived at *before* the frames that get
+     * there, and it emits those frames as two batches — the player's own move, then the bots'
+     * turns after their search. So between the batches, and through the beat before the first
+     * move of one, the engine is ahead of the picture with nothing on screen saying so.
+     *
+     * This is the picture's own position. The stage holds the table here while a batch waits
+     * to be stepped to, and the rail compares it against the live view to decide whether a
+     * button belongs to a position the player can still act in — see `withoutStaleOffers`.
+     *
+     * Null until the first frame is drawn: a screen that has animated nothing has nothing to be
+     * behind, so it is showing the live table and every control on it is real.
+     */
+    internal var drawn: PlayerView? by mutableStateOf(null)
+
+    /**
+     * Whether a batch is being drawn right now.
+     *
+     * Read by the plan's transport, which has to know when the film has finished so it can park
+     * the head on the last turn — the animation's own length is the only thing that knows, and
+     * it depends on the player's pace, on reduced motion and on how much each turn moves.
+     */
+    internal var drawing: Boolean by mutableStateOf(false)
 
     /** Declarations answered: true for a right call, false for a wrong one. */
     internal val verdicts = mutableStateMapOf<Anchor, Boolean>()
@@ -288,6 +362,23 @@ class Stage {
 
     /** The table's sounds — silent unless the app root put real ones here. See [Sounds]. */
     internal var sounds: Sounds = Sounds(player = null, enabled = false)
+
+    /**
+     * Which of [allowed] lies under [point], by the places already measured on this table.
+     *
+     * The berths are the hit test: every card and both piles report where they are on every
+     * layout pass, so there is nothing to register and nothing to keep in step. A point inside
+     * a card's own picture counts — not its padded tap box — because two cards in a tight hand
+     * have touching boxes and the nearer edge would claim a drop meant for its neighbour.
+     */
+    internal fun placeAt(point: Offset, allowed: Set<PlanTarget>): PlanTarget? =
+        allowed.firstOrNull { target ->
+            val anchor = when (target) {
+                is PlanTarget.Card -> Anchor.Seat(target.ref.playerId, target.ref.position)
+                PlanTarget.Discard -> Anchor.Discard
+            }
+            berths[anchor]?.holds(point) == true
+        }
 
     /** A duration, at the pace the player asked for. */
     internal fun ms(base: Int): Int = (base * pace).toInt()
@@ -569,7 +660,23 @@ internal data class Berth(
     val centre: Offset,
     val card: Size,
     val turned: Boolean,
-)
+) {
+    /**
+     * Whether [point] is on the card lying here.
+     *
+     * Measured from the centre outwards over the *picture*, which is what a person sees and
+     * aims at — see [Stage.placeAt] for why not the padded box. A card lying sideways is as
+     * wide as it is tall and the other way about.
+     */
+    internal fun holds(point: Offset): Boolean {
+        val half = if (turned) {
+            Offset(card.height / 2f, card.width / 2f)
+        } else {
+            Offset(card.width / 2f, card.height / 2f)
+        }
+        return abs(point.x - centre.x) <= half.x && abs(point.y - centre.y) <= half.y
+    }
+}
 
 /**
  * What a lesson is asking of the stage.
@@ -624,19 +731,64 @@ fun Anchor.key(): String = when (this) {
     is Anchor.Seat -> "card:$playerId:$position"
 }
 
+/**
+ * The card in the air between a slot and wherever the plan is going to put it (design D5).
+ *
+ * Drawn over the table like a flight, and for the same reason: a card carried by re-laying-out
+ * the hand it came from would make every other card in that hand move, which is not what
+ * picking one up looks like. The one under the finger is the only thing that moves.
+ */
+@Composable
+private fun Carried(stage: Stage, sizes: TableSizes) {
+    val at = stage.carriedTo
+    val density = LocalDensity.current
+    val card = sizes.theirs
+    val half = with(density) { Offset(card.width.toPx() / 2f, card.height.toPx() / 2f) }
+    Box(
+        modifier = Modifier
+            .graphicsLayer {
+                translationX = at.x - half.x
+                translationY = at.y - half.y
+                alpha = CARRIED_ALPHA
+            },
+    ) {
+        CardFace(card = CardView.Hidden, scale = card, state = CardState(carrying = true))
+    }
+}
+
+/** How solid a carried card is drawn: enough to follow, not enough to hide what is under it. */
+private const val CARRIED_ALPHA = 0.85f
+
 val LocalStage = compositionLocalOf { Stage() }
 
 /**
- * The taps, unless the felt is showing ghosts. A rehearsal plays moves that have not happened,
- * and a tap on one would be a move on a table that does not exist — so while the stage is
- * rehearsing every move is dropped, and the taps come back with the live table.
+ * Every touch on the table, routed by which table it is (design D2).
+ *
+ * This used to be `unlessRehearsing()`, and it dropped *everything* while ghosts were on the
+ * felt: "a tap on one would be a move on a table that does not exist". That reasoning survives
+ * whole — what changes is that a tap in plan mode now has a legitimate meaning, so the guard
+ * routes instead of muting.
+ *
+ * In [TableMode.LIVE] a move goes where it always went. In [TableMode.PLAN] only a
+ * [Move.Quiet] passes — the composer's own return type, which [Move.Send] is not a subtype of
+ * — so the felt cannot dispatch a `GameAction` from a hypothetical table even if something
+ * upstream handed it one. The type is the guard; this is the place it is applied.
  */
 @Composable
-fun ((Move) -> Unit).unlessRehearsing(): (Move) -> Unit =
-    if (LocalStage.current.rehearsing) ::noMove else this
-
-@Suppress("UnusedParameter")
-private fun noMove(move: Move) = Unit
+fun ((Move) -> Unit).routed(table: Table): (Move) -> Unit {
+    val onMove = this
+    // The table itself rather than `LocalStage.current.mode`, which the stage learns one
+    // composition later: routing must key on the same value the screen is drawing, in the same
+    // frame, or the first tap after the plan opens is routed against the table before it.
+    val mode = table.mode
+    return remember(onMove, mode) {
+        if (mode == TableMode.PLAN) {
+            { move -> if (move is Move.Quiet) onMove(move) }
+        } else {
+            onMove
+        }
+    }
+}
 
 /**
  * The table, with a layer above it for everything in motion.
@@ -661,6 +813,251 @@ private fun noMove(move: Move) = Unit
  * @param live where the game actually is. Shown whenever nothing is being animated, which is
  *   every moment the player can act.
  */
+
+/**
+ * The loop that draws what has happened, and the handful of things it writes back to the screen.
+ *
+ * A class rather than a long effect body inside [CardStage]: the composable was already at its
+ * length limit and the loop is the half of it with the reasoning in it. A suspend function with
+ * eight lambdas in its signature would not have been an improvement on what it replaced.
+ *
+ * @param live where the game actually is, read afresh each time — the loop reconciles lifted
+ *   cards against it after a drop, and a captured value would lift what *was* aimed at.
+ */
+private class Drawing(
+    private val stage: Stage,
+    private val queue: AnimationQueue<Frame>,
+    private val coaching: Coaching,
+    private val log: State<List<Say>>,
+    private val live: () -> PlayerView,
+    private val behind: MutableState<PlayerView?>,
+    private val draining: MutableState<Boolean>,
+    private val progress: MutableIntState,
+) {
+
+    private var next = 0L
+    private var lastActor: String? = null
+    private var lastDrawn: Frame? = null
+
+    /**
+     * **Arrivals are taken off the flow as they are made, not when the last batch has finished
+     * being drawn.** Collecting *around* the drain meant a batch emitted mid-animation sat in
+     * the flow until the animation was over — and the batch that arrives mid-animation is the
+     * interesting one, because it is a person acting. Their own throw could not join a scramble
+     * already in the air: it waited out the flight and the read beat after it, and for well over
+     * a second the table went on asking the question they had just answered. Reported from a
+     * phone as a tap that does nothing, and the tap was never lost — the engine took it at once
+     * and the picture queued, which is what made it hard to place.
+     */
+    private val inbox = Channel<List<Frame>>(Channel.UNLIMITED)
+
+    suspend fun play(frames: Flow<List<Frame>>, opening: List<Scene>) = coroutineScope {
+        launch { frames.collect { inbox.send(it) } }
+
+        // Whatever the log already says — a resumed round — is the starting point, and so is
+        // the table itself: a screen that has animated nothing has drawn the live view, which
+        // is what the first batch holds the table at while it waits to be stepped to.
+        stage.tellAll(log.value)
+        stage.drawn = live()
+
+        // The deal, before anything else — see [playOpening].
+        next = stage.playOpening(opening, next)
+
+        // A game opened mid-action — a resume, a reconnect — may already be holding cards up,
+        // and no frame is coming to say so: the lift is a state, so it is read.
+        stage.holdUp(live())
+
+        // Suspends on `receive` between batches, so the composition goes quiet in between —
+        // which is the whole point of the shape: a loop that asks for a composition frame every
+        // time round is a composition that is never idle, and `waitForIdle` never returns.
+        while (true) {
+            take(inbox.receive())
+            drainWhatIsWaiting()
+        }
+    }
+
+    /** Takes a batch in: its lines come off the log, its frames go on the queue. */
+    private fun take(batch: List<Frame>) {
+        stage.untell(batch.flatMap { it.said })
+        // Submitted as it came. Grouping happens where the frames are *drawn* now, so that a
+        // throw arriving a moment after the others still joins them — see [nextTogether].
+        queue.submit(batch)
+    }
+
+    /** Everything on the queue, and everything that lands while it is being played. */
+    private suspend fun drainWhatIsWaiting() {
+        draining.value = true
+        stage.drawing = true
+
+        // Hold the table where it is until the first frame steps it. Nothing in this batch has
+        // been drawn yet, so the screen must go on showing what it was showing — see [settled].
+        // Without this the beat below is spent looking at the answer.
+        if (behind.value == null) behind.value = stage.drawn
+
+        // Whether the next move out of the queue is this batch's first — the coach is the one
+        // thing that treats it differently.
+        var opensTheBatch = true
+
+        while (true) {
+            // Anything that has landed since the last move was drawn.
+            gatherArrivals()
+
+            // Looked at rather than taken, because what is drawn is decided *after* the beat
+            // below, and the beat is where the rest of the table gets its hands down.
+            val coming = queue.peek() ?: break
+
+            // Wait out whatever the coach is saying before showing the next move.
+            coaching.finishTalking(opensTheBatch)
+            opensTheBatch = false
+
+            // The beat where a person would be thinking. Without it, three bot turns are one
+            // long stream of cards with no way to tell whose move any of them was — and with
+            // it, a turn arriving *feels* like somebody taking one. Throws that follow throws
+            // get none of it: see [Pacing.thinkBefore].
+            delay(stage.paced(Pacing.thinkBefore(coming, lastDrawn, lastActor, live().viewerId)))
+
+            // **And this is the window.** A card landing face up is a moment the whole table
+            // reacts in, and the beat above is how long that moment lasts on screen. Whatever
+            // came down inside it is gathered up now, so it is drawn *with* this move rather
+            // than queued behind it — which is what makes a scramble read as one, and what
+            // stops a person's own throw arriving as a separate event after everybody else's.
+            gatherArrivals()
+
+            draw(queue.nextTogether() ?: break)
+            progress.intValue++
+        }
+
+        draining.value = false
+        stage.drawing = false
+
+        // Caught up — and the only path when a batch was dropped for being too far behind,
+        // which is what makes the drop land on the present rather than nowhere. The lifts land
+        // on the present too: whatever the current view holds up is up, and nothing else is.
+        // **`drawn` is deliberately not reset here.** It is how far the screen has got, and a
+        // dispatch emits its own move and the bots' turns as two batches — so at the end of the
+        // first one the engine is already past both. Told it had caught up, the rail offered
+        // the buttons of the position at the end of the bots' turns while none of those turns
+        // had been drawn, and took them away again when the frames arrived to draw them.
+        // `ControlBlinkTest` counts that as it happens.
+        behind.value = null
+        stage.rehearsing = false
+        stage.holdUp(live())
+        stage.tellAll(log.value)
+    }
+
+    private fun gatherArrivals() {
+        while (true) take(inbox.tryReceive().getOrNull() ?: break)
+    }
+
+    /** One move: the table steps to it, its cards fly, and then it is left to be read. */
+    private suspend fun draw(frame: Frame) {
+        if (frame.hasSomethingToSee) lastActor = frame.actorId
+        lastDrawn = frame
+
+        // What this move is about to move and to reveal, marked before the table steps to
+        // it — see [prepareFor].
+        stage.prepareFor(frame)
+        stage.rehearsing = frame.ghost
+
+        // The table steps to this move before its cards fly, because the overlay draws a gap
+        // where a card is landing: the seat has to be showing the card for the gap to be in
+        // the right place. The log steps with it: what the rail says about a move appears as
+        // the move is drawn, not when the engine finished it.
+        behind.value = frame.view
+        stage.drawn = frame.view
+        stage.tell(frame.said)
+
+        next = stage.playScenes(frame, next)
+
+        // Nothing is expected any more: every flight this move had has started, and a beat
+        // that never flew (a card already where it was going) must not leave a place waiting
+        // for it. Concealment ends the same way: a reveal that never played must not leave a
+        // card wearing its back forever.
+        stage.expecting.clear()
+        stage.concealing.clear()
+
+        // The lifted cards, brought into line with the table this move left behind. After the
+        // scenes rather than between them, so a card stays up through the whole of a verdict —
+        // a wrong King's target hovers through the red ring and the penalty and turns over
+        // where it hovers — and comes down once, at the end, if the view has let go of it.
+        stage.holdUp(frame.view)
+
+        // And the beat after, so the table can be read before the next thing happens — **or
+        // until somebody does something, whichever comes first**. The pause is for reading a
+        // settled table, and a move landing in it means the table is not settled. Nothing else
+        // arrives here: the bots' turns come as one batch, so what interrupts this is a person
+        // acting, and a person who has acted has finished reading.
+        inbox.receiveWithin(stage.paced(Pacing.dwellAfter(frame, live().viewerId)))?.let(::take)
+
+        // Only now does the table stop pointing. A seat is pointed at for the whole of what is
+        // happening to it — an Ace names a victim in one scene and the card flies to them in
+        // the next, and a ring cleared between the two blinks off at the exact moment the
+        // player looks up to see who was named.
+        stage.attention.clear()
+    }
+}
+
+/**
+ * The next move to draw, with every throw already waiting behind it.
+ *
+ * A toss-in window belongs to the whole table at once: it opens, and every hand holding a match
+ * comes down. `tossedTogether` has always merged the throws that *arrive* together so their
+ * cards leave in one scene — but a person's own throw is emitted alone and before the bots
+ * (`LocalGameSession.dispatch` says why), so it never arrived with anybody. Grouping here, as
+ * the frames are drawn rather than as they land, is what lets a hand that came down a moment
+ * later still be part of the same scramble.
+ *
+ * Only throws group. Everything else is one move and is drawn as one.
+ */
+private fun AnimationQueue<Frame>.nextTogether(): Frame? {
+    val first = next() ?: return null
+    if (!first.isAThrownCard()) return first
+
+    val together = mutableListOf(first)
+    while (peek()?.isAThrownCard() == true) together += next() ?: break
+    return together.tossedTogether().single()
+}
+
+/**
+ * Waits up to [ms] for a batch, and answers with it or with null if none came.
+ *
+ * Used for the pause after a move, which is a pause for *reading a settled table* — so a batch
+ * landing in it ends it early rather than making the next hand wait its turn.
+ *
+ * A poll rather than `withTimeoutOrNull`, and not for taste: under the Compose test clock the
+ * timeout never fired, so the pause after every move became a wait for something that was not
+ * coming and the next move was never drawn. `delay` is the one primitive this whole loop is
+ * already built on and the only one the clock is known to drive.
+ */
+private suspend fun Channel<List<Frame>>.receiveWithin(ms: Long): List<Frame>? {
+    var left = ms
+    while (left > 0L) {
+        tryReceive().getOrNull()?.let { return it }
+        val step = minOf(left, GLANCE_MS)
+        delay(step)
+        left -= step
+    }
+    return tryReceive().getOrNull()
+}
+
+/** How often the pause after a move looks up. Two frames or so: quick enough to feel answered. */
+private const val GLANCE_MS = 32L
+
+/**
+ * Tells the stage which table is on the felt, for everything too deep to be handed it.
+ *
+ * The router above takes the table directly, because it must be right in the frame the plan
+ * opens. This is for the rest — the rehearsal banner, a card deciding whether it is draggable
+ * — where a composition's lag costs nothing and threading a `Table` through five composables
+ * costs a great deal. Same source, so the two cannot disagree about anything but timing.
+ */
+@Composable
+fun TellTheStage(table: Table) {
+    val stage = LocalStage.current
+    val mode = table.mode
+    SideEffect { stage.mode = mode }
+}
+
 @Suppress("LongParameterList") // A stage has many optional knobs; callers name what they set.
 @Composable
 fun CardStage(
@@ -704,7 +1101,10 @@ fun CardStage(
 
     // The move being shown, while it is behind the one the engine is on. Null means caught up,
     // which is both the resting state and the only state the player is asked to act in.
-    var behind by remember { mutableStateOf<PlayerView?>(null) }
+    //
+    // Held as the state object rather than through `by`, because the loop that writes it lives
+    // in [Drawing] now and a delegated var cannot be handed over.
+    val behind = remember { mutableStateOf<PlayerView?>(null) }
 
     // The view being shown right now, current across recompositions: the frame loop below
     // reconciles the lifted cards against it after a drop, and a stale capture would lift
@@ -715,115 +1115,21 @@ fun CardStage(
     // every time one move of it finishes. Progress rather than elapsed time, because a long
     // batch at a calm pace is slow and perfectly healthy — a stall is a batch that has stopped
     // moving, not one that is taking a while.
-    var draining by remember { mutableStateOf(false) }
-    var progress by remember { mutableIntStateOf(0) }
-    CountStalls(draining, progress)
+    val draining = remember { mutableStateOf(false) }
+    val progress = remember { mutableIntStateOf(0) }
+    CountStalls(draining.value, progress.intValue)
 
-    // Drains only while there is something to play, and then stops.
-    //
-    // The obvious shape — a `while (true)` asking for a frame each time round — spins for the
-    // life of the screen, and the cost is not the CPU: a composition that requests a frame
-    // forever is a composition that is never idle, so `waitForIdle` in a UI test never
-    // returns and neither does anything else built on idling. Collecting and draining per
-    // batch has the same effect and goes quiet in between.
     LaunchedEffect(frames) {
-        var next = 0L
-        var lastActor: String? = null
-
-        // Whatever the log already says — a resumed round — is the starting point.
-        stage.tellAll(liveLog.value)
-
-        // The deal, before anything else — see [playOpening].
-        next = stage.playOpening(opening, next)
-
-        // A game opened mid-action — a resume, a reconnect — may already be holding cards
-        // up, and no frame is coming to say so: the lift is a state, so it is read.
-        stage.holdUp(current)
-
-        frames.collect { batch ->
-            // A batch replayed into a fresh stage — the screen recreated under a rotation —
-            // arrives after the session's log already holds its lines, and the seed above
-            // took them. They come off again here so the frames can tell them in step.
-            stage.untell(batch.flatMap { it.said })
-            queue.submit(batch.tossedTogether())
-            draining = true
-
-            // Whether the next move out of the queue is this batch's first — see the hold
-            // below, which is the one thing that treats it differently.
-            var opensTheBatch = true
-
-            while (true) {
-                val frame = queue.next() ?: break
-
-                // Wait out whatever the coach is saying before showing the next move.
-                coaching.finishTalking(opensTheBatch)
-                opensTheBatch = false
-
-                // The beat where a person would be thinking. Without it, three bot turns are
-                // one long stream of cards with no way to tell whose move any of them was —
-                // and with it, a turn arriving *feels* like somebody taking one.
-                delay(stage.paced(Pacing.thinkBefore(frame, lastActor, live.viewerId)))
-                if (frame.hasSomethingToSee) lastActor = frame.actorId
-
-                // What this move is about to move and to reveal, marked before the table
-                // steps to it — see [prepareFor].
-                stage.prepareFor(frame)
-                stage.rehearsing = frame.ghost
-
-                // The table steps to this move before its cards fly, because the overlay
-                // draws a gap where a card is landing: the seat has to be showing the card
-                // for the gap to be in the right place. The log steps with it: what the
-                // rail says about a move appears as the move is drawn, not when the engine
-                // finished it.
-                behind = frame.view
-                stage.tell(frame.said)
-
-                for (scene in frame.scenes) {
-                    // One frame first, so the table has re-laid-out and reported where things
-                    // now are. A scene is worked out from the move, and the drawing is always
-                    // a frame behind — asking for positions in the same frame gets the
-                    // previous ones, or none at all for a slot that has only just appeared.
-                    withFrameNanos { }
-                    next = stage.play(scene, next)
-                    delay(stage.paced(Pacing.BETWEEN_SCENES_MS))
-                }
-
-                // Nothing is expected any more: every flight this move had has started, and
-                // a beat that never flew (a card already where it was going) must not leave a
-                // place waiting for it. Concealment ends the same way: a reveal that never
-                // played must not leave a card wearing its back forever.
-                stage.expecting.clear()
-                stage.concealing.clear()
-
-                // The lifted cards, brought into line with the table this move left behind.
-                // After the scenes rather than between them, so a card stays up through the
-                // whole of a verdict — a wrong King's target hovers through the red ring and
-                // the penalty and turns over where it hovers — and comes down once, at the
-                // end, if the view has let go of it.
-                stage.holdUp(frame.view)
-
-                // And the beat after, so the table can be read before the next thing happens.
-                delay(stage.paced(Pacing.dwellAfter(frame, live.viewerId)))
-
-                // Only now does the table stop pointing. A seat is pointed at for the whole
-                // of what is happening to it — an Ace names a victim in one scene and the
-                // card flies to them in the next, and a ring cleared between the two blinks
-                // off at the exact moment the player looks up to see who was named.
-                stage.attention.clear()
-                progress++
-            }
-
-            draining = false
-
-            // Caught up — and the only path when a batch was dropped for being too far
-            // behind, which is what makes the drop land on the present rather than nowhere.
-            // The lifts land on the present too: whatever the current view holds up is up,
-            // and nothing else is.
-            behind = null
-            stage.rehearsing = false
-            stage.holdUp(current)
-            stage.tellAll(liveLog.value)
-        }
+        Drawing(
+            stage = stage,
+            queue = queue,
+            coaching = coaching,
+            log = liveLog,
+            live = { current },
+            behind = behind,
+            draining = draining,
+            progress = progress,
+        ).play(frames, opening)
     }
 
     Box(modifier = modifier.fillMaxSize().onGloballyPositioned { stage.setOrigin(it) }) {
@@ -831,7 +1137,7 @@ fun CardStage(
             // Always the stepped copy, never the live log: a new batch's lines are in the
             // session's log before its first frame has been picked up, which is the same
             // race one step earlier.
-            content(behind ?: live, stage.told)
+            content(behind.value ?: live, stage.told)
         }
 
         // Keyed by anchor: two cards can hover at once now, and positional memoization over
@@ -856,6 +1162,12 @@ fun CardStage(
                 }
             }
         }
+
+        // The card being carried across the felt to somewhere in the plan, drawn under the
+        // finger. Face-down, which is not a simplification: in a final round every card on the
+        // table is face-down, and the plan moves cards by what the table has been *told* they
+        // are rather than by what they are.
+        stage.carrying?.let { Carried(stage, sizes) }
 
         stage.borrowed?.let { Borrowed(it, sizes, stage.tableCentre(), stage.travel(STAGE_GROW_MS)) }
         // The sweep is pure movement; under reduced motion the count still shows for the
@@ -911,6 +1223,24 @@ private suspend fun Stage.playOpening(opening: List<Scene>, firstId: Long): Long
         delay(paced(Pacing.BETWEEN_SCENES_MS))
     }
     expecting.clear()
+    return next
+}
+
+/**
+ * A frame's scenes, one after another, and the id the next flight should take.
+ *
+ * One rendered frame before each, so the table has re-laid-out and reported where things now
+ * are: a scene is worked out from the move, and the drawing is always a frame behind — asking
+ * for positions in the same frame gets the previous ones, or none at all for a slot that has
+ * only just appeared.
+ */
+private suspend fun Stage.playScenes(frame: Frame, firstId: Long): Long {
+    var next = firstId
+    for (scene in frame.scenes) {
+        withFrameNanos { }
+        next = play(scene, next)
+        delay(paced(Pacing.BETWEEN_SCENES_MS))
+    }
     return next
 }
 

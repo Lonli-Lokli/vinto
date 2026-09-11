@@ -3,18 +3,31 @@ package game.vinto.app
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.use
+import game.vinto.app.game.HelpSheet
+import game.vinto.app.game.LocalStage
+import game.vinto.app.game.Stage
 import game.vinto.app.game.TableLayout
 import game.vinto.app.game.TableScreen
 import game.vinto.app.game.TableState
 import game.vinto.app.theme.VintoTheme
+import game.vinto.client.Question
 import game.vinto.client.Settings
+import game.vinto.client.TableMode
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
+import game.vinto.shapes.CardAt
+import game.vinto.shapes.Claim
+import game.vinto.shapes.CoalitionPlan
+import game.vinto.shapes.GamePhase
+import game.vinto.shapes.Lane
+import game.vinto.shapes.Rank
+import game.vinto.shapes.Step
 import kotlin.test.Test
 
 /**
@@ -92,6 +105,59 @@ class ScreenshotTest {
         }
     }
 
+    @Test
+    fun thePlanOnTheFelt() {
+        // The fifth screen, and the newest: the coalition's plan drawn on the table as a replay
+        // (design D1). Its looks *are* the product in the same way the felt's are — a lit
+        // switch, a ruled band saying nothing has moved, ghost cards marked at the seats that
+        // hold them — and none of it is reachable by an assertion about text.
+        val whole = teachingSession().view.value
+        val caller = whole.players.first { it.id != whole.viewerId }
+        val view = whole.copy(
+            phase = GamePhase.FINAL,
+            finalTurnTriggered = true,
+            vintoCallerId = caller.id,
+            players = whole.players.map { seat ->
+                if (seat.id == caller.id) {
+                    seat
+                } else {
+                    seat.copy(claims = listOf(Claim(seat.id, listOf(0), listOf(Rank.FIVE))))
+                }
+            },
+        )
+        val mate = view.players.first { it.id != view.viewerId && it.id != caller.id }
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(mate.id, Step.Swap(CardAt(mate.id, 0), CardAt(view.viewerId, 0)))),
+        )
+        val table = tableFor(view, question = Question.ThePlan(), plan = plan)
+
+        shoot("plan") {
+            Box(modifier = Modifier.size(PHONE_W.dp, PHONE_H.dp)) {
+                CompositionLocalProvider(LocalStage provides Stage().apply { mode = TableMode.PLAN }) {
+                    TableScreen(
+                        state = TableState(view, table, null, emptyList(), 1),
+                        layout = TableLayout.forScreen(PHONE_H.dp),
+                        onMove = {},
+                        onHelp = {},
+                        onSettings = {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun theHelpSheet() {
+        // The sixth screen, and the one a player opens *during* a turn. It was a single column
+        // — thirteen ranks, seven rings and four paragraphs — and is four tabs now, so what it
+        // looks like is worth a picture: a legend nobody can find is a legend nobody reads.
+        shoot("help") {
+            Box(modifier = Modifier.size(PHONE_W.dp, PHONE_H.dp)) {
+                HelpSheet(open = true, now = null, left = DECK_LEFT, onDismiss = {})
+            }
+        }
+    }
+
     /** Renders [content] in each theme and stands both against their goldens. */
     private fun shoot(
         name: String,
@@ -119,6 +185,9 @@ class ScreenshotTest {
     private companion object {
         /** Three digits, like a real one, so the footer is laid out at its true width. */
         const val PINNED_BUILD = "000"
+
+        /** A plausible mid-round deck, so the sheet's live count reads like a real one. */
+        const val DECK_LEFT = 21
 
         const val PHONE_W = 411
         const val PHONE_H = 740

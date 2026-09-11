@@ -230,6 +230,8 @@
     <string name="seat_badge_coalition">連合の一員</string>
     <string name="seat_badge_away">席を外している</string>
     <string name="seat_badge_barred">もうトスインできません</string>
+    <string name="seat_badge_agreed">計画に同意</string>
+    <string name="seat_badge_will_shed">投げ込む準備ができている</string>
     <string name="seat_pointed_vinto">%1$sがVintoを宣言しました</string>
     <string name="seat_pointed_penalty">%1$sが山札からカードを引いています</string>
     <string name="seat_pointed_coalition">%1$sが連合を率いています</string>
@@ -261,13 +263,8 @@
     <string name="talk_wait_they">%1$sが少し待つよう求めています。</string>
     <string name="talk_worse">それでは自分が不利になると伝えています。</string>
     <string name="talk_worse_they">%1$sは、それでは自分が不利になると言っています。</string>
-    <string name="table_final_caller">残りの全員が力を合わせて一つの手であなたと勝負します。</string>
     <string name="table_final_turns_left">公開まであと%1$d手番</string>
     <string name="table_final_last_turn">最後の手番</string>
-    <string name="table_final_coalition">あなたたち3人で一つの手を作り、%1$sと勝負します。</string>
-    <string name="table_final_side_coalition">連合</string>
-    <string name="table_final_side_caller">宣言者</string>
-    <string name="table_final_versus">対</string>
     <string name="table_see_score">スコアを見る</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -443,6 +440,10 @@
     <string name="teach_done">完了</string>
 
     <!-- ================================================================ help -->
+    <string name="help_tab_cards">カード</string>
+    <string name="help_tab_rings">リング</string>
+    <string name="help_tab_badges">バッジ</string>
+    <string name="help_tab_more">その他</string>
     <string name="help_right_now">今</string>
     <string name="help_the_cards">カード</string>
     <string name="help_signals">テーブルが伝えていること</string>
@@ -515,9 +516,10 @@
     <string name="label_agree">同意</string>
     <string name="label_do_as_planned">計画通りにする</string>
     <string name="label_keep_it_instead">代わりにこれを残す</string>
-    <string name="label_plan_swap">カードを2枚交換</string>
+    <string name="label_play_the_card">プレイする</string>
+    <string name="label_keep_the_card">持っておく</string>
+    <string name="label_let_the_card_go">手放す</string>
     <string name="label_plan_declare">ランクを宣言</string>
-    <string name="label_plan_put_down">カードを出す</string>
     <string name="label_plan_take_discard">捨て札を取る</string>
     <string name="label_plan_clear">クリア</string>
     <string name="label_plan_shed">投げ込む</string>
@@ -535,33 +537,43 @@
     <string name="detail_draw_beats_plan">引いた%1$sは計画より有利です — %2$d番目のカードの代わりに残しましょう。</string>
     <string name="detail_plan_is_a_suggestion">計画はあくまで提案です。決めるのは手番の人です。</string>
     <string name="board_title">計画</string>
-    <string name="board_summary_empty">まだ計画はありません — タップして一緒に計画しましょう</string>
-    <string name="board_summary">計画: %2$d手番のうち%1$d手番が決定、%4$d人のうち%3$d人が同意</string>
+    <string name="label_plan_open">計画</string>
+    <string name="label_plan_run">再生</string>
+    <string name="label_plan_halt">停止</string>
+    <string name="label_plan_back">戻る</string>
+    <string name="label_plan_on">次へ</string>
+    <string name="label_plan_rewind">最初へ</string>
+    <string name="board_turn_planned">ターン%1$d（%2$s）: %3$s</string>
+    <string name="board_played">%1$s（プレイ済み）</string>
+    <string name="board_now">今</string>
+    <string name="board_unplayable">この手順はここから実行できません。指定されたカードがすでになくなっています。</string>
+    <string name="board_broken">この手順の根拠となった申告は、誤りだと判明しました。</string>
+    <string name="board_carry_hint">カードを移動先まで運んでください。またはカードに触れてから、移動先に触れてください。</string>
+    <string name="board_arrival_title">この計画の行き着く先</string>
+    <string name="board_arrival_ours">私たちの最善の手: %1$d</string>
+    <string name="board_arrival_theirs">相手が持っていると思われる点数: %1$d</string>
+    <string name="board_arrival_unseen">相手のカードのうち%1$d枚については、誰も話していません。</string>
     <string name="board_your_call">あなたの番</string>
-    <string name="board_in_play">進行中</string>
     <string name="board_owner_you">あなたの</string>
     <string name="board_owner_named">%1$sの</string>
     <string name="board_step_swap">%1$sカード%2$dと%3$sカード%4$dを交換する</string>
     <string name="board_step_declare">キングで%1$sを宣言する</string>
     <string name="board_step_take_discard">捨て札を取る</string>
+    <string name="board_from_the_deck">山札から引く</string>
+    <string name="board_part_end">%1$sカード%2$d</string>
+    <string name="board_part_card">カード%1$d</string>
+    <string name="board_part_card_called">カード%1$d = %2$s</string>
+    <string name="board_nobody_throws_in">まだ誰も投げ込んでいません</string>
+    <string name="board_step_bin">手放す</string>
+    <string name="board_step_use_it">出たものをそのままプレイする</string>
     <string name="board_step_put_down">%1$sカード%2$dを出す</string>
     <string name="board_step_put_down_known">%1$sカード%2$d（%3$s）を出す</string>
     <string name="board_would_rather">%1$sは%2$sほうがいい</string>
     <string name="board_shed">%1$sが%2$sを投げ込む予定</string>
     <string name="board_edited_by">最後に変更したのは%1$s</string>
-    <string name="board_nod_yes">%1$sが同意しました</string>
-    <string name="board_nod_not_yet">%1$sはまだ同意していません</string>
-    <string name="board_lane">%1$s: %2$s</string>
-    <string name="board_outcome_wins">こちらの最良の手%1$d対相手%2$d — 勝ちです。</string>
-    <string name="board_outcome_level">こちらの最良の手%1$d対相手%2$d — 同点で、同点は宣言者の勝ちになります。</string>
-    <string name="board_outcome_loses">こちらの最良の手%1$d対相手%2$d — それでは届きません。</string>
-    <string name="board_outcome_unseen">宣言者のカードのうち%1$d枚は誰も見ていません。</string>
-    <string name="board_verdict_wins">勝ち</string>
-    <string name="board_verdict_level">同点</string>
-    <string name="board_verdict_loses">届かず</string>
-    <string name="label_plan_rehearse">プランを再生</string>
     <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
     <string name="table_rehearsal">リハーサル — 実際には動いていません</string>
+    <string name="badge_plain">だれかがこのカードだと言っている</string>
     <string name="badge_disputed">異議あり</string>
     <string name="badge_paired">対になっている、順不同</string>
     <string name="badge_right">正解</string>

@@ -220,6 +220,10 @@ fun CardFace(
                     ),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
+                    // A back the plan has turned into an unseen draw is tinted, not only
+                    // ringed: two card backs side by side in one hand are what a member is
+                    // being asked to tell apart, and at a hand's size a ring is a hairline.
+                    colorFilter = if (state.unseen && !showingFace) UnseenTint else null,
                     // The back of the layer is a mirror image once past the quarter turn, so
                     // the face is flipped back the other way to read as a card rather than a
                     // reflection.
@@ -287,6 +291,14 @@ private fun CardState.steadyRing(): Color? = when {
     // A declaration answered: green for a right call, red for a wrong one. Loudest, because
     // it is the one moment in the game that is a gamble on your own memory.
     verdict != null -> if (verdict) Signal.rightCall else Signal.wrongCall
+    // The card being carried, and the places it could go: the plan's own blue, and steady.
+    // A destination must not breathe — it is being aimed at with a finger already on the
+    // glass, and a target that changes size under the thumb is a target that gets missed.
+    carrying -> Signal.chosen
+    wanted -> Signal.planned
+    // Under the plan's own blue, because a card can be both — a place to aim at matters more
+    // than what is under it, and the aim is the thing a finger is about to act on.
+    unseen -> Signal.unseen
     chosen -> Signal.chosen
     live -> Signal.live
     tappable -> null
@@ -296,7 +308,14 @@ private fun CardState.steadyRing(): Color? = when {
 /** A card with something to say about it wears a ring; the rest wear a hairline. */
 private fun CardState.ringWidth() = if (marked()) Ring else Hairline
 
-private fun CardState.marked() = verdict != null || chosen || tappable || live
+/** How far the back of an unseen draw is pulled towards [Signal.unseen]. Enough to read, not to shout. */
+private val UnseenTint = androidx.compose.ui.graphics.ColorFilter.tint(
+    Signal.unseen.copy(alpha = 0.30f),
+    androidx.compose.ui.graphics.BlendMode.SrcAtop,
+)
+
+private fun CardState.marked() =
+    verdict != null || chosen || tappable || live || wanted || carrying || unseen
 
 /** Which picture a card shows. A hidden one always shows the back, and knows nothing else. */
 private fun CardView.art(): DrawableResource = when (this) {

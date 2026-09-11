@@ -292,6 +292,30 @@ object Signal {
 
     /** The halo on a card being looked at, and on a revealed card flying shown. */
     val peeked = Color(0xFF22C55E)
+
+    /**
+     * A place the coalition's plan could put the card being carried (design D5).
+     *
+     * The coalition's own blue, taken a good deal deeper because this one is drawn against a
+     * card's white rather than against felt — the same reason [tappable] is not [pick]. It has
+     * to be a colour of its own: green already means "touch this to *play* it", and a plan is
+     * the one thing on this table that is not a move.
+     */
+    val planned = Color(0xFF1D4FB0)
+
+    /**
+     * A card the plan has replaced with a draw **nobody has seen** (design D5).
+     *
+     * A step that puts a card down does not leave a gap: the seat draws off the deck, face
+     * down, and that card is a lottery ticket rather than a known quantity. It wore the same
+     * back as every other card, so a hand read at a later stop of the transport gave a member
+     * no way to tell the two apart — asked for from a phone in exactly those terms.
+     *
+     * Violet rather than another blue: the plan's own blue already means *a place a card may
+     * go*, and this is the opposite kind of statement — not somewhere to aim, but something
+     * that cannot be known. Deep enough to be read against a card's white, like its neighbours.
+     */
+    val unseen = Color(0xFF6D3BAF)
 }
 
 /** The white of a card face: what [Signal.tappable] and its neighbours are drawn against. */

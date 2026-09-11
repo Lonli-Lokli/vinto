@@ -195,9 +195,12 @@ therefore round-trip in a browser.
 
 - **`composeApp` has a desktop target with a `main()`.** It is the fastest way to look at a UI
   change, with no emulator to boot, and it is how the four sounds get listened to.
-- **Screenshot goldens are not committed from CI and not generated here.** A fresh runner would
-  write its own and assert nothing, and glyph rasterisation differs by JVM. They are a
-  maintainer's artefact, accepted by a human looking at the images.
+- **Screenshot goldens are committed, and CI still does not run the suite that checks them.**
+  The two halves are separate decisions. They are *committed* because a golden's whole purpose
+  is to make a visual change show up in a review as a picture, and one kept only on the machine
+  that wrote it is a check nobody else can run. CI *skips* the suite because a fresh runner with
+  no goldens would write its own and pass, asserting nothing, and because glyph rasterisation
+  differs by JVM. So a person runs it, looks at the images, and commits them.
 - **`ROOM_OPEN` defaults to `"false"`.** A deployed room with the flag off creates nothing and
   discloses nothing. `/health` and `/replay` stay above the gate: one is a liveness answer, the
   other a pure function of its own argument.

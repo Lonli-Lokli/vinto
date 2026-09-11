@@ -73,6 +73,22 @@ data class CardState(
      * once both have landed.
      */
     val live: Boolean = false,
+    /**
+     * A place the plan's edit could put the card being carried right now (design D5).
+     *
+     * Lit **before** the release, which is what makes an illegal drop a thing that was never
+     * offered rather than an error afterwards. Only ever true in plan mode.
+     */
+    val wanted: Boolean = false,
+    /** This card is the one being carried: it is drawn under the finger, not in its slot. */
+    val carrying: Boolean = false,
+    /**
+     * The plan has already replaced this card with a draw nobody has seen (design D5).
+     *
+     * Only ever true in plan mode, and only at a stop the put-down has happened by. See
+     * `Board.fresh` and [Signal.unseen].
+     */
+    val unseen: Boolean = false,
 )
 
 /**

@@ -123,15 +123,17 @@ sealed interface Label {
     /** The viewer's own lane, on their turn, when the draw has made it legal. */
     data object DoAsPlanned : Label
 
-    /** Compose a lane as putting one of the seat's own cards down for a teammate to throw in on. */
-    data object PlanAPutDown : Label
-
     /** Keep the drawn card rather than do the plan's step: the re-plan a good draw earns. */
     data object KeepItInstead : Label
 
-    data object PlanASwap : Label
-
     data object PlanADeclare : Label
+
+    /** The three things a turn can do with the card it takes — see `Question.Doing`. */
+    data object PlayTheCard : Label
+
+    data object KeepTheCard : Label
+
+    data object LetTheCardGo : Label
 
     data object PlanTakeTheDiscard : Label
 

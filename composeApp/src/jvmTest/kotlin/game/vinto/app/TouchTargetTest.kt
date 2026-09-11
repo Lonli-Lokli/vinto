@@ -28,7 +28,9 @@ import game.vinto.client.Question
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
+import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import kotlinx.coroutines.test.runTest
@@ -64,6 +66,45 @@ class TouchTargetTest {
     @Test
     fun everythingOnATurnCanBeHit() = eachTapTarget(Question.None) { what, tap ->
         assertTrue(tap.bigEnough, tooSmall(what, tap))
+    }
+
+    /**
+     * The plan's own row, which is the smallest thing this app draws and asks a finger to hit.
+     *
+     * The row is marks rather than words — where the card comes from, what becomes of it — so
+     * nothing about it is sized by its label, and the sizes were picked to make a row of four
+     * fit a phone rather than to be hit. This suite never measured them: it drew the ordinary
+     * turn and the rank rail, and the plan is a third table neither of those reaches.
+     */
+    @Test
+    fun everyPartOfAPlannedTurnCanBeHit() = eachTapTarget(
+        question = Question.ThePlan(),
+        plan = CoalitionPlan(),
+        on = conferring(),
+    ) { what, tap ->
+        assertTrue(tap.bigEnough, tooSmall(what, tap))
+    }
+
+    /** A final round somebody else called, with this seat in the coalition and free to plan. */
+    private fun conferring(): PlayerView {
+        val whole = drawn()
+        val caller = whole.players.first { it.id != whole.viewerId }
+        return whole.copy(
+            phase = GamePhase.FINAL,
+            pendingAction = null,
+            vintoCallerId = caller.id,
+            conferMsRemaining = 20_000L,
+            players = whole.players.map { seat ->
+                seat.copy(
+                    isVintoCaller = seat.id == caller.id,
+                    coalitionWith = if (seat.id == caller.id) {
+                        emptyList()
+                    } else {
+                        whole.players.map { it.id } - seat.id - caller.id
+                    },
+                )
+            },
+        )
     }
 
     /** The crowded case: the eight action ranks, a confirm and a cancel, in one rail. */
@@ -205,16 +246,24 @@ class TouchTargetTest {
         question: Question,
         header: Boolean = false,
         fontScale: Float = 1f,
+        plan: CoalitionPlan? = null,
+        on: PlayerView = drawn(),
         check: (String, Tap) -> Unit,
     ) = runComposeUiTest {
-        val view = drawn()
+        val view = on
         setContent {
             val density = LocalDensity.current.density
             CompositionLocalProvider(LocalDensity provides Density(density, fontScale)) {
                 VintoTheme {
                     Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
                         TableScreen(
-                            state = TableState(view, tableFor(view, question), null, emptyList(), 1),
+                            state = TableState(
+                                view,
+                                tableFor(view, question, plan = plan),
+                                null,
+                                emptyList(),
+                                1,
+                            ),
                             layout = TableLayout.forScreen(PHONE_H),
                             onMove = {},
                             onHelp = {},

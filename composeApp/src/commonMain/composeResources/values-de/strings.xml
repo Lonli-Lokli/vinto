@@ -216,6 +216,8 @@
     <string name="seat_badge_coalition">in der Koalition</string>
     <string name="seat_badge_away">nicht am Tisch</string>
     <string name="seat_badge_barred">darf nicht mehr einwerfen</string>
+    <string name="seat_badge_agreed">hat dem Plan zugestimmt</string>
+    <string name="seat_badge_will_shed">hat eine Karte zum Einwerfen bereit</string>
     <string name="seat_pointed_vinto">%1$s hat Vinto gerufen</string>
     <string name="seat_pointed_penalty">%1$s nimmt eine Karte vom Stapel</string>
     <string name="seat_pointed_coalition">%1$s führt die Koalition an</string>
@@ -247,13 +249,8 @@
     <string name="talk_wait_they">%1$s bittet Sie um einen Moment Geduld.</string>
     <string name="talk_worse">Sie sagen, das würde Sie schlechter dastehen lassen.</string>
     <string name="talk_worse_they">%1$s sagt, das würde einen schlechter dastehen lassen.</string>
-    <string name="table_final_caller">Alle anderen spielen gemeinsam eine Hand gegen Ihre.</string>
     <string name="table_final_turns_left">%1$d Züge bis zur Aufdeckung</string>
     <string name="table_final_last_turn">letzter Zug</string>
-    <string name="table_final_coalition">Sie drei spielen gemeinsam eine Hand gegen %1$s.</string>
-    <string name="table_final_side_coalition">Gemeinsam</string>
-    <string name="table_final_side_caller">Hat gerufen</string>
-    <string name="table_final_versus">gegen</string>
     <string name="table_see_score">Punktestand ansehen</string>
 
     <string name="header_support">Einen Kaffee spendieren</string>
@@ -415,6 +412,10 @@
     <string name="teach_go_on">Weiter</string>
     <string name="teach_done">Fertig</string>
 
+    <string name="help_tab_cards">Karten</string>
+    <string name="help_tab_rings">Ringe</string>
+    <string name="help_tab_badges">Abzeichen</string>
+    <string name="help_tab_more">Mehr</string>
     <string name="help_right_now">Gerade jetzt</string>
     <string name="help_the_cards">Die Karten</string>
     <string name="help_signals">Was der Tisch Ihnen sagt</string>
@@ -483,9 +484,10 @@
     <string name="label_agree">Zustimmen</string>
     <string name="label_do_as_planned">Wie geplant machen</string>
     <string name="label_keep_it_instead">Stattdessen behalten</string>
-    <string name="label_plan_swap">Zwei Karten tauschen</string>
+    <string name="label_play_the_card">Spielen</string>
+    <string name="label_keep_the_card">Behalten</string>
+    <string name="label_let_the_card_go">Ablegen</string>
     <string name="label_plan_declare">Einen Rang benennen</string>
-    <string name="label_plan_put_down">Eine Karte ablegen</string>
     <string name="label_plan_take_discard">Die Ablage nehmen</string>
     <string name="label_plan_clear">Löschen</string>
     <string name="label_plan_shed">Einwerfen</string>
@@ -494,14 +496,6 @@
     <string name="detail_shed_risk_pushed">Ihre Hand ist die, auf die die Koalition setzt. Ein falscher Einwurf kostet sie eine Karte und schließt sie für den Rest der Runde aus — nur einwerfen, was Sie gesehen haben.</string>
     <string name="detail_claim_was_wrong">Ein Schritt hier beruhte auf einer Behauptung, die sich inzwischen als falsch erwiesen hat. Das ist das Spiel, wie es funktioniert, kein Fehler: jemand hat sich eine Karte anders gemerkt, als sie liegt.</string>
     <!-- Where the plan would leave the round. Level is said as losing: a tie pays the caller. -->
-    <string name="board_outcome_wins">Unsere beste Hand %1$d gegen ihre %2$d: das gewinnt.</string>
-    <string name="board_outcome_level">Unsere beste Hand %1$d gegen ihre %2$d: gleichauf, und gleichauf zahlt an die rufende Person.</string>
-    <string name="board_outcome_loses">Unsere beste Hand %1$d gegen ihre %2$d: das reicht nicht.</string>
-    <string name="board_outcome_unseen">%1$d der Karten der rufenden Person hat niemand gesehen.</string>
-    <string name="board_verdict_wins">gewinnt</string>
-    <string name="board_verdict_level">gleichauf</string>
-    <string name="board_verdict_loses">reicht nicht</string>
-    <string name="label_plan_rehearse">Plan ansehen</string>
     <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
     <string name="table_rehearsal">PROBE — ES HAT SICH NICHTS BEWEGT</string>
     <string name="ask_what_will_you_do">Was machen Sie mit Ihrem Zug?</string>
@@ -514,24 +508,42 @@
     <string name="detail_draw_beats_plan">Ihr %1$s ist besser als der Plan: behalten Sie es anstelle von Karte %2$d.</string>
     <string name="detail_plan_is_a_suggestion">Ein Plan ist ein Vorschlag. Wer am Zug ist, entscheidet.</string>
     <string name="board_title">Der Plan</string>
-    <string name="board_summary_empty">Noch kein Plan — antippen, um gemeinsam zu planen</string>
-    <string name="board_summary">Der Plan: %1$d von %2$d Zügen festgelegt, %3$d von %4$d zugestimmt</string>
+    <string name="label_plan_open">Plan</string>
+    <string name="label_plan_run">Abspielen</string>
+    <string name="label_plan_halt">Stopp</string>
+    <string name="label_plan_back">Zurück</string>
+    <string name="label_plan_on">Weiter</string>
+    <string name="label_plan_rewind">Anfang</string>
+    <string name="board_turn_planned">Zug %1$d, %2$s: %3$s</string>
+    <string name="board_played">%1$s, gespielt</string>
+    <string name="board_now">Jetzt</string>
+    <string name="board_unplayable">Dieser Zug lässt sich von hier aus nicht spielen: eine darin genannte Karte ist fort.</string>
+    <string name="board_broken">Eine Annahme unter diesem Zug hat sich als falsch erwiesen.</string>
+    <string name="board_carry_hint">Legen Sie eine Karte dorthin, wo sie hingehört – oder berühren Sie sie und dann die Stelle.</string>
+    <string name="board_arrival_title">Wo das hinführt</string>
+    <string name="board_arrival_ours">Unser bestes Blatt: %1$d</string>
+    <string name="board_arrival_theirs">Vermutlich in ihrer Hand: %1$d</string>
+    <string name="board_arrival_unseen">Über %1$d ihrer Karten wurde nichts gesagt.</string>
     <string name="board_your_call">Ihre Entscheidung</string>
-    <string name="board_in_play">im Spiel</string>
     <string name="board_owner_you">von Ihnen</string>
     <string name="board_owner_named">von %1$s</string>
     <string name="board_step_swap">Karte %2$d %1$s gegen Karte %4$d %3$s tauschen</string>
     <string name="board_step_declare">%1$s mit einem König erklären</string>
     <string name="board_step_take_discard">die Ablage nehmen</string>
+    <string name="board_from_the_deck">vom Stapel ziehen</string>
+    <string name="board_part_end">Karte %2$d %1$s</string>
+    <string name="board_part_card">Karte %1$d</string>
+    <string name="board_part_card_called">Karte %1$d = %2$s</string>
+    <string name="board_nobody_throws_in">niemand wirft bisher ein</string>
+    <string name="board_step_bin">die Karte ablegen</string>
+    <string name="board_step_use_it">spielen, was es auch ist</string>
     <string name="board_step_put_down">Karte %2$d %1$s ablegen</string>
     <string name="board_step_put_down_known">Karte %2$d %1$s ablegen, den Rang %3$s</string>
     <string name="board_would_rather">%1$s würde lieber %2$s</string>
     <string name="board_shed">%1$s wirft %2$s ein</string>
     <string name="board_edited_by">zuletzt geändert von %1$s</string>
-    <string name="board_nod_yes">%1$s hat zugestimmt</string>
-    <string name="board_nod_not_yet">%1$s hat noch nicht zugestimmt</string>
-    <string name="board_lane">%1$s: %2$s</string>
     <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <string name="badge_plain">was jemand über diese Karte behauptet</string>
     <string name="badge_disputed">strittig</string>
     <string name="badge_paired">eine von zweien, Reihenfolge unbekannt</string>
     <string name="badge_right">richtig</string>

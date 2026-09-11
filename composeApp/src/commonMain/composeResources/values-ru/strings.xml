@@ -237,6 +237,8 @@
     <string name="seat_badge_coalition">в коалиции</string>
     <string name="seat_badge_away">не за столом</string>
     <string name="seat_badge_barred">больше не может подкидывать</string>
+    <string name="seat_badge_agreed">согласны с планом</string>
+    <string name="seat_badge_will_shed">держит карту наготове для подкидывания</string>
     <string name="seat_pointed_vinto">%1$s объявляет Винто</string>
     <string name="seat_pointed_penalty">%1$s берёт карту из колоды</string>
     <string name="seat_pointed_coalition">%1$s ведёт коалицию</string>
@@ -268,13 +270,8 @@
     <string name="talk_wait_they">%1$s просит вас немного подождать.</string>
     <string name="talk_worse">Вы говорите, что это ухудшит ваше положение.</string>
     <string name="talk_worse_they">%1$s говорит, что это ухудшит положение.</string>
-    <string name="table_final_caller">Все остальные выставляют одну руку на всех — против вашей.</string>
     <string name="table_final_turns_left">Ходов до вскрытия: %1$d</string>
     <string name="table_final_last_turn">последний ход</string>
-    <string name="table_final_coalition">У вас троих одна рука — против %1$s.</string>
-    <string name="table_final_side_coalition">Вместе</string>
-    <string name="table_final_side_caller">Объявляет</string>
-    <string name="table_final_versus">против</string>
     <string name="table_see_score">Посмотреть счёт</string>
 
     <string name="header_support">Угостить кофе</string>
@@ -435,6 +432,10 @@
     <string name="teach_go_on">Дальше</string>
     <string name="teach_done">Готово</string>
 
+    <string name="help_tab_cards">Карты</string>
+    <string name="help_tab_rings">Кольца</string>
+    <string name="help_tab_badges">Значки</string>
+    <string name="help_tab_more">Ещё</string>
     <string name="help_right_now">Прямо сейчас</string>
     <string name="help_the_cards">Карты</string>
     <string name="help_signals">О чём говорит стол</string>
@@ -503,9 +504,10 @@
     <string name="label_agree">Согласиться</string>
     <string name="label_do_as_planned">Сделать по плану</string>
     <string name="label_keep_it_instead">Оставить эту карту</string>
-    <string name="label_plan_swap">Поменять две карты</string>
+    <string name="label_play_the_card">Сыграть</string>
+    <string name="label_keep_the_card">Оставить себе</string>
+    <string name="label_let_the_card_go">Отправить в сброс</string>
     <string name="label_plan_declare">Назвать достоинство</string>
-    <string name="label_plan_put_down">Выложить карту</string>
     <string name="label_plan_take_discard">Взять сброс</string>
     <string name="label_plan_clear">Очистить</string>
     <string name="label_plan_shed">Подкинуть</string>
@@ -513,14 +515,6 @@
     <string name="detail_shed_risk">Только то достоинство, которое вы видели у себя в руке: ошибка в подкидывании стоит вам карты и лишает права подкидывать до конца раунда.</string>
     <string name="detail_shed_risk_pushed">Ваша рука — та, что коалиция выдвигает вперёд. Ошибка в подкидывании стоит команде карты и лишает её права подкидывать до конца раунда — подкидывайте только то, что видели.</string>
     <string name="detail_claim_was_wrong">Этот шаг был построен на утверждении, которое карты с тех пор опровергли. Это не ошибка, а игра как она есть: кто-то запомнил карту не так, как она лежит на самом деле.</string>
-    <string name="board_outcome_wins">Наша лучшая рука — %1$d против их %2$d: это победа.</string>
-    <string name="board_outcome_level">Наша лучшая рука — %1$d против их %2$d: поровну, а поровну засчитывается тому, кто объявил Винто.</string>
-    <string name="board_outcome_loses">Наша лучшая рука — %1$d против их %2$d: этого не хватает.</string>
-    <string name="board_outcome_unseen">%1$d карт того, кто объявил Винто, никто не видел.</string>
-    <string name="board_verdict_wins">победа</string>
-    <string name="board_verdict_level">поровну</string>
-    <string name="board_verdict_loses">не хватает</string>
-    <string name="label_plan_rehearse">Посмотреть план</string>
     <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
     <string name="table_rehearsal">РЕПЕТИЦИЯ — ничего не сдвинулось</string>
     <string name="ask_what_will_you_do">Что вы сделаете в свой ход?</string>
@@ -533,24 +527,42 @@
     <string name="detail_draw_beats_plan">Ваш %1$s лучше плана: оставьте его вместо карты %2$d.</string>
     <string name="detail_plan_is_a_suggestion">План — это только предложение. Решает тот, чей сейчас ход.</string>
     <string name="board_title">План</string>
-    <string name="board_summary_empty">Плана пока нет — нажмите, чтобы спланировать вместе</string>
-    <string name="board_summary">План: %1$d из %2$d ходов заданы, %3$d из %4$d согласны</string>
+    <string name="label_plan_open">План</string>
+    <string name="label_plan_run">Воспроизвести</string>
+    <string name="label_plan_halt">Стоп</string>
+    <string name="label_plan_back">Назад</string>
+    <string name="label_plan_on">Далее</string>
+    <string name="label_plan_rewind">Сначала</string>
+    <string name="board_turn_planned">Ход %1$d, %2$s: %3$s</string>
+    <string name="board_played">%1$s, сыграно</string>
+    <string name="board_now">Сейчас</string>
+    <string name="board_unplayable">Этот ход сейчас не сыграть: названная в нём карта уже ушла.</string>
+    <string name="board_broken">Утверждение, на котором строится этот ход, оказалось неверным.</string>
+    <string name="board_carry_hint">Перенесите карту туда, где ей место, — или коснитесь карты, а затем места назначения.</string>
+    <string name="board_arrival_title">К чему это приводит</string>
+    <string name="board_arrival_ours">Наша лучшая рука: %1$d</string>
+    <string name="board_arrival_theirs">Предположительно у соперника: %1$d</string>
+    <string name="board_arrival_unseen">О %1$d его картах ничего не известно.</string>
     <string name="board_your_call">решайте сами</string>
-    <string name="board_in_play">в игре</string>
     <string name="board_owner_you">у вас</string>
     <string name="board_owner_named">у %1$s</string>
     <string name="board_step_swap">поменять местами: карта %2$d (%1$s) и карта %4$d (%3$s)</string>
     <string name="board_step_declare">назвать %1$s королём</string>
     <string name="board_step_take_discard">взять сброс</string>
+    <string name="board_from_the_deck">взять из колоды</string>
+    <string name="board_part_end">%1$s %2$d</string>
+    <string name="board_part_card">карта %1$d</string>
+    <string name="board_part_card_called">карта %1$d = %2$s</string>
+    <string name="board_nobody_throws_in">пока никто не подкидывает</string>
+    <string name="board_step_bin">отправить карту в сброс</string>
+    <string name="board_step_use_it">сыграть, что бы это ни было</string>
     <string name="board_step_put_down">выложить карту %2$d (%1$s)</string>
     <string name="board_step_put_down_known">выложить карту %2$d (%1$s), %3$s</string>
     <string name="board_would_rather">%1$s предпочитает %2$s</string>
     <string name="board_shed">%1$s подкинет %2$s</string>
     <string name="board_edited_by">последнее изменение: %1$s</string>
-    <string name="board_nod_yes">%1$s: план поддержан</string>
-    <string name="board_nod_not_yet">%1$s: план ещё не поддержан</string>
-    <string name="board_lane">%1$s: %2$s</string>
     <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <string name="badge_plain">то, что заявлено об этой карте</string>
     <string name="badge_disputed">спорно</string>
     <string name="badge_paired">одна из пары, порядок неизвестен</string>
     <string name="badge_right">верно</string>

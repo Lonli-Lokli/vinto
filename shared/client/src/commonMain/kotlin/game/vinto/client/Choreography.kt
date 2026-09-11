@@ -332,11 +332,23 @@ fun scoringScenes(before: PlayerView, after: PlayerView): List<Scene> {
  *
  * The view kept is the last one, which is the table after all of them have thrown: the same
  * table the flights are landing on.
+ *
+ * **Merging is no longer only this function's business.** The stage groups throws as it *draws*
+ * them rather than as they arrive, so that a hand coming down a moment after the others still
+ * joins the same scramble — see `CardStage`, and [isAThrownCard], which is how it asks.
  */
 private fun Frame.isAThrow(): Boolean {
     val first = scenes.firstOrNull() ?: return false
     return first.isNotEmpty() && first.all { it is Beat.Move && it.to == Anchor.Discard }
 }
+
+/**
+ * Whether this frame is a card being thrown into the window that is open.
+ *
+ * Public because [tossedTogether] is no longer the only thing that needs to know: the stage
+ * groups throws at the moment it draws them, and asks this to decide what belongs together.
+ */
+fun Frame.isAThrownCard(): Boolean = action is GameAction.ParticipateInTossIn && isAThrow()
 
 fun List<Frame>.tossedTogether(): List<Frame> {
     val out = mutableListOf<Frame>()
@@ -366,7 +378,7 @@ fun List<Frame>.tossedTogether(): List<Frame> {
         // sweeping that into the joint scene puts the penalty, the flinch and the line in the
         // middle of everybody else's throws, which is the one thing the merge is here to
         // prevent.
-        if (frame.action is GameAction.ParticipateInTossIn && frame.isAThrow()) {
+        if (frame.isAThrownCard()) {
             group += frame
         } else {
             flush()

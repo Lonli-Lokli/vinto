@@ -665,11 +665,13 @@ private fun RemoteGameScreen(
             pace = pace.scale,
             recent = log,
         ) { shown, told ->
+            // One table for the screen and for the router — see the note in `GameScreen`.
+            val table = holder.tableAsShown(shown, drawn = LocalStage.current.drawn)
             Column(modifier = Modifier.fillMaxSize()) {
                 TableScreen(
                     state = TableState(
                         view = shown,
-                        table = holder.tableAsShown(shown),
+                        table = table,
                         refusal = holder.refusal,
                         sending = holder.sending,
                         busy = holder.sending,
@@ -677,7 +679,7 @@ private fun RemoteGameScreen(
                         round = standings.size + 1,
                     ),
                     layout = layout,
-                    onMove = act.unlessRehearsing(),
+                    onMove = act.routed(table),
                     onHelp = { helpOpen = true },
                     onSettings = onSettings,
                     modifier = Modifier.weight(1f),

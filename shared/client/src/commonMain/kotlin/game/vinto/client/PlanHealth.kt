@@ -95,14 +95,18 @@ fun readPlan(view: PlayerView, plan: CoalitionPlan, reveals: List<PublicReveal>)
                 health += if (stillThere) StepHealth.LIVE else StepHealth.BROKEN
             }
 
-            Step.TakeTheDiscard -> {
+            // None of them names a card, so none has one to follow or to lose.
+            Step.TakeTheDiscard, Step.Bin, Step.UseIt -> {
                 repaired += lane
                 health += StepHealth.LIVE
             }
 
             is Step.PutDown -> {
                 val at = follow(view, step.card, contradicted)
-                repaired += lane.copy(step = Step.PutDown(at.first))
+                // **The guess travels with the card.** Rebuilding the step rather than copying
+                // it would drop the rank its owner meant to call, silently, every time a step
+                // followed a card that moved.
+                repaired += lane.copy(step = step.copy(card = at.first))
                 health += at.second
             }
         }

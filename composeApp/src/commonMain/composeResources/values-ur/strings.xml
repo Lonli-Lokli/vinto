@@ -225,6 +225,8 @@
     <string name="seat_badge_coalition">اتحاد میں</string>
     <string name="seat_badge_away">میز سے دور</string>
     <string name="seat_badge_barred">دوبارہ ٹاس اِن ممکن نہیں</string>
+    <string name="seat_badge_agreed">منصوبے پر رضامند</string>
+    <string name="seat_badge_will_shed">اتارنے کے لیے پتہ تیار ہے</string>
     <string name="seat_pointed_vinto">%1$s نے Vinto کہا</string>
     <string name="seat_pointed_penalty">%1$s کے لیے ڈیک سے پتہ نکالا جا رہا ہے</string>
     <string name="seat_pointed_coalition">اتحاد کی قیادت %1$s کے پاس ہے</string>
@@ -256,13 +258,8 @@
     <string name="talk_wait_they">%1$s نے آپ سے تھوڑا انتظار کرنے کو کہا۔</string>
     <string name="talk_worse">آپ کہتے ہیں کہ اس سے آپ کی صورتحال خراب ہو جائے گی۔</string>
     <string name="talk_worse_they">%1$s نے کہا کہ اس سے ان کی صورتحال خراب ہو جائے گی۔</string>
-    <string name="table_final_caller">باقی سب مل کر آپ کے خلاف ایک ہاتھ کھیلتے ہیں۔</string>
     <string name="table_final_turns_left">نتیجے تک %1$d چالیں</string>
     <string name="table_final_last_turn">آخری چال</string>
-    <string name="table_final_coalition">آپ تینوں مل کر %1$s کے خلاف ایک ہاتھ کھیلتے ہیں۔</string>
-    <string name="table_final_side_coalition">مل کر</string>
-    <string name="table_final_side_caller">کہہ دیا</string>
-    <string name="table_final_versus">بمقابلہ</string>
     <string name="table_see_score">اسکور دیکھیں</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -431,6 +428,10 @@
     <string name="teach_done">ہو گیا</string>
 
     <!-- ================================================================ help -->
+    <string name="help_tab_cards">پتے</string>
+    <string name="help_tab_rings">حلقے</string>
+    <string name="help_tab_badges">نشانات</string>
+    <string name="help_tab_more">مزید</string>
     <string name="help_right_now">ابھی</string>
     <string name="help_the_cards">پتے</string>
     <string name="help_signals">میز آپ کو کیا بتا رہی ہے</string>
@@ -499,9 +500,10 @@
     <string name="label_agree">متفق</string>
     <string name="label_do_as_planned">منصوبے کے مطابق کریں</string>
     <string name="label_keep_it_instead">اس کے بجائے یہ رکھیں</string>
-    <string name="label_plan_swap">دو پتے بدلیں</string>
+    <string name="label_play_the_card">اسے کھیلیں</string>
+    <string name="label_keep_the_card">اسے رکھیں</string>
+    <string name="label_let_the_card_go">اسے جانے دیں</string>
     <string name="label_plan_declare">درجہ بتائیں</string>
-    <string name="label_plan_put_down">پتہ نیچے رکھیں</string>
     <string name="label_plan_take_discard">ڈسکارڈ لیں</string>
     <string name="label_plan_clear">صاف کریں</string>
     <string name="label_plan_shed">پھینکیں</string>
@@ -509,14 +511,6 @@
     <string name="detail_shed_risk">صرف وہ درجہ جسے آپ نے اپنے ہاتھ میں دیکھا ہو: غلط پھینک ایک جرمانے کا پتہ دلاتی ہے اور آپ کو باقی پورے دور کے لیے باہر کر دیتی ہے۔</string>
     <string name="detail_shed_risk_pushed">یہ آپ کا ہاتھ ہے جسے اتحاد آگے بڑھا رہا ہے۔ غلط پھینک اسے ایک جرمانے کا پتہ دلاتی ہے اور اسے باقی پورے دور کے لیے باہر کر دیتی ہے — صرف وہی پھینکیں جو آپ نے دیکھا ہو۔</string>
     <string name="detail_claim_was_wrong">یہاں ایک قدم اس دعوے پر بنایا گیا تھا جسے پتوں نے بعد میں غلط ثابت کر دیا۔ یہ کھیل کا چلنا ہے، غلطی نہیں: کسی نے پتے کو اصل ترتیب سے مختلف یاد رکھا تھا۔</string>
-    <string name="board_outcome_wins">ہمارا بہترین ہاتھ %1$d بمقابلہ ان کا %2$d: یہ جیت ہے۔</string>
-    <string name="board_outcome_level">ہمارا بہترین ہاتھ %1$d بمقابلہ ان کا %2$d: برابر، اور برابری کا فائدہ کہنے والے کو ملتا ہے۔</string>
-    <string name="board_outcome_loses">ہمارا بہترین ہاتھ %1$d بمقابلہ ان کا %2$d: یہ کم پڑ جاتا ہے۔</string>
-    <string name="board_outcome_unseen">کہنے والے کے %1$d پتے ایسے ہیں جنہیں کسی نے نہیں دیکھا۔</string>
-    <string name="board_verdict_wins">جیت</string>
-    <string name="board_verdict_level">برابر</string>
-    <string name="board_verdict_loses">کم پڑ گیا</string>
-    <string name="label_plan_rehearse">منصوبہ دیکھیں</string>
     <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
     <string name="table_rehearsal">ریہرسل — کچھ بھی نہیں ہلا</string>
     <string name="ask_what_will_you_do">آپ اپنی باری میں کیا کریں گے؟</string>
@@ -529,23 +523,41 @@
     <string name="detail_draw_beats_plan">آپ کا %1$s منصوبے سے بہتر ہے: اسے پتہ %2$d کی جگہ رکھیں۔</string>
     <string name="detail_plan_is_a_suggestion">منصوبہ محض ایک تجویز ہے۔ فیصلہ اسی کا ہوتا ہے جس کی باری ہو۔</string>
     <string name="board_title">منصوبہ</string>
-    <string name="board_summary_empty">ابھی کوئی منصوبہ نہیں — مل کر منصوبہ بنانے کے لیے تھپتھپائیں</string>
-    <string name="board_summary">منصوبہ: %2$d میں سے %1$d باریاں طے، %4$d میں سے %3$d متفق</string>
+    <string name="label_plan_open">منصوبہ</string>
+    <string name="label_plan_run">چلائیں</string>
+    <string name="label_plan_halt">روکیں</string>
+    <string name="label_plan_back">پیچھے</string>
+    <string name="label_plan_on">اگلا</string>
+    <string name="label_plan_rewind">آغاز</string>
+    <string name="board_turn_planned">باری %1$d، %2$s: %3$s</string>
+    <string name="board_played">%1$s، کھیلا جا چکا</string>
+    <string name="board_now">اب</string>
+    <string name="board_unplayable">یہ باری یہاں سے نہیں کھیلی جا سکتی: اس میں مذکور پتہ جا چکا ہے۔</string>
+    <string name="board_broken">اس باری کے تحت کیا گیا دعویٰ غلط ثابت ہو چکا ہے۔</string>
+    <string name="board_carry_hint">پتے کو وہاں لے جائیں جہاں اسے جانا چاہیے — یا پہلے پتے کو چھوئیں، پھر اس جگہ کو۔</string>
+    <string name="board_arrival_title">اس سے صورتحال یہ بنتی ہے</string>
+    <string name="board_arrival_ours">ہمارا بہترین ہاتھ: %1$d</string>
+    <string name="board_arrival_theirs">خیال ہے کہ ان کے پاس: %1$d</string>
+    <string name="board_arrival_unseen">ان کے %1$d پتوں کے بارے میں کسی نے کچھ نہیں کہا۔</string>
     <string name="board_your_call">آپ کی باری</string>
-    <string name="board_in_play">کھیل میں</string>
     <string name="board_owner_you">آپ کا</string>
     <string name="board_owner_named">%1$s کا</string>
     <string name="board_step_swap">%1$s پتہ %2$d کو %3$s پتہ %4$d سے بدلیں</string>
     <string name="board_step_declare">بادشاہ کے ساتھ %1$s کا اعلان کریں</string>
     <string name="board_step_take_discard">ڈسکارڈ لیں</string>
+    <string name="board_from_the_deck">ڈیک سے نکالیں</string>
+    <string name="board_part_end">%1$s %2$d</string>
+    <string name="board_part_card">پتہ %1$d</string>
+    <string name="board_part_card_called">پتہ %1$d = %2$s</string>
+    <string name="board_nobody_throws_in">ابھی تک کوئی نہیں پھینک رہا</string>
+    <string name="board_step_bin">پتہ جانے دیں</string>
+    <string name="board_step_use_it">جو بھی ہو، وہی کھیلیں</string>
     <string name="board_step_put_down">%1$s پتہ %2$d نیچے رکھیں</string>
     <string name="board_step_put_down_known">%1$s پتہ %2$d، یعنی %3$s، نیچے رکھیں</string>
     <string name="board_would_rather">%1$s کی ترجیح: %2$s</string>
     <string name="board_shed">%1$s کی طرف سے %2$s شامل کیا جائے گا</string>
     <string name="board_edited_by">آخری تبدیلی: %1$s</string>
-    <string name="board_nod_yes">%1$s متفق ہیں</string>
-    <string name="board_nod_not_yet">%1$s ابھی متفق نہیں ہیں</string>
-    <string name="board_lane">%1$s: %2$s</string>
+    <string name="badge_plain">کسی کا یہ دعویٰ کہ یہ پتہ کیا ہے</string>
     <string name="badge_disputed">متنازع</string>
     <string name="badge_paired">جوڑے میں سے ایک، ترتیب نامعلوم</string>
     <string name="badge_right">درست</string>

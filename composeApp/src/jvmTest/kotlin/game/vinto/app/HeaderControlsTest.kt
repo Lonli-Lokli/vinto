@@ -39,9 +39,13 @@ class HeaderControlsTest {
         // went where the rest of "what does this mean" already lives.
         onNodeWithText("?").performClick()
         waitForIdle()
-        // Scrolled to within the sheet's own list: it is the last section, and a LazyColumn has
-        // not composed what is below the fold. `onAllNodes` because the table behind the sheet
-        // has scrollables of its own and a strict matcher picks one of those.
+        // Behind the "More" tab now: the sheet is four tabs rather than one long column, so the
+        // deck is one press away instead of a screen and a half of scrolling.
+        onNodeWithText("MORE").performClick()
+        waitForIdle()
+        // Still scrolled to within the sheet's own list — it is the last section there, and a
+        // LazyColumn has not composed what is below the fold. `onAllNodes` because the table
+        // behind the sheet has scrollables of its own and a strict matcher picks one of those.
         onAllNodes(hasScrollAction()).onLast()
             .performScrollToNode(hasText("The deck", substring = true))
         onNodeWithText("The deck", substring = true).assertIsDisplayed()
@@ -83,7 +87,14 @@ class HeaderControlsTest {
     fun theQuestionMarkOpensTheRules() = onATable {
         onNodeWithText("?").performClick()
         waitForIdle()
-        onNodeWithText("The cards", substring = true).assertIsDisplayed()
+        // The sheet opens on the cards, because "what does this one do" is the question a
+        // player has with a card waiting and one hand free. The other three are a press away.
+        // The tab labels exactly, not as substrings: "Cards" is also inside "Look at two of
+        // your cards", and a looser matcher finds the table behind the sheet instead.
+        listOf("CARDS", "RINGS", "BADGES", "MORE").forEach {
+            onNodeWithText(it).assertIsDisplayed()
+        }
+        onNodeWithText("Numbers", substring = true).assertIsDisplayed()
     }
 
     /**

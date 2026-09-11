@@ -61,21 +61,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isFinite
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
-import game.vinto.app.art.board_edited_by
-import game.vinto.app.art.board_in_play
-import game.vinto.app.art.board_lane
-import game.vinto.app.art.board_nod_not_yet
-import game.vinto.app.art.board_nod_yes
-import game.vinto.app.art.board_shed
-import game.vinto.app.art.board_title
-import game.vinto.app.art.board_would_rather
-import game.vinto.app.art.board_your_call
 import game.vinto.app.art.card_described
 import game.vinto.app.art.card_face_down
 import game.vinto.app.art.card_in_play
 import game.vinto.app.art.card_position
 import game.vinto.app.art.card_the_deck
-import game.vinto.app.art.label_plan_rehearse
 import game.vinto.app.art.rail_aim_empty
 import game.vinto.app.art.rail_aim_first
 import game.vinto.app.art.rail_aim_second
@@ -89,10 +79,8 @@ import game.vinto.app.cardName
 import game.vinto.app.detailed
 import game.vinto.app.keyOf
 import game.vinto.app.labelled
-import game.vinto.app.outcomeWords
 import game.vinto.app.said
 import game.vinto.app.speakerName
-import game.vinto.app.stepWords
 import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
@@ -102,18 +90,13 @@ import game.vinto.app.theme.feltEdge
 import game.vinto.app.theme.roomForLabels
 import game.vinto.client.Aim
 import game.vinto.client.AimedCard
-import game.vinto.client.Board
 import game.vinto.client.Choice
 import game.vinto.client.Detail
-import game.vinto.client.LaneLine
 import game.vinto.client.Move
 import game.vinto.client.RankChoice
 import game.vinto.client.Say
 import game.vinto.client.SeatChoice
-import game.vinto.client.ShedLine
 import game.vinto.client.Speaker
-import game.vinto.client.StepHealth
-import game.vinto.client.StepLine
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Tone
@@ -304,7 +287,25 @@ fun ControlPanel(
         val twoLines = promptLine + with(density) { (DetailSize * LogLineFactor).toDp() }
         val inPlay = railCard(state.view, table)
 
-        RailBody(state, table, inPlay, recent, crowded, promptLine, twoLines, side, onMove)
+        // The plan takes the rail whole (design D1). It cannot share the ordinary layout: the
+        // block there *scrolls*, and the transport and the turns went straight below the fold —
+        // the plan read through a letterbox, which is the exact report this change answers. The
+        // plan's own rail has no scroll and no log, because it is the one thing in this round
+        // that has to be read entire.
+        val board = table.board
+        if (board != null) {
+            PlanRail(
+                board,
+                table,
+                onMove,
+                // Padded at the sides only. The rail is 240 dp and every point of it is spoken
+                // for — the turns, the transport and the buttons all have to be *there*, so the
+                // margin above and below is the first thing to give up.
+                modifier = Modifier.fillMaxSize().padding(horizontal = PanelPad),
+            )
+        } else {
+            RailBody(state, table, inPlay, recent, crowded, promptLine, twoLines, side, onMove)
+        }
     }
 }
 
@@ -366,7 +367,6 @@ private fun RailBody(
                     recent,
                     crowded = crowded || tall,
                     twoLines,
-                    onMove,
                     modifier = Modifier.weight(1f),
                 )
                 RailFoot(table, footCap, side, onMove)
@@ -396,7 +396,6 @@ private fun RailBlock(
     recent: List<Say>,
     crowded: Boolean,
     twoLines: Dp,
-    onMove: (Move) -> Unit,
     modifier: Modifier,
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
@@ -450,11 +449,6 @@ private fun RailBlock(
                     val shown = (inPlay as? CardView.Visible)?.card
                     Heading(table = table, teaching = state.teaching, shown = shown)
                     Answer(state)
-                    // The board, while it is open. In the block rather than the foot, so the
-                    // choices stay pinned and whole (`RailFitsTest`); as a mode rather than a
-                    // fixture, so the log strip under it keeps its room on every other table.
-                    // The one-line way in sits on the felt's final-round line.
-                    PlanBoard(table.board, onMove)
                 }
                 // The log is what happened *before* now. The prompt above is now, and the
                 // two are built from the same narration, so the top line of the log was
@@ -488,163 +482,6 @@ private fun RailFoot(table: Table, footCap: Dp, side: Boolean, onMove: (Move) ->
         RankGrid(table.ranks, LocalStage.current, onMove)
         SeatGrid(table.seats, onMove)
         Choices(table, side, onMove)
-    }
-}
-
-/**
- * The coalition's shared plan (design D7a): one line per turn still to come, the sheds, and
- * who has nodded — drawn in the block under the prompt, where it scrolls with the words, so the
- * choices on the foot stay pinned and whole (`RailFitsTest`). Tapping a lane *is* answering a
- * question — what should this turn do? — and opens the composer for that seat.
- *
- * A lane the door would accept is a button; one it would refuse — locked, the turn in
- * progress, or any lane at all when the viewer is the caller — is a line of text, so nothing
- * here can be tapped and then refused. Nods are read, not pressed: "Agree" is a choice on the
- * foot while the board is open, beside "Back".
- */
-@Composable
-private fun PlanBoard(board: Board?, onMove: (Move) -> Unit) {
-    if (board == null) return
-    val stage = LocalStage.current
-
-    Column(
-        modifier = Modifier.fillMaxWidth().markedAs(stage, "board"),
-        verticalArrangement = Arrangement.spacedBy(Half),
-    ) {
-        Text(
-            text = stringResource(Res.string.board_title),
-            fontSize = DetailSize,
-            fontWeight = FontWeight.Bold,
-            color = Rail.inkDim,
-        )
-        board.lanes.forEach { lane -> LaneRow(lane, stage, onMove) }
-        board.sheds.forEach { shed -> ShedRow(shed, onMove) }
-        board.outcome?.let { outcome ->
-            Text(
-                text = outcomeWords(outcome),
-                fontSize = DetailSize,
-                fontWeight = FontWeight.Bold,
-                color = if (outcome.wins) Rail.ink else WarnInk,
-            )
-        }
-        // Watching beats reading: the plan is played on the felt as ghosts, through the same
-        // choreography a real move gets, and the table snaps back after (design D8).
-        board.rehearse?.let { rehearse ->
-            GameButton(
-                label = stringResource(Res.string.label_plan_rehearse),
-                tone = ButtonTone.KEEP,
-                onClick = { onMove(rehearse) },
-                modifier = Modifier.fillMaxWidth().markedAs(stage, "choice:rehearse"),
-                compact = true,
-            )
-        }
-        Nods(board)
-        board.editedBy?.let { who ->
-            Text(
-                text = stringResource(Res.string.board_edited_by, speakerName(who)),
-                fontSize = DetailSize,
-                color = Rail.inkDim,
-            )
-        }
-    }
-}
-
-/**
- * "Nina: swap your card 2 with Don's card 3", tappable where the plan may still change.
- *
- * A step whose claim a reveal has proved wrong is drawn in the warning ink with a cross, and
- * the rail's detail says why (design D9). A step that followed its card is drawn as any other:
- * the table watched the card go, so there is nothing to announce.
- */
-@Composable
-private fun LaneRow(lane: LaneLine, stage: Stage, onMove: (Move) -> Unit) {
-    val words = lane.step?.let { stepWords(it) } ?: stringResource(Res.string.board_your_call)
-    val broken = lane.health == StepHealth.BROKEN
-    val mark = if (broken) "✗ " else ""
-    val line = mark + stringResource(Res.string.board_lane, speakerName(lane.who), words)
-    val shown = if (lane.locked) "$line · " + stringResource(Res.string.board_in_play) else line
-    val move = lane.move
-    if (move != null) {
-        GameButton(
-            label = shown,
-            tone = if (broken) ButtonTone.STAKES else ButtonTone.NEUTRAL,
-            onClick = { onMove(move) },
-            modifier = Modifier.fillMaxWidth().markedAs(stage, "lane:${speakerKey(lane.who)}"),
-            compact = true,
-        )
-    } else {
-        Text(
-            text = shown,
-            fontSize = DetailSize,
-            color = if (broken) WarnInk else Rail.ink,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-    lane.suggestion?.let { WouldRather(lane, it, stage, onMove) }
-}
-
-/**
- * "Nina would rather swap …": the lane owner's alternative to the step somebody set for them
- * (3.13). Tapping what they said puts it on the board, the way agreeing with a person at a
- * table does — nobody's edit is written over by a bot, and there is no second control to learn.
- */
-@Composable
-private fun WouldRather(lane: LaneLine, suggestion: StepLine, stage: Stage, onMove: (Move) -> Unit) {
-    val words = stringResource(Res.string.board_would_rather, speakerName(lane.who), stepWords(suggestion))
-    val use = lane.useSuggestion
-    if (use != null) {
-        GameButton(
-            label = words,
-            tone = ButtonTone.KEEP,
-            onClick = { onMove(use) },
-            modifier = Modifier.fillMaxWidth().markedAs(stage, "suggest:" + speakerKey(lane.who)),
-            compact = true,
-        )
-    } else {
-        Text(text = words, fontSize = DetailSize, color = Rail.ink, modifier = Modifier.fillMaxWidth())
-    }
-}
-
-/** "Nina will throw in a 7", and a way to take it back for whoever said it. */
-@Composable
-private fun ShedRow(shed: ShedLine, onMove: (Move) -> Unit) {
-    val words = stringResource(Res.string.board_shed, speakerName(shed.who), shed.rank.serialName)
-    val move = shed.move
-    if (move != null) {
-        GameButton(
-            label = words,
-            tone = ButtonTone.NEUTRAL,
-            onClick = { onMove(move) },
-            modifier = Modifier.fillMaxWidth(),
-            compact = true,
-        )
-    } else {
-        Text(text = words, fontSize = DetailSize, color = Rail.ink)
-    }
-}
-
-/** Who has said yes. Read, not pressed: the viewer's own yes is a choice on the foot. */
-@Composable
-private fun Nods(board: Board) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Gap),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        board.nods.forEach { nod ->
-            val name = speakerName(nod.who)
-            val spoken = if (nod.agreed) {
-                stringResource(Res.string.board_nod_yes, name)
-            } else {
-                stringResource(Res.string.board_nod_not_yet, name)
-            }
-            Text(
-                text = (if (nod.agreed) "✓ " else "○ ") + name,
-                fontSize = DetailSize,
-                color = if (nod.agreed) Rail.ink else Rail.inkDim,
-                modifier = Modifier.semantics { contentDescription = spoken },
-            )
-        }
     }
 }
 
@@ -1242,7 +1079,7 @@ private fun ChoiceButton(choice: Choice, onMove: (Move) -> Unit, modifier: Modif
 }
 
 /** The model says what kind of move it is; this says what that kind looks like. */
-private fun Tone.paint(): ButtonTone = when (this) {
+internal fun Tone.paint(): ButtonTone = when (this) {
     Tone.PLAY -> ButtonTone.PLAY
     Tone.KEEP -> ButtonTone.KEEP
     Tone.NEUTRAL -> ButtonTone.NEUTRAL

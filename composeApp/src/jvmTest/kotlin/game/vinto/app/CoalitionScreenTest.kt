@@ -48,6 +48,7 @@ import game.vinto.shapes.TableTalk
 import game.vinto.shapes.getCardShortDescription
 import game.vinto.shapes.getCardValue
 import kotlin.test.Test
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -298,11 +299,28 @@ class CoalitionScreenTest {
             editedBy = mate.id,
         )
 
-        val words = textsOn(view, plan = plan, question = Question.ThePlan)
+        val words = textsOn(view, plan = plan, question = Question.ThePlan())
 
-        assertTrue(words.any { it.contains("declare K", ignoreCase = true) }, "the step is not in words: $words")
-        assertTrue(words.any { it.contains(mate.nickname) && it.contains("✓") }, "the nod is not drawn: $words")
-        assertTrue(words.any { it.contains("last changed by", ignoreCase = true) }, "no editor named: $words")
+        // The row names the rank and no more — the sentence it replaced is what a screen reader
+        // is given, because a caption that long over a felt is the thing the row was built to
+        // remove. Both are asserted, because both are promises.
+        assertTrue(
+            words.any { it == Rank.KING.serialName },
+            "the rank the King names is not on the row: $words",
+        )
+        val spokenStep = describedOn(view, plan = plan, question = Question.ThePlan())
+        assertTrue(
+            spokenStep.any { it.contains("declare K", ignoreCase = true) },
+            "the step is not said in full for a screen reader: $spokenStep",
+        )
+
+        // The nod is on the *seat plate* now (design D7): it is about a member, not about a
+        // turn, and putting it among the turns said it was the same kind of thing as a step.
+        val spoken = describedOn(view, plan = plan, question = Question.ThePlan())
+        assertTrue(
+            spoken.any { it.contains("agreed to the plan", ignoreCase = true) },
+            "the nod is not worn by the seat that gave it: $spoken",
+        )
     }
 
     @Test
@@ -317,10 +335,30 @@ class CoalitionScreenTest {
             editedBy = mate.id,
         )
 
-        val words = textsOn(view, plan = plan, question = Question.ThePlan)
+        // Where the plan lands is read at the transport's last position (design D10) — the
+        // plan has arrived, and the numbers describe the hands on the felt beside them. The
+        // last position counts the *coalition's* turns, not the lanes anybody has filled in.
+        val turns = assertNotNull(tableFor(view, question = Question.ThePlan(), plan = plan).board).lanes.size
+        val landed = Question.ThePlan(at = turns)
+        val words = textsOn(view, plan = plan, question = landed)
         assertTrue(
             words.any { it.contains("Our best hand", ignoreCase = true) },
-            "the board does not say where the plan leaves the round: $words",
+            "the plan does not say where it leaves the round: $words",
+        )
+        assertTrue(
+            words.any { it.contains("believed to hold", ignoreCase = true) },
+            "the caller's believed total is missing: $words",
+        )
+        assertTrue(
+            words.any { it.contains("Nobody has spoken about", ignoreCase = true) },
+            "a believed total with no count of what is a guess: $words",
+        )
+        // And no verdict, anywhere (design D12). The comparison is two numbers and both are on
+        // the screen; an app that made it would grade every candidate plan and end the argument
+        // the round is made of.
+        assertTrue(
+            words.none { it.contains("wins", ignoreCase = true) || it.contains("falls short", ignoreCase = true) },
+            "the plan pronounced a verdict: $words",
         )
 
         val five = Claim(mate.id, listOf(0), listOf(Rank.FIVE))
@@ -333,22 +371,45 @@ class CoalitionScreenTest {
             editedBy = view.viewerId,
         )
         val nine = Card("turned", Rank.NINE, 9, played = false, actionText = null)
-        val told = textsOn(
-            claimed,
-            plan = broken,
-            question = Question.ThePlan,
-            reveals = listOf(PublicReveal(mate.id, 0, nine)),
-        )
+        // The news rides on the **turn** now (design D13), not on a rail line about the plan as
+        // a whole: it is that turn that rests on nothing, and a member reading turn 2 should not
+        // have to work out which of the three the warning is about. Read as a screen reader
+        // reads it, because a tappable row merges its children's words into its own description.
+        // Opened at the turn the broken step is on. The rail draws the turn being composed and
+        // no others now — the header's stops are the list — so reading a turn means going to it.
+        val revealed = listOf(PublicReveal(mate.id, 0, nine))
+        val lanes = assertNotNull(
+            tableFor(claimed, question = Question.ThePlan(), plan = broken, reveals = revealed).board,
+        ).lanes
+        // A stop names the turn it *ends*, so the turn at lane `n` is read at stop `n + 1`.
+        val hurt = lanes.indexOfFirst { it.health == game.vinto.client.StepHealth.BROKEN } + 1
+        assertTrue(hurt >= 0, "no lane was reported as resting on a disproved claim")
+
+        // Texts as well as descriptions: the news is a line under the row now rather than words
+        // merged into a tappable row's own description, because the row is a set of marks and a
+        // mark has nowhere to put a sentence.
+        val told = describedOn(claimed, plan = broken, question = Question.ThePlan(at = hurt), reveals = revealed) +
+            textsOn(claimed, plan = broken, question = Question.ThePlan(at = hurt), reveals = revealed)
         assertTrue(
-            told.any { it.contains("the game working", ignoreCase = true) },
-            "a broken step is not explained as the game working: $told",
+            told.any { it.contains("proved wrong", ignoreCase = true) },
+            "the turn resting on a disproved claim says nothing about it: $told",
         )
     }
 
+    /**
+     * The felt says it is a rehearsal by what it *is*, not by a line of text over it.
+     *
+     * A player who thinks a plan has happened is worse off than one who never planned (design
+     * D1), so the mode has to be unmistakable — but it used to be a band reading "REHEARSAL —
+     * NOTHING HAS MOVED" that said the same thing on the fortieth second as on the first and
+     * could not be pressed. Asked for from a phone: controls, not commentary.
+     *
+     * Three markers now, all of which change when the mode does and two of which are controls:
+     * the switch in the header showing itself on, a stop naming which table is on the felt, and
+     * the band ruled in the coalition's colour above it.
+     */
     @Test
-    fun thePlanCanBeWatchedAndTheFeltSaysWhenItIsOnlyARehearsal() = runComposeUiTest {
-        // Watching beats reading (design D8) — and a player who thinks a plan happened is worse
-        // off than one who never planned, so the felt says it is a rehearsal while it plays.
+    fun thePlanSaysItIsOpenWithControlsRatherThanWithASentence() = runComposeUiTest {
         val view = conferring()
         val mate = view.players.first { it.id != view.viewerId && it.id != view.vintoCallerId }
         val plan = CoalitionPlan(
@@ -357,16 +418,42 @@ class CoalitionScreenTest {
             editedBy = mate.id,
         )
 
-        show(view, plan = plan, question = Question.ThePlan)
+        show(view, plan = plan, question = Question.ThePlan())
+
+        // One named stop per coalition turn, in the band, and the table as it is among them.
         assertTrue(
-            onAllNodesWithText("Watch the plan", ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
-            "a plan with a step and no way to watch it",
+            onAllNodesWithContentDescription("Now").fetchSemanticsNodes().isNotEmpty(),
+            "the transport does not name the table as it is",
+        )
+        assertTrue(
+            onAllNodesWithContentDescription(mate.nickname).fetchSemanticsNodes().isNotEmpty(),
+            "no stop names the turn it ends",
         )
 
-        show(view, plan = plan, rehearsing = true)
+        // And which of them is being read is *said*, not only drawn — the accessibility bar
+        // this app ships against, and the whole point of naming the positions at all.
+        val lit = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected))
+            .fetchSemanticsNodes()
+            .filter { it.config.getOrNull(SemanticsProperties.Selected) == true }
+        assertTrue(lit.size == 1, "exactly one stop should be marked as the one being read, found ${lit.size}")
+
+        // The switch that opened it is in the header and shows itself on.
         assertTrue(
-            onAllNodesWithText("Rehearsal", substring = true, ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
-            "ghosts on the felt and nothing saying so",
+            onAllNodesWithContentDescription("Plan", substring = true, ignoreCase = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty(),
+            "the plan's switch is not on screen",
+        )
+
+        // And none of the sentences it replaced is left behind.
+        val words = textsOn(view, plan = plan, question = Question.ThePlan())
+        assertTrue(
+            words.none { it.contains("Rehearsal", ignoreCase = true) },
+            "the rehearsal caption is still on screen: $words",
+        )
+        assertTrue(
+            words.none { it.contains("Carry a card", ignoreCase = true) },
+            "help text is still on screen in a game rather than in a lesson: $words",
         )
     }
 
@@ -383,10 +470,15 @@ class CoalitionScreenTest {
             editedBy = view.viewerId,
         )
 
-        show(view, plan = plan, question = Question.ThePlan)
+        // Only on the turn being read (design D8). Parked on that lane it is there; parked past
+        // it, three alternative futures on one felt is not a plan anybody can read.
+        val lanes = assertNotNull(tableFor(view, question = Question.ThePlan(), plan = plan).board).lanes
+        val at = lanes.indexOfFirst { it.step != null } + 1
+
+        show(view, plan = plan, question = Question.ThePlan(at = at))
         assertTrue(
             onAllNodesWithText("would rather", substring = true, ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
-            "the lane owner's alternative was not read out",
+            "the lane owner's alternative was not read out on the turn it belongs to",
         )
     }
 
@@ -402,13 +494,13 @@ class CoalitionScreenTest {
 
         // The whole word, not a substring: "3 of 3 agreed" and "Nina agreed" are on the board
         // too, and neither is a button.
-        show(view, plan = plan, question = Question.ThePlan)
+        show(view, plan = plan, question = Question.ThePlan())
         assertTrue(
             onAllNodesWithText("Agree", ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
             "a plan stands and there is no way to say yes to it",
         )
 
-        show(view, plan = plan.copy(agreed = listOf(mate.id, view.viewerId)), question = Question.ThePlan)
+        show(view, plan = plan.copy(agreed = listOf(mate.id, view.viewerId)), question = Question.ThePlan())
         assertTrue(
             onAllNodesWithText("Agree", ignoreCase = true).fetchSemanticsNodes().isEmpty(),
             "asked to agree to a plan already agreed to",
@@ -420,18 +512,28 @@ class CoalitionScreenTest {
         val view = conferring()
         val mate = view.players.first { it.id != view.viewerId && it.id != view.vintoCallerId }
 
-        // The line is one tappable row, so its words are merged into one node: matched by text
-        // rather than read off the list of texts.
+        // A control, not a status line that happens to be tappable. "No plan yet" read as a
+        // fact about the game rather than as a door, which is the report this change answers.
         show(view, plan = null)
         assertTrue(
-            onAllNodesWithText("No plan yet", substring = true, ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
-            "the window has no way into the board",
+            onAllNodesWithText("Plan", ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
+            "the window has no way into the plan",
         )
 
-        val opened = textsOn(view, plan = null, question = Question.ThePlan)
+        // An empty turn is drawn as its own empty parts rather than as a gap: the turn exists
+        // either way — every turn takes a card from somewhere and does something with it — and
+        // it is the empty one a member most needs to fill. Read as a screen reader reads it,
+        // because the parts are marks and the marks carry the words.
+        val opened = describedOn(view, plan = null, question = Question.ThePlan())
         assertTrue(
-            opened.any { it.contains(mate.nickname, ignoreCase = true) && it.contains("your call", ignoreCase = true) },
-            "an empty lane is not drawn, so nothing invites a plan: $opened",
+            opened.any { it.contains("your call", ignoreCase = true) },
+            "an empty turn is not drawn, so nothing invites a plan: $opened",
+        )
+        assertTrue(
+            textsOn(view, plan = null, question = Question.ThePlan()).any {
+                it.contains(mate.nickname, ignoreCase = true)
+            },
+            "the empty turn does not say whose it is",
         )
     }
 
@@ -550,6 +652,22 @@ class CoalitionScreenTest {
         return onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text))
             .fetchSemanticsNodes()
             .mapNotNull { it.config.getOrNull(SemanticsProperties.Text)?.firstOrNull()?.text }
+    }
+
+    /** Everything the screen says out loud: the marks on the plates are only spoken. */
+    private fun ComposeUiTest.describedOn(
+        view: PlayerView,
+        plan: CoalitionPlan? = null,
+        question: Question = Question.None,
+        reveals: List<PublicReveal> = emptyList(),
+    ): List<String> {
+        show(view, plan = plan, question = question, reveals = reveals)
+        // Every description of every node, not the first of each: a seat plate is a clickable
+        // surface, so it *merges* its children's semantics and reports them as a list. Taking
+        // only the first hides every mark after the one the plate happens to draw first.
+        return onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ContentDescription))
+            .fetchSemanticsNodes()
+            .flatMap { it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() }
     }
 
     private fun ComposeUiTest.show(

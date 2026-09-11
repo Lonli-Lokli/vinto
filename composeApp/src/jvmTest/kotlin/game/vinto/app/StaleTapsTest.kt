@@ -3,7 +3,7 @@ package game.vinto.app
 import androidx.compose.runtime.mutableStateOf
 import game.vinto.app.game.GameHolder
 import game.vinto.app.game.showsTheSameHandAs
-import game.vinto.app.game.withoutStaleTaps
+import game.vinto.app.game.withoutStaleOffers
 import game.vinto.client.CardRef
 import game.vinto.client.Question
 import game.vinto.client.tableFor
@@ -42,7 +42,7 @@ class StaleTapsTest {
                 if (seat.id == me) seat.copy(cards = seat.cards.drop(1)) else seat
             },
         )
-        val guarded = table.withoutStaleTaps(shown, live)
+        val guarded = table.withoutStaleOffers(shown, shown, live)
         assertTrue(
             guarded.taps.keys.none { it.playerId == me },
             "a stale tap got through: ${guarded.taps.keys}",
@@ -60,14 +60,41 @@ class StaleTapsTest {
                 if (seat.id == other.id) seat.copy(cards = seat.cards.drop(1)) else seat
             },
         )
-        assertEquals(table, table.withoutStaleTaps(shown, live))
+        assertEquals(table, table.withoutStaleOffers(shown, shown, live))
+    }
+
+    @Test
+    fun aWindowThePlayerHasClosedOffersNoButtonWhileItIsBeingReplayed() {
+        // The buttons' half of the same guard. A toss-in window replays with the frames that
+        // animate it, so a window the player closed comes back on screen — and with it a
+        // control they had finished with, which then goes again when the next card moves.
+        // Measured against what has been *drawn*, because when the stage has let go of its lag
+        // the shown view is the live one and could never answer the question.
+        val drawn = tossWindow()
+        val table = tableFor(drawn, Question.None)
+        assertTrue(
+            table.choices.any { it.move is game.vinto.client.Move.Send },
+            "the window offers this player nothing to press, so this case proves nothing",
+        )
+
+        // The engine has moved on: the window is over and it is somebody else's turn.
+        val live = drawn.copy(
+            subPhase = game.vinto.shapes.GameSubPhase.AI_THINKING,
+            activeTossIn = null,
+            currentPlayerIndex = drawn.players.indexOfFirst { it.id != drawn.viewerId },
+        )
+        val guarded = table.withoutStaleOffers(drawn, drawn, live)
+        assertTrue(
+            guarded.choices.none { it.move is game.vinto.client.Move.Send },
+            "a control from a window the engine has left got through: ${guarded.choices.map { it.label }}",
+        )
     }
 
     @Test
     fun aScreenThatHasCaughtUpKeepsEveryTap() {
         val shown = tossWindow()
         val table = tableFor(shown, Question.None)
-        assertEquals(table, table.withoutStaleTaps(shown, shown))
+        assertEquals(table, table.withoutStaleOffers(shown, shown, shown))
         assertTrue(table.taps.containsKey(CardRef(shown.viewerId, 0)))
     }
 

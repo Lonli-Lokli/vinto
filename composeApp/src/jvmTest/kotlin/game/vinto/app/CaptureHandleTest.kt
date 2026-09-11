@@ -216,6 +216,18 @@ class CaptureHandleTest {
         )
     }
 
+    /**
+     * The planning scene arrives with the **third bot** having called, at once, every time.
+     *
+     * The state a person otherwise reaches by playing a whole round and hoping — and the round
+     * you get by playing is usually the one you called yourself, which is the other side of the
+     * table entirely. Waiting for a bot to *decide* to call took a dozen real turns of search
+     * and depended on the cards: fine on a developer's machine, tens of seconds on a phone.
+     *
+     * Asserted one layer down rather than through the screen: what matters is the position, and
+     * rendering it costs what `theDemoSceneOpensOnATable` records paying for nothing.
+     */
+
     private companion object {
         const val SEED = 20_260_903L
 

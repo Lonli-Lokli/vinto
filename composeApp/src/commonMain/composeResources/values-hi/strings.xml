@@ -228,6 +228,8 @@
     <string name="seat_badge_coalition">गठबंधन में</string>
     <string name="seat_badge_away">टेबल से दूर</string>
     <string name="seat_badge_barred">दोबारा टॉस-इन की मनाही</string>
+    <string name="seat_badge_agreed">योजना पर सहमत</string>
+    <string name="seat_badge_will_shed">फेंकने के लिए एक पत्ता तैयार है</string>
     <string name="seat_pointed_vinto">%1$s ने Vinto बोला</string>
     <string name="seat_pointed_penalty">%1$s: डेक से पत्ता उठाना</string>
     <string name="seat_pointed_coalition">%1$s: गठबंधन का नेतृत्व</string>
@@ -259,13 +261,8 @@
     <string name="talk_wait_they">%1$s ने आपसे थोड़ा इंतज़ार करने को कहा।</string>
     <string name="talk_worse">आप कहते हैं कि इससे आपकी स्थिति ख़राब हो जाएगी।</string>
     <string name="talk_worse_they">%1$s ने कहा कि इससे उनकी स्थिति ख़राब हो जाएगी।</string>
-    <string name="table_final_caller">बाकी सब मिलकर आपके खिलाफ़ एक हाथ खेलते हैं।</string>
     <string name="table_final_turns_left">खुलासे तक %1$d बारी</string>
     <string name="table_final_last_turn">आखिरी बारी</string>
-    <string name="table_final_coalition">आप तीनों मिलकर %1$s के खिलाफ़ एक हाथ खेलते हैं।</string>
-    <string name="table_final_side_coalition">साथ में</string>
-    <string name="table_final_side_caller">दावा</string>
-    <string name="table_final_versus">बनाम</string>
     <string name="table_see_score">स्कोर देखें</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -436,6 +433,10 @@
     <string name="teach_done">पूरा हुआ</string>
 
     <!-- ================================================================ help -->
+    <string name="help_tab_cards">पत्ते</string>
+    <string name="help_tab_rings">घेरे</string>
+    <string name="help_tab_badges">बैज</string>
+    <string name="help_tab_more">अधिक</string>
     <string name="help_right_now">अभी</string>
     <string name="help_the_cards">पत्ते</string>
     <string name="help_signals">मेज़ आपको क्या बता रही है</string>
@@ -507,9 +508,10 @@
     <string name="label_agree">सहमत</string>
     <string name="label_do_as_planned">योजना अनुसार करें</string>
     <string name="label_keep_it_instead">इसे ही रखें</string>
-    <string name="label_plan_swap">दो पत्ते बदलें</string>
+    <string name="label_play_the_card">इसे खेलें</string>
+    <string name="label_keep_the_card">इसे रखें</string>
+    <string name="label_let_the_card_go">इसे जाने दें</string>
     <string name="label_plan_declare">एक रैंक बताएं</string>
-    <string name="label_plan_put_down">पत्ता नीचे रखें</string>
     <string name="label_plan_take_discard">चुका हुआ पत्ता लें</string>
     <string name="label_plan_clear">मिटाएं</string>
     <string name="label_plan_shed">फेंकें</string>
@@ -517,14 +519,6 @@
     <string name="detail_shed_risk">केवल वह रैंक जो आपने अपने हाथ में देखी हो: गलत फेंकने पर एक दंड पत्ता मिलता है और आप बाकी दौर के लिए बाहर हो जाते हैं।</string>
     <string name="detail_shed_risk_pushed">आपका हाथ वही है जिसे गठबंधन आगे बढ़ा रहा है। गलत फेंकने पर इसे एक दंड पत्ता मिलता है और यह बाकी दौर के लिए बाहर हो जाता है — केवल वही फेंकें जो आपने देखा हो।</string>
     <string name="detail_claim_was_wrong">यहां एक कदम एक ऐसे दावे पर बना था जिसे पत्तों ने बाद में गलत साबित कर दिया। यही खेल का सही ढंग से चलना है, कोई गलती नहीं — किसी ने एक पत्ता जैसा वह असल में है उससे अलग याद रखा था।</string>
-    <string name="board_outcome_wins">हमारा सबसे अच्छा हाथ %1$d, उनके %2$d के खिलाफ़: यह जीतता है।</string>
-    <string name="board_outcome_level">हमारा सबसे अच्छा हाथ %1$d, उनके %2$d के खिलाफ़: बराबरी, और बराबरी पुकारने वाले के पक्ष में जाती है।</string>
-    <string name="board_outcome_loses">हमारा सबसे अच्छा हाथ %1$d, उनके %2$d के खिलाफ़: यह कम पड़ता है।</string>
-    <string name="board_outcome_unseen">पुकारने वाले के %1$d पत्ते किसी ने नहीं देखे।</string>
-    <string name="board_verdict_wins">जीत</string>
-    <string name="board_verdict_level">बराबर</string>
-    <string name="board_verdict_loses">कम पड़ा</string>
-    <string name="label_plan_rehearse">योजना देखें</string>
     <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
     <string name="table_rehearsal">पूर्वाभ्यास — कुछ नहीं हिला</string>
     <string name="ask_what_will_you_do">आप अपनी बारी में क्या करेंगे?</string>
@@ -537,24 +531,42 @@
     <string name="detail_draw_beats_plan">आपका %1$s योजना से बेहतर है: पत्ते %2$d की जगह इसे रखें।</string>
     <string name="detail_plan_is_a_suggestion">योजना एक सुझाव है। बारी जिसकी है, फैसला वही करेगा।</string>
     <string name="board_title">योजना</string>
-    <string name="board_summary_empty">अभी कोई योजना नहीं — साथ मिलकर योजना बनाने के लिए टैप करें</string>
-    <string name="board_summary">योजना: %2$d में से %1$d बारियां तय, %4$d में से %3$d सहमत</string>
+    <string name="label_plan_open">योजना</string>
+    <string name="label_plan_run">चलाएं</string>
+    <string name="label_plan_halt">रोकें</string>
+    <string name="label_plan_back">पीछे</string>
+    <string name="label_plan_on">आगे</string>
+    <string name="label_plan_rewind">शुरुआत</string>
+    <string name="board_turn_planned">बारी %1$d, %2$s: %3$s</string>
+    <string name="board_played">%1$s, खेला गया</string>
+    <string name="board_now">अभी</string>
+    <string name="board_unplayable">यह बारी अब यहां से नहीं खेली जा सकती: इसमें बताया गया पत्ता अब नहीं है।</string>
+    <string name="board_broken">इस बारी के अंतर्गत किया गया दावा गलत साबित हुआ है।</string>
+    <string name="board_carry_hint">पत्ते को उसकी सही जगह तक खींचें — या उसे छुएं, फिर उस जगह को छुएं।</string>
+    <string name="board_arrival_title">इससे स्थिति यह बनती है</string>
+    <string name="board_arrival_ours">हमारा सबसे अच्छा हाथ: %1$d</string>
+    <string name="board_arrival_theirs">माना जाता है कि उनके पास है: %1$d</string>
+    <string name="board_arrival_unseen">उनके %1$d पत्तों के बारे में अब तक कोई जानकारी नहीं है।</string>
     <string name="board_your_call">आपका निर्णय</string>
-    <string name="board_in_play">खेल में</string>
     <string name="board_owner_you">अपना</string>
     <string name="board_owner_named">%1$s का</string>
     <string name="board_step_swap">%1$s पत्ता %2$d को %3$s पत्ता %4$d से बदलें</string>
     <string name="board_step_declare">King के साथ %1$s बताएं</string>
     <string name="board_step_take_discard">चुका हुआ पत्ता लें</string>
+    <string name="board_from_the_deck">डेक से उठाना</string>
+    <string name="board_part_end">%1$s %2$d</string>
+    <string name="board_part_card">पत्ता %1$d</string>
+    <string name="board_part_card_called">पत्ता %1$d = %2$s</string>
+    <string name="board_nobody_throws_in">अभी तक कोई नहीं फेंक रहा</string>
+    <string name="board_step_bin">पत्ता जाने दें</string>
+    <string name="board_step_use_it">जो भी हो, उसे खेलें</string>
     <string name="board_step_put_down">%1$s पत्ता %2$d नीचे रखें</string>
     <string name="board_step_put_down_known">%1$s पत्ता %2$d, जो %3$s है, नीचे रखें</string>
     <string name="board_would_rather">इसके बजाय %1$s की पसंद: %2$s</string>
     <string name="board_shed">%1$s: एक %2$s फेंकना</string>
     <string name="board_edited_by">आखिरी बदलाव %1$s द्वारा</string>
-    <string name="board_nod_yes">%1$s ने सहमति दी है</string>
-    <string name="board_nod_not_yet">%1$s ने अभी सहमति नहीं दी है</string>
-    <string name="board_lane">%1$s: %2$s</string>
     <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <string name="badge_plain">इस पत्ते के बारे में दावा</string>
     <string name="badge_disputed">विवादित</string>
     <string name="badge_paired">जोड़े में से एक, क्रम पता नहीं</string>
     <string name="badge_right">सही</string>

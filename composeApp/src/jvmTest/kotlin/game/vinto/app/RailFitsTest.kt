@@ -187,17 +187,20 @@ class RailFitsTest {
     }
 
     @Test
-    fun theOpenBoardsThreeChoicesAreWholeAtADoubledFont() {
+    fun theOpenBoardsOneChoiceIsWholeAtADoubledFont() {
         val view = conferring()
         eachChoiceWhole(
             view,
             emptyList(),
-            setOf("Agree", "Throw in", "Back"),
+            // One button, because everything else that used to be down here acts on the turn
+            // and the turn is a row of its own parts now. No "Back" either: the switch in the
+            // header is the plan's one way in and out.
+            setOf("Agree"),
             PHONE_W,
             PHONE_H,
             fontScale = 2f,
             plan = standingPlan(view),
-            question = Question.ThePlan,
+            question = Question.ThePlan(),
         )
     }
 

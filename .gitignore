@@ -91,10 +91,13 @@ DerivedData/
 # Wrangler local dev state (the local Durable Object SQLite lives here).
 worker/cloudflare/.wrangler/
 
-# Screenshot goldens are accepted by a maintainer looking at the images, never written
-# by a build. `ScreenshotTest` produces them here; CI does not run it, because a fresh
-# runner would write its own and assert nothing (see docs/kotlin/README.md §6i step 1).
-composeApp/src/jvmTest/goldens/*.png
+# Screenshot goldens ARE committed — the whole point of a golden is that a change to it shows
+# up in a review as a picture somebody can look at, and one that lives only on a maintainer's
+# machine is a check nobody but that maintainer can ever run. `ScreenshotTest` writes them;
+# CI still does not run it, because a fresh runner would write its own and assert nothing
+# (docs/kotlin/ROOM.md §6i step 1), and because glyph rasterisation differs by machine.
+# What is ignored is the failure artefact — the picture a mismatch leaves behind.
+composeApp/src/jvmTest/goldens/*.actual.png
 
 # Store assets are generated, and the reasoning is the goldens' one directly above: a build
 # writes them, so committing them means reviewing a binary diff nobody reads. `zdymak build`

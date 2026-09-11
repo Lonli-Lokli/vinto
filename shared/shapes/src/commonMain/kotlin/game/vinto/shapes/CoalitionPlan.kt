@@ -54,7 +54,32 @@ data class CoalitionPlan(
     val editedBy: String? = null,
 ) {
     /** Whether anything has actually been planned, as opposed to a draft nobody has filled. */
-    val isEmpty: Boolean get() = lanes.all { it.step == null } && sheds.isEmpty()
+    val isEmpty: Boolean
+        get() = lanes.all { it.step == null && it.opening == null } && sheds.isEmpty()
+}
+
+/**
+ * How a turn opens. Every turn in this game starts by taking a card from one of the two piles.
+ *
+ * Recorded beside the step because a turn is a *sequence* — take a card, then do something with
+ * it — and three of the four steps never said which pile their card came from. A plan that
+ * cannot say "take the King off the pile **and** declare fives" is describing half a turn.
+ *
+ * **A draw is still worth planning around**, which is the thing that looked like a blocker and
+ * is not: you cannot say which card arrives, but you can say which of your own goes out in its
+ * place, whether to guess that card's rank, and who throws in after it lands. And the moment the
+ * draw is face up it is public, so the board is rethought — which is how the bots already work,
+ * filling empty lanes on every pass.
+ */
+@Serializable
+enum class Opening {
+    /** Off the deck, sight unseen. */
+    @SerialName("draw")
+    DRAW,
+
+    /** The unused action card lying face up, which is the one card a plan can name in advance. */
+    @SerialName("take-the-discard")
+    TAKE_THE_DISCARD,
 }
 
 /**
@@ -67,6 +92,14 @@ data class CoalitionPlan(
 data class Lane(
     val seat: String,
     val step: Step? = null,
+    /**
+     * Which pile the turn's card comes from, or null where nobody has said.
+     *
+     * Additive on the wire: an older build ignores it and reads the step exactly as it did
+     * before, which is why this is a new field rather than a new [Step] shape. **After** [step]
+     * rather than before it, so that `Lane(seat, step)` goes on meaning what it always did.
+     */
+    val opening: Opening? = null,
     /**
      * Set when this seat's turn begins.
      *
@@ -153,7 +186,48 @@ sealed interface Step {
      */
     @Serializable
     @SerialName("put-down")
-    data class PutDown(val card: CardAt) : Step
+    data class PutDown(
+        val card: CardAt,
+        /**
+         * The rank to guess the put-down card as, or null to put it down in silence.
+         *
+         * The rules let a player name the rank of the card they just swapped out: right, and
+         * they play that card's action for free; wrong, and they take a penalty card. It is a
+         * real decision with a real price, so it is a thing a coalition plans rather than a
+         * thing one member springs.
+         *
+         * **Not the King's declare**, which is [Declare] and a different move: that one names a
+         * rank so that everybody throws it in. This one is a guess about one card.
+         */
+        val guess: Rank? = null,
+    ) : Step
+
+    /**
+     * Let the card go: onto the pile, action unused, hand untouched.
+     *
+     * It looks like a wasted turn and it is the opposite. This is how a coalition tells the seat
+     * holding its best hand **don't touch your hand** — draw, and whatever it is, let it go. Only
+     * the lowest hand is compared, so protecting it is worth a turn; and the alternative, leaving
+     * the lane at "your call", says nothing and reads as nobody having got to it yet.
+     */
+    @Serializable
+    @SerialName("bin")
+    data object Bin : Step
+
+    /**
+     * Play whatever the turn's card turns out to be, for its action.
+     *
+     * The instruction you can give about a card nobody has seen yet: *use it*. No targets,
+     * because there is nothing to aim until the card is face up — and the moment it is, the
+     * board is rethought and this becomes a [Swap], a [Declare] or a better idea.
+     *
+     * [TakeTheDiscard] is this same instruction with the pile named, and stays because it is on
+     * the wire; a lane whose opening says `TAKE_THE_DISCARD` and whose step is this one means
+     * exactly what that one always meant.
+     */
+    @Serializable
+    @SerialName("use-it")
+    data object UseIt : Step
 }
 
 // ---------------------------------------------------------------- editing the board
@@ -177,6 +251,17 @@ sealed interface PlanEdit {
     @Serializable
     @SerialName("set-lane")
     data class SetLane(val seat: String, val step: Step) : PlanEdit
+
+    /**
+     * Set which pile [seat]'s turn opens from, leaving whatever is planned after it alone.
+     *
+     * Its own edit because it is its own decision, and the first one: a turn is built a part at
+     * a time and the opening is the part that is always there. Setting it must not wipe a step
+     * already agreed, and choosing a step must not silently pick a pile.
+     */
+    @Serializable
+    @SerialName("open-lane")
+    data class OpenLane(val seat: String, val opening: Opening) : PlanEdit
 
     /** Take the lane back to "your call". */
     @Serializable
@@ -244,18 +329,25 @@ fun CoalitionPlan?.edited(
     when (edit) {
         is PlanEdit.SetLane -> {
             laneRefusal(edit.seat, lanes, coalition, onPlay)?.let { return it }
-            edit.step.cardsNamed().firstOrNull { it.seat !in coalition }?.let {
-                return PlanEditOutcome.Refused("a step may not touch the caller's cards")
-            }
-            if (edit.step is Step.Swap && edit.step.from.seat == edit.step.to.seat) {
-                return PlanEditOutcome.Refused("a swap is between two hands")
-            }
-            // The draw goes into the hand that puts the card down, and only the lane's own seat
-            // draws on that turn.
-            if (edit.step is Step.PutDown && edit.step.card.seat != edit.seat) {
-                return PlanEditOutcome.Refused("you can only put down your own card")
-            }
-            lanes[edit.seat] = Lane(seat = edit.seat, step = edit.step, locked = false)
+            stepRefusal(edit, coalition)?.let { return it }
+            // The opening is kept: it is a separate part of the same turn, and a member who
+            // said "take the discard" and then chose what to do with it has said two things.
+            lanes[edit.seat] = Lane(
+                seat = edit.seat,
+                opening = lanes[edit.seat]?.opening,
+                step = edit.step,
+                locked = false,
+            )
+        }
+
+        is PlanEdit.OpenLane -> {
+            laneRefusal(edit.seat, lanes, coalition, onPlay)?.let { return it }
+            lanes[edit.seat] = Lane(
+                seat = edit.seat,
+                opening = edit.opening,
+                step = lanes[edit.seat]?.step,
+                locked = false,
+            )
         }
 
         is PlanEdit.ClearLane -> {
@@ -285,6 +377,28 @@ fun CoalitionPlan?.edited(
     )
 }
 
+/**
+ * What is wrong with the step itself, as opposed to with the lane it is being put on.
+ *
+ * Its own function because [edited] had reached the number of ways out a reader can hold at
+ * once, and these three are one subject: a step may not touch the caller's cards, a swap is
+ * between two hands, and only a lane's own seat can put its own card down.
+ */
+private fun stepRefusal(edit: PlanEdit.SetLane, coalition: List<String>): PlanEditOutcome.Refused? = when {
+    edit.step.cardsNamed().any { it.seat !in coalition } ->
+        PlanEditOutcome.Refused("a step may not touch the caller's cards")
+
+    edit.step is Step.Swap && edit.step.from.seat == edit.step.to.seat ->
+        PlanEditOutcome.Refused("a swap is between two hands")
+
+    // The draw goes into the hand that puts the card down, and only the lane's own seat draws
+    // on that turn.
+    edit.step is Step.PutDown && edit.step.card.seat != edit.seat ->
+        PlanEditOutcome.Refused("you can only put down your own card")
+
+    else -> null
+}
+
 private fun laneRefusal(
     seat: String,
     lanes: Map<String, Lane>,
@@ -302,7 +416,7 @@ private fun laneRefusal(
 fun Step.cardsNamed(): List<CardAt> = when (this) {
     is Step.Swap -> listOf(from, to)
     is Step.PutDown -> listOf(card)
-    is Step.Declare, Step.TakeTheDiscard -> emptyList()
+    is Step.Declare, Step.TakeTheDiscard, Step.Bin, Step.UseIt -> emptyList()
 }
 
 /** One seat's yes or no to the plan as it stands. */

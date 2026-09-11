@@ -277,6 +277,10 @@
     <string name="seat_badge_coalition">in the coalition</string>
     <string name="seat_badge_away">away from the table</string>
     <string name="seat_badge_barred">cannot toss in again</string>
+    <!-- The coalition's plan, as it stands against a seat rather than against a turn
+         (design D7): a nod is about a member, and a shed is not a turn at all. -->
+    <string name="seat_badge_agreed">agreed to the plan</string>
+    <string name="seat_badge_will_shed">has a card ready to throw in</string>
     <string name="seat_pointed_vinto">%1$s called Vinto</string>
     <string name="seat_pointed_penalty">%1$s is taking a card from the deck</string>
     <string name="seat_pointed_coalition">%1$s leads the coalition</string>
@@ -308,13 +312,8 @@
     <string name="talk_wait_they">%1$s asks you to wait.</string>
     <string name="talk_worse">You say it would leave you worse off.</string>
     <string name="talk_worse_they">%1$s says it would leave them worse off.</string>
-    <string name="table_final_caller">Everyone else plays one hand between them, against yours.</string>
     <string name="table_final_turns_left">%1$d turns to the reveal</string>
     <string name="table_final_last_turn">last turn</string>
-    <string name="table_final_coalition">One hand between the three of you, against %1$s.</string>
-    <string name="table_final_side_coalition">Together</string>
-    <string name="table_final_side_caller">Called it</string>
-    <string name="table_final_versus">vs</string>
     <string name="table_see_score">See the score</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -520,6 +519,12 @@
     <string name="teach_done">Done</string>
 
     <!-- ================================================================ help -->
+    <!-- The help sheet's four tabs. Short: they sit side by side on a phone, and a tab whose
+         word wraps is a tab nobody can read at a glance. -->
+    <string name="help_tab_cards">Cards</string>
+    <string name="help_tab_rings">Rings</string>
+    <string name="help_tab_badges">Badges</string>
+    <string name="help_tab_more">More</string>
     <string name="help_right_now">Right now</string>
     <string name="help_the_cards">The cards</string>
     <string name="help_signals">What the table is telling you</string>
@@ -615,9 +620,11 @@
     <string name="label_agree">Agree</string>
     <string name="label_do_as_planned">Do as planned</string>
     <string name="label_keep_it_instead">Keep it instead</string>
-    <string name="label_plan_swap">Swap two cards</string>
+    <!-- The three answers to "what should this seat do with the card their turn takes?" -->
+    <string name="label_play_the_card">Play it</string>
+    <string name="label_keep_the_card">Keep it</string>
+    <string name="label_let_the_card_go">Let it go</string>
     <string name="label_plan_declare">Declare a rank</string>
-    <string name="label_plan_put_down">Put a card down</string>
     <string name="label_plan_take_discard">Take the discard</string>
     <string name="label_plan_clear">Clear</string>
     <string name="label_plan_shed">Throw in</string>
@@ -625,15 +632,6 @@
     <string name="detail_shed_risk">Only a rank you have seen in your hand: a wrong throw costs you a card and bars you for the rest of the round.</string>
     <string name="detail_shed_risk_pushed">Yours is the hand the coalition is pushing. A wrong throw costs it a card and bars it for the rest of the round — throw in only what you have seen.</string>
     <string name="detail_claim_was_wrong">A step here was built on a claim the cards have since proved wrong. That is the game working, not a mistake: somebody remembered a card differently from how it lies.</string>
-    <!-- Where the plan would leave the round. Level is said as losing: a tie pays the caller. -->
-    <string name="board_outcome_wins">Our best hand %1$d against their %2$d: that wins.</string>
-    <string name="board_outcome_level">Our best hand %1$d against their %2$d: level, and level pays the caller.</string>
-    <string name="board_outcome_loses">Our best hand %1$d against their %2$d: that falls short.</string>
-    <string name="board_outcome_unseen">%1$d of the caller’s cards nobody has seen.</string>
-    <string name="board_verdict_wins">wins</string>
-    <string name="board_verdict_level">level</string>
-    <string name="board_verdict_loses">falls short</string>
-    <string name="label_plan_rehearse">Watch the plan</string>
     <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
     <string name="table_rehearsal">Rehearsal — nothing has moved</string>
     <string name="ask_what_will_you_do">What will you do with your turn?</string>
@@ -648,16 +646,57 @@
     <string name="detail_draw_beats_plan">Your %1$s beats the plan: keep it in place of card %2$d.</string>
     <string name="detail_plan_is_a_suggestion">A plan is a suggestion. Whoever’s turn it is decides.</string>
     <string name="board_title">The plan</string>
-    <string name="board_summary_empty">No plan yet — tap to plan together</string>
-    <string name="board_summary">The plan: %1$d of %2$d turns set, %3$d of %4$d agreed</string>
+    <!-- The plan on the felt (design D1). One switch, on for the whole of a final round whether
+         or not anything is planned, because a plan you have to guess your way into is a plan
+         nobody opens. A switch says its own state, so there is no second word for "close". -->
+    <string name="label_plan_open">Plan</string>
+    <!-- The transport (design D14): the plan is a short film with one stop per turn. -->
+    <string name="label_plan_run">Play</string>
+    <string name="label_plan_halt">Stop</string>
+    <string name="label_plan_back">Back</string>
+    <string name="label_plan_on">Next</string>
+    <string name="label_plan_rewind">Start</string>
+    <!-- One planned turn, read out whole: %1$d its number, %2$s whose it is, %3$s a
+         board_step_* fragment or "your call". -->
+    <string name="board_turn_planned">Turn %1$d, %2$s: %3$s</string>
+    <string name="board_played">%1$s, played</string>
+    <string name="board_now">Now</string>
+    <string name="board_unplayable">This turn cannot be played from here: a card it names has gone.</string>
+    <string name="board_broken">A claim under this turn has been proved wrong.</string>
+    <!-- Where the plan lands (design D10, D12): three numbers, and no verdict. Whether that
+         wins is the players' comparison to make, and an app that made it would grade every
+         candidate plan instead of leaving the coalition its argument. -->
+    <!-- How a turn is changed, said once on the plan's own rail. Both paths in one sentence
+         because they are one edit, and neither needs a pointer or a hold: it reads the same on
+         a phone, on a tablet in a browser, and on a desktop with a mouse. -->
+    <string name="board_carry_hint">Carry a card to where it should go — or touch it, then touch the place.</string>
+    <string name="board_arrival_title">Where this leaves us</string>
+    <string name="board_arrival_ours">Our best hand: %1$d</string>
+    <string name="board_arrival_theirs">They are believed to hold: %1$d</string>
+    <string name="board_arrival_unseen">Nobody has spoken about %1$d of their cards.</string>
     <string name="board_your_call">your call</string>
-    <string name="board_in_play">in play</string>
     <!-- The owner of a card, as a step's sentence needs it: "swap your card 2 with Nina’s card 3". -->
     <string name="board_owner_you">your</string>
     <string name="board_owner_named">%1$s’s</string>
     <string name="board_step_swap">swap %1$s card %2$d with %3$s card %4$d</string>
     <string name="board_step_declare">declare %1$s with a King</string>
     <string name="board_step_take_discard">take the discard</string>
+    <string name="board_from_the_deck">draw from the deck</string>
+    <!-- The short form of what a step names, for the chip on the turn's row. The sentence it
+         replaces is still what a screen reader is given. %1$s and %3$s are whose cards, %2$d
+         and %4$d which ones, counting from the left as people do. -->
+    <!-- One end of a planned trade: whose card, and which one, counting from the left. The
+         arrow between the two ends is drawn rather than written, so no font can lose it. -->
+    <string name="board_part_end">%1$s %2$d</string>
+    <string name="board_part_card">card %1$d</string>
+    <string name="board_part_card_called">card %1$d = %2$s</string>
+    <string name="board_nobody_throws_in">nobody throws in yet</string>
+    <!-- Let the drawn card go and leave the hand alone: how a coalition tells the seat holding
+         its best hand not to touch it. -->
+    <string name="board_step_bin">let the card go</string>
+    <!-- Play whatever the card turns out to be. The instruction you can give about a card
+         nobody has seen yet; once it is face up the board is rethought. -->
+    <string name="board_step_use_it">play whatever it is</string>
     <!-- A lane step that puts one of the seat's own cards on the pile so a teammate can throw a
          match in: %1$s the owner ("your" / "Nina’s"), %2$d the card's 1-based position, and in
          the _known form %3$s the rank the table knows it to be. -->
@@ -668,10 +707,9 @@
     <string name="board_would_rather">%1$s would rather %2$s</string>
     <string name="board_shed">%1$s will throw in a %2$s</string>
     <string name="board_edited_by">last changed by %1$s</string>
-    <string name="board_nod_yes">%1$s agreed</string>
-    <string name="board_nod_not_yet">%1$s has not agreed yet</string>
-    <string name="board_lane">%1$s: %2$s</string>
     <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
+    <!-- A claim nobody has contradicted: what one player says a card is. -->
+    <string name="badge_plain">what somebody says this card is</string>
     <string name="badge_disputed">disputed</string>
     <string name="badge_paired">one of a pair, order unknown</string>
     <string name="badge_right">right</string>

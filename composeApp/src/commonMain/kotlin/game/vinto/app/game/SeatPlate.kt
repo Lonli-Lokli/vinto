@@ -53,11 +53,13 @@ import game.vinto.app.art.avatar_dune
 import game.vinto.app.art.avatar_ember
 import game.vinto.app.art.avatar_gale
 import game.vinto.app.art.avatar_tide
+import game.vinto.app.art.seat_badge_agreed
 import game.vinto.app.art.seat_badge_away
 import game.vinto.app.art.seat_badge_barred
 import game.vinto.app.art.seat_badge_coalition
 import game.vinto.app.art.seat_badge_vinto
 import game.vinto.app.art.seat_badge_waiting
+import game.vinto.app.art.seat_badge_will_shed
 import game.vinto.app.art.seat_is_a_bot
 import game.vinto.app.art.seat_pointed_coalition
 import game.vinto.app.art.seat_pointed_penalty
@@ -251,7 +253,7 @@ private fun BadgeRow(badges: List<SeatBadge>, marks: String?, portrait: Dp) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(BadgeGap),
     ) {
-        badges.forEach { Badge(it, portrait) }
+        badges.forEach { SeatMark(it, portrait) }
         marks?.let {
             Text(
                 text = it,
@@ -295,6 +297,23 @@ enum class SeatBadge {
     AWAY,
 
     /**
+     * This seat has said yes to the coalition's plan as it stands (design D7).
+     *
+     * On the plate rather than on the plan, because a nod is about a *member* and not about a
+     * step: reading the plan's turns, "who is happy with this" is a question about the people
+     * round the table, and the plates are where the table already says what each seat is.
+     */
+    AGREED,
+
+    /**
+     * This seat has said it will throw a rank in if one lands (design D7).
+     *
+     * Not a turn, so it has no place in the sequence of turns — but it belongs to a seat, and
+     * the rank itself is beside it in the plate's marks.
+     */
+    WILL_SHED,
+
+    /**
      * This seat guessed wrong on a toss-in and may not try again.
      *
      * The engine has always known it for *every* seat — `PlayerView.barredFromTossIn` is a list
@@ -305,9 +324,14 @@ enum class SeatBadge {
     BARRED,
 }
 
-/** One mark, drawn at a size that follows the portrait beside it. */
+/**
+ * One mark, drawn at a size that follows the portrait beside it.
+ *
+ * Internal because the help sheet's legend draws the **same** composable rather than a picture
+ * of it: a legend that redraws a mark is a legend that can come to disagree with the table.
+ */
 @Composable
-private fun Badge(badge: SeatBadge, portrait: Dp) {
+internal fun SeatMark(badge: SeatBadge, portrait: Dp) {
     val said = stringResource(badge.spoken())
     val ink = when (badge) {
         SeatBadge.VINTO -> Slate.gold
@@ -315,6 +339,8 @@ private fun Badge(badge: SeatBadge, portrait: Dp) {
         SeatBadge.AWAY -> Slate.ink.copy(alpha = QUIET)
         SeatBadge.BOT -> Slate.ink.copy(alpha = QUIET)
         SeatBadge.BARRED -> Signal.penalty
+        SeatBadge.AGREED -> Signal.pick
+        SeatBadge.WILL_SHED -> Signal.coalition
     }
     val marked = Modifier
         .size(maxOf(portrait * BadgeShare, BadgeLeast))
@@ -328,6 +354,8 @@ private fun Badge(badge: SeatBadge, portrait: Dp) {
         SeatBadge.COALITION -> Canvas(marked) { drawLink(ink) }
         SeatBadge.AWAY -> Canvas(marked) { drawAway(ink) }
         SeatBadge.BARRED -> Canvas(marked) { drawBarred(ink) }
+        SeatBadge.AGREED -> Canvas(marked) { drawNod(ink) }
+        SeatBadge.WILL_SHED -> Canvas(marked) { drawShed(ink) }
     }
 }
 
@@ -406,12 +434,14 @@ private fun DrawScope.drawThoughtBadge(phase: Float?) {
  */
 private const val CLOUD_INSET = 0.8f
 
-private fun SeatBadge.spoken(): StringResource = when (this) {
+internal fun SeatBadge.spoken(): StringResource = when (this) {
     SeatBadge.BOT -> Res.string.seat_is_a_bot
     SeatBadge.VINTO -> Res.string.seat_badge_vinto
     SeatBadge.COALITION -> Res.string.seat_badge_coalition
     SeatBadge.AWAY -> Res.string.seat_badge_away
     SeatBadge.BARRED -> Res.string.seat_badge_barred
+    SeatBadge.AGREED -> Res.string.seat_badge_agreed
+    SeatBadge.WILL_SHED -> Res.string.seat_badge_will_shed
 }
 
 /**
@@ -527,6 +557,38 @@ private fun DrawScope.drawLink(ink: Color) {
         drawCircle(ink, radius = w * LINK_R, center = Offset(w * it, w * MIDDLE), style = pen)
     }
 }
+
+/** A tick: this seat has said yes to the plan as it stands. */
+private fun DrawScope.drawNod(ink: Color) {
+    val w = size.minDimension
+    val pen = w * BADGE_PEN
+    stroke(ink, pen, Offset(w * NOD_LEFT, w * MIDDLE), Offset(w * NOD_TURN, w * NOD_LOW))
+    stroke(ink, pen, Offset(w * NOD_TURN, w * NOD_LOW), Offset(w * NOD_RIGHT, w * NOD_HIGH))
+}
+
+/** A card leaving downwards: this seat will throw a rank in if one lands. */
+private fun DrawScope.drawShed(ink: Color) {
+    val w = size.minDimension
+    val pen = w * BADGE_PEN
+    stroke(ink, pen, Offset(w * MIDDLE, w * SHED_TOP), Offset(w * MIDDLE, w * SHED_LOW))
+    stroke(ink, pen, Offset(w * SHED_LEFT, w * SHED_MID), Offset(w * MIDDLE, w * SHED_LOW))
+    stroke(ink, pen, Offset(w * SHED_RIGHT, w * SHED_MID), Offset(w * MIDDLE, w * SHED_LOW))
+}
+
+/** One round-capped stroke of a badge's glyph, so the two above read as drawings. */
+private fun DrawScope.stroke(ink: Color, pen: Float, from: Offset, to: Offset) =
+    drawLine(ink, from, to, pen, StrokeCap.Round)
+
+private const val NOD_LEFT = 0.28f
+private const val NOD_TURN = 0.44f
+private const val NOD_RIGHT = 0.74f
+private const val NOD_LOW = 0.66f
+private const val NOD_HIGH = 0.32f
+private const val SHED_TOP = 0.26f
+private const val SHED_LOW = 0.72f
+private const val SHED_MID = 0.52f
+private const val SHED_LEFT = 0.30f
+private const val SHED_RIGHT = 0.70f
 
 /** A circle with a bar through it: this seat may not throw in again. */
 private fun DrawScope.drawBarred(ink: Color) {

@@ -35,21 +35,40 @@ class FinishesTest {
     private fun GameState.everySeatPlayable(): GameState =
         copy(players = players.map { it.copy(isHuman = false, isBot = true) })
 
+    /**
+     * Drives one seat's brain over all four seats until the round ends or the drive gives out.
+     *
+     * A function of its own so the case above stays readable — and because the loop answers two
+     * different kinds of thing: moves, and the coalition's window, which is not one.
+     *
+     * @return how many it made, for the report.
+     */
+    private suspend fun playOut(session: LocalGameSession, person: BotRunner): Int {
+        var moves = 0
+        while (!session.isOver && moves < MOVE_LIMIT) {
+            // The window is the one thing a seat answers with something that is not a
+            // `GameAction`, so a drive made only of actions waits in it forever. The person
+            // here is this loop; a person at a table presses the button.
+            if (session.view.value.conferMsRemaining != null) {
+                session.doneConferring()
+                moves++
+                continue
+            }
+
+            val action = person.nextAction(session.state.everySeatPlayable()) ?: return moves
+            if (session.dispatch(action) != null) return moves
+            moves++
+        }
+        return moves
+    }
+
     @Test
     fun aWholeGamePlaysItselfOutFromAnySeed() = runTest(timeout = LONG) {
         val stalled = mutableListOf<String>()
 
         for (seed in 1L..SEEDS) {
             val session = LocalGameSession(seed = seed, difficulty = Difficulty.EASY)
-            val person = BotRunner(Difficulty.EASY, Random(seed))
-            var moves = 0
-
-            while (!session.isOver && moves < MOVE_LIMIT) {
-                val action = person.nextAction(session.state.everySeatPlayable()) ?: break
-                if (session.dispatch(action) != null) break
-                moves++
-            }
-
+            val moves = playOut(session, BotRunner(Difficulty.EASY, Random(seed)))
             if (session.isOver) continue
 
             // Say *why* it stopped. A stall reported as "did not finish" is a stall somebody

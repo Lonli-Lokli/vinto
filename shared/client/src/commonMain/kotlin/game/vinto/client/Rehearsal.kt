@@ -9,11 +9,14 @@ import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.CardAt
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
+import game.vinto.shapes.Lane
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.Step
 import game.vinto.shapes.SwapCardPayload
 import game.vinto.shapes.TargetType
+import game.vinto.shapes.coalitionInTurnOrder
+import game.vinto.shapes.laneOf
 
 /**
  * A plan, played back as an animation of what it would do.
@@ -39,13 +42,76 @@ import game.vinto.shapes.TargetType
  * cards changing places. Nothing here needs the engine, and nothing here can see a card the
  * seat was not already shown.
  */
-fun rehearse(view: PlayerView, plan: CoalitionPlan): List<Frame> {
-    var table = view
-    val frames = mutableListOf<Frame>()
+fun rehearse(view: PlayerView, plan: CoalitionPlan): List<Frame> =
+    rehearsal(view, plan).frames.filterNotNull()
 
-    for (lane in plan.lanes) {
-        val step = lane.step ?: continue
-        val after = table.after(step) ?: continue
+/**
+ * A plan as the **transport** reads it (design D14): the positions it stops at, and the
+ * pictures between them.
+ *
+ * The film has one stop per turn boundary — the table now, and the table after each of at most
+ * three turns — because those are the only positions worth resting on: every other moment has
+ * cards in mid-air, which is the one state a table can be neither read nor edited in. So
+ * [tables] is one longer than [frames], and position *k* renders the table after turns 1..*k*
+ * and no further.
+ *
+ * A turn with nothing to draw — no step yet, or a step naming a card that is not there — keeps
+ * its place with a null frame rather than being dropped. That is what makes ② mean the same
+ * turn to every member reading it (design D6), and it is why [rehearse] filters rather than
+ * this skipping.
+ */
+data class Rehearsal(
+    /** One per position, 0..*n*: the table now, then the table after each turn. */
+    val tables: List<PlayerView>,
+    /** One per turn, in order: what to play on the way to that position, or null if nothing. */
+    val frames: List<Frame?>,
+) {
+    /** The last position: the table the plan arrives at (design D10). */
+    val arrival: PlayerView get() = tables.last()
+
+    /** How many positions the transport has beyond the first. */
+    val turns: Int get() = frames.size
+
+    /**
+     * The film from position [at] onward — what is left to play from where the head is parked.
+     *
+     * **The drop comes before the filter**, and that order is the whole of it. [frames] is one
+     * per turn *including the turns with nothing to draw*, so a turn's index is its position;
+     * filtered first, the list is shorter than the plan and dropping by a position number takes
+     * the wrong frames off the front. On the plan a phone reported — turn 1 undecided, turn 2 a
+     * swap, turn 3 undecided — the filtered film is one frame long, so a head parked on turn 1
+     * dropped the only move there was and Play ran an empty film: the transport travelled to the
+     * end and not one card moved.
+     */
+    fun from(at: Int): List<Frame> = between(at, turns)
+
+    /**
+     * The film between two positions — what plays on the way from [from] to [to].
+     *
+     * The transport sends the head to a *named* stop now rather than always to the end, so a
+     * member who presses ② watches the first two turns and stops there.
+     */
+    fun between(from: Int, to: Int): List<Frame> =
+        frames.drop(from.coerceIn(0, turns)).take((to - from).coerceAtLeast(0)).filterNotNull()
+}
+
+/** The plan, resolved into the transport's positions. See [Rehearsal]. */
+fun rehearsal(view: PlayerView, plan: CoalitionPlan): Rehearsal {
+    var table = view
+    val tables = mutableListOf(view)
+    val frames = mutableListOf<Frame?>()
+
+    for (lane in plan.turnsOf(view)) {
+        val step = lane.step
+        val after = step?.let { table.after(it) }
+        if (step == null || after == null) {
+            // The turn still exists — it is somebody's turn either way — so it keeps its
+            // position and the transport still stops on it. There is simply nothing to draw.
+            frames += null
+            tables += table
+            continue
+        }
+
         val action = miming(lane.seat, step)
 
         // The choreography draws a swap from the *pending action's* targets — that is where a
@@ -60,9 +126,29 @@ fun rehearse(view: PlayerView, plan: CoalitionPlan): List<Frame> {
             ghost = true,
         )
         table = after
+        tables += after
     }
 
-    return frames
+    return Rehearsal(tables = tables, frames = frames)
+}
+
+/**
+ * The plan as **one lane per coalition turn**, in turn order, decided or not.
+ *
+ * `CoalitionPlan.lanes` holds only the turns somebody has set, so its length is a count of
+ * *decisions* and not of turns. Walking it made position ② mean "after the plan's second
+ * decision", which on a board where only the middle turn was decided put that turn's swap on
+ * the felt under the name of the seat before it — and made every position past the last decided
+ * lane fall off the end, so the arrival, which is the one picture the transport exists for,
+ * quietly showed the table as it is now.
+ *
+ * Read off the view rather than passed in, so every caller is fixed at once and none of them can
+ * pass a coalition that disagrees with the one the board draws.
+ */
+private fun CoalitionPlan.turnsOf(view: PlayerView): List<Lane> {
+    val caller = view.vintoCallerId ?: return lanes
+    return coalitionInTurnOrder(view.players.map { it.id }, caller)
+        .map { seat -> laneOf(seat) ?: Lane(seat) }
 }
 
 /**
@@ -87,8 +173,9 @@ private fun PlayerView.after(step: Step): PlayerView? = when (step) {
     )
 
     // Nothing to show: what comes off the pile is a card the plan already knows about, and the
-    // interesting part is what its action then does, which the next step describes.
-    Step.TakeTheDiscard -> this
+    // interesting part is what its action then does, which the next step describes. Binning
+    // shows nothing for the opposite reason — the hand is deliberately left alone.
+    Step.TakeTheDiscard, Step.Bin, Step.UseIt -> this
 
     is Step.PutDown -> putDown(step.card)
 }
@@ -199,4 +286,6 @@ private fun miming(seat: String, step: Step): GameAction = when (step) {
     )
 
     Step.TakeTheDiscard -> GameAction.PlayDiscard(PlayerIdPayload(seat))
+    Step.Bin -> GameAction.DiscardCard(PlayerIdPayload(seat))
+    Step.UseIt -> GameAction.UseCardAction(PlayerIdPayload(seat))
 }

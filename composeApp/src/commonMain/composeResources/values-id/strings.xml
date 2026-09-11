@@ -225,6 +225,8 @@
     <string name="seat_badge_coalition">dalam koalisi</string>
     <string name="seat_badge_away">sedang pergi</string>
     <string name="seat_badge_barred">tidak bisa toss-in lagi</string>
+    <string name="seat_badge_agreed">setuju dengan rencana</string>
+    <string name="seat_badge_will_shed">punya kartu siap dilempar masuk</string>
     <string name="seat_pointed_vinto">%1$s memanggil Vinto</string>
     <string name="seat_pointed_penalty">%1$s mengambil kartu penalti dari dek</string>
     <string name="seat_pointed_coalition">%1$s memimpin koalisi</string>
@@ -256,13 +258,8 @@
     <string name="talk_wait_they">%1$s meminta Anda menunggu sebentar.</string>
     <string name="talk_worse">Anda mengatakan itu akan merugikan Anda.</string>
     <string name="talk_worse_they">%1$s mengatakan itu akan merugikan dirinya.</string>
-    <string name="table_final_caller">Semua yang lain bermain satu tangan bersama, melawan tangan Anda.</string>
     <string name="table_final_turns_left">%1$d giliran lagi sampai dibuka</string>
     <string name="table_final_last_turn">giliran terakhir</string>
-    <string name="table_final_coalition">Anda bertiga bermain satu tangan bersama, melawan %1$s.</string>
-    <string name="table_final_side_coalition">Bersama</string>
-    <string name="table_final_side_caller">Yang memanggil</string>
-    <string name="table_final_versus">vs</string>
     <string name="table_see_score">Lihat skor</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
@@ -432,6 +429,10 @@
     <string name="teach_done">Selesai</string>
 
     <!-- ================================================================ help -->
+    <string name="help_tab_cards">Kartu</string>
+    <string name="help_tab_rings">Cincin</string>
+    <string name="help_tab_badges">Lencana</string>
+    <string name="help_tab_more">Lainnya</string>
     <string name="help_right_now">Saat ini</string>
     <string name="help_the_cards">Kartu-kartunya</string>
     <string name="help_signals">Apa yang meja beri tahu kepada Anda</string>
@@ -504,9 +505,10 @@
     <string name="label_agree">Setuju</string>
     <string name="label_do_as_planned">Lakukan sesuai rencana</string>
     <string name="label_keep_it_instead">Simpan saja ini</string>
-    <string name="label_plan_swap">Tukar dua kartu</string>
+    <string name="label_play_the_card">Mainkan</string>
+    <string name="label_keep_the_card">Simpan</string>
+    <string name="label_let_the_card_go">Biarkan lewat</string>
     <string name="label_plan_declare">Umumkan sebuah nilai</string>
-    <string name="label_plan_put_down">Letakkan sebuah kartu</string>
     <string name="label_plan_take_discard">Ambil kartu buangan</string>
     <string name="label_plan_clear">Hapus</string>
     <string name="label_plan_shed">Lempar masuk</string>
@@ -514,14 +516,6 @@
     <string name="detail_shed_risk">Hanya nilai yang pernah Anda lihat di tangan Anda: lemparan yang salah membuat Anda kehilangan satu kartu dan tidak boleh mencoba lagi sampai akhir ronde.</string>
     <string name="detail_shed_risk_pushed">Tangan Anda yang sedang didorong koalisi. Lemparan yang salah membuat tangan itu kehilangan satu kartu dan tidak boleh mencoba lagi sampai akhir ronde — lempar masuk hanya yang benar-benar sudah Anda lihat.</string>
     <string name="detail_claim_was_wrong">Sebuah langkah di sini disusun berdasarkan klaim yang kini terbukti salah oleh kartu yang ada. Itu tandanya permainan berjalan semestinya, bukan kesalahan — ada yang mengingat sebuah kartu berbeda dari kenyataannya.</string>
-    <string name="board_outcome_wins">Tangan terbaik kami %1$d melawan %2$d milik mereka: itu menang.</string>
-    <string name="board_outcome_level">Tangan terbaik kami %1$d melawan %2$d milik mereka: seri, dan seri dibayarkan untuk pemanggil.</string>
-    <string name="board_outcome_loses">Tangan terbaik kami %1$d melawan %2$d milik mereka: itu belum cukup.</string>
-    <string name="board_outcome_unseen">%1$d kartu pemanggil belum pernah dilihat siapa pun.</string>
-    <string name="board_verdict_wins">menang</string>
-    <string name="board_verdict_level">seri</string>
-    <string name="board_verdict_loses">belum cukup</string>
-    <string name="label_plan_rehearse">Lihat rencananya</string>
     <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
     <string name="table_rehearsal">Latihan — belum ada yang berpindah</string>
     <string name="ask_what_will_you_do">Apa yang akan Anda lakukan pada giliran Anda?</string>
@@ -534,23 +528,41 @@
     <string name="detail_draw_beats_plan">%1$s Anda lebih baik dari rencana: simpan sebagai pengganti kartu %2$d.</string>
     <string name="detail_plan_is_a_suggestion">Rencana hanyalah saran. Yang menentukan adalah pemain yang gilirannya sedang berlangsung.</string>
     <string name="board_title">Rencana</string>
-    <string name="board_summary_empty">Belum ada rencana — ketuk untuk menyusun bersama</string>
-    <string name="board_summary">Rencananya: %1$d dari %2$d giliran tersusun, %3$d dari %4$d setuju</string>
+    <string name="label_plan_open">Rencana</string>
+    <string name="label_plan_run">Putar</string>
+    <string name="label_plan_halt">Berhenti</string>
+    <string name="label_plan_back">Kembali</string>
+    <string name="label_plan_on">Berikutnya</string>
+    <string name="label_plan_rewind">Awal</string>
+    <string name="board_turn_planned">Giliran %1$d, %2$s: %3$s</string>
+    <string name="board_played">%1$s, dimainkan</string>
+    <string name="board_now">Sekarang</string>
+    <string name="board_unplayable">Giliran ini tidak bisa dimainkan dari sini: kartu yang disebutkan sudah tidak ada.</string>
+    <string name="board_broken">Klaim pada giliran ini sudah terbukti salah.</string>
+    <string name="board_carry_hint">Seret kartu ke tempat yang seharusnya — atau sentuh kartu itu, lalu sentuh tempatnya.</string>
+    <string name="board_arrival_title">Hasil akhirnya</string>
+    <string name="board_arrival_ours">Tangan terbaik kami: %1$d</string>
+    <string name="board_arrival_theirs">Diyakini mereka memegang: %1$d</string>
+    <string name="board_arrival_unseen">Belum ada yang membicarakan %1$d kartu mereka.</string>
     <string name="board_your_call">giliran Anda</string>
-    <string name="board_in_play">sedang berjalan</string>
     <string name="board_owner_you">Anda</string>
     <string name="board_owner_named">milik %1$s</string>
     <string name="board_step_swap">tukar kartu ke-%2$d %1$s dengan kartu ke-%4$d %3$s</string>
     <string name="board_step_declare">umumkan %1$s dengan King</string>
     <string name="board_step_take_discard">ambil kartu buangan</string>
+    <string name="board_from_the_deck">ambil dari tumpukan</string>
+    <string name="board_part_end">%1$s %2$d</string>
+    <string name="board_part_card">kartu ke-%1$d</string>
+    <string name="board_part_card_called">kartu ke-%1$d = %2$s</string>
+    <string name="board_nobody_throws_in">belum ada yang melempar masuk</string>
+    <string name="board_step_bin">biarkan kartu ini lewat</string>
+    <string name="board_step_use_it">mainkan apa pun itu</string>
     <string name="board_step_put_down">letakkan kartu ke-%2$d %1$s</string>
     <string name="board_step_put_down_known">letakkan kartu ke-%2$d %1$s, %3$s</string>
     <string name="board_would_rather">%1$s lebih memilih %2$s</string>
     <string name="board_shed">%1$s akan melempar masuk %2$s</string>
     <string name="board_edited_by">terakhir diubah oleh %1$s</string>
-    <string name="board_nod_yes">%1$s sudah setuju</string>
-    <string name="board_nod_not_yet">%1$s belum setuju</string>
-    <string name="board_lane">%1$s: %2$s</string>
+    <string name="badge_plain">yang dikatakan seseorang tentang kartu ini</string>
     <string name="badge_disputed">diperselisihkan</string>
     <string name="badge_paired">salah satu pasangan, urutan tidak diketahui</string>
     <string name="badge_right">benar</string>
