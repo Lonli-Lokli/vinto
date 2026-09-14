@@ -6,19 +6,27 @@
  *   npx zdymak capture --platform android # drive the app and take the shots
  *   npx zdymak build --clean              # screenshots + videos for every device below
  *
- * Pinned to zdymak 0.22.0 — the version `.claude/skills/zdymak/SKILL.md` was vendored from.
+ * Pinned to zdymak 0.25.0 — the version `.claude/skills/zdymak/SKILL.md` was vendored from.
  * Behaviour here is version-specific (the output layout changed at 0.15), so bump both together.
  *
- * **One exception, and it is temporary.** `appstore-iap-review` below was added to zdymak for this
- * repository's in-app purchase and is not in 0.22.0, so `npm run capture-iap` runs the local
- * checkout by path — the same shape `capture-ios` and `capture-android` already use. When zdymak
- * publishes, raise the pin in `package.json` and put `zdymak screenshots` back in that script.
+ * **The exception that stood here is closed.** `appstore-iap-review` was added to zdymak for this
+ * repository's in-app purchase and was missing from 0.22.0, so every script that needed it ran a
+ * sibling checkout by path — which meant this repository could not build its own store media
+ * without a clone of another one beside it. 0.25.0 ships that target, and the published package is
+ * byte-identical to the checkout, so `package.json` says plain `zdymak` again everywhere.
+ *
+ * That was not cosmetic: `npm run store-screenshots` was BROKEN, and loudly — 0.22.0 answered
+ * `✗ Unknown image target "appstore-iap-review"` and, because the script is an `&&` chain, took
+ * `vydanne bridge` down with it after the screenshots had already been written. A run that has
+ * built its assets and not bridged them is the one state the bridge exists to prevent.
  *
  * **`npx zdymak capture` drives this app now.** The handle the note at the foot of this file
  * specified is built: `MarketingScene` in `composeApp`, read from an intent extra on Android
  * (debug source set) and a launch argument on iOS. `npm run capture-ios`, `capture-ipad` and
- * `capture-android` pass the five scene ids below; `npm run capture-headless` renders the same
- * five without a device at all.
+ * `capture-android` pass the six scene ids below; `npm run capture-headless` renders the same
+ * six without a device at all. (It said five until `plan` joined them, and several other counts
+ * further down this file still do — they are prose, not configuration, and the scene list is the
+ * thing to read.)
  */
 export default {
   // The table's own palette, from `composeApp/.../theme/VintoTheme.kt` rather than picked to

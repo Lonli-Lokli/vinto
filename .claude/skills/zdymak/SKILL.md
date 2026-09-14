@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires Node >=18 and `npx zdymak`. iOS capture needs macOS + Xcode; Android capture needs adb and a device.
 metadata:
   author: Lonli-Lokli
-  version: "0.22.0"
+  version: "0.25.0"
   source: https://github.com/Lonli-Lokli/zdymak
 ---
 
@@ -45,6 +45,7 @@ get rejected or quietly under-perform.
 | A cinematic showcase | `premium-reel` | premium matte | Override `size` for landscape (Mac: `[2880, 1800]`). |
 | **App Store** screenshots | `appstore-iphone-6.9` (+`-6.5`), `appstore-ipad-13` (+`-landscape`), `appstore-mac`, `appstore-watch` | framed (inferred) | Marketing styling is **expected** here: frames, headlines, backgrounds. iPad/Mac/Watch shots are *required* if the app ships there. Pick ONE Watch size and keep it across localizations. |
 | **Google Play** screenshots | `play-phone`, `play-tablet` (+`-portrait`), `play-wear`, `play-feature-graphic` | `bleed` + `caption: false` for the upload | Google forbids device frames, added text and backgrounds on store screenshots (hard requirement for Wear OS). Render a plain set for upload and a styled set for the website — `dir` keeps both. The feature graphic is **required** even without a video. |
+| An **in-app purchase** review screenshot | `appstore-iap-review` | interface only (automatic) | Its own slot with its own OLDER size table — the listing sizes are refused. Defaults to 640×920; never pass a listing target's `size:` here. `appstore-iap-promo` is the optional 1024×1024 companion. |
 | Web-app screenshots | any target, captured with `--platform web` | as above | Playwright driver; states are URL paths. |
 
 Exact dimensions live in `zdymak specs` (printed from the code, so it can't drift). They're checked
@@ -199,6 +200,14 @@ use it in every locale).
 device frame. iPhone 886×1920 (`appstore-preview`) · **iPad 1200×1600** (`appstore-preview-ipad`) · Mac
 1920×1080 landscape (`appstore-preview-mac`). The iPad preview is NOT the iPad screenshot size — that
 mismatch is a routine rejection.
+**In-app purchase images** are a SEPARATE pair of slots, on the purchase and not on the listing:
+`appstore-iap-review` (**required** to submit an IAP) and `appstore-iap-promo` (1024×1024, flattened RGB,
+optional — only to promote the purchase on the product page; win-back offers are subscriptions-only).
+**The review screenshot is validated against an older table than the listing slots**: 1290×2796 and
+1320×2868 are refused there with "The dimensions of one or more screenshots are wrong" while the listing
+slots take them happily, so it defaults to **640×920** and never borrows a `size:` from a listing target.
+It is review-only and never shown to a customer, so it renders the interface alone — no frame, no
+caption, no matte.
 **Play images** JPEG/24-bit PNG, no alpha: phone 1080×1920 (2–8, max 2:1, 320–3840px) · tablet 2560×1440
 · Wear 1080×1080 1:1 (required for Wear) · feature graphic 1024×500 (**required**) · icon 512×512 ≤1MB
 (alpha OK). Wear OS: interface only (requirement). Phone/tablet: frames recommended against, taglines ≤20% allowed.
@@ -237,7 +246,14 @@ re-encoded per locale.
 ## Three styles (fixed per target; all read the same `scenes`)
 - **Full-bleed** (`appstore-preview`, `play-promo`) — screen fills the frame; required for App Previews.
 - **Device-framed** (`social-reel`) — iPhone bezel + brand background + logo cold-open/end-card
-  (needs `brand.name/tagline/endline/logo`). Web/social/YouTube.
+  (needs `brand.name/tagline/endline/logo`). Web/social/YouTube. `brand.lockupGap` tunes the
+  icon-to-wordmark gap here and on the feature graphic at once.
+
+The **feature graphic** takes `brand.fan` — a list of images fanned out like a hand of cards, each
+rotated further from the middle, overlapped and drop-shadowed — for a game selling a deck rather
+than a screen (`fanSpread`, `fanX`, `fanY`, `fanHeight` place it). `brand.textOffsetY` shifts the
+whole left-hand block down together when a short tagline would otherwise strand it in the top
+corner.
 - **Premium** (`premium-reel`) — the **Apple editing-vocabulary** preset: matte + glow + vignette,
   motion-then-freeze spring dolly, **palette-aware cuts**, bottom title pill. This is the default premium
   marketing look; tune via the optional `theme` block (brand-driven defaults apply if omitted). Web/social.

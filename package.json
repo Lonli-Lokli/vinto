@@ -38,11 +38,11 @@
     "store-promo": "zdymak reel --only play-promo",
     "store-bridge": "vydanne bridge",
     "store-specs": "zdymak specs",
-    "capture-ios": "node ../zdymak/bin/zdymak.mjs capture --platform ios --device \"iPhone 17 Pro Max\" --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby,plan --settle 45 --out ./marketing/captures/ios",
-    "capture-ipad": "node ../zdymak/bin/zdymak.mjs capture --platform ios --device \"iPad Pro 13-inch (M5)\" --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby,plan --settle 45 --out ./marketing/captures/ios-ipad",
-    "capture-android": "node ../zdymak/bin/zdymak.mjs capture --platform android --component app.kupalinka.vinto/game.vinto.app.MainActivity --arg vinto.capture --states home,teach,table,score,lobby,plan --settle 90 --out ./marketing/captures/android",
+    "capture-ios": "zdymak capture --platform ios --device \"iPhone 17 Pro Max\" --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby,plan --settle 45 --out ./marketing/captures/ios",
+    "capture-ipad": "zdymak capture --platform ios --device \"iPad Pro 13-inch (M5)\" --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby,plan --settle 45 --out ./marketing/captures/ios-ipad",
+    "capture-android": "zdymak capture --platform android --component app.kupalinka.vinto/game.vinto.app.MainActivity --arg vinto.capture --states home,teach,table,score,lobby,plan --settle 90 --out ./marketing/captures/android",
     "capture-headless": "./gradlew :composeApp:jvmTest --tests \"*StoreShotsTest*\" --tests \"*IapShotTest*\" -PstoreShots --rerun",
-    "capture-iap": "npm run capture-headless && node ../zdymak/bin/zdymak.mjs screenshots && vydanne iap",
+    "capture-iap": "npm run capture-headless && zdymak screenshots && vydanne iap",
     "release:check": "node tools/check-release-branch.mjs",
     "shipped": "node ../gulnya/tools/shipped.mjs app.kupalinka.vinto",
     "shipped:all": "node ../gulnya/tools/shipped.mjs"
@@ -50,6 +50,6 @@
   "devDependencies": {
     "lefthook": "^2.1.12",
     "vydanne": "^0.13.0",
-    "zdymak": "^0.22.0"
+    "zdymak": "^0.25.0"
   }
 }
