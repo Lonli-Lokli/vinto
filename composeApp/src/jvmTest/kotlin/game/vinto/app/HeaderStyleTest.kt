@@ -24,11 +24,11 @@ import kotlin.test.assertTrue
 class HeaderStyleTest {
 
     @Test
-    fun aPhoneInPortraitDrawsMarksAndKeepsItsWordmark() {
+    fun aPhoneInPortraitDrawsMarksAndKeepsItsWordmarkAndCounter() {
         val style = headerStyle(Host.PHONE, landscape = false)
         assertFalse(style.labelled, "a portrait phone has no width for words on its controls")
         assertFalse(style.cup, "a phone's answer to the same want is an in-app purchase, not a link out")
-        assertFalse(style.counter, "the wordmark wins the space a portrait phone has")
+        assertTrue(style.counter, "which round and turn it is belongs on a phone as much as anywhere")
     }
 
     /** Rotate the same phone and it has the width, so it says what the controls do. */

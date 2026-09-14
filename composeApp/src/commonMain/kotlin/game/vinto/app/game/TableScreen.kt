@@ -805,14 +805,21 @@ internal data class HeaderStyle(
     val cup: Boolean,
 ) {
     /**
-     * The round counter rides with the labels.
+     * The round counter is offered everywhere, and `HeaderName` is what decides whether it lands.
      *
-     * Not because it is wide — it is four characters — but because it is the one header item a
-     * player never needs and always has somewhere else to find. Where the header is roomy it is
-     * a nicety; on a phone in portrait the wordmark is the thing that should win the space, and
-     * choosing between them by rule is what stops both being dropped by an arithmetic error.
+     * It used to ride with the labels, which meant a phone in portrait never showed it. That was
+     * the wrong half to cut: which round and turn it is, is the one thing on this header a player
+     * reads to know where they are in a hand, and a phone is where most of them are read. The
+     * worry it answered was width, and the shape above had already fixed the width — the header
+     * stopped reserving a tap target for a chip that had moved to the felt, so portrait has MORE
+     * room now than when the counter was drawn there.
+     *
+     * So this is a constant rather than a rule. The one measurement that survives is the honest
+     * one inside `HeaderName`: it draws the name first and adds the counter only if both fit the
+     * box, so a narrow window still loses the counter and never the wordmark. That check measures
+     * text it is about to draw, which is what the arithmetic this replaced could not do.
      */
-    val counter: Boolean get() = labelled
+    val counter: Boolean get() = true
 }
 
 /** The rule itself, apart from Compose so it can be asserted directly. */
