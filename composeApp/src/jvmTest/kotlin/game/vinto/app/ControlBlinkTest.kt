@@ -18,6 +18,7 @@ import game.vinto.shapes.Difficulty
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * A control the table has offered does not go away again on its own.
@@ -47,7 +48,7 @@ import kotlin.test.assertTrue
 class ControlBlinkTest {
 
     @Test
-    fun aControlIsNeverOfferedAndThenWithdrawnWhileTheBotsPlay() = runComposeUiTest {
+    fun aControlIsNeverOfferedAndThenWithdrawnWhileTheBotsPlay() = runComposeUiTest(testTimeout = BUDGET) {
         val game = runBlocking { LocalGame.start(MemoryVault(), SEED, Difficulty.EASY) }
         setContent {
             // The pauses are the point here, so the pacing is a player's rather than nobody's.
@@ -120,5 +121,26 @@ class ControlBlinkTest {
         const val SEED = 12L
         const val TICK = 100L
         const val STEPS = 60
+
+        /**
+         * A CI budget, not a claim about the code — the same one, and for the same reason, as
+         * `SwapAnimationTest`'s.
+         *
+         * `runComposeUiTest` inherits `runTest`'s sixty-second wall clock, and this test spends it
+         * on real work by design: 120 paused-clock ticks, each rendered and settled, around three
+         * bots' MCTS running on the composition's own scope. Collapsing that is not an option —
+         * the note at the top of this file is about an earlier version that drove the session
+         * directly, ran the whole turn before the UI composed once, and so could not see the bug.
+         *
+         * It measures **14.7 s** on an Apple-silicon laptop and fitted inside the minute there. It
+         * did not fit on a GitHub runner, which is several times slower at exactly this kind of
+         * work: the deadline fired mid-body and reported an `UncompletedCoroutinesError` naming
+         * neither the rail nor the blink, in two of six runs — the intermittency being the tell
+         * that it was landing near the line rather than hanging.
+         *
+         * Five minutes is a hang detector, which is what this clock is for. It is not a licence
+         * for the test to grow: at anything near it, the thing to fix is the test.
+         */
+        val BUDGET = 5.minutes
     }
 }
