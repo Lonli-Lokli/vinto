@@ -284,7 +284,13 @@
     <string name="seat_pointed_vinto">%1$s called Vinto</string>
     <string name="seat_pointed_penalty">%1$s is taking a card from the deck</string>
     <string name="seat_pointed_coalition">%1$s leads the coalition</string>
-    <string name="table_final_round">Final round</string>
+    <!-- The arrival into a final round somebody else called. Drawn as a panel over the table
+         because three coalition turns can pass in under a second and the band that used to
+         carry the news was one word in the corner: reported from a phone as not noticing that
+         anybody had called at all. %1$s is the caller, %2$s the teammates, already joined. -->
+    <string name="table_called_vinto">%1$s called Vinto!</string>
+    <string name="table_you_are_with">You are with %1$s. Tell them what you know, then make a plan together.</string>
+    <string name="table_called_vinto_go">Share what I know</string>
     <string name="detail_ace_hurts_your_side">The caller is out of bounds, so an Ace can only make one of your own side draw.</string>
     <string name="talk_low">You say your hand is the low one.</string>
     <string name="talk_low_they">%1$s says theirs is the low hand.</string>
@@ -586,8 +592,11 @@
          `rail_card_action`, because it is that sentence when no card is drawn beside it. -->
     <string name="detail_card_does">%1$s, worth %2$d: %3$s</string>
     <string name="detail_king_declared">The King declared a %1$s: %2$s</string>
-    <string name="detail_tap_to_say">Tap one of your cards to say what you think it is.</string>
-    <string name="detail_table_talk">Table talk — the coalition takes your word for it, right or wrong.</string>
+    <string name="detail_tap_to_say">Tap any card to say what you think it is — yours, a teammate’s, or theirs.</string>
+    <!-- Under the rank rail, and it has to carry both halves. A rank is a *toggle*: name one
+         and the card is that card, name several and it is one of them — which fourteen plaques
+         in a grid cannot say for themselves. And nothing checks a claim when it is made. -->
+    <string name="detail_name_the_ranks">Tap every rank it could be — one alone if there is no doubt.</string>
     <string name="detail_right_plays">Right plays its action; wrong costs you a card.</string>
     <string name="detail_wrong_costs">A wrong one costs you a penalty card.</string>
     <string name="detail_barred_card">You guessed wrong on this card, so you are out of this one. The next card to land is a fresh chance.</string>
@@ -610,40 +619,58 @@
     <string name="ask_name_what_you_put_down">Name the card you are putting down?</string>
     <string name="ask_which_way_round">Which way round are they?</string>
     <string name="ask_say_what_you_know">Tell the others what you know.</string>
-    <!-- The three assessments a coalition member can offer in one tap. Kept to two words each:
-         they share a row with "Done talking" on a phone. -->
-    <string name="label_standing_low">I am low</string>
-    <string name="label_standing_high">I am high</string>
-    <string name="label_standing_bin">Bin me</string>
-    <string name="label_done_talking">Done talking</string>
+    <!-- The way out of the confer window, and the only button on it. It said "Done talking",
+         which named the half that costs nothing — talk is free, and may be resumed on any later
+         turn — and hid the half that does not: pressing it sets three final turns going. -->
+    <string name="label_ready">I’m ready</string>
+    <!-- Send the claim the rail has been building. A confirm rather than a send-on-tap,
+         because a rank is a toggle now and "a 7 or an 8" cannot be told from "a 7" until the
+         player says they are finished. It said "Say it", which reads as an instruction rather
+         than as the end of one. -->
+    <string name="label_say_it">Done</string>
     <!-- The coalition's shared plan (design D7a): a board of parts agreed as a whole. -->
     <string name="label_agree">Agree</string>
-    <string name="label_do_as_planned">Do as planned</string>
-    <string name="label_keep_it_instead">Keep it instead</string>
     <!-- The three answers to "what should this seat do with the card their turn takes?" -->
     <string name="label_play_the_card">Play it</string>
-    <string name="label_keep_the_card">Keep it</string>
+    <!-- The middle answer of a planned turn: the drawn card goes into the hand and one of the
+         seat's own goes out. In the live turn's own words — its rail says "Swap Cards" for
+         the same move — and the reporter's: "swap with my jack". It said "Keep it", which
+         named the half nobody plans around. -->
     <string name="label_let_the_card_go">Let it go</string>
-    <string name="label_plan_declare">Declare a rank</string>
-    <string name="label_plan_take_discard">Take the discard</string>
-    <string name="label_plan_clear">Clear</string>
-    <string name="label_plan_shed">Throw in</string>
+    <!-- The two answers to "where does the card come from?": the deck, or the unplayed action
+         card lying on the discard — named, because it is the one card a plan knows in
+         advance. %1$s is the card's name. -->
+    <!-- Call the card being put down as the rank the table knows it to be, so that a right call
+         plays its action. One tap, offered rather than asked; %1$s is the card's name. -->
+    <!-- One throw-in, taken off the turn it was said on. -->
+    <string name="label_remove_throw">Not throwing</string>
+    <!-- Watch one turn of the plan again, from the table it starts on. -->
+    <string name="label_plan_replay">Watch this turn</string>
     <string name="ask_which_rank_throw_in">Which rank will you throw in if one lands?</string>
-    <string name="detail_shed_risk">Only a rank you have seen in your hand: a wrong throw costs you a card and bars you for the rest of the round.</string>
-    <string name="detail_shed_risk_pushed">Yours is the hand the coalition is pushing. A wrong throw costs it a card and bars it for the rest of the round — throw in only what you have seen.</string>
+    <string name="ask_which_rank_they_throw_in">Which rank will %1$s throw in if one lands?</string>
+    <!-- A known 7, 8, 9 or 10 on the turn: the one card it looks at is touched on the felt. %1$s is the card's name. -->
+    <string name="ask_which_card_will_it_look_at">Which card does the %1$s look at? Touch it.</string>
+    <string name="ask_which_card_king_points_at">Which card does the King point at? Touch it.</string>
+    <string name="ask_who_should_draw">Who draws a card?</string>
+    <string name="detail_touch_the_card">Touch the card on the table.</string>
     <string name="detail_claim_was_wrong">A step here was built on a claim the cards have since proved wrong. That is the game working, not a mistake: somebody remembered a card differently from how it lies.</string>
     <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
-    <string name="table_rehearsal">Rehearsal — nothing has moved</string>
     <string name="ask_what_will_you_do">What will you do with your turn?</string>
     <string name="ask_what_should_they_do">What should %1$s do with their turn?</string>
+    <!-- The first question of a planned turn, asked only while the discard holds an unplayed
+         action card — with a plain card on it the deck is the only pile, and nothing is asked. -->
+    <string name="ask_where_will_your_card_come_from">Where will your card come from?</string>
+    <string name="ask_where_should_their_card_come_from">Where should %1$s’s card come from?</string>
+    <!-- A known Jack or Queen is on this turn — off the pile, or called as it is put down — and
+         the two cards it trades are touched on the felt. %1$s is the card's name. -->
+    <string name="ask_which_two_will_it_swap">Which two cards does the %1$s swap? Touch one, then the other.</string>
     <string name="ask_which_rank_will_you_declare">Which rank will you declare with the King?</string>
     <string name="ask_which_rank_should_they_declare">Which rank should %1$s declare with the King?</string>
-    <string name="ask_which_card_will_you_put_down">Which card will you put down for a teammate to throw in on?</string>
-    <string name="ask_which_card_should_they_put_down">Which card should %1$s put down for a teammate to throw in on?</string>
-    <string name="detail_plan_asks">The plan: %1$s.</string>
-    <!-- The drawn card does more for the coalition than the plan's step would: %1$s the card's
-         name, %2$d the 1-based position of the viewer's card it should replace. -->
-    <string name="detail_draw_beats_plan">Your %1$s beats the plan: keep it in place of card %2$d.</string>
+    <!-- After "Swap it in": which card leaves to make room for the draw. Neutral about why —
+         it used to say "for a teammate to throw in on", and a member swapping the draw into
+         their Jack's place so as to call the Jack was being told a different purpose. -->
+    <string name="ask_which_card_will_you_put_down">Which of your cards goes out to make room for it?</string>
+    <string name="ask_which_card_should_they_put_down">Which of %1$s’s cards goes out to make room for it?</string>
     <string name="detail_plan_is_a_suggestion">A plan is a suggestion. Whoever’s turn it is decides.</string>
     <string name="board_title">The plan</string>
     <!-- The plan on the felt (design D1). One switch, on for the whole of a final round whether
@@ -651,16 +678,16 @@
          nobody opens. A switch says its own state, so there is no second word for "close". -->
     <string name="label_plan_open">Plan</string>
     <!-- The transport (design D14): the plan is a short film with one stop per turn. -->
-    <string name="label_plan_run">Play</string>
     <string name="label_plan_halt">Stop</string>
-    <string name="label_plan_back">Back</string>
-    <string name="label_plan_on">Next</string>
-    <string name="label_plan_rewind">Start</string>
     <!-- One planned turn, read out whole: %1$d its number, %2$s whose it is, %3$s a
          board_step_* fragment or "your call". -->
-    <string name="board_turn_planned">Turn %1$d, %2$s: %3$s</string>
-    <string name="board_played">%1$s, played</string>
-    <string name="board_now">Now</string>
+    <!-- One stop on the plan's stepper, said in full. The chip draws the turn's number and the
+         face of the seat whose turn it ends; somebody hearing the screen gets the same two things
+         as words. %1$d the number, %2$s the seat. -->
+    <!-- One stop on the plan's stepper, beside the seat's own face. The word is carried rather
+         than left as a bare numeral: "1" alone was the thing a player asked about by name. -->
+    <string name="board_turn_stop">Turn %1$d</string>
+    <string name="board_turn_stop_spoken">Turn %1$d, %2$s</string>
     <string name="board_unplayable">This turn cannot be played from here: a card it names has gone.</string>
     <string name="board_broken">A claim under this turn has been proved wrong.</string>
     <!-- Where the plan lands (design D10, D12): three numbers, and no verdict. Whether that
@@ -670,27 +697,45 @@
          because they are one edit, and neither needs a pointer or a hold: it reads the same on
          a phone, on a tablet in a browser, and on a desktop with a mouse. -->
     <string name="board_carry_hint">Carry a card to where it should go — or touch it, then touch the place.</string>
-    <string name="board_arrival_title">Where this leaves us</string>
-    <string name="board_arrival_ours">Our best hand: %1$d</string>
-    <string name="board_arrival_theirs">They are believed to hold: %1$d</string>
-    <string name="board_arrival_unseen">Nobody has spoken about %1$d of their cards.</string>
-    <string name="board_your_call">your call</string>
     <!-- The owner of a card, as a step's sentence needs it: "swap your card 2 with Nina’s card 3". -->
     <string name="board_owner_you">your</string>
     <string name="board_owner_named">%1$s’s</string>
     <string name="board_step_swap">swap %1$s card %2$d with %3$s card %4$d</string>
     <string name="board_step_declare">declare %1$s with a King</string>
+    <!-- A King pointed at a card: %1$s the owner ("your" / "Nina’s"), %2$d the card, %3$s the rank named. -->
+    <string name="board_step_declare_card">declare %1$s card %2$d a %3$s with a King</string>
+    <string name="board_step_peek">look at %1$s card %2$d</string>
+    <string name="board_step_peek_two">look at %1$s card %2$d and %3$s card %4$d</string>
+    <string name="board_step_force_draw">make %1$s draw a card</string>
+    <!-- The turn as a sentence, one chip per word that names a decision. The open questions of a
+         turn — which pile, and then what, which card, which two — are words too, drawn where their
+         answer will go, so the shape of a turn shows before it is decided. Owners are named as the
+         table names them ("You", "Nina"); a card is its 1-based place along the row. -->
+    <string name="says_draws">draws</string>
+    <string name="says_takes">takes the %1$s</string>
+    <string name="says_takes_the_pile">takes the pile’s card</string>
+    <string name="says_plays_it">plays it</string>
+    <string name="says_lets_it_go">lets it go</string>
+    <string name="says_what_with">and then?</string>
+    <string name="says_which_card">which card goes out?</string>
+    <string name="says_call_it">+ call it %1$s</string>
+    <string name="says_which_two">which two cards?</string>
+    <string name="says_which_to_look_at">at which card?</string>
+    <string name="says_forces">makes %1$s draw</string>
+    <string name="says_who_draws">who draws?</string>
+    <!-- Who throws in on the turn, in the you-form for the viewer and the named form for anybody else. -->
+    <string name="says_you_throw">then you throw in a %1$s</string>
+    <string name="says_throws">then %1$s throws in a %2$s</string>
+    <string name="says_add_throw">+ throw in…</string>
+    <!-- Said of the word the rail is waiting on, so it is marked by more than its colour. -->
+    <string name="says_asked">being asked now</string>
+    <!-- Between the words of a turn when it is said in one line rather than as chips. -->
     <string name="board_step_take_discard">take the discard</string>
-    <string name="board_from_the_deck">draw from the deck</string>
     <!-- The short form of what a step names, for the chip on the turn's row. The sentence it
          replaces is still what a screen reader is given. %1$s and %3$s are whose cards, %2$d
          and %4$d which ones, counting from the left as people do. -->
     <!-- One end of a planned trade: whose card, and which one, counting from the left. The
          arrow between the two ends is drawn rather than written, so no font can lose it. -->
-    <string name="board_part_end">%1$s %2$d</string>
-    <string name="board_part_card">card %1$d</string>
-    <string name="board_part_card_called">card %1$d = %2$s</string>
-    <string name="board_nobody_throws_in">nobody throws in yet</string>
     <!-- Let the drawn card go and leave the hand alone: how a coalition tells the seat holding
          its best hand not to touch it. -->
     <string name="board_step_bin">let the card go</string>
@@ -702,14 +747,94 @@
          the _known form %3$s the rank the table knows it to be. -->
     <string name="board_step_put_down">put down %1$s card %2$d</string>
     <string name="board_step_put_down_known">put down %1$s card %2$d, the %3$s</string>
+    <!-- The same put-down, called as it goes: a right call plays the card's action. %1$s the
+         owner ("your" / "Nina’s"), %2$d the card's position, %3$s the name of the rank called. -->
+    <string name="board_step_put_down_called">put down %1$s card %2$d and call it %3$s</string>
+    <!-- Joins a put-down to what its call then does, in one sentence: %1$s the put-down
+         fragment, %2$s a board_step_* fragment for the called card's action. -->
+    <string name="board_step_then">%1$s, then %2$s</string>
+    <!-- The chip on the turn's row for the call: short, beside "card 1 = J". %1$s is the rank
+         as the card shows it. -->
+    <!-- A coalition seat's plate while the plan is open: touching it opens that seat's turn.
+         The you-form is the viewer's own plate. -->
+    <string name="seat_plan_your_turn">Plan your turn</string>
+    <string name="seat_plan_their_turn">Plan %1$s’s turn</string>
     <!-- A lane owner's alternative to the step somebody set for them, beside it on the board:
          %1$s their name, %2$s a board_step_* fragment. Tapping it puts it on the board. -->
+    <!-- The plan's rail (design D1): one turn a page, a sentence a turn. A word that names a
+         card is drawn beside a picture of the card, so the chip carries the verb alone — the
+         _word forms — and the spoken form says the card in words: %1$s is whose ("your",
+         "Nina’s"), %2$d the card's place along the row as people count, %3$s a rank. -->
+    <string name="says_takes_word">takes the</string>
+    <string name="says_drew">drew the %1$s</string>
+    <string name="says_drew_word">drew the</string>
+    <!-- Nothing decided about the card: plain, because it is not a decision. -->
+    <string name="says_well_see">and we’ll see</string>
+    <!-- The next decision, on offer at the end of the line. -->
+    <string name="says_and_then">+ and then…</string>
+    <string name="says_puts_down_word">puts down</string>
+    <string name="says_puts_down_whose">puts down %1$s card %2$d</string>
+    <string name="says_puts_down_whose_known">puts down %1$s card %2$d, the %3$s</string>
+    <!-- A Jack's swap, and a Queen's look at the same two cards: the arrow between them says which. -->
+    <string name="says_swaps_two">swaps %1$s card %2$d with %3$s card %4$d</string>
+    <string name="says_looks_at_both">looks at %1$s card %2$d and %3$s card %4$d</string>
+    <string name="says_looks_at_word">looks at</string>
+    <string name="says_looks_at_one">looks at %1$s card %2$d</string>
+    <!-- A King points at a card first and names it second: the card, and what it is said to be. -->
+    <string name="says_points_at">points at %1$s card %2$d: a %3$s</string>
+    <string name="says_points_at_what">points at %1$s card %2$d — which rank?</string>
+    <string name="says_which_to_point_at">points at which card?</string>
+    <!-- The older King that names a rank at whoever holds one. -->
+    <string name="says_names">declares %1$s</string>
+    <!-- After the picture of the pointed card: "[card] is a 5", or the question. -->
+    <string name="says_is_a">is a %1$s</string>
+    <string name="says_is_a_what">is a…?</string>
+    <!-- A throw-in: the thrower's face, this word, the card — and "blind" where the table cannot
+         vouch for the match: a card nobody has named, thrown to see it. A wrong throw costs a
+         penalty card and shows the card, which real tables sometimes want. -->
+    <string name="says_throws_word">throws in</string>
+    <string name="says_blind">blind</string>
+    <string name="says_throws_blind">then %1$s throws in card %2$d blind</string>
+    <string name="says_you_throw_blind">then you throw in card %1$d blind</string>
+    <string name="says_which_to_throw">which card?</string>
+    <!-- The rail's rows: the label before the throw-ins, and the last page where the plan lands —
+         the caller's hand as the coalition believes it, and every coalition hand the same way.
+         %1$d is a total of the cards somebody has named, or a count of cards nobody has. -->
+    <string name="board_then">then</string>
+    <string name="board_lands">Lands</string>
+    <string name="board_named">%1$d named</string>
+    <string name="board_unnamed">%1$d unnamed</string>
+    <string name="board_ours">ours</string>
+    <string name="board_hand_unknown">+%1$d unknown</string>
+    <!-- A card the plan draws or deals, on the felt and in the sentence: rose, tagged with the
+         turn it arrives on, because nobody has seen it. Spoken for the tag. -->
+    <string name="card_arrives">A card nobody has seen, arriving on turn %1$d</string>
+    <!-- The two film buttons: ▶ this turn again, ▶▶ every turn from here to where the plan lands. -->
+    <string name="label_plan_play_all">Play every turn</string>
+    <!-- The switch in the header while the plan is closed and a teammate has changed your turn. -->
+    <string name="label_plan_changed_by">Plan — %1$s changed your turn</string>
+    <!-- What becomes of the card a turn takes, offered under the sentence. -->
+    <string name="label_put_a_card_down">Put a card down</string>
+    <string name="label_well_see">We’ll see</string>
+    <!-- A King's rank, offered from what the table said the pointed card is: %1$s the rank, %2$s who said it. -->
+    <string name="label_rank_said_by">%1$s — %2$s said so</string>
+    <string name="label_another_rank">Another rank…</string>
+    <!-- The line under the sentence: how it is changed, who changed it, how a throw is picked. -->
+    <string name="detail_touch_a_word">Touch a boxed word to change it.</string>
+    <string name="detail_changed_by">%1$s changed this turn.</string>
+    <string name="detail_touch_a_card_to_throw">Touch a card to throw in: gold ones match, dim ones throw blind.</string>
+    <string name="detail_the_caller_reads">The coalition’s plan, as they have it. You called Vinto, so it is yours to read and not to change.</string>
+    <string name="ask_which_card_you_throw_in">Which card do you throw in? Touch it.</string>
+    <string name="ask_which_card_they_throw_in">Which card does %1$s throw in? Touch it.</string>
+    <!-- A King's step said whole while the rank is still to be named, and one that names nothing yet. -->
+    <string name="board_step_point">point the King at %1$s card %2$d</string>
+    <string name="board_step_declare_unnamed">declare a rank with a King</string>
     <string name="board_would_rather">%1$s would rather %2$s</string>
-    <string name="board_shed">%1$s will throw in a %2$s</string>
-    <string name="board_edited_by">last changed by %1$s</string>
     <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
     <!-- A claim nobody has contradicted: what one player says a card is. -->
     <string name="badge_plain">what somebody says this card is</string>
+    <!-- Spoken on a claim still being composed: the speaker can see it, nobody else can. -->
+    <string name="badge_draft">not said yet</string>
     <string name="badge_disputed">disputed</string>
     <string name="badge_paired">one of a pair, order unknown</string>
     <string name="badge_right">right</string>
@@ -720,6 +845,9 @@
     <string name="label_this_way_round">%1$s then %2$s</string>
     <string name="label_not_sure_which_way">Not sure which</string>
     <string name="ask_what_do_you_say">What do you say this card is?</string>
+    <!-- The same question once two cards are held: "this card" is plainly wrong, and the
+         prompt is the only thing on the screen that confirms the second tap landed. -->
+    <string name="ask_what_do_you_say_these">What do you say these two are?</string>
     <string name="ask_say_and_play">Say what it is, and play that card's action</string>
     <string name="ask_look_at_one_of_yours">Look at one of your own cards</string>
     <string name="ask_look_at_one_of_theirs">Look at one card of another player</string>

@@ -142,7 +142,8 @@ fun GameScreen(
             // Read once and handed to both the screen and the router: which table this is
             // decides what a touch on a card means (design D2), and the two must not be
             // deciding it from different values a frame apart.
-            val table = holder.tableAsShown(shown, drawn = LocalStage.current.drawn)
+            val stage = LocalStage.current
+            val table = holder.tableAsShown(shown, drawn = stage.drawn, rehearsing = stage.rehearsing)
             Column(modifier = Modifier.fillMaxSize()) {
                 TableScreen(
                     // `shown` rather than the live view: while the bots' moves are being played

@@ -10,11 +10,12 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.Lane
+import game.vinto.shapes.Opening
 import game.vinto.shapes.Pile
 import game.vinto.shapes.PlayerState
 import game.vinto.shapes.Rank
-import game.vinto.shapes.Shed
 import game.vinto.shapes.Step
+import game.vinto.shapes.TossIn
 import game.vinto.shapes.getCardShortDescription
 import game.vinto.shapes.getCardValue
 import kotlin.test.Test
@@ -68,6 +69,7 @@ class PlanOutcomeTest {
         theirs: List<Rank> = listOf(Rank.NINE, Rank.KING),
         callers: List<Rank> = listOf(Rank.FOUR, Rank.FOUR),
         callerSpoken: Int = 2,
+        discardTop: Rank = Rank.EIGHT,
     ): GameState {
         fun spoken(id: String, ranks: List<Rank>, upTo: Int = ranks.size) =
             ranks.indices.take(upTo).map { Claim(id, listOf(it), listOf(ranks[it])) }
@@ -84,11 +86,12 @@ class PlanOutcomeTest {
                 seat(caller, callers, spoken(me, callers, callerSpoken)),
                 seat(mate, theirs, spoken(mate, theirs)),
             ),
-            currentPlayerIndex = 0,
+            // The caller is still on play: every coalition turn is still to come.
+            currentPlayerIndex = 1,
             vintoCallerId = caller,
             coalitionLeaderId = null,
             drawPile = Pile((0..4).map { card(Rank.THREE, "draw-$it") }),
-            discardPile = Pile(listOf(card(Rank.EIGHT, "seed"))),
+            discardPile = Pile(listOf(card(discardTop, "seed"))),
             pendingAction = null,
             activeTossIn = null,
             turnActions = emptyList(),
@@ -109,20 +112,28 @@ class PlanOutcomeTest {
     }
 
     @Test
-    fun puttingACardDownTakesEveryKnownMatchWithItAndPricesTheDraw() {
-        // 3.14: my nine goes to the pile and the mate's claimed nine follows it in the toss-in,
-        // leaving them a King alone — 0. The draw that takes my nine's place is unseen and
-        // priced as one, so my hand is 2 plus the deck's mean rather than 2.
+    fun puttingACardDownPricesTheDrawAndSweepsOnlyWhatSomebodyHasSaidTheyWillThrow() {
+        // 3.14: my nine goes to the pile and the mate's claimed nine follows it — but only once
+        // the mate has said so, because a throw-in is part of the turn and not a reflex the
+        // readout assumes. Then they hold a King alone: 0. The draw that takes my nine's place is
+        // unseen and priced as one, so my hand is 2 plus the deck's mean rather than 2.
         val nines = table(mine = listOf(Rank.TWO, Rank.NINE), theirs = listOf(Rank.NINE, Rank.KING))
-        val plan = CoalitionPlan(
+        val silent = CoalitionPlan(
             lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 1)))),
             agreed = listOf(me),
             editedBy = me,
         )
-        assertEquals(0, read(nines, plan).ourBest)
+        assertEquals(7, read(nines, silent).ourBest, "a put-down swept a match nobody had promised to throw")
+
+        val thrown = CoalitionPlan(
+            lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 1)), tossIns = listOf(TossIn(mate, Rank.NINE)))),
+            agreed = listOf(me),
+            editedBy = me,
+        )
+        assertEquals(0, read(nines, thrown).ourBest)
 
         // No match anywhere: the card leaves, the draw arrives, and nothing else moves.
-        val alone = read(table(mine = listOf(Rank.TWO, Rank.THREE)), plan)
+        val alone = read(table(mine = listOf(Rank.TWO, Rank.THREE)), silent)
         assertEquals(7, alone.ourBest, "the draw that replaces a put-down card was priced as free")
     }
 
@@ -157,23 +168,34 @@ class PlanOutcomeTest {
 
     @Test
     fun aSwapMovesTheValueAndTheBestHandFollows() {
-        // The concentration play: my 3 for their King. Mine becomes 2+0 = 2.
+        // The concentration play, made the way the rules let it happen: the mate puts down the
+        // Jack they hold, calls it, and it trades my 3 for their King. Mine becomes 2+0 = 2.
         val plan = CoalitionPlan(
             lanes = listOf(
-                Lane(mate, Step.Swap(from = CardAt(me, 1), to = CardAt(mate, 1))),
+                Lane(
+                    mate,
+                    Step.PutDown(
+                        CardAt(mate, 2),
+                        guess = Rank.JACK,
+                        then = Step.Swap(from = CardAt(me, 1), to = CardAt(mate, 1)),
+                    ),
+                ),
             ),
         )
 
-        assertEquals(2, read(table(), plan).ourBest)
+        assertEquals(2, read(table(theirs = listOf(Rank.NINE, Rank.KING, Rank.JACK)), plan).ourBest)
     }
 
     @Test
-    fun aKingEmptiesTheRankOutOfEveryCoalitionHand() {
-        // And only theirs — the caller may not toss in once they have called, so a King can
-        // never help them shed.
-        val plan = CoalitionPlan(lanes = listOf(Lane(mate, Step.Declare(Rank.NINE))))
-        val before = read(table())
-        val outcome = read(table(), plan)
+    fun aKingTakesTheCardItPointsAtAndTheThrowInsTakeTheRest() {
+        // And only from the coalition — the caller may not toss in once they have called, so a
+        // King can never help them shed. The King itself takes one card: the one it points at,
+        // or the first one believed to be the rank where the plan names no card.
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(mate, Step.Declare(Rank.NINE, CardAt(mate, 0)), opening = Opening.TAKE_THE_DISCARD)),
+        )
+        val before = read(table(discardTop = Rank.KING))
+        val outcome = read(table(discardTop = Rank.KING), plan)
 
         // The teammate's 9 goes and their King is worth nothing, so *their* hand becomes the
         // best one — which is the concentration play working, not a bug.
@@ -187,12 +209,22 @@ class PlanOutcomeTest {
     }
 
     @Test
-    fun aShedLowersAHandWithoutSpendingATurn() {
+    fun aThrowInLowersAHandWithoutSpendingATurn() {
         // The cheapest tool the coalition has, and the one a lanes-only plan would miss: the
-        // round is three turns *plus every window they open*.
-        val plan = CoalitionPlan(sheds = listOf(Shed(me, Rank.THREE)))
+        // round is three turns *plus every window they open*. Said on the turn it lands on —
+        // the mate's King names threes, and I throw mine in.
+        val plan = CoalitionPlan(
+            lanes = listOf(
+                Lane(
+                    mate,
+                    Step.Declare(Rank.THREE),
+                    opening = Opening.TAKE_THE_DISCARD,
+                    tossIns = listOf(TossIn(me, Rank.THREE)),
+                ),
+            ),
+        )
 
-        assertEquals(2, read(table(), plan).ourBest)
+        assertEquals(2, read(table(discardTop = Rank.KING), plan).ourBest)
     }
 
     @Test

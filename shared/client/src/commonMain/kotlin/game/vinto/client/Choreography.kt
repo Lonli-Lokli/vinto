@@ -203,6 +203,21 @@ data class Frame(
      * ghost frame shows outlives it.
      */
     val ghost: Boolean = false,
+    /**
+     * Which turn of the plan a ghost frame plays, as people count, or null for a real move.
+     *
+     * The stage reads it to say, between two turns of the film, whose turn has just played and
+     * whose comes next — three coalition turns run into one stream of cards otherwise.
+     */
+    val turn: Int? = null,
+    /**
+     * For a ghost frame: the cards on its table that the plan has drawn or dealt, each tagged
+     * with the turn it arrives on, and the turn since which the pile's top is a card nobody
+     * knows. The felt draws the frame's own table while the film plays, and reads these off
+     * the stage to paint those cards rose — see `Board.fresh` for the parked equivalent.
+     */
+    val fresh: Map<CardRef, Int> = emptyMap(),
+    val pileUnknown: Int? = null,
 ) {
     /** Whoever made the move, or null for the engine's own bookkeeping. */
     val actorId: String? get() = action.actorId
@@ -361,11 +376,19 @@ fun List<Frame>.tossedTogether(): List<Frame> {
             else -> {
                 val flights = group.mapNotNull { it.scenes.firstOrNull() }.flatten()
                 val rest = group.flatMap { it.scenes.drop(1) }
+                // The last throw's table, and the last throw's account of it: a plan's throws
+                // are ghosts of one turn, and the merged frame stays one — dropping the flag
+                // would have the felt snap back to the parked table between two throws.
+                val last = group.last()
                 out += Frame(
-                    action = group.last().action,
+                    action = last.action,
                     scenes = listOfNotNull(flights.takeIf { it.isNotEmpty() }) + rest,
-                    view = group.last().view,
+                    view = last.view,
                     said = group.flatMap { it.said },
+                    ghost = last.ghost,
+                    turn = last.turn,
+                    fresh = last.fresh,
+                    pileUnknown = last.pileUnknown,
                 )
             }
         }

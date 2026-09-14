@@ -11,6 +11,7 @@ import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
+import game.vinto.shapes.coalitionInTurnOrder
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -180,33 +181,32 @@ class ConferWindowTest {
     }
 
     @Test
-    fun aLaneLocksWhenItsOwnersTurnBegins() {
-        // A plan must not change under the hand of the person executing it. Later lanes stay
-        // open, because the round is still going and better information keeps arriving.
-        // **Wound on to a coalition member's turn first.** Straight out of the call the caller
-        // is still the current player — the window opens before the turn moves — so a plan
-        // made here would have to name the caller's seat to lock anything, and the caller has
-        // no lane. The state this is about is the one after that: somebody in the coalition is
-        // playing, and their step is the one that must stop moving.
+    fun aLaneLocksOnceItsOwnersTurnHasBeenPlayed() {
+        // History is not edited; the turn on play and the ones after it stay open, because the
+        // round is still going and the drawn card is the news the plan turns on.
+        // **Wound on to the second coalition turn.** Straight out of the call the caller is
+        // still the current player — the window opens before the turn moves — so nothing has
+        // been played yet and nothing locks. The state this is about is the one after the first
+        // coalition turn: it is over, and its lane is the one that must stop moving.
         val called = decodeRoom(finalRoundCalledBy(seat = 1))
         val dealt = checkNotNull(called.game)
         val caller = checkNotNull(dealt.vintoCallerId)
-        val coalition = dealt.players.filter { it.id != caller }
+        val coalition = coalitionInTurnOrder(dealt.players.map { it.id }, caller)
 
-        val onPlay = coalition.first().id
-        val other = coalition.last().id
-        check(onPlay != other)
+        val played = coalition[0]
+        val onPlay = coalition[1]
+        val other = coalition[2]
 
-        // Planned in the window, with the caller still on play — a seat whose turn has begun
-        // takes no fresh lane, which PlanDoorTest holds — and then the turn moves.
         val planned = editPlan(
-            editPlan(called, TOKEN_A, PlanEdit.SetLane(onPlay, Step.TakeTheDiscard), START).state,
+            editPlan(called, TOKEN_A, PlanEdit.SetLane(played, Step.TakeTheDiscard), START).state,
             TOKEN_A,
             PlanEdit.SetLane(other, Step.TakeTheDiscard),
             START,
         )
         assertNull(planned.error)
-        val moved = planned.state.copy(
+        val withOnPlay = editPlan(planned.state, TOKEN_A, PlanEdit.SetLane(onPlay, Step.Bin), START)
+        assertNull(withOnPlay.error)
+        val moved = withOnPlay.state.copy(
             game = dealt.copy(currentPlayerIndex = dealt.players.indexOfFirst { it.id == onPlay }),
         )
 
@@ -214,7 +214,8 @@ class ConferWindowTest {
         val after = decodeLifecycle(onAlarm(encode(moved), START + 2_000.0)).state
         val lanes = checkNotNull(after.plan).lanes
 
-        assertTrue(lanes.first { it.seat == onPlay }.locked, "the turn in progress was left editable")
+        assertTrue(lanes.first { it.seat == played }.locked, "the played turn was left editable")
+        assertFalse(lanes.first { it.seat == onPlay }.locked, "the turn in progress was frozen")
         assertFalse(lanes.first { it.seat == other }.locked, "a later turn was frozen too early")
     }
 

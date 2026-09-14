@@ -85,6 +85,14 @@ among the static rows.
   in silence) from a belief being *wrong* (never repaired, and news) — but the broken marker
   currently rides on the rail rows this change retires, so the felt takes it over.
 
+**After a third report — "we must be able to express any coalition actions visually on a
+plan, even order of players"** — the change widened once more: the plan says the whole of the
+rules (a throw-in is part of the turn it lands on, in the order people throw, with what its card
+does; a look, a pointed King and an Ace are steps), the turn is built and read as a sentence of
+touchable words rather than a row of marks, and the plan is information only — nothing on the
+live rail is armed by it. `tasks.md` §12 and design D15–D17 carry it, and the wire went to
+version 4 with the floor at 4.
+
 ## Capabilities
 
 ### New Capabilities
@@ -126,6 +134,10 @@ new suite for the tap contract. `ScreenshotTest`'s goldens change.
   no speaking into the coalition’s channel.
 - No change to `CoalitionPlan` / `PlanEdit` on the wire, to what a `Step` can express, or to how
   bots plan and answer.
+- **No control that answers an ask.** `TableTalk.GiveMe` stays a line in the log: nothing in the
+  app consumes one, the plan already carries "which cards should end up where" as a step somebody
+  can build and agree to, and a member holding a Jack can grant an ask on their own turn without
+  a button for it. `tasks.md` carries the argument.
 - No hover-only interaction, on any platform — and no edit reachable *only* by dragging.
 - Not a redesign of the ordinary (non-final) turn, the log strip, or the score sheet.
 - Not the online protocol: a plan edit travels exactly as it does today.

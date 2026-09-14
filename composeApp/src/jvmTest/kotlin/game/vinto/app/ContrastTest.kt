@@ -109,6 +109,21 @@ class ContrastTest {
         }
     }
 
+    /**
+     * And a button that is a toggle turns over when it is on: the parchment that was its
+     * letters becomes its ground, and the dark shade that was its ground becomes its letters.
+     *
+     * The pair is the same two colours the other way round, which is not the same question —
+     * `Wcag.contrast` is symmetrical but *which* one carries the small bold text is not, and
+     * the rank rail is fourteen plaques of it at once.
+     */
+    @Test
+    fun aSelectedToggleIsLegibleInverted() = bothSchemes { scheme ->
+        ButtonTone.entries.forEach { tone ->
+            text(tone.low, tone.ink, "$scheme: ${tone.name}, selected")
+        }
+    }
+
     // ---------------------------------------------------------------- signals, 3:1
 
     /**
@@ -151,6 +166,31 @@ class ContrastTest {
     fun theOutlineOfAControlCanBeSeen() = bothSchemes { scheme ->
         ui(Rail.edge, Rail.fill, "$scheme: the outline of an unselected chip")
         ui(Rail.ink, Rail.fill, "$scheme: the fill of a selected one")
+    }
+
+    /**
+     * The plan's own colours (design D1): the word being asked for in the coalition's blue,
+     * a decision's word on its box, a fact in dim ink — and a card nobody has seen, rose on
+     * the felt and in the sentence, with the turn it arrives on in its corner.
+     *
+     * Asked for as "some pink background or whatever better from WCAG", and answered with the
+     * numbers: every pair here is measured in both schemes.
+     */
+    @Test
+    fun thePlansOwnColoursCanBeReadInBothSchemes() = bothSchemes { scheme ->
+        text(Rail.onAsked, Rail.asked, "$scheme: the word being asked for")
+        ui(Rail.asked, Rail.fill, "$scheme: the asked word's box against the rail")
+        text(Rail.ink, Rail.chip, "$scheme: a decision's word on its box")
+        text(Rail.inkDim, Rail.fill, "$scheme: a fact, plain")
+        ui(Rail.edge, Rail.chip, "$scheme: the outline of a boxed word, on its box")
+        text(Rail.fill, Rail.gold, "$scheme: the lit stop's number and name")
+
+        text(Signal.roseInk, Signal.rose, "$scheme: the question mark on a card nobody has seen")
+        text(Signal.rose, Signal.roseInk, "$scheme: the turn's number on the rose card's tag")
+        ui(Signal.roseEdge, Signal.rose, "$scheme: the rose card's edge, on the card")
+        MaterialTheme.colorScheme.feltGradient().forEachIndexed { i, felt ->
+            ui(Signal.rose, felt, "$scheme: a rose card, at stop $i of the felt")
+        }
     }
 
     // ---------------------------------------------------------------- the schemes differ

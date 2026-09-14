@@ -40,14 +40,21 @@ class BoardProposalsTest {
 
     /**
      * The caller is in seat two, so the coalition plays Nina, Don, then the person. Nina holds
-     * a two she could give away and a ten she would like rid of; Don holds a King and a seven;
-     * the person has said their one card is a nine.
+     * a Jack to put down and call, a two she could give away and a ten she would like rid of;
+     * Don holds a King and a seven; the person has said they hold a Jack and a nine.
+     *
+     * The Jacks are the point: a plan can only aim a trade with a card the table can see, so
+     * a bot proposes a trade by putting a Jack down and calling it, never on a blind draw.
      */
     private fun table(): GameState = testState(
         players = listOf(
-            seat(me, listOf(Rank.NINE), claims = listOf(Claim(me, listOf(0), listOf(Rank.NINE)))),
+            seat(
+                me,
+                listOf(Rank.JACK, Rank.NINE),
+                claims = listOf(Claim(me, listOf(0), listOf(Rank.JACK)), Claim(me, listOf(1), listOf(Rank.NINE))),
+            ),
             seat(caller, listOf(Rank.SIX)),
-            seat(nina, listOf(Rank.TWO, Rank.TEN)),
+            seat(nina, listOf(Rank.JACK, Rank.TWO, Rank.TEN)),
             seat(don, listOf(Rank.KING, Rank.SEVEN)),
         ),
         phase = GamePhase.FINAL,
@@ -109,9 +116,13 @@ class BoardProposalsTest {
 
         val order = coalitionInTurnOrder(table().players.map { it.id }, caller)
         assertEquals(listOf(nina, don, me), order)
-        val first = assertIs<Step.Swap>(assertNotNull(seeded.plan.laneOf(nina), "no proposal for the first lane").step)
-        assertTrue(first.from.seat != caller && first.to.seat != caller, "a proposal reached for the caller's cards")
-        assertTrue(first.from.seat != first.to.seat, "a swap within one hand")
+        val first = assertIs<Step.PutDown>(
+            assertNotNull(seeded.plan.laneOf(nina), "no proposal for the first lane").step,
+        )
+        assertEquals(Rank.JACK, first.guess, "the Jack put down was not called")
+        val trade = assertIs<Step.Swap>(first.then, "the called Jack trades nothing")
+        assertTrue(trade.from.seat != caller && trade.to.seat != caller, "a proposal reached for the caller's cards")
+        assertTrue(trade.from.seat != trade.to.seat, "a swap within one hand")
         assertNull(seeded.plan.laneOf(don)?.step, "a trade was proposed that could not lower the lowest hand")
         assertNull(seeded.plan.laneOf(me)?.step)
         assertEquals(nina, seeded.plan.editedBy, "a bot's proposal was signed by somebody else")
@@ -127,7 +138,7 @@ class BoardProposalsTest {
             players = listOf(
                 seat(me, listOf(Rank.TWO), claims = listOf(Claim(me, listOf(0), listOf(Rank.TWO)))),
                 seat(caller, listOf(Rank.SIX)),
-                seat(nina, listOf(Rank.TEN, Rank.NINE)),
+                seat(nina, listOf(Rank.JACK, Rank.NINE)),
                 seat(don, listOf(Rank.SEVEN, Rank.KING)),
             ),
             phase = GamePhase.FINAL,
@@ -135,7 +146,8 @@ class BoardProposalsTest {
         ).let { it.copy(currentPlayerIndex = it.players.indexOfFirst { p -> p.id == caller }) }
 
         val seeded = seedTheBoard(lowPerson, plan = null)
-        val step = assertIs<Step.Swap>(assertNotNull(seeded.plan.laneOf(nina)).step)
+        val called = assertIs<Step.PutDown>(assertNotNull(seeded.plan.laneOf(nina)).step)
+        val step = assertIs<Step.Swap>(called.then)
         val persons = listOf(step.from, step.to).single { it.seat == me }
         assertEquals(Claim(me, listOf(0), listOf(Rank.TWO)), persons.anchor, "the step cannot follow its card")
         val dons = listOf(step.from, step.to).single { it.seat == don }
@@ -205,14 +217,13 @@ class BoardProposalsTest {
 
     @Test
     fun theBestTradeConcentratesTheLowCards() {
-        // Nina's picture of the table above: the lowest hand is Don's seven. Every trade that
-        // leaves one hand on two is as good as it gets — Nina's two into the person's hand for
-        // the nine, or into Don's for the seven, or Don's King into Nina's for the ten — and the
-        // two is the card that moves in each of them.
+        // Nina's picture of the table above: Don has said nothing, so his two cards are priced at
+        // the deck's mean each and his is the lowest hand at ten. The trade that lowers it most is
+        // Nina's two into it for one of those — the two is the card that moves.
         val input = assertNotNull(buildCoalitionPlanInput(table(), nina))
         val hands = input.members.associate { it.id to it.cards }
         val best = assertNotNull(bestSwap(hands, input.members.map { it.id }))
-        assertEquals(2, best.minAfter)
+        assertEquals(7, best.minAfter)
         val moved = listOf(best.from, best.to).map { hands.getValue(it.seat)[it.position].value }
         assertTrue(0 in moved || 2 in moved, "the trade moved neither the two nor the King: $best")
     }

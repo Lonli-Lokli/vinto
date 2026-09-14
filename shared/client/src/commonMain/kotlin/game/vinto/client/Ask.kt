@@ -39,6 +39,15 @@ sealed interface Ask {
 
     data object WhatDoYouSayThisCardIs : Ask
 
+    /**
+     * The same question about a pair, because "this card" is plainly wrong once two are held.
+     *
+     * Two prompts rather than one that fits both: a claim is built by tapping, so the number of
+     * cards under it changes while the player watches, and the prompt is the only thing on the
+     * screen that can confirm the second tap landed.
+     */
+    data object WhatDoYouSayTheseCardsAre : Ask
+
     /** A King, borrowing another rank's action. */
     data object SayWhatItIsAndPlayIt : Ask
 
@@ -91,11 +100,35 @@ sealed interface Ask {
 
     data class WhatShouldTheyDo(val who: Speaker) : Ask
 
+    /** Which pile [who]'s turn takes its card from — asked only while there is a choice of piles. */
+    data class WhereShouldTheirCardComeFrom(val who: Speaker) : Ask
+
+    /**
+     * Which two cards the known Jack or Queen trades: the one answer that is not a button, since
+     * the cards are on the felt and are touched there. [rank] names the card, because "the Jack
+     * swaps" and "the Queen swaps" are what the sentence is about.
+     */
+    data class WhichTwoWillItSwap(val rank: Rank) : Ask
+
     data class WhichRankShouldTheyDeclare(val who: Speaker) : Ask
 
     /** Which of [who]'s own cards goes on the pile, for a teammate holding its rank to throw in on. */
     data class WhichCardShouldTheyPutDown(val who: Speaker) : Ask
-    data object WhichRankWillYouThrowIn : Ask
+
+    /** Which card the known 7, 8, 9 or 10 looks at — touched on the felt. [rank] names the card. */
+    data class WhichCardWillItLookAt(val rank: Rank) : Ask
+
+    /** Which card the King points at, of the ones believed to be the rank it names. */
+    data object WhichCardDoesTheKingPointAt : Ask
+
+    /** Who the Ace makes draw: a coalition seat, off the felt or the rail. */
+    data object WhoShouldDraw : Ask
+
+    /** Which rank [who] will throw in on this turn, if one lands. */
+    data class WhichRankWillTheyThrowIn(val who: Speaker) : Ask
+
+    /** Which card [who] throws in, touched on the felt. */
+    data class WhichCardWillTheyThrowIn(val who: Speaker) : Ask
 
     // --- the end ------------------------------------------------------------------------------
 

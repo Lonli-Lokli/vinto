@@ -1,0 +1,1 @@
+{"type":"action","token":"tok","action":{"type":"SET_COALITION_LEADER","payload":{"leaderId":"p1"}}}

@@ -36,8 +36,16 @@ sealed interface Detail {
      */
     data object AnAceOnlyHurtsYourOwnSide : Detail
 
-    /** Declaring your hand to the coalition, who have no way to check. */
-    data object TableTalkIsTakenOnTrust : Detail
+    /**
+     * How the rank rail is read, and what a claim is worth.
+     *
+     * Both halves in one line because the rail cannot say either on its own. A rank is a
+     * **toggle** — name one and the card is that card, name several and it is one of them —
+     * and nothing about fourteen plaques in a grid says so. And nothing checks a claim when it
+     * is made: the coalition takes the speaker's word, and the reveal at scoring is the only
+     * referee there is.
+     */
+    data object NameEveryRankItCouldBe : Detail
 
     /** Guessing what you are putting down. */
     data object RightPlaysItWrongCostsACard : Detail
@@ -57,25 +65,32 @@ sealed interface Detail {
     /** Nobody called; the deck simply ran out. */
     data object TheDeckRanOut : Detail
 
-    /** The viewer's own lane, under the prompt on their turn. */
-    data class ThePlanAsksYouTo(val step: StepLine) : Detail
+    /** Boxed means touchable: the one line that says how the sentence is changed. */
+    data object TouchAWord : Detail
 
-    /**
-     * The card just drawn does more for the coalition than the plan's step for this turn would
-     * (task 3.11): kept in place of the viewer's card at [position], it leaves the coalition's
-     * lowest hand lower than the step does. The plan is a suggestion, and this is the one
-     * moment the table says so before the player finds out.
-     */
-    data class YourDrawBeatsThePlan(val rank: Rank, val position: Int) : Detail
+    /** A teammate changed the turn on screen since the viewer last looked. */
+    data class ChangedBy(val who: Speaker) : Detail
+
+    /** A throw-in is picked on the felt: gold for a match, dim for a card nobody has named. */
+    data object TouchACardToThrow : Detail
+
+    /** The caller opened the plan: every word is plain, and nothing answers a touch. */
+    data object TheCallerReads : Detail
 
     /** Propose, never command: the person on play decides. */
     data object APlanIsASuggestion : Detail
 
+    /**
+     * How a card is named on the felt, both ways in one sentence: carry it, or touch it and
+     * then the place. One edit, two paths (design D5), and neither needs a pointer or a hold.
+     */
+    data object CarryACardOrTouchIt : Detail
+
     /** A step on the board was built on a claim the reveal has proved wrong (design D9). */
     data object AClaimWasWrong : Detail
 
-    /** What a wrong throw costs; sharper when the viewer's hand is the one the coalition is pushing. */
-    data class ShedRisk(val pushed: Boolean) : Detail
+    /** A card is named on the felt with one touch: the one a 9 looks at, the one a King points at. */
+    data object TouchTheCard : Detail
 }
 
 /**

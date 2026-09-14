@@ -11,6 +11,7 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.Lane
+import game.vinto.shapes.Opening
 import game.vinto.shapes.Pile
 import game.vinto.shapes.PlayerState
 import game.vinto.shapes.Rank
@@ -80,11 +81,13 @@ class PlanDecayTest {
             seat(caller, listOf(Rank.FOUR, Rank.FOUR)),
             seat(mate, listOf(Rank.NINE, Rank.KING), matesClaims),
         ),
-        currentPlayerIndex = 0,
+        // The caller is still on play, so every coalition turn is still to come; and a Jack
+        // lies unplayed on the pile, which is the one card a plan can aim a trade with.
+        currentPlayerIndex = 1,
         vintoCallerId = caller,
         coalitionLeaderId = null,
         drawPile = Pile((0..4).map { card(Rank.THREE, "draw-$it") }),
-        discardPile = Pile(listOf(card(Rank.EIGHT, "seed"))),
+        discardPile = Pile(listOf(card(Rank.JACK, "seed"))),
         pendingAction = null,
         activeTossIn = null,
         turnActions = emptyList(),
@@ -94,7 +97,7 @@ class PlanDecayTest {
         rngState = 0,
     )
 
-    /** A step remembers what it was built on, so it can follow its card. */
+    /** A step remembers what it was built on, so it can follow its card. The Jack off the pile makes the trade. */
     private fun swapPlan() = CoalitionPlan(
         lanes = listOf(
             Lane(
@@ -103,6 +106,7 @@ class PlanDecayTest {
                     CardAt(me, 1, Claim(me, listOf(1), listOf(Rank.THREE))),
                     CardAt(mate, 1, Claim(mate, listOf(1), listOf(Rank.KING))),
                 ),
+                opening = Opening.TAKE_THE_DISCARD,
             ),
         ),
     )

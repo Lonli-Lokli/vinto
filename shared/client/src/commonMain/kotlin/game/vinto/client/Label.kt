@@ -1,7 +1,6 @@
 package game.vinto.client
 
 import game.vinto.shapes.Rank
-import game.vinto.shapes.TableTalk
 
 /**
  * What a button says, as an *identity* rather than as words.
@@ -39,18 +38,25 @@ sealed interface Label {
     /** Say no to a suggestion. Said rather than ignored, so the proposer knows it landed. */
     data object DeclineSuggestion : Label
 
-    /** End this seat's share of the coalition's confer window. */
-    data object DoneTalking : Label
+    /**
+     * End this seat's share of the coalition's confer window and let the round run.
+     *
+     * It said "Done talking", which named the half of it that costs nothing — talk is free and
+     * can be resumed on any later turn — and hid the half that does not: pressing it is what
+     * sets three final turns going. Readiness is the thing being declared, and online it is
+     * literally that: the window ends when everybody is ready.
+     */
+    data object Ready : Label
 
     /**
-     * Where this hand stands, as one tap.
+     * Send the claim the rail has been building.
      *
-     * The round is decided by the coalition's **lowest** hand, so which hand that is has to be
-     * settled before any of the rest is worth planning. Declaring cards implies it, but only
-     * for a player who has looked at enough of their own hand to add it up — this says the
-     * conclusion directly, which is what a person at a table would do.
+     * A confirm rather than a send-on-tap, because a rank is now a **toggle**: one names the
+     * card exactly, several say it is one of them, and neither can be told from the other
+     * until the player says they are finished. Sending on the first rank made "a 7 or an 8"
+     * unsayable, which is most of what anybody actually remembers.
      */
-    data class SayStanding(val where: TableTalk.Standing.Where) : Label
+    data object SayIt : Label
 
     /**
      * One of the two ways a claimed pair could be round: this card is that rank, and the
@@ -120,25 +126,23 @@ sealed interface Label {
     /** Yes to the board as it stands. */
     data object Agree : Label
 
-    /** The viewer's own lane, on their turn, when the draw has made it legal. */
-    data object DoAsPlanned : Label
-
-    /** Keep the drawn card rather than do the plan's step: the re-plan a good draw earns. */
-    data object KeepItInstead : Label
-
-    data object PlanADeclare : Label
-
     /** The three things a turn can do with the card it takes — see `Question.Doing`. */
     data object PlayTheCard : Label
 
-    data object KeepTheCard : Label
+    /** Put one of your own cards on the pile for the drawn one, chosen on the felt. */
+    data object PutACardDown : Label
+
+    /** Decide nothing about what becomes of the card: it is the draw's to say. */
+    data object WellSee : Label
+
+    /** The rank somebody said the pointed-at card is, offered as the King's answer. */
+    data class RankSaidBy(val rank: Rank, val who: Speaker) : Label
+
+    /** A rank nobody said: the whole set, one touch further. */
+    data object AnotherRank : Label
 
     data object LetTheCardGo : Label
 
-    data object PlanTakeTheDiscard : Label
-
-    data object ClearLane : Label
-
-    /** "I will throw one in": open the rank rail for a shed on the board. */
-    data object PlanAShed : Label
+    /** Take one throw-in off the turn it was said on. */
+    data object RemoveThrow : Label
 }

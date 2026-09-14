@@ -8,12 +8,15 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -25,7 +28,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -33,8 +38,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.card_10
 import game.vinto.app.art.card_2
@@ -46,6 +53,7 @@ import game.vinto.app.art.card_7
 import game.vinto.app.art.card_8
 import game.vinto.app.art.card_9
 import game.vinto.app.art.card_a
+import game.vinto.app.art.card_arrives
 import game.vinto.app.art.card_back
 import game.vinto.app.art.card_described
 import game.vinto.app.art.card_face_down
@@ -220,10 +228,10 @@ fun CardFace(
                     ),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
-                    // A back the plan has turned into an unseen draw is tinted, not only
-                    // ringed: two card backs side by side in one hand are what a member is
-                    // being asked to tell apart, and at a hand's size a ring is a hairline.
-                    colorFilter = if (state.unseen && !showingFace) UnseenTint else null,
+                    // A card the plan has not dealt yet is rose all over, not only ringed:
+                    // two card backs side by side in one hand are what a member is being
+                    // asked to tell apart, and at a hand's size a ring is a hairline.
+                    colorFilter = if (state.arrived != null && !showingFace) RoseTint else null,
                     // The back of the layer is a mirror image once past the quarter turn, so
                     // the face is flipped back the other way to read as a card rather than a
                     // reflection.
@@ -237,9 +245,55 @@ fun CardFace(
             // ring that *moves* can move without the card being rebuilt around it. Inside the
             // rotation, so it turns and lies sideways with the card it belongs to.
             CardRing(state, shape, Modifier.matchParentSize())
+
+            // And the turn a card nobody has seen arrives on, with the question mark that says
+            // so — over the rose, inside the rotation, at every size a card is drawn.
+            if (!showingFace) state.arrived?.let { RoseMark(it, Modifier.matchParentSize()) }
         }
     }
 }
+
+/**
+ * What a card that is not on the table yet wears: the turn it arrives on in one corner, and a
+ * question mark where a face would be. [Signal.roseInk] on [Signal.rose] reads at 8.5:1, and
+ * the tag reverses the two so it reads on the card at the same ratio.
+ */
+@Composable
+private fun RoseMark(turn: Int, modifier: Modifier) {
+    val spoken = stringResource(Res.string.card_arrives, turn)
+    Box(modifier = modifier.semantics { contentDescription = spoken }) {
+        Text(
+            text = "?",
+            fontSize = RoseAsk,
+            fontWeight = FontWeight.Bold,
+            color = Signal.roseInk,
+            modifier = Modifier.align(Alignment.Center),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(RoseInset)
+                .size(RoseTag)
+                .background(Signal.roseInk, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = turn.toString(),
+                fontSize = RoseTagText,
+                fontWeight = FontWeight.Bold,
+                color = Signal.rose,
+            )
+        }
+    }
+}
+
+private val RoseAsk = 14.sp
+private val RoseTag = 13.dp
+private val RoseTagText = 8.sp
+private val RoseInset = 1.dp
+
+/** The back of a card nobody has seen, painted rose whole: the art's shape, none of its pattern. */
+private val RoseTint = ColorFilter.tint(Signal.rose, BlendMode.SrcAtop)
 
 /**
  * The ring around a card: steady gold for one this action has claimed, a slow pulse for one
@@ -298,7 +352,7 @@ private fun CardState.steadyRing(): Color? = when {
     wanted -> Signal.planned
     // Under the plan's own blue, because a card can be both — a place to aim at matters more
     // than what is under it, and the aim is the thing a finger is about to act on.
-    unseen -> Signal.unseen
+    arrived != null -> Signal.roseEdge
     chosen -> Signal.chosen
     live -> Signal.live
     tappable -> null
@@ -308,14 +362,8 @@ private fun CardState.steadyRing(): Color? = when {
 /** A card with something to say about it wears a ring; the rest wear a hairline. */
 private fun CardState.ringWidth() = if (marked()) Ring else Hairline
 
-/** How far the back of an unseen draw is pulled towards [Signal.unseen]. Enough to read, not to shout. */
-private val UnseenTint = androidx.compose.ui.graphics.ColorFilter.tint(
-    Signal.unseen.copy(alpha = 0.30f),
-    androidx.compose.ui.graphics.BlendMode.SrcAtop,
-)
-
 private fun CardState.marked() =
-    verdict != null || chosen || tappable || live || wanted || carrying || unseen
+    verdict != null || chosen || tappable || live || wanted || carrying || arrived != null
 
 /** Which picture a card shows. A hidden one always shows the back, and knows nothing else. */
 private fun CardView.art(): DrawableResource = when (this) {

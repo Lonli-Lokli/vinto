@@ -107,10 +107,10 @@ class ScreenshotTest {
 
     @Test
     fun thePlanOnTheFelt() {
-        // The fifth screen, and the newest: the coalition's plan drawn on the table as a replay
-        // (design D1). Its looks *are* the product in the same way the felt's are — a lit
-        // switch, a ruled band saying nothing has moved, ghost cards marked at the seats that
-        // hold them — and none of it is reachable by an assertion about text.
+        // The fifth screen, and the newest: the coalition's plan as table talk (design D18).
+        // Its looks *are* the product in the same way the felt's are — a lit switch, a sentence
+        // of boxed and plain words, the stops with their faces, the marked cards at the seats
+        // that hold them — and none of it is reachable by an assertion about text.
         val whole = teachingSession().view.value
         val caller = whole.players.first { it.id != whole.viewerId }
         val view = whole.copy(

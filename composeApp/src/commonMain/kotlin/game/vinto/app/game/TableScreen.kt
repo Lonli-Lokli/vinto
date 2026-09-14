@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,6 +62,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -76,9 +78,11 @@ import game.vinto.app.Support
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
 import game.vinto.app.art.badge_disputed
+import game.vinto.app.art.badge_draft
 import game.vinto.app.art.badge_paired
 import game.vinto.app.art.badge_right
 import game.vinto.app.art.badge_wrong
+import game.vinto.app.art.card_arrives
 import game.vinto.app.art.card_discarded
 import game.vinto.app.art.card_discarded_live
 import game.vinto.app.art.card_drawn_by
@@ -91,24 +95,33 @@ import game.vinto.app.art.header_leave
 import game.vinto.app.art.header_rules
 import game.vinto.app.art.header_settings
 import game.vinto.app.art.header_support
+import game.vinto.app.art.label_plan_changed_by
 import game.vinto.app.art.label_plan_open
+import game.vinto.app.art.list_join_and
+import game.vinto.app.art.seat_plan_their_turn
+import game.vinto.app.art.seat_plan_your_turn
+import game.vinto.app.art.table_called_vinto
+import game.vinto.app.art.table_called_vinto_go
 import game.vinto.app.art.table_discard
 import game.vinto.app.art.table_draw
 import game.vinto.app.art.table_final_last_turn
-import game.vinto.app.art.table_final_round
 import game.vinto.app.art.table_final_turns_left
 import game.vinto.app.art.table_round_turn
 import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_toss_in_summary
 import game.vinto.app.art.table_toss_in_timed
 import game.vinto.app.art.table_tossed
+import game.vinto.app.art.table_you_are_with
 import game.vinto.app.host
 import game.vinto.app.openUrl
 import game.vinto.app.speakerName
 import game.vinto.app.supportOffer
+import game.vinto.app.theme.ButtonTone
+import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.GeneratedAvatar
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Signal
+import game.vinto.app.theme.VintoDialog
 import game.vinto.app.theme.Wordmark
 import game.vinto.app.theme.contactShadow
 import game.vinto.app.theme.feltEdge
@@ -301,93 +314,159 @@ fun TableScreen(
     // alike, so the one composable both screens go through is where it belongs.
     PlanRunner(state.table, onMove)
 
-    if (layout.landscape) {
-        // Centred, not stretched: the felt column is [TableLayout.feltWidth] wide — the
-        // whole remainder on a rotated phone, a capped table on a tablet or desktop — and
-        // the rail hugs it, so on a big screen the pair sits together in the middle of the
-        // app's dark surround rather than the controls drifting to one horizon and the
-        // seats to the other.
-        //
-        // The table and its rail are one object, and on a window taller than a table it sits in
-        // the middle of that window rather than being stretched down it. The band is the header
-        // plus the felt's own capped depth; what is left over is surround, above and below,
-        // exactly as the leftover width already is either side.
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(
-                        if (layout.feltHeight > 0.dp) {
-                            Modifier.height(HeaderHeight + layout.feltHeight)
-                        } else {
-                            Modifier.fillMaxHeight()
-                        },
-                    ),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Column(modifier = Modifier.width(layout.feltWidth)) {
-                    TableHeader(
-                        state.view,
-                        state.round,
-                        onHelp,
-                        onSettings,
-                        onLeave,
-                        plan = state.table.planSummary,
-                        onMove = onMove,
-                        landscape = true,
-                    )
-                    FeltTable(
-                        state = state,
-                        sizes = layout.sizes,
-                        onMove = onMove,
-                        onHelp = onHelp,
-                        modifier = Modifier.weight(1f).padding(start = Edge, end = Edge, bottom = Edge),
-                    )
-                }
+    // The whole table in a box, so the arrival panel has something to sit *over*. Both branches
+    // below filled the screen themselves and were the root; the box is the root now and they
+    // fill it, which changes no measurement and gives the overlay a parent that stacks.
+    Box(modifier = modifier.fillMaxSize()) {
+        if (layout.landscape) {
+            // Centred, not stretched: the felt column is [TableLayout.feltWidth] wide — the
+            // whole remainder on a rotated phone, a capped table on a tablet or desktop — and
+            // the rail hugs it, so on a big screen the pair sits together in the middle of the
+            // app's dark surround rather than the controls drifting to one horizon and the
+            // seats to the other.
+            //
+            // The table and its rail are one object, and on a window taller than a table it sits in
+            // the middle of that window rather than being stretched down it. The band is the header
+            // plus the felt's own capped depth; what is left over is surround, above and below,
+            // exactly as the leftover width already is either side.
+            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            if (layout.feltHeight > 0.dp) {
+                                Modifier.height(HeaderHeight + layout.feltHeight)
+                            } else {
+                                Modifier.fillMaxHeight()
+                            },
+                        ),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    Column(modifier = Modifier.width(layout.feltWidth)) {
+                        TableHeader(
+                            state.view,
+                            state.round,
+                            onHelp,
+                            onSettings,
+                            onLeave,
+                            plan = state.table.planSummary,
+                            onMove = onMove,
+                            landscape = true,
+                        )
+                        FeltTable(
+                            state = state,
+                            sizes = layout.sizes,
+                            onMove = onMove,
+                            onHelp = onHelp,
+                            modifier = Modifier.weight(1f).padding(start = Edge, end = Edge, bottom = Edge),
+                        )
+                    }
 
-                // The rail, standing at the side. The final-round line sits at its head — in
-                // landscape the felt has no height to spare for a banner, and "who plays for
-                // whom" is read next to the controls that ask what to do about it anyway.
-                Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
-                    FinalRoundLine(state.view, state.table.board, onMove)
-                    ControlPanel(
-                        state = state,
-                        onMove = onMove,
-                        side = true,
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                    )
+                    // The rail, standing at the side. The final-round line sits at its head — in
+                    // landscape the felt has no height to spare for a banner, and "who plays for
+                    // whom" is read next to the controls that ask what to do about it anyway.
+                    Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
+                        FinalRoundLine(state.view, state.table.board)
+                        ControlPanel(
+                            state = state,
+                            onMove = onMove,
+                            side = true,
+                            modifier = Modifier.fillMaxWidth().weight(1f),
+                        )
+                    }
                 }
             }
+        } else {
+            Column(modifier = modifier.fillMaxSize()) {
+                TableHeader(
+                    state.view,
+                    state.round,
+                    onHelp,
+                    onSettings,
+                    onLeave,
+                    plan = state.table.planSummary,
+                    onMove = onMove,
+                    landscape = false,
+                )
+
+                FinalRoundLine(state.view, state.table.board)
+
+                FeltTable(
+                    state = state,
+                    sizes = layout.sizes,
+                    onMove = onMove,
+                    onHelp = onHelp,
+                    modifier = Modifier.weight(1f).padding(horizontal = Edge),
+                )
+
+                ControlPanel(
+                    state = state,
+                    onMove = onMove,
+                    modifier = Modifier.fillMaxWidth().height(layout.railHeight),
+                )
+            }
         }
-    } else {
-        Column(modifier = modifier.fillMaxSize()) {
-            TableHeader(
-                state.view,
-                state.round,
-                onHelp,
-                onSettings,
-                onLeave,
-                plan = state.table.planSummary,
-                onMove = onMove,
-                landscape = false,
-            )
 
-            FinalRoundLine(state.view, state.table.board, onMove)
+        TheCall(state)
+    }
+}
 
-            FeltTable(
-                state = state,
-                sizes = layout.sizes,
-                onMove = onMove,
-                onHelp = onHelp,
-                modifier = Modifier.weight(1f).padding(horizontal = Edge),
-            )
+/**
+ * "Dune called Vinto! You are with Ember and Tide."
+ *
+ * The one moment in a round that changes what the whole screen is for, and it was announced by
+ * the word FINAL ROUND appearing in a band the size of a caption. Three coalition turns can pass
+ * in under a second when the bots hold them, so a player who was reading their own hand missed
+ * the call, the coalition and the window to talk in it — reported from a phone as not being clear
+ * that anybody had called.
+ *
+ * A panel, therefore, and one that has to be dismissed: an announcement nobody has to acknowledge
+ * is an announcement that competes with whatever they were already doing. It says who called, who
+ * the player is now with, and what the round wants from them — which is the whole of the
+ * coalition's job, in the order it is done.
+ *
+ * **Not for the caller**, who knows, and not during the lesson, which has a script of its own.
+ * Once per call: `remember` is keyed on the caller and the round, so a new deal announces itself
+ * again and a recomposition does not.
+ */
+@Composable
+private fun TheCall(state: TableState) {
+    val view = state.view
+    val caller = view.players.firstOrNull { it.id == view.vintoCallerId }
+    var seen by remember(view.vintoCallerId, state.round) { mutableStateOf(false) }
 
-            ControlPanel(
-                state = state,
-                onMove = onMove,
-                modifier = Modifier.fillMaxWidth().height(layout.railHeight),
-            )
-        }
+    // `!state.teaching`, and it was `state.teaching == null` — a `Boolean` compared to null,
+    // which Kotlin compiles with a warning and evaluates as always false. The panel was built,
+    // translated into nineteen locales and shipped never once opening.
+    val mine = caller != null &&
+        caller.id != view.viewerId &&
+        view.phase == GamePhase.FINAL &&
+        !state.teaching &&
+        // **Never over the plan.** The panel's whole message is "you are in a coalition now, go
+        // and make a plan" — drawn on top of the plan, it is telling somebody to do the thing
+        // they are looking at. In ordinary play it cannot happen, because the panel comes first
+        // and the plan is three taps later; what this covers is every other way a screen can
+        // arrive already planning.
+        state.table.board == null
+    if (caller == null) return
+
+    val mates = view.players
+        .filter { it.id != view.viewerId && it.id != caller.id }
+        .map { it.nickname }
+        .joinToString(stringResource(Res.string.list_join_and))
+
+    VintoDialog(
+        open = mine && !seen,
+        onDismiss = { seen = true },
+        title = stringResource(Res.string.table_called_vinto, caller.nickname),
+        body = stringResource(Res.string.table_you_are_with, mates),
+    ) {
+        GameButton(
+            label = stringResource(Res.string.table_called_vinto_go),
+            tone = ButtonTone.PLAY,
+            onClick = { seen = true },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -454,7 +533,13 @@ private fun FeltTable(
     // the live one (design D1): the plan's whole content is *where cards go*, and a picture of
     // that has to show the hands as the turns so far leave them. Built by transforming the
     // view, so nothing here can turn over a card this seat was not shown.
-    val view = state.table.board?.felt ?: state.view
+    //
+    // **Except while the film plays**, when the felt follows the frames as it does for a real
+    // move: each ghost frame carries the table its turn leaves, and the cards fly over that.
+    // The board's own picture is the page's start table, and would have the cards land on a
+    // table that had not moved.
+    val board = state.table.board
+    val view = if (board == null || LocalStage.current.rehearsing) state.view else board.felt ?: state.view
     val table = state.table
 
     // Nullable, and the felt is drawn either way.
@@ -959,7 +1044,12 @@ internal fun TableHeader(
 
         // Before the three glyphs, because it is the only one of the four that is about the
         // round rather than about the app.
-        plan?.let { PlanSwitch(LocalStage.current.planning, it, onMove, labelled = wideHeader) }
+        // **Labelled on every host, unlike the three glyphs beside it.** A gear and a question
+        // mark are marks anybody can read; a lit pill is not, and reported from a phone as
+        // "not clear" — nothing on the screen said the switch was the way into the plan. It
+        // costs four characters out of the wordmark's slack rather than out of another control,
+        // because `HeaderName` is the one thing in this row carrying the weight.
+        plan?.let { PlanSwitch(LocalStage.current.planning, it, onMove) }
 
         // The rules, in the one place on the screen that never moves.
         //
@@ -1027,35 +1117,37 @@ internal fun TableHeader(
  * left is the countdown, which moves, and the plan, which is the only thing anybody does in
  * this round.
  *
- * **With the plan open the band is the transport and nothing else.** The heading said "FINAL
- * ROUND" over a felt that had said so for the last five minutes, and under it ran a line reading
- * "REHEARSAL — NOTHING HAS MOVED" that said the same thing on the fortieth second as on the
- * first. Neither could be pressed, and a player asked for controls rather than commentary.
- *
- * What marks the mode now is what the mode *is*: the band ruled top and bottom in the
- * coalition's colour, the switch lit in the header above it, and a stop naming which table is on
- * the felt. All three change when the mode does and two of them are controls — which matters,
- * because the felt below is showing cards that have not moved and a player who thinks a plan has
- * happened is worse off than one who never planned.
+ * **With the plan open there is no band at all.** It used to carry the transport's stops,
+ * ruled top and bottom in the coalition's colour, above a felt that on a phone has four hands
+ * to fit; the stops live under the felt now, on the plan's own rail beside the two buttons that
+ * play the film (`PlanStops`), and a band that only repeated them was a strip of the felt's
+ * height spent on nothing. Asked for from a phone. What marks the mode is the switch lit in
+ * the header, and the rail below being the plan's rather than the round's.
  */
 @Composable
-private fun FinalRoundLine(view: PlayerView, board: Board?, onMove: (Move) -> Unit) {
+private fun FinalRoundLine(view: PlayerView, board: Board?) {
     if (view.phase == GamePhase.SCORING) return
     if (view.players.none { it.id == view.vintoCallerId }) return
-    val open = LocalStage.current.planning
-    val stops = board?.transport?.takeIf { open && it.stops.isNotEmpty() }
+    if (board != null) return
 
-    Column(modifier = Modifier.fillMaxWidth().background(Rail.fill)) {
-        if (open) PlanRule()
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(Gap),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (stops != null) PlanStops(stops, onMove) else Countdown(view)
-        }
+    // **A band with nothing in it is not drawn.** It used to carry the words "FINAL ROUND" over
+    // a felt that says so in four other ways — the caller's crown, the coalition marks, the
+    // overlay that announced the call — and during the confer window that was the *whole* of
+    // it, because the countdown has nothing to say until the first turn of the round is under
+    // way (`finalRoundTurnsLeft` is null while play is still parked on the caller). One word,
+    // a rule above and below it, and a strip of the felt's height spent. Reported from a phone
+    // as wasted space, and it was.
+    val left = finalRoundTurnsLeft(view) ?: return
 
-        if (open) PlanRule()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Rail.fill)
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(Gap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Countdown(left)
     }
 }
 
@@ -1067,17 +1159,7 @@ private fun FinalRoundLine(view: PlayerView, board: Board?, onMove: (Move) -> Un
  * so the band above stays inside the complexity a reviewer can hold at once.
  */
 @Composable
-private fun RowScope.Countdown(view: PlayerView) {
-    Text(
-        stringResource(Res.string.table_final_round).uppercase(),
-        style = MaterialTheme.typography.labelSmall,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = 1.sp,
-        color = Rail.gold,
-        modifier = Modifier.semantics { heading() },
-    )
-
-    val left = finalRoundTurnsLeft(view) ?: return
+private fun RowScope.Countdown(left: Int) {
     Text(
         if (left == 1) {
             stringResource(Res.string.table_final_last_turn)
@@ -1087,13 +1169,8 @@ private fun RowScope.Countdown(view: PlayerView) {
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Bold,
         color = Rail.gold,
+        modifier = Modifier.semantics { heading() },
     )
-}
-
-/** The rule that closes the band top and bottom while the plan is open. Decorative. */
-@Composable
-private fun PlanRule() {
-    Box(modifier = Modifier.fillMaxWidth().height(PlanRuleHigh).background(Signal.coalition))
 }
 
 /**
@@ -1115,19 +1192,17 @@ private fun PlanSwitch(
     open: Boolean,
     summary: PlanSummary,
     onMove: (Move) -> Unit,
-    /**
-     * Whether there is room for the word beside the track.
-     *
-     * The same rule the rest of the header follows. In the band below it there was room for
-     * both; up here the switch shares a row with the wordmark, the round counter and three
-     * glyphs, and the row squeezes from the end — so keeping the word cost the counter, which
-     * is the one thing in that row that *changes*. The switch is announced as "Plan, on"
-     * either way, so nothing is lost to a screen reader.
-     */
-    labelled: Boolean = true,
 ) {
     val stage = LocalStage.current
-    val spoken = stringResource(Res.string.label_plan_open)
+    // A teammate rewrote your turn while the plan was closed — most often round the card you
+    // have just drawn — and the news must not wait for you to open the plan on the off chance:
+    // their face rides beside the switch, and the switch says so.
+    val changed = (summary.changedBy as? Speaker.Named)?.nickname
+    val spoken = if (changed == null) {
+        stringResource(Res.string.label_plan_open)
+    } else {
+        stringResource(Res.string.label_plan_changed_by, changed)
+    }
     val travel by animateDpAsState(
         targetValue = if (open) SwitchTrack - SwitchThumb - SwitchSeat * 2 else 0.dp,
         animationSpec = tween(SwitchMs, easing = FastOutSlowInEasing),
@@ -1165,19 +1240,30 @@ private fun PlanSwitch(
                     .background(if (open) Rail.fill else Rail.ink),
             )
         }
-        if (labelled) {
-            Text(
-                stringResource(Res.string.label_plan_open).uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp,
-                color = Rail.ink,
-            )
+        Text(
+            stringResource(Res.string.label_plan_open).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp,
+            color = Rail.ink,
+        )
+        changed?.let { who ->
+            Box(
+                modifier = Modifier
+                    .size(SwitchFace)
+                    .border(SwitchNews, Signal.coalition, CircleShape)
+                    .clearAndSetSemantics { },
+            ) {
+                Avatar(name = who, size = SwitchFace)
+            }
         }
     }
 }
 
-private val PlanRuleHigh = 2.dp
+/** The face of whoever changed your turn, beside the switch, and the ring that makes it news. */
+private val SwitchFace = 20.dp
+private val SwitchNews = 2.dp
+
 private val SwitchTrack = 34.dp
 private val SwitchHigh = 20.dp
 private val SwitchThumb = 14.dp
@@ -1668,10 +1754,26 @@ private fun Plate(
     val marks = buildList { view.scores?.get(seat.id)?.let { add("$it") } }
     val badges = badgesFor(seat, view, table)
     val thinking = isWaitingOn(seat, view, active)
-    val tap = table.seats.firstOrNull { it.id == seat.id }?.move
+    val choice = table.seats.firstOrNull { it.id == seat.id }
+    val tap = choice?.move
     val stage = LocalStage.current
     val line = stage.lineFor(seat.id)
     val pointed = stage.attentionOn(seat.id)
+
+    // With the plan open a coalition seat is the way to its own turn, and the one whose turn
+    // is being built is lit in the coalition's colour — "how to design moves for them" has its
+    // answer on the felt, at the person the turn belongs to. Said, not only coloured: the
+    // plate's own name is what a screen reader would otherwise get. A seat that is the answer
+    // to a question — who throws in, who draws — keeps its own name.
+    val planning = choice?.planTurn == true
+    val composing = table.composerNow()?.seat == seat.id
+    val described = if (!planning) {
+        null
+    } else if (seat.id == view.viewerId) {
+        stringResource(Res.string.seat_plan_your_turn)
+    } else {
+        stringResource(Res.string.seat_plan_their_turn, seat.nickname)
+    }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         // Three bots that only ever move cards are furniture. A line at the right moment —
@@ -1705,6 +1807,8 @@ private fun Plate(
             thinking = thinking,
             size = sizes.avatar,
             onClick = tap?.let { { onMove(it) } },
+            lit = composing,
+            described = described,
         )
     }
 }
@@ -1765,7 +1869,7 @@ private fun SeatCard(
                 flinching = stage.isFlinching(anchor),
                 wanted = wanted,
                 carrying = carrying,
-                unseen = ref in table.board?.fresh.orEmpty(),
+                arrived = stage.arrivedAt(ref, table.board),
             ),
             label = stringResource(Res.string.card_position, seat.nickname, position + 1),
             onClick = move?.let { { onMove(it) } },
@@ -1774,7 +1878,20 @@ private fun SeatCard(
         // A declared claim, worn on the card's corner: what somebody *says* it is, readable by
         // every seat and exactly as trustworthy as the memory it came from. A label on the
         // back — never the card itself, which stays hidden.
-        table.badges[ref]?.let { badge -> ClaimBadge(badge, Modifier.align(Alignment.TopEnd)) }
+        //
+        // **Worn, not laid out.** Two faces and "Joker" on one card are wider than the card, and
+        // a badge that was a child of the card's box widened the box: a hand of five then no
+        // longer fitted its row, wrapped onto a second, and the whole seat re-pitched — the
+        // plate slid, the hands moved (product owner). The badge hangs off the corner over a
+        // layer the size of the card, so the box stays a card's size whatever the claim says.
+        table.badges[ref]?.let { badge ->
+            Box(modifier = Modifier.matchParentSize()) {
+                ClaimBadge(
+                    badge,
+                    Modifier.align(Alignment.TopEnd).wrapContentWidth(Alignment.End, unbounded = true),
+                )
+            }
+        }
     }
 }
 
@@ -1791,22 +1908,13 @@ private fun SeatCard(
  */
 @Composable
 internal fun ClaimBadge(badge: Badge, modifier: Modifier = Modifier) {
-    val warn = badge.disputed || badge.verdict == Verdict.WRONG
-    val scheme = MaterialTheme.colorScheme
-    val fill = if (warn) scheme.errorContainer else scheme.secondaryContainer
-    val ink = if (warn) scheme.onErrorContainer else scheme.onSecondaryContainer
+    val (fill, ink) = badgeColours(badge)
     val mark = when (badge.verdict) {
         Verdict.RIGHT -> "✓ "
         Verdict.WRONG -> "✗ "
         null -> if (badge.paired) "↔ " else ""
     }
-    val standing = when {
-        badge.verdict == Verdict.RIGHT -> stringResource(Res.string.badge_right)
-        badge.verdict == Verdict.WRONG -> stringResource(Res.string.badge_wrong)
-        badge.disputed -> stringResource(Res.string.badge_disputed)
-        badge.paired -> stringResource(Res.string.badge_paired)
-        else -> null
-    }
+    val standing = badgeStanding(badge)
     // `map` is inline and `joinToString`'s transform is not, and only the first may call a
     // composable — the names are resolved first and joined after.
     val names = badge.speakers.map { speakerName(it) }.joinToString(", ")
@@ -1816,6 +1924,7 @@ internal fun ClaimBadge(badge: Badge, modifier: Modifier = Modifier) {
         modifier = modifier.padding(2.dp).semantics(mergeDescendants = true) { contentDescription = spoken },
         shape = RoundedCornerShape(TableSizes.Corner),
         color = fill,
+        border = if (badge.draft) BorderStroke(DraftRim, Signal.coalition) else null,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
@@ -1839,13 +1948,54 @@ internal fun ClaimBadge(badge: Badge, modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * A badge's ground and its ink: the warning pair where a claim is disputed or was proved wrong,
+ * the rail's own where it is still a draft, and the ordinary pair otherwise.
+ *
+ * Out of [ClaimBadge] because that composable had grown past what detekt reads as one decision,
+ * and the three states are one decision: which *kind* of claim this is.
+ */
+@Composable
+private fun badgeColours(badge: Badge): Pair<Color, Color> {
+    val scheme = MaterialTheme.colorScheme
+    return when {
+        badge.disputed || badge.verdict == Verdict.WRONG ->
+            scheme.errorContainer to scheme.onErrorContainer
+
+        // A draft takes the rail's ground rather than a claim's, so it reads as *not yet one of
+        // them*: the coalition's own outline around it, and the felt's own ink inside.
+        badge.draft -> Rail.fill to Rail.ink
+        else -> scheme.secondaryContainer to scheme.onSecondaryContainer
+    }
+}
+
+/** What a badge is, in a word, for somebody who is hearing the screen rather than seeing it. */
+@Composable
+private fun badgeStanding(badge: Badge): String? = when {
+    badge.verdict == Verdict.RIGHT -> stringResource(Res.string.badge_right)
+    badge.verdict == Verdict.WRONG -> stringResource(Res.string.badge_wrong)
+    badge.disputed -> stringResource(Res.string.badge_disputed)
+    // Ahead of "one of a pair", because it changes what the words mean rather than adding to
+    // them: a draft is what the speaker is *about to* say, and nobody else has heard it.
+    badge.draft -> stringResource(Res.string.badge_draft)
+    badge.paired -> stringResource(Res.string.badge_paired)
+    else -> null
+}
+
 /** A speaker's face on a claim badge: large enough to recognise, small enough for a card's corner. */
 private val BadgeFace = 10.dp
+
+/** The outline that says a badge is a draft: the coalition's colour, at a badge's scale. */
+private val DraftRim = 1.5.dp
 
 /** The deck and the discard, labelled as on the web table, with the toss-in rank beneath. */
 @Composable
 private fun Piles(view: PlayerView, sizes: TableSizes, board: Board?, onHelp: (Rank?) -> Unit) {
-    val composer = board?.let { it.lanes.getOrNull(it.at)?.composer }
+    // The turn being built, asked of the board rather than indexed by the transport's position:
+    // a stop names the turn it *ends*, so the lane at index `at` is the turn *after* the one
+    // being composed — whose composer is always null. The pile therefore never lit for a card
+    // that could be put down on it, and a carry to the pile landed nowhere.
+    val composer = board?.building?.composer
     val stage = LocalStage.current
 
     // The web app's two-by-two, and the reason for it: what a player draws is public, so it
@@ -2212,6 +2362,21 @@ private fun Discard(
     // happens rather than after (design D5).
     val wanted = discardWanted(board, composer)
 
+    // A card nobody knows on the pile — the plan put down a card nobody has named — is drawn
+    // as what it is: rose, tagged with the turn it landed, and never on offer. The ghost table
+    // holds no card there at all, so without this the pile would read as empty.
+    val unknownSince = if (stage.rehearsing) stage.ghostPileUnknown else board?.pileUnknown
+    if (unknownSince != null && stage.landingOn(Anchor.Discard) == null && stage.flourish == null) {
+        CardFace(
+            card = CardView.Hidden,
+            scale = sizes.theirs,
+            modifier = pile,
+            state = CardState(arrived = unknownSince, wanted = wanted),
+            label = stringResource(Res.string.card_arrives, unknownSince),
+        )
+        return
+    }
+
     // The pile draws every card that is lying on it, and never one that is somewhere else.
     //
     // Two things can be somewhere else: a card in the air on its way here, and a card being
@@ -2367,6 +2532,13 @@ private fun Pile(label: String, content: @Composable () -> Unit) {
 private fun Move?.unlessActing(stage: Stage): Move? = if (stage.acting) null else this
 
 private data class Rendering(val view: PlayerView, val table: Table, val scale: CardScale)
+
+/**
+ * The turn a card that is not on the table yet arrives on, or null for one that is: off the
+ * frame while the film plays, off the parked board otherwise.
+ */
+private fun Stage.arrivedAt(ref: CardRef, board: Board?): Int? =
+    if (rehearsing) ghostFresh[ref] else board?.fresh?.get(ref)
 
 /** Cards this action has already been aimed at, so the player can see what they have chosen. */
 private fun CardRef.isTargeted(view: PlayerView): Boolean =

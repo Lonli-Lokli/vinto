@@ -448,6 +448,9 @@ private fun RailBlock(
                 ) {
                     val shown = (inPlay as? CardView.Visible)?.card
                     Heading(table = table, teaching = state.teaching, shown = shown)
+                    // What the plan says about the turn on play, as information only: one line
+                    // of the plan's own words, and nothing to touch.
+                    table.planLine?.let { PlanLineText(it) }
                     Answer(state)
                 }
                 // The log is what happened *before* now. The prompt above is now, and the
@@ -838,7 +841,7 @@ private fun ColumnScope.Answer(state: TableState) {
  * what it does, for whoever's card it is — and, when it is still worth saying, the rule.
  */
 @Composable
-private fun Heading(table: Table, teaching: Boolean, shown: Card?) {
+internal fun Heading(table: Table, teaching: Boolean, shown: Card?) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = asked(table.prompt),
@@ -1103,7 +1106,7 @@ internal fun Tone.paint(): ButtonTone = when (this) {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SeatGrid(seats: List<SeatChoice>, onMove: (Move) -> Unit) {
+internal fun SeatGrid(seats: List<SeatChoice>, onMove: (Move) -> Unit) {
     if (seats.isEmpty()) return
 
     FlowRow(
@@ -1170,10 +1173,14 @@ private fun SeatFace(portrait: DrawableResource) {
  * four to a row, because seven-and-one is a row of plaques and an orphan. A muted chip is
  * still a chip — the King may name an actionless rank on purpose — it just does not dress
  * like the common case.
+ *
+ * On the claim rail the plaques are **toggles**, and a picked one is drawn held down. Nothing
+ * here knows which rail it is: the model says whether a rank is in the claim, the same way it
+ * says whether one is muted.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RankGrid(ranks: List<RankChoice>, stage: Stage, onMove: (Move) -> Unit) {
+internal fun RankGrid(ranks: List<RankChoice>, stage: Stage, onMove: (Move) -> Unit) {
     if (ranks.isEmpty()) return
 
     FlowRow(
@@ -1191,6 +1198,10 @@ private fun RankGrid(ranks: List<RankChoice>, stage: Stage, onMove: (Move) -> Un
                     .weight(1f)
                     .markedAs(stage, "rank:${rank.rank.serialName}"),
                 compact = true,
+                // Held down for as long as it is part of the claim. A claim is built rather
+                // than picked now — several ranks means the card is one of them — so the rail
+                // has to say which of its fourteen are in.
+                selected = rank.picked,
             )
         }
     }

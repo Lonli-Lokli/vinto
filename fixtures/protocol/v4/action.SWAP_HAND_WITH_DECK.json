@@ -1,0 +1,1 @@
+{"type":"action","token":"tok","action":{"type":"SWAP_HAND_WITH_DECK","payload":{"playerId":"p1","handPosition":0,"deckCardRank":"A"}}}

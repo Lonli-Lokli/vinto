@@ -62,6 +62,29 @@ class TossedTogetherTest {
         assertTrue(merged[2].action is GameAction.ParticipateInTossIn)
     }
 
+    /**
+     * The plan's throws are ghosts of one turn, and the merged frame stays one: dropping the
+     * flag would have the felt snap back to the parked table between two throws of the film,
+     * and lose the cards the turn had dealt by then.
+     */
+    @Test
+    fun ghostThrowsMergedTogetherStayGhostsOfTheirTurn() = runTest {
+        val session = teachingSession()
+        val view = projectView(session.state, session.playerId)
+        val fresh = mapOf(CardRef("bot-1", 0) to 2)
+        val batch = listOf(
+            frame(view, throwBy("bot-1")).copy(ghost = true, turn = 2, fresh = fresh, pileUnknown = 1),
+            frame(view, throwBy("bot-2")).copy(ghost = true, turn = 2, fresh = fresh, pileUnknown = 1),
+        )
+
+        val merged = batch.tossedTogether().single()
+
+        assertTrue(merged.ghost, "two ghosts merged into a real move")
+        assertEquals(2, merged.turn)
+        assertEquals(fresh, merged.fresh)
+        assertEquals(1, merged.pileUnknown)
+    }
+
     /** A single throw is left exactly as it was. */
     @Test
     fun oneThrowIsNotRepackaged() = runTest {

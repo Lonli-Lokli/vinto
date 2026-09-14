@@ -127,14 +127,6 @@ fun App(
      */
     counting: Counting? = null,
     /**
-     * Whether the last bot calls Vinto the moment its turn comes, whatever it holds.
-     *
-     * False in every real launch and in the release binary, which has no way to pass anything
-     * else — the platform half is a `src/debug` twin, the same gate the capture handle uses.
-     * `LocalGameSession` carries what it is for; it reaches only the local game.
-     */
-    lastBotCallsVinto: Boolean = false,
-    /**
      * A state to open in, for a store capture. Null in every real launch.
      *
      * The platform half of this handle is debug-only — an intent extra behind a `src/debug`
@@ -222,7 +214,7 @@ fun App(
                                     is Screen.Home -> HomeScreen(
                                         settings = settings,
                                         canContinue = here.canContinue,
-                                        go = homeActions(vault, seeds, settings, lastBotCallsVinto) {
+                                        go = homeActions(vault, seeds, settings) {
                                             screen = it
                                         },
                                     )
@@ -286,14 +278,10 @@ private fun homeActions(
     vault: Vault,
     seeds: () -> Long,
     settings: Settings,
-    /** A debug rig; see `LocalGameSession.theLastBotCallsVinto`. False in every real launch. */
-    lastBotCallsVinto: Boolean,
     go: (Screen) -> Unit,
 ): HomeActions = HomeActions(
     continueGame = {
-        // Carried into a resumed round too, so picking a game back up does not quietly un-rig it.
-        LocalGame.resume(vault, Dispatchers.Default, lastBotCallsVinto)
-            ?.let { go(Screen.Playing(it)) }
+        LocalGame.resume(vault, Dispatchers.Default)?.let { go(Screen.Playing(it)) }
     },
     newGame = {
         go(
@@ -303,7 +291,6 @@ private fun homeActions(
                     seeds(),
                     settings.difficulty,
                     Dispatchers.Default,
-                    lastBotCallsVinto = lastBotCallsVinto,
                 ),
             ),
         )

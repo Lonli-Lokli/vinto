@@ -666,7 +666,7 @@ private fun RemoteGameScreen(
             recent = log,
         ) { shown, told ->
             // One table for the screen and for the router — see the note in `GameScreen`.
-            val table = holder.tableAsShown(shown, drawn = LocalStage.current.drawn)
+            val table = holder.tableAsShown(shown, LocalStage.current.drawn, LocalStage.current.rehearsing)
             Column(modifier = Modifier.fillMaxSize()) {
                 TableScreen(
                     state = TableState(

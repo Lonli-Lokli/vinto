@@ -233,7 +233,34 @@ object Rail {
     val note: Color
         @Composable @ReadOnlyComposable
         get() = pick(Amber, DeepGold)
+
+    /**
+     * The word of the plan's sentence the rail is asking for: the coalition's blue on slate,
+     * and a deeper blue on paper — the bright one reads at 2.7:1 under white ink there, which is
+     * the one chip a member is being asked to look at going illegible on a light phone.
+     */
+    val asked: Color
+        @Composable @ReadOnlyComposable
+        get() = pick(AskedOnSlate, AskedOnPaper)
+
+    /** The ink on [asked]: dark on the bright blue, white on the deep one. */
+    val onAsked: Color
+        @Composable @ReadOnlyComposable
+        get() = pick(SlateFill, Color.White)
+
+    /** A boxed word of the sentence: a decision, touchable. Sits a step above [fill]. */
+    val chip: Color
+        @Composable @ReadOnlyComposable
+        get() = pick(SlateChip, PaperChip)
 }
+
+/** The plan's asked word on each rail. */
+private val AskedOnSlate = Color(0xFF5A94F0)
+private val AskedOnPaper = Color(0xFF1D4FB0)
+
+/** A decision's box on each rail: distinct from the panel, and still a ground for [SlateInk] / [PaperInk]. */
+private val SlateChip = Color(0xFF252E2A)
+private val PaperChip = Color(0xFFE2DED1)
 
 @Composable
 @ReadOnlyComposable
@@ -304,18 +331,19 @@ object Signal {
     val planned = Color(0xFF1D4FB0)
 
     /**
-     * A card the plan has replaced with a draw **nobody has seen** (design D5).
+     * A card that is **not on the table yet**: one the plan draws or deals — a put-down's
+     * replacement, an Ace's forced draw, a blind throw's penalty card — on the felt and in the
+     * sentence, tagged with the turn it arrives on.
      *
-     * A step that puts a card down does not leave a gap: the seat draws off the deck, face
-     * down, and that card is a lottery ticket rather than a known quantity. It wore the same
-     * back as every other card, so a hand read at a later stop of the transport gave a member
-     * no way to tell the two apart — asked for from a phone in exactly those terms.
-     *
-     * Violet rather than another blue: the plan's own blue already means *a place a card may
-     * go*, and this is the opposite kind of statement — not somewhere to aim, but something
-     * that cannot be known. Deep enough to be read against a card's white, like its neighbours.
+     * Rose, and chosen for contrast rather than decoration: [roseInk] reads on it at 8.5:1, the
+     * ground itself stands 6.2:1 off the felt, and [roseEdge] marks its edge at 3.7:1 — all past
+     * WCAG AA in either scheme, because the felt is the same green at noon and at midnight, and
+     * so is a card. Asked for from a phone as "some pink background or whatever better from
+     * WCAG"; `ContrastTest` holds every pair.
      */
-    val unseen = Color(0xFF6D3BAF)
+    val rose = Color(0xFFF2C4D8)
+    val roseInk = Color(0xFF4A1F33)
+    val roseEdge = Color(0xFFA04C6A)
 }
 
 /** The white of a card face: what [Signal.tappable] and its neighbours are drawn against. */

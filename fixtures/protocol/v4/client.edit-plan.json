@@ -1,0 +1,1 @@
+{"type":"edit-plan","token":"tok","edit":{"type":"set-toss-ins","seat":"p2","tossIns":[{"seat":"p3","rank":"Q","then":{"type":"swap","from":{"seat":"p3","position":0},"to":{"seat":"p4","position":0}}}]}}

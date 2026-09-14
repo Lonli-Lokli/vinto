@@ -52,14 +52,20 @@ class PlanModeTest {
     fun theModeIsThePlanForTheWholeOfPlanningAndForNothingElse() {
         val standing = CoalitionPlan(lanes = listOf(Lane(nina, swap(me, 0, nina, 0))))
 
-        // Three questions, one mode. The plan itself, and the two things a card cannot be
-        // *carried* into — a King's rank and a shed's — are all planning, and the felt stays in
-        // plan mode through them: a screen that dropped back to the live table to name a rank
-        // would put a draw button under a finger in the middle of composing (design D9).
+        // Every question about the plan is one mode. The plan itself, and every part of a turn
+        // the sentence can open — what becomes of the card, which card goes out, a King's rank,
+        // the cards an action names, who an Ace makes draw, who throws in — are all planning,
+        // and the felt stays in plan mode through them: a screen that dropped back to the live
+        // table to name a rank would put a draw button under a finger in the middle of composing
+        // (design D9).
         val planning = listOf(
             Question.ThePlan(),
-            Question.Planning(seat = nina),
-            Question.Shedding(me),
+            Question.Doing(nina, at = 1),
+            Question.PuttingDown(nina, at = 1),
+            Question.Naming(nina, at = 1, part = Part.Own),
+            Question.Aiming(nina, at = 1, part = Part.Own),
+            Question.Forcing(nina, at = 1, part = Part.Own),
+            Question.Throwing(nina, at = 1, index = 0),
         )
         for (question in planning) {
             assertEquals(
@@ -169,9 +175,12 @@ class PlanModeTest {
                         table.seats.map { it.move } +
                         table.board?.lanes.orEmpty().flatMap { lane ->
                             listOfNotNull(lane.useSuggestion) +
-                                lane.composer?.drops.orEmpty().values.flatMap { it.values }
+                                lane.composer?.drops.orEmpty().values.flatMap { it.values } +
+                                lane.composer?.touches.orEmpty().values
                         } +
-                        table.board?.sheds.orEmpty().mapNotNull { it.move }
+                        table.board?.sentence?.clauses.orEmpty().flatMap { clause -> clause.slots.mapNotNull { it.open } } +
+                        listOfNotNull(table.board?.sentence?.replay, table.board?.transport?.playAll) +
+                        table.board?.transport?.stops.orEmpty().flatMap { listOfNotNull(it.go, it.replay) }
 
                     touched += offered.size
                     val loud = offered.filterNot { it is Move.Quiet }
@@ -235,13 +244,20 @@ class PlanModeTest {
     }
 
     @Test
-    fun theSeatOnPlayIsNotOfferedForEditingEither() {
-        val onPlay = view(finalRound(onPlay = nina))
-        val board = assertNotNull(
-            tableFor(onPlay, question = Question.ThePlan(), plan = CoalitionPlan()).board,
+    fun theSeatOnPlayStaysOpenAndAPlayedTurnDoesNot() {
+        // The turn in progress is the one most worth rewriting — its drawn card is the news the
+        // plan turns on — so it is offered; the turn before it has been played and is not.
+        val onPlay = view(finalRound(onPlay = don))
+        val ninas = assertNotNull(tableFor(onPlay, question = Question.ThePlan(at = 1), plan = CoalitionPlan()).board)
+        assertNull(
+            ninas.lanes.first { it.who == speakerFor(onPlay, nina) }.composer,
+            "a played turn was offered for editing",
         )
-        val lane = assertNotNull(board.lanes.firstOrNull { it.who == speakerFor(onPlay, nina) })
-        assertNull(lane.composer, "the turn already in progress was offered for editing")
+        val dons = assertNotNull(tableFor(onPlay, question = Question.ThePlan(at = 2), plan = CoalitionPlan()).board)
+        assertNotNull(
+            dons.lanes.first { it.who == speakerFor(onPlay, don) }.composer,
+            "the turn in progress was closed",
+        )
     }
 
     // ------------------------------------------------------------------ fixtures

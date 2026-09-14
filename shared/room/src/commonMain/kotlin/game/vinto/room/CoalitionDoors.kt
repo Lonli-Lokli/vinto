@@ -146,17 +146,22 @@ internal fun doneConferring(state: RoomState, token: String): Spoken {
 }
 
 /**
- * Locks the lane of whoever is on play, and leaves the rest open.
+ * Locks the lanes of the turns that have been played, and leaves the turn on play and the
+ * ones after it open.
  *
- * A plan must not change under the hand of the person executing it — the step they agreed to
- * is the step they are acting on. Later lanes stay editable, because the round is still going
- * and better information keeps arriving; freezing the whole plan at the first turn would make
- * every reveal after it unusable.
- *
- * Once locked, a lane stays locked. A turn does not un-begin.
+ * The turn on play stays editable on purpose: its drawn card is face up and public, and the
+ * plan is how the coalition says what to do with it while the card is still in the player's
+ * hand. What closes is history — a turn does not un-play itself — and the door refuses those
+ * from the order of the coalition whether or not this stamp has run (`CoalitionPlan.edited`).
  */
-internal fun RoomState.withLanesLocked(plan: CoalitionPlan): CoalitionPlan =
-    plan.lockingLaneOf(game?.let { it.players.getOrNull(it.currentPlayerIndex)?.id })
+internal fun RoomState.withLanesLocked(plan: CoalitionPlan): CoalitionPlan {
+    val game = game ?: return plan
+    val caller = game.vintoCallerId ?: return plan
+    return plan.lockingLaneOf(
+        game.players.getOrNull(game.currentPlayerIndex)?.id,
+        coalitionInTurnOrder(game.players.map { it.id }, caller),
+    )
+}
 
 /**
  * One part of the coalition's shared plan, changed (design D7a).

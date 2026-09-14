@@ -18,17 +18,22 @@ import game.vinto.app.game.Stage
 import game.vinto.app.game.TableLayout
 import game.vinto.app.game.TableScreen
 import game.vinto.app.game.TableState
+import game.vinto.app.game.seatingFor
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.CardRef
+import game.vinto.client.Label
 import game.vinto.client.Move
 import game.vinto.client.Question
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
+import game.vinto.engine.mySeat
+import game.vinto.shapes.Claim
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Rank
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -110,12 +115,45 @@ class ClaimsOnTheFeltTest {
         )
 
         // And the picker, carried to its end, produces one send — the same one from either path.
+        // Naming a rank builds the claim; saying it is what sends, because one rank and several
+        // cannot be told apart until the player says they are finished.
         val picking = Question.Claiming(mate.id, listOf(0))
         val ranked = tableFor(view, question = picking).ranks.first { it.rank == Rank.QUEEN }.move
-        assertTrue(ranked is Move.Send, "naming a rank did not send the claim: $ranked")
+        assertTrue(ranked is Move.Ask, "naming a rank sent before the claim was finished: $ranked")
+
+        val said = tableFor(view, question = (ranked as Move.Ask).question)
+            .choices
+            .first { it.label == Label.SayIt }
+            .move
+        assertTrue(said is Move.Send, "a named rank with no way to send it: $said")
     }
 
     // ------------------------------------------------------------------ fixtures
+
+    @Test
+    fun aWideClaimDoesNotWrapAHandOntoASecondRow() = runComposeUiTest {
+        // Two faces and "Joker" on one card of the seat across the table are wider than the
+        // card. A badge that was laid out as part of the card's box widened the box, and five
+        // cards then no longer fitted their row: the hand wrapped onto a second row and the whole
+        // seat re-pitched, plate and all (product owner). A badge is worn, not laid out.
+        val view = conferring()
+        val top = assertNotNull(seatingFor(view.players, view.mySeat).top, "the fixture has no seat across the table")
+        val speakers = view.players.filter { it.id != top.id && it.id != view.viewerId }.take(2)
+        val claimed = view.copy(
+            players = view.players.map { seat ->
+                if (seat.id == top.id) {
+                    seat.copy(claims = speakers.map { Claim(it.id, listOf(2), listOf(Rank.JOKER)) })
+                } else {
+                    seat
+                }
+            },
+        )
+
+        show(claimed)
+
+        val rows = top.cards.indices.map { fetchNode(claimed, CardRef(top.id, it)).boundsInRoot.top }.distinct()
+        assertEquals(1, rows.size, "the seat across the table broke its hand into rows at $rows")
+    }
 
     private fun ComposeUiTest.fetchNode(view: PlayerView, ref: CardRef) =
         onNodeWithContentDescription(label(view, ref), substring = true).fetchSemanticsNode()

@@ -225,7 +225,7 @@ fun TeachScreen(
             val settled = shown.showsTheSameHandAs(holder.current)
             val table = coaching.read(
                 shown = shown,
-                live = holder.tableAsShown(shown)
+                live = holder.tableAsShown(shown, rehearsing = LocalStage.current.rehearsing)
                     // From the live view: whether the gold button exists is a fact about the
                     // game, and reading it off a lagging one made it come and go mid-flight.
                     .beforeTheEnd(

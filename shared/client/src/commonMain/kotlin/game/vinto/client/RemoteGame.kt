@@ -790,12 +790,10 @@ class RemoteGameSession internal constructor(
                 jumped = true
             } else {
                 val reveals = entry.revealed.map { PublicReveal(it.playerId, it.position, it.card) }
-                if (reveals.isNotEmpty()) _reveals.value = _reveals.value + reveals
-                batch += Frame(
-                    entry.action,
-                    scenesFor(entry.action, last, after, reveals),
-                    after,
-                )
+                val scenes = scenesFor(entry.action, last, after, reveals)
+                // The reveals that stand follow the cards the same scenes move. See `following`.
+                _reveals.value = _reveals.value.following(scenes, last, after) + reveals
+                batch += Frame(entry.action, scenes, after)
                 last = after
             }
             if (entry.byBot) bots++

@@ -83,12 +83,14 @@ data class CardState(
     /** This card is the one being carried: it is drawn under the finger, not in its slot. */
     val carrying: Boolean = false,
     /**
-     * The plan has already replaced this card with a draw nobody has seen (design D5).
+     * A card that is **not on the table yet**: the plan draws or deals it, on the turn this
+     * says — a put-down's replacement, an Ace's forced draw, a blind throw's penalty card.
      *
-     * Only ever true in plan mode, and only at a stop the put-down has happened by. See
-     * `Board.fresh` and [Signal.unseen].
+     * Drawn rose with the turn in its corner and a question mark on its face, because nobody
+     * has seen it and nobody can plan on it. Only ever set in plan mode, from `Board.fresh`,
+     * and from the page its turn lands on to the last. See [Signal.rose].
      */
-    val unseen: Boolean = false,
+    val arrived: Int? = null,
 )
 
 /**

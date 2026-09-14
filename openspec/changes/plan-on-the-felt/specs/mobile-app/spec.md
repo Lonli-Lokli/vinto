@@ -14,7 +14,8 @@ never a state a player has to guess their way out of.
 
 The final-round header SHALL carry only what changes — the turns remaining and the plan's
 standing — and SHALL NOT repeat which seats are on which side, because the seat plates already
-say so.
+say so. While the plan is open the app SHALL spend nothing above the felt on it: the plan's own
+rail under the felt carries its pages, and the felt keeps the height four hands need on a phone.
 
 #### Scenario: A coalition member opens the plan
 
@@ -54,10 +55,18 @@ While the plan is open the app SHALL present it as a replay: the cards each turn
 between the seats that hold them, in the order the turns come. The table SHALL be marked
 unmistakably as showing something that has not happened.
 
-The replay SHALL be driven by a transport the viewer controls — running it, halting it, and moving
-in both directions — and the transport's positions SHALL be the turn boundaries: the table now,
-and the table after each turn. Moving through the plan SHALL come to rest on one of those
-positions and never between them.
+The replay SHALL be driven by a transport the viewer controls, and the transport SHALL be a pager:
+one page per coalition turn, in the order the turns come, and a last page where the plan lands. A
+page SHALL show the table its turn starts from, and — once that turn's film has been watched — the
+table it leaves. Moving between pages, by a swipe or by touching a stop, SHALL be a jump with no
+cards in flight; what plays the film SHALL be two controls beside the stops: this turn again, from
+the table it starts on, and every turn from the page on screen to where the plan lands, which
+SHALL read as a stop while it runs. Halting SHALL come to rest on the page reached and never
+between two.
+
+Between two turns of the film the app SHALL say, over the felt and for a beat before the turn's
+cards move, whose turn has just played and whose comes next; and a ghost's every movement and
+pause SHALL be slower than a real move's, because the film is watched to see where a card goes.
 
 At the end of the replay the app SHALL show the state the plan arrives at: every hand as the plan
 would leave it, the caller's total as the coalition believes it, and how many of the caller's
@@ -78,10 +87,20 @@ against the seat that holds them rather than in the sequence of turns.
 
 #### Scenario: Coming to rest
 
-- **WHEN** the viewer halts the replay part-way through a turn, or moves the transport to a
-  position between two turns
-- **THEN** the replay comes to rest on a turn boundary, showing a settled table rather than cards
-  in flight
+- **WHEN** the viewer halts the replay part-way through
+- **THEN** the replay comes to rest on the page it had reached, showing a settled table rather
+  than cards in flight
+
+#### Scenario: Turning the page
+
+- **WHEN** the viewer swipes to the next turn or touches its stop
+- **THEN** the page changes, the felt shows the table that turn starts from, and no card flies
+
+#### Scenario: Whose turn is next
+
+- **WHEN** the film passes from one coalition turn to the next
+- **THEN** a card over the felt names the turn and the seat it passes to, and holds for a beat
+  before that turn's cards move
 
 #### Scenario: Reaching the end
 
@@ -164,6 +183,43 @@ be shown without the cards it refers to being distinguishable from the cards it 
 - **WHEN** no card of the viewer's can be claimed
 - **THEN** no instruction to tap a card is shown
 
+### Requirement: A claim is built, and may name more than one rank
+
+A member saying what they believe about a card SHALL be able to name **several ranks for one
+card**, meaning that the card is one of them, as well as a single rank meaning that it is that
+card. The ranks SHALL therefore behave as toggles over the whole rail, and the claim SHALL NOT
+be sent until the member says it is finished — a rail that sends on the first rank touched
+cannot express an uncertain memory at all, and uncertain memory is the common case.
+
+Taking back what was said SHALL reach only the cards the member is pointing at, leaving
+everything else they have said about that hand standing.
+
+Whether a rank is currently named SHALL be conveyed to a viewer who cannot see the screen, and
+SHALL be distinguishable from a rail whose ranks are not toggles at all.
+
+#### Scenario: A card that could be one of two
+
+- **WHEN** a member names one card and two ranks, and says so
+- **THEN** one claim is recorded holding both ranks, and the card is believed to be either
+
+#### Scenario: A card the member is sure of
+
+- **WHEN** a member names one card and one rank, and says so
+- **THEN** one claim is recorded naming that rank exactly
+
+#### Scenario: A pair whose order is still open
+
+- **WHEN** a member names two cards and two ranks
+- **THEN** the order is asked for as three answers of equal standing — each arrangement, and
+  "not sure" — and the ranks named remain changeable while that question stands
+
+#### Scenario: Correcting one card
+
+- **WHEN** a member takes back what they said about one card of a hand they have spoken about
+  more than once
+- **THEN** only that card's claim is withdrawn, and the rest of what they said about that hand
+  still stands
+
 ### Requirement: The plan is legible without scrolling, with the past behind it
 
 The plan SHALL present the turns still to come without requiring the viewer to scroll to read
@@ -203,3 +259,120 @@ say nothing: the table watched the card go, so nothing has been learned.
 
 - **WHEN** a Jack moves a card one of the plan's steps was made about, and the step follows it
 - **THEN** the plan is unchanged in the reading and nothing is announced
+
+### Requirement: The plan can say every coalition action, throw-ins in order included
+
+The plan SHALL be able to express any action the rules allow a coalition member: taking either
+pile, playing, swapping in or letting the card go, a look at a card, a trade of two cards, a King
+pointed at a card and what that card then does, an Ace naming who draws — and, for each turn, who
+throws in on it, **in the order they throw**, each with what the thrown card then does. A throw-in
+SHALL be part of the turn it lands on rather than a promise beside the plan.
+
+Every such action SHALL be held to the rank that plays it and SHALL NOT touch the Vinto caller's
+hand: no look at, trade of, pointing at or lengthening of the caller's cards, and no throw-in by
+the caller.
+
+#### Scenario: You play this Queen, then I throw in mine and play it
+
+- **WHEN** a member plans that a teammate takes the Queen off the pile and trades two cards, then
+  that they themselves throw a Queen in and trade two more
+- **THEN** the plan carries one turn with one throw-in after its step, the replay shows the
+  put-down, the throw and both trades in that order, and the readout prices all of it
+
+#### Scenario: Two throws on one turn
+
+- **WHEN** two members say they will throw in on the same turn
+- **THEN** the plan carries them in the order they were said, and the order can be changed
+
+### Requirement: The turn is built and read as a sentence
+
+While the plan is open the app SHALL present the turn being built as a sentence of words, one per
+decision, in the order the turn happens: where the card comes from, what becomes of it, what it
+names, then each throw-in and what its card does. Touching a word SHALL open the question that
+word answers, and the word the rail is waiting on SHALL be marked as such and not by colour alone.
+
+**Boxed means touchable.** A decision SHALL be drawn as a boxed word; a fact — the pile it draws
+from when there is only one, the card it drew, "and we'll see" for nothing decided — SHALL be
+drawn plain and SHALL NOT respond to a touch; the next decision SHALL be on offer as a dashed
+box at the end of the line rather than asked before anybody wants it. The caller SHALL read every
+word plain. A question with one answer SHALL NOT be asked.
+
+A card the sentence names SHALL be drawn as the card on the felt is — its back, its owner's face,
+the rank the table says it is, its place along the row — and a card that is not on the table yet
+SHALL be rose, with the turn it arrives on, in the sentence and on the felt alike, from the page
+its turn lands on to the last. A throw-in of a card the table cannot vouch for SHALL say so
+("blind") and SHALL rehearse as the card coming back with a penalty card beside it.
+
+The rail SHALL be five rows that never move — the page, the answers, the stops, the standing
+button, and the page's two rows of sentence and throw-ins — at one height, whatever the turn
+says and whether or not a rank is being asked for; at a doubled font a long sentence SHALL
+scroll sideways inside its own row rather than move anything under it.
+
+Each turn SHALL offer its own replay from the table it starts on, and the whole plan SHALL be
+playable from wherever the transport is parked.
+
+#### Scenario: Building by touching words
+
+- **WHEN** a member touches "+ and then…" in a turn's sentence
+- **THEN** the row under the sentence offers put a card down, let it go and we'll see — and play
+  it, once the card is face up — and the answer takes its place in the sentence with the plan
+  still open at that turn
+
+#### Scenario: A fact is not a control
+
+- **WHEN** the pile holds no card the turn could take
+- **THEN** "draws" is drawn plain, nothing happens when it is touched, and a screen reader is
+  given no action for it
+
+#### Scenario: A card nobody has seen
+
+- **WHEN** turn 1 puts a card down and the viewer reads turn 3
+- **THEN** the card that took its place is rose on the felt and in any sentence that names it,
+  tagged with turn 1
+
+#### Scenario: Throwing in blind
+
+- **WHEN** a member picks a card nobody has named as a throw-in
+- **THEN** the sentence reads it as thrown blind, and the film shows it coming back with a penalty
+  card
+
+#### Scenario: Watching one turn again
+
+- **WHEN** a member activates the replay at the head of a turn's sentence
+- **THEN** the felt returns to the table that turn starts on and plays that turn to its end
+
+### Requirement: The plan is information on the live table, never a control
+
+On a member's own turn the app SHALL present the ordinary turn's controls, unchanged by the plan,
+and SHALL show what the plan says about that turn as one line of information. The app SHALL NOT
+offer a control that performs the plan's step and SHALL NOT compare the draw against the plan.
+
+When conferring ends the app SHALL open the plan, on the member's own turn while it can still be
+built and otherwise on the first turn that can, because the plan is what the talking was for; the
+switch closes it, and the ordinary controls are there whenever it is closed.
+
+A turn already played SHALL be locked. The turn on play SHALL stay open to editing, with the card
+its seat has drawn entering the sentence as a fact, because that card is the news the plan turns
+on. When a toss-in window opens that the member may throw in on, an open plan SHALL step aside so
+the round's controls are on screen, and SHALL reopen where it was when the member asks; the turn
+coming round to the member SHALL NOT close it.
+
+The switch that opens the plan SHALL say, while the plan is closed, that a teammate has changed
+the member's own turn since they last looked at it, wearing that teammate's face.
+
+#### Scenario: Ready opens the plan
+
+- **WHEN** a member finishes conferring
+- **THEN** the plan opens on their own turn, and closing it leaves the ordinary controls with
+  nothing withheld
+
+#### Scenario: Your turn, with the plan open
+
+- **WHEN** the turn comes round to a member who has the plan open
+- **THEN** the plan stays open, their turn is still editable, and the card they draw reads in the
+  sentence as a fact
+
+#### Scenario: A card lands while the plan is open
+
+- **WHEN** the plan is open and a card lands that the member could throw in on
+- **THEN** the plan closes and the toss-in controls are on screen

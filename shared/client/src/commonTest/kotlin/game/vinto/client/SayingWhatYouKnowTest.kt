@@ -1,9 +1,12 @@
 package game.vinto.client
 
+import game.vinto.engine.PlayerView
 import game.vinto.engine.projectView
+import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.Card
 import game.vinto.shapes.Claim
+import game.vinto.shapes.DeclareCardsPayload
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -20,6 +23,8 @@ import game.vinto.shapes.getCardValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -92,6 +97,20 @@ class SayingWhatYouKnowTest {
         return move.question
     }
 
+    /** Touch a rank on the rail, and get back the claim being built. */
+    private fun name(view: PlayerView, question: Question, rank: Rank): Question {
+        val move = tableFor(view, question).ranks.first { it.rank == rank }.move
+        assertIs<Move.Ask>(move, "the rail does not offer $rank")
+        return move.question
+    }
+
+    /** Press "Say it", and get back what it declares. */
+    private fun declared(view: PlayerView, question: Question): DeclareCardsPayload {
+        val move = tableFor(view, question).choices.first { it.label == Label.SayIt }.move
+        assertIs<Move.Send>(move, "nothing to send")
+        return (move.action as GameAction.DeclareCards).payload
+    }
+
     // ------------------------------------------------------------------ what may be tapped
 
     @Test
@@ -119,16 +138,89 @@ class SayingWhatYouKnowTest {
     fun oneCardAndOneRankIsAnExactClaim() {
         val view = viewOf()
         val question = tapOn(tableFor(view), mate, 1)
-        val picking = tableFor(view, question)
-
-        val send = picking.ranks.first { it.rank == Rank.SIX }.move
-        assertIs<Move.Send>(send)
-        val payload = (send.action as GameAction.DeclareCards).payload
+        val payload = declared(view, name(view, question, Rank.SIX))
 
         assertEquals(me, payload.playerId, "a claim is the speaker's")
         assertEquals(mate, payload.about, "and it is about the card's owner")
         assertEquals(listOf(1), payload.claims.single().positions)
         assertEquals(listOf(Rank.SIX), payload.claims.single().ranks)
+        assertTrue(payload.claims.single().covering, "one rank names the card exactly")
+    }
+
+    /**
+     * The sentence the picker existed to make unsayable.
+     *
+     * "It is a 7 or an 8" is what a person has for most of the cards they have ever seen, and
+     * `Claim` has carried it since the day it was written — one position, two ranks, not
+     * covering. The rail sent on the first rank, so the only way to say it was to say
+     * something else and hope. The coalition then planned on the guess as though it were read.
+     */
+    @Test
+    fun namingASecondRankSaysTheCardIsOneOfThem() {
+        val view = viewOf()
+        var question = tapOn(tableFor(view), mate, 1)
+        question = name(view, question, Rank.SEVEN)
+        val claim = declared(view, name(view, question, Rank.EIGHT)).claims.single()
+
+        assertEquals(listOf(1), claim.positions)
+        assertEquals(listOf(Rank.SEVEN, Rank.EIGHT), claim.ranks)
+        assertTrue(!claim.covering, "two ranks on one card is *one of*, not both")
+    }
+
+    @Test
+    fun tappingANamedRankTakesItBackOut() {
+        val view = viewOf()
+        val question = Question.Claiming(mate, listOf(1), listOf(Rank.SEVEN, Rank.EIGHT))
+
+        val after = tableFor(view, question).ranks.first { it.rank == Rank.SEVEN }.move
+        assertIs<Move.Ask>(after)
+        assertEquals(listOf(Rank.EIGHT), (after.question as Question.Claiming).ranks)
+    }
+
+    @Test
+    fun theRanksAlreadyNamedAreMarkedAsSuch() {
+        // Fourteen plaques in a grid say nothing about which of them are in the claim, and a
+        // toggle whose state cannot be seen is a control that cannot be used.
+        val view = viewOf()
+        val question = Question.Claiming(mate, listOf(1), listOf(Rank.SEVEN))
+        val rail = tableFor(view, question).ranks
+
+        assertEquals(ALL_RANKS.size, rail.size, "the whole rail is offered, always")
+        assertEquals(
+            listOf(Rank.SEVEN),
+            rail.filter { it.picked == true }.map { it.rank },
+            "the rail does not show what has been named",
+        )
+        // Every other plaque says it is a toggle that is *off*, which is a different thing
+        // from a plaque that is not a toggle. Both reach the screen reader.
+        assertTrue(rail.all { it.picked != null }, "a claim rail with a plaque that is not a toggle")
+    }
+
+    @Test
+    fun aKingsRailIsNotAToggleAndSaysSo() {
+        // The same grid, a different question: each of the King's fourteen is a sentence that
+        // sends on touch, so none of them is on or off.
+        val view = viewOf()
+        val king = tableFor(view, Question.CallRank(0)).ranks
+
+        assertTrue(king.all { it.picked == null }, "the King's rail claims to be a set of toggles")
+    }
+
+    @Test
+    fun thereIsNothingToSayUntilARankIsNamed() {
+        val view = viewOf()
+        val empty = tableFor(view, Question.Claiming(mate, listOf(1)))
+
+        assertTrue(
+            empty.choices.none { it.label == Label.SayIt },
+            "a claim of no ranks was offered as something to say",
+        )
+        assertTrue(
+            tableFor(view, Question.Claiming(mate, listOf(1), listOf(Rank.SEVEN)))
+                .choices
+                .any { it.label == Label.SayIt },
+            "a named rank with no way to send it",
+        )
     }
 
     // ------------------------------------------------------------------ two cards
@@ -139,10 +231,8 @@ class SayingWhatYouKnowTest {
         var question = tapOn(tableFor(view), me, 0)
         question = tapOn(tableFor(view, question), me, 2)
 
-        val ranks = tableFor(view, question)
-        question = (ranks.ranks.first { it.rank == Rank.KING }.move as Move.Ask).question
-        val second = tableFor(view, question)
-        question = (second.ranks.first { it.rank == Rank.ACE }.move as Move.Ask).question
+        question = name(view, question, Rank.KING)
+        question = name(view, question, Rank.ACE)
 
         val asked = tableFor(view, question)
         assertEquals(Ask.WhichWayRound, asked.prompt)
@@ -151,6 +241,29 @@ class SayingWhatYouKnowTest {
         val offered = asked.choices.map { it.label }
         assertEquals(2, offered.count { it is Label.ThisWayRound }, "both orderings: $offered")
         assertTrue(Label.NotSureWhichWayRound in offered, "no way to say you are not sure: $offered")
+
+        // And the rail is still live under it: the pair question is a *refinement* of the
+        // ranks named, so changing your mind about one of them must not mean starting again.
+        assertEquals(ALL_RANKS.size, asked.ranks.size, "the rail went when the pair was named")
+        assertEquals(2, asked.ranks.count { it.picked == true }, "the named pair is not marked")
+    }
+
+    /**
+     * Two cards can be spoken about without the order ever coming up.
+     *
+     * "Those two are both low" is a pair claim with one rank; "they are among these three" has
+     * more ranks than cards. Neither leaves an order to settle, so neither is asked for one —
+     * the pair question belongs to the case that has exactly two of each.
+     */
+    @Test
+    fun twoCardsAndOneRankSaysBothWithoutAskingTheOrder() {
+        val view = viewOf()
+        val question = Question.Claiming(me, listOf(0, 2))
+        val claim = declared(view, name(view, question, Rank.KING)).claims.single()
+
+        assertEquals(listOf(0, 2), claim.positions)
+        assertEquals(listOf(Rank.KING), claim.ranks)
+        assertTrue(!claim.covering, "one rank cannot cover two cards between them")
     }
 
     @Test
@@ -209,6 +322,60 @@ class SayingWhatYouKnowTest {
         assertEquals(listOf(2), again.positions)
     }
 
+    // ------------------------------------------------------------------ the draft on the felt
+
+    /**
+     * What you are about to say, worn by the card you are about to say it about.
+     *
+     * The rail is a multiple choice and the thing it chooses about is on the felt, so with
+     * nothing drawn until "Say it" a member naming three ranks could only check themselves by
+     * reading fourteen plaques back. Reported from a phone: the card does not update until
+     * afterwards.
+     */
+    @Test
+    fun theCardYouAreNamingWearsWhatYouHaveNamedSoFar() {
+        val view = viewOf()
+        var question = tapOn(tableFor(view), mate, 1)
+        question = name(view, question, Rank.SEVEN)
+        question = name(view, question, Rank.EIGHT)
+
+        val badge = tableFor(view, question).badges[CardRef(mate, 1)]
+        assertNotNull(badge, "the card being named wears nothing")
+        assertEquals("7/8", badge.text)
+        assertTrue(badge.draft, "a draft that does not say it is one")
+    }
+
+    @Test
+    fun aCardPickedWithNoRankYetStillSaysItIsTheOneBeingTalkedAbout() {
+        val view = viewOf()
+        val question = tapOn(tableFor(view), mate, 1)
+
+        val badge = tableFor(view, question).badges[CardRef(mate, 1)]
+        assertNotNull(badge, "the picked card is not marked at all")
+        assertTrue(badge.draft)
+        assertNull(badge.verdict)
+    }
+
+    @Test
+    fun aDraftIsWornOnlyByTheCardsTheClaimNames() {
+        val view = viewOf()
+        val question = Question.Claiming(mate, listOf(0), listOf(Rank.FIVE))
+
+        val badges = tableFor(view, question).badges
+        assertEquals(setOf(CardRef(mate, 0)), badges.filterValues { it.draft }.keys)
+    }
+
+    /** And once it is said it is a claim like any other, drawn as one. */
+    @Test
+    fun whatHasBeenSaidIsNoLongerADraft() {
+        val standing = mapOf(mate to listOf(Claim(me, listOf(0), listOf(Rank.FIVE))))
+        val view = projectView(finalRound(standing), me)
+
+        val badge = tableFor(view).badges[CardRef(mate, 0)]
+        assertNotNull(badge)
+        assertTrue(!badge.draft, "a claim on the table is still drawn as a draft")
+    }
+
     // ------------------------------------------------------------------ taking it back
 
     @Test
@@ -222,7 +389,38 @@ class SayingWhatYouKnowTest {
         val payload = (withdraw.action as GameAction.DeclareCards).payload
 
         assertEquals(mate, payload.about)
-        assertTrue(payload.claims.isEmpty(), "an empty claim list is how a speaker takes it back")
+        assertTrue(
+            payload.claims.single().vacuous,
+            "taking it back left something standing: ${payload.claims}",
+        )
+    }
+
+    /**
+     * And it takes back only the card being pointed at.
+     *
+     * The button sat in a picker scoped to one card and sent the empty claim list, which is
+     * how a speaker unsays **everything** about that hand. So correcting one card cost a
+     * player every other thing they had told the coalition about that seat, silently — and a
+     * per-card take-back was already in the model, as the claim that names every rank.
+     */
+    @Test
+    fun takingOneCardBackLeavesTheRestOfWhatYouSaidStanding() {
+        val standing = mapOf(
+            mate to listOf(
+                Claim(me, listOf(0), listOf(Rank.FIVE)),
+                Claim(me, listOf(1), listOf(Rank.SIX)),
+            ),
+        )
+        val view = projectView(finalRound(standing), me)
+
+        val withdraw = tableFor(view, Question.Claiming(mate, listOf(0)))
+            .choices
+            .first { it.label == Label.Withdraw }
+            .move
+        assertIs<Move.Send>(withdraw)
+        val claims = (withdraw.action as GameAction.DeclareCards).payload.claims
+
+        assertEquals(listOf(0), claims.single().positions, "it reached past the card tapped")
     }
 
     @Test

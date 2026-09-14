@@ -26,13 +26,18 @@ import game.vinto.client.Speaker
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
+import game.vinto.shapes.Card
 import game.vinto.shapes.Claim
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Lane
+import game.vinto.shapes.Opening
 import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
+import game.vinto.shapes.coalitionInTurnOrder
+import game.vinto.shapes.getCardShortDescription
+import game.vinto.shapes.getCardValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -59,11 +64,11 @@ class PlanDragTest {
         // A long press is the tax paid for telling a drag apart from a scroll, and in plan mode
         // there is nothing to scroll, nothing to tap-to-play and nothing to swipe (design D5a).
         // So a card is in the air after a touch and a movement, with no wait in between.
-        val view = finalRound()
+        val view = jackOnThePile(finalRound())
         val stage = Stage()
         val from = CardRef(view.viewerId, 0)
 
-        show(view, stage, plan = CoalitionPlan())
+        show(view, stage, plan = takingTheJack(view))
 
         onNodeWithContentDescription(cardLabel(view, from), substring = true)
             .performTouchInput {
@@ -78,13 +83,14 @@ class PlanDragTest {
 
     @Test
     fun carryingACardOntoAnotherSeatsCardPlansASwap() = runComposeUiTest {
-        val view = finalRound()
+        // A trade needs a card that trades: the pile's Jack, taken by the turn being built.
+        val view = jackOnThePile(finalRound())
         val stage = Stage()
         val moves = mutableListOf<Move>()
         val from = CardRef(view.viewerId, 0)
         val onto = CardRef(mate(view).id, 0)
 
-        show(view, stage, plan = CoalitionPlan(), onMove = { moves += it })
+        show(view, stage, plan = takingTheJack(view), onMove = { moves += it })
         carry(view, from, onto)
 
         val planned = moves.filterIsInstance<Move.Plan>()
@@ -101,10 +107,10 @@ class PlanDragTest {
 
     @Test
     fun carryingACardOntoNothingLeavesThePlanByteIdentical() = runComposeUiTest {
-        val view = finalRound()
+        val view = jackOnThePile(finalRound())
         val stage = Stage()
         val moves = mutableListOf<Move>()
-        val standing = CoalitionPlan(lanes = listOf(Lane(mate(view).id, Step.TakeTheDiscard)))
+        val standing = takingTheJack(view)
         val from = CardRef(view.viewerId, 0)
 
         show(view, stage, plan = standing, onMove = { moves += it })
@@ -157,11 +163,11 @@ class PlanDragTest {
         // Nothing here is hover-only, on any platform: the two edits are a carry and a pair of
         // touches, and every control is a button with a label. Read by *doing* it with touch
         // alone — a pointer never enters this test.
-        val view = finalRound()
+        val view = jackOnThePile(finalRound())
         val stage = Stage()
         val moves = mutableListOf<Move>()
 
-        show(view, stage, plan = CoalitionPlan(), onMove = { moves += it })
+        show(view, stage, plan = takingTheJack(view), onMove = { moves += it })
         carry(view, CardRef(view.viewerId, 0), CardRef(mate(view).id, 0))
 
         assertTrue(
@@ -197,6 +203,23 @@ class PlanDragTest {
 
     private fun mate(view: PlayerView) =
         view.players.first { it.id != view.viewerId && it.id != view.vintoCallerId }
+
+    /** The same table with an unplayed Jack on the pile: the one card a plan can trade with in advance. */
+    private fun jackOnThePile(view: PlayerView): PlayerView = view.copy(
+        discardTop = Card(
+            id = "jack-on-the-pile",
+            rank = Rank.JACK,
+            value = getCardValue(Rank.JACK),
+            played = false,
+            actionText = getCardShortDescription(Rank.JACK),
+        ),
+    )
+
+    /** The first coalition turn takes the pile's Jack, which is what makes its two cards a question. */
+    private fun takingTheJack(view: PlayerView): CoalitionPlan {
+        val first = coalitionInTurnOrder(view.players.map { it.id }, view.vintoCallerId.orEmpty())[0]
+        return CoalitionPlan(lanes = listOf(Lane(first, Step.UseIt, opening = Opening.TAKE_THE_DISCARD)))
+    }
 
     /** A final round somebody else called, with every coalition seat having claimed a card. */
     private fun finalRound(): PlayerView {

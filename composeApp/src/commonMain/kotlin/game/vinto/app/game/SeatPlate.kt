@@ -752,10 +752,16 @@ private fun edgeFor(
     pointed: Attention?,
     breathing: Boolean,
     clickable: Boolean,
+    lit: Boolean,
     resting: Color,
 ): Color = when {
     // Being pointed at wins over everything: it is the table saying *this* seat, now.
     pointed?.colour() != null -> pointed.colour()!!
+
+    // The turn the plan is building, in the plan's own colour. Above "you may touch this",
+    // because with the plan open every coalition plate may be touched and only one is the
+    // turn on the rail — that one has to read as different from the other two.
+    lit -> Signal.coalition
 
     // Green means "you may touch this", here and on a card, and it outranks whose turn it is
     // because it is the only one of the three that is a *question being asked of you*. A card
@@ -801,19 +807,29 @@ fun SeatPlate(
     pointed: Attention? = null,
     size: Dp = 40.dp,
     onClick: (() -> Unit)? = null,
+    /**
+     * The seat whose turn the plan is building: ringed in the coalition's colour, so that the
+     * turn being composed is visibly *somebody's* on the felt and not only named in the rail.
+     */
+    lit: Boolean = false,
+    /**
+     * What the plate says when it is a control rather than a pointer — "Plan Tide's turn". A
+     * plate that can be pressed and says only a name is a button a screen reader cannot explain.
+     */
+    described: String? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
 
     // Whether the ring is the breathing one, decided once and read twice — the `when` below
     // orders the same three questions, and the two answers must not be able to disagree.
-    val breathing = active && pointed?.colour() == null && onClick == null
+    val breathing = active && pointed?.colour() == null && onClick == null && !lit
 
     val edge by animateColorAsState(
-        edgeFor(pointed, breathing, onClick != null, scheme.onFelt().copy(alpha = QUIET)),
+        edgeFor(pointed, breathing, onClick != null, lit, scheme.onFelt().copy(alpha = QUIET)),
         label = "edge",
     )
 
-    val said = pointed?.let { stringResource(it.spoken(), name) }
+    val said = pointed?.let { stringResource(it.spoken(), name) } ?: described
 
     Box(modifier = modifier) {
         Surface(
@@ -824,7 +840,7 @@ fun SeatPlate(
                 .semantics { said?.let { contentDescription = it } },
             shape = CircleShape,
             color = Slate.fill.copy(alpha = PLATE_ALPHA),
-            border = BorderStroke(ringFor(pointed, active, onClick != null), edge),
+            border = BorderStroke(ringFor(pointed, active, onClick != null || lit), edge),
             onClick = onClick ?: {},
             enabled = onClick != null,
         ) {
@@ -840,14 +856,7 @@ fun SeatPlate(
                 Column(
                     modifier = Modifier.padding(end = NamePad).widthIn(max = nameRoom(size)),
                 ) {
-                    Text(
-                        text = name,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                        color = if (active) Slate.gold else Slate.ink,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    PlateName(name, active)
                     BadgeRow(badges, marks, size)
                 }
             }
@@ -869,6 +878,19 @@ fun SeatPlate(
             )
         }
     }
+}
+
+/** The name on the plate: gold and bold for the seat whose turn it is, so the felt says so on its own. */
+@Composable
+private fun PlateName(name: String, active: Boolean) {
+    Text(
+        text = name,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+        color = if (active) Slate.gold else Slate.ink,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 /**

@@ -822,23 +822,28 @@ tested by `RoundOutcomeTest`; the words are tested by `ScoreSheetTest` in compos
 as `CardHelpTest` and `LessonCopyTest` — the model says *which* verdict, the resources say it in
 a language.
 
-## The coalition's plan board (design D7a)
+## The coalition's plan (design D7a, D16–D19)
 
-The final round has a **shared plan**: one board of parts, edited by any coalition member and
-agreed as a whole. On the felt, the final-round banner carries one extra line — "No plan yet —
-tap to plan together", or how many turns are set and how many have nodded — and tapping it
-opens the board on the rail the way a claim opens the rank picker. The board lists one lane per
-coalition turn in turn order with its step in words and who last changed it, the sheds, and the
-nods; "Agree" sits beside "Back" on the foot while it is open. A lane is a button where the door
-would accept an edit and plain text where it would not (locked, the turn in progress, or any lane
-when the viewer is the caller), so nothing can be tapped and then refused. Tapping a lane opens
-the composer: a swap is two taps on two hands with the caller's cards never offered and the first
-card shown in the aim column, a declare is one rank off the rail, taking the discard is a button
-only while an action card is there. On the viewer's own turn their lane is written under the
-prompt and, when the table's own controls already offer the move, put first as "Do as planned".
+The final round has a **shared plan**: one turn per coalition seat, edited by any member and
+agreed as a whole, and it stands in for the talk at a physical table — *"you play this Queen,
+then I throw in mine and play mine"*. The switch in the header opens it (and "I'm ready" opens it
+on the member's own turn); while it is open the felt draws the table the page's turn starts from
+and the rail under the felt is the plan's own, five rows that never move: a pager with one turn a
+page and a last page where the plan lands; the answers to the word being asked for; the stops,
+with ▶ for this turn again and ▶▶ for every turn to the end; and Agree. Each turn is a sentence
+of words, one per decision — *draws · puts down [card] · + call it Jack · then [face] throws in
+[card]* — and **boxed means touchable**: a decision is a boxed word, the one being asked for is
+blue, the next decision is a dashed offer at the end of the line, and a fact ("draws" with one
+pile, the drawn card, "and we'll see") is plain and answers nothing. A card the sentence names
+is drawn as the felt draws it, and a card the plan has not dealt yet — a put-down's replacement,
+a forced draw, a blind throw's penalty card — is rose on both, tagged with the turn it arrives
+on. Between two turns of the film a card over the felt says whose turn comes next, and ghosts
+move slower than real cards. On the live table the plan is one line of information under the
+prompt and never a control; the switch wears the face of a teammate who changed your turn while
+you were away.
 
-Two placements were tried before this one and each failed an existing test: beside the prompt
-the board starved the log strip (`everySentenceTheCoalitionCanSpeakIsDrawnInTheLog`), and on the
-foot it pushed the four confer buttons under the edge of the screen (`RailFitsTest`). The mode
-and the felt line are what survived. Held by `PlanBoardTest`, `CoalitionScreenTest` and
-`RailFitsTest`.
+Nothing above the felt is spent on the plan: an earlier band there took a strip of the four
+hands' height on a phone, and a rail that listed all three turns at once could not be read
+without scrolling. Held by `PlanAsTalkTest` and `PlanAsTalkScreenTest`, `TurnBuilderTest`,
+`TransportTest`, `PlanBuilderTest`, `PlanOnTheFeltTest`, `CoalitionScreenTest`,
+`ContrastTest` and the `plan-light`/`plan-dark` goldens.

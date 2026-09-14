@@ -169,3 +169,12 @@ the door; `RemoteVersionTest` holds the client's half.
 | --- | --- |
 | 1 | The wire as first shipped: `join`, `action`, `resync`, `add-bot`, `remove-bot`, `next-round`, `more-time`; `joined`, `events`, `sync`, `lobby`, `started`, `between-rounds`, `ended`, `closed`, `error` |
 | 2 | Coalition play: `say`, `done-conferring`, `edit-plan`, `agree-plan`; `said`, `notice`; `join.protocol`, `joined.protocol`, `error.code`; the `DECLARE_CARDS` payload's new shape (`about` + a list of claims) |
+| 4 | The plan says the whole of the rules: a lane's `opening` (`draw`, `take-the-discard`) and `tossIns`, each a seat, a rank or none for a **blind** throw of a card nobody has named, the `card` thrown and what it then does; the steps `peek`, `force-draw`, `put-down` with its `guess` and `then`, and `declare` pointing at a `card` with a `rank` that may still be unsaid; the edits `open-lane` and `set-toss-ins`. Frozen in `fixtures/protocol/v4/` |
+
+**Version 4 raised the floor, and this is why.** The coalition plan carries *steps* — `swap`,
+`peek`, `declare`, `put-down` and the rest — as polymorphic shapes, and a shape is a tag, not a
+field: a build that does not know `peek` does not skip it, it fails to decode the whole `events`
+or `sync` message that carried the plan, in the final round, which is exactly the freeze the
+number exists to prevent. So a new step or plan-edit shape is a bump **and** a floor, and the
+plan's vocabulary is frozen per version beside the messages' (`WireFreezeTest`). The room
+deploys before the clients; a client at 3 is told to update at the door.

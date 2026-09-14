@@ -27,16 +27,26 @@ import game.vinto.app.art.ask_toss_in_barred
 import game.vinto.app.art.ask_waiting_for_others
 import game.vinto.app.art.ask_watching
 import game.vinto.app.art.ask_what_do_you_say
+import game.vinto.app.art.ask_what_do_you_say_these
 import game.vinto.app.art.ask_what_should_they_do
 import game.vinto.app.art.ask_what_will_you_do
+import game.vinto.app.art.ask_where_should_their_card_come_from
+import game.vinto.app.art.ask_where_will_your_card_come_from
+import game.vinto.app.art.ask_which_card_king_points_at
 import game.vinto.app.art.ask_which_card_replaced
 import game.vinto.app.art.ask_which_card_should_they_put_down
+import game.vinto.app.art.ask_which_card_they_throw_in
+import game.vinto.app.art.ask_which_card_will_it_look_at
 import game.vinto.app.art.ask_which_card_will_you_put_down
+import game.vinto.app.art.ask_which_card_you_throw_in
 import game.vinto.app.art.ask_which_rank_should_they_declare
+import game.vinto.app.art.ask_which_rank_they_throw_in
 import game.vinto.app.art.ask_which_rank_throw_in
 import game.vinto.app.art.ask_which_rank_will_you_declare
+import game.vinto.app.art.ask_which_two_will_it_swap
 import game.vinto.app.art.ask_which_way_round
 import game.vinto.app.art.ask_who_draws
+import game.vinto.app.art.ask_who_should_draw
 import game.vinto.app.art.ask_you_drew
 import game.vinto.app.art.ask_you_drew_unknown
 import game.vinto.app.art.ask_you_playing
@@ -126,14 +136,23 @@ import game.vinto.app.art.beat_you_called_body
 import game.vinto.app.art.beat_you_called_title
 import game.vinto.app.art.beat_your_turn_to_call_body
 import game.vinto.app.art.beat_your_turn_to_call_title
+import game.vinto.app.art.board_carry_hint
 import game.vinto.app.art.board_owner_named
 import game.vinto.app.art.board_owner_you
 import game.vinto.app.art.board_step_bin
 import game.vinto.app.art.board_step_declare
+import game.vinto.app.art.board_step_declare_card
+import game.vinto.app.art.board_step_declare_unnamed
+import game.vinto.app.art.board_step_force_draw
+import game.vinto.app.art.board_step_peek
+import game.vinto.app.art.board_step_peek_two
+import game.vinto.app.art.board_step_point
 import game.vinto.app.art.board_step_put_down
+import game.vinto.app.art.board_step_put_down_called
 import game.vinto.app.art.board_step_put_down_known
 import game.vinto.app.art.board_step_swap
 import game.vinto.app.art.board_step_take_discard
+import game.vinto.app.art.board_step_then
 import game.vinto.app.art.board_step_use_it
 import game.vinto.app.art.board_title
 import game.vinto.app.art.card_position
@@ -154,18 +173,19 @@ import game.vinto.app.art.detail_ace_hurts_your_side
 import game.vinto.app.art.detail_barred
 import game.vinto.app.art.detail_barred_card
 import game.vinto.app.art.detail_card_does
+import game.vinto.app.art.detail_changed_by
 import game.vinto.app.art.detail_claim_was_wrong
 import game.vinto.app.art.detail_deck_ran_out
-import game.vinto.app.art.detail_draw_beats_plan
 import game.vinto.app.art.detail_king_declared
-import game.vinto.app.art.detail_plan_asks
+import game.vinto.app.art.detail_name_the_ranks
 import game.vinto.app.art.detail_plan_is_a_suggestion
 import game.vinto.app.art.detail_right_plays
 import game.vinto.app.art.detail_scored_against
-import game.vinto.app.art.detail_shed_risk
-import game.vinto.app.art.detail_shed_risk_pushed
-import game.vinto.app.art.detail_table_talk
 import game.vinto.app.art.detail_tap_to_say
+import game.vinto.app.art.detail_the_caller_reads
+import game.vinto.app.art.detail_touch_a_card_to_throw
+import game.vinto.app.art.detail_touch_a_word
+import game.vinto.app.art.detail_touch_the_card
 import game.vinto.app.art.detail_wrong_costs
 import game.vinto.app.art.explains_card_action
 import game.vinto.app.art.explains_card_plain
@@ -178,23 +198,19 @@ import game.vinto.app.art.gloss_log
 import game.vinto.app.art.gloss_pulse
 import game.vinto.app.art.gloss_toss
 import game.vinto.app.art.label_agree
+import game.vinto.app.art.label_another_rank
 import game.vinto.app.art.label_decline_suggestion
-import game.vinto.app.art.label_do_as_planned
 import game.vinto.app.art.label_do_as_suggested
-import game.vinto.app.art.label_done_talking
-import game.vinto.app.art.label_keep_it_instead
-import game.vinto.app.art.label_keep_the_card
 import game.vinto.app.art.label_let_the_card_go
 import game.vinto.app.art.label_not_sure_which_way
-import game.vinto.app.art.label_plan_clear
-import game.vinto.app.art.label_plan_declare
-import game.vinto.app.art.label_plan_shed
-import game.vinto.app.art.label_plan_take_discard
 import game.vinto.app.art.label_play_the_card
-import game.vinto.app.art.label_standing_bin
-import game.vinto.app.art.label_standing_high
-import game.vinto.app.art.label_standing_low
+import game.vinto.app.art.label_put_a_card_down
+import game.vinto.app.art.label_rank_said_by
+import game.vinto.app.art.label_ready
+import game.vinto.app.art.label_remove_throw
+import game.vinto.app.art.label_say_it
 import game.vinto.app.art.label_this_way_round
+import game.vinto.app.art.label_well_see
 import game.vinto.app.art.label_withdraw
 import game.vinto.app.art.list_join_and
 import game.vinto.app.art.log_called_vinto
@@ -233,6 +249,41 @@ import game.vinto.app.art.log_toss_in_missed_unknown
 import game.vinto.app.art.log_tossed_in
 import game.vinto.app.art.log_tossed_in_unknown
 import game.vinto.app.art.log_you
+import game.vinto.app.art.says_add_throw
+import game.vinto.app.art.says_and_then
+import game.vinto.app.art.says_call_it
+import game.vinto.app.art.says_draws
+import game.vinto.app.art.says_drew
+import game.vinto.app.art.says_drew_word
+import game.vinto.app.art.says_forces
+import game.vinto.app.art.says_lets_it_go
+import game.vinto.app.art.says_looks_at_both
+import game.vinto.app.art.says_looks_at_one
+import game.vinto.app.art.says_looks_at_word
+import game.vinto.app.art.says_names
+import game.vinto.app.art.says_plays_it
+import game.vinto.app.art.says_points_at
+import game.vinto.app.art.says_points_at_what
+import game.vinto.app.art.says_puts_down_whose
+import game.vinto.app.art.says_puts_down_whose_known
+import game.vinto.app.art.says_puts_down_word
+import game.vinto.app.art.says_swaps_two
+import game.vinto.app.art.says_takes
+import game.vinto.app.art.says_takes_the_pile
+import game.vinto.app.art.says_takes_word
+import game.vinto.app.art.says_throws
+import game.vinto.app.art.says_throws_blind
+import game.vinto.app.art.says_throws_word
+import game.vinto.app.art.says_well_see
+import game.vinto.app.art.says_what_with
+import game.vinto.app.art.says_which_card
+import game.vinto.app.art.says_which_to_look_at
+import game.vinto.app.art.says_which_to_point_at
+import game.vinto.app.art.says_which_to_throw
+import game.vinto.app.art.says_which_two
+import game.vinto.app.art.says_who_draws
+import game.vinto.app.art.says_you_throw
+import game.vinto.app.art.says_you_throw_blind
 import game.vinto.app.art.talk_bin
 import game.vinto.app.art.talk_bin_they
 import game.vinto.app.art.talk_give_me
@@ -267,6 +318,7 @@ import game.vinto.client.Explains
 import game.vinto.client.Gloss
 import game.vinto.client.Label
 import game.vinto.client.Say
+import game.vinto.client.Says
 import game.vinto.client.Speaker
 import game.vinto.client.StepLine
 import game.vinto.client.Teaches
@@ -435,12 +487,8 @@ internal fun speakerName(who: Speaker): String = when (who) {
 fun labelled(label: Label): String = when (label) {
     Label.Withdraw -> stringResource(Res.string.label_withdraw)
     Label.DoAsSuggested -> stringResource(Res.string.label_do_as_suggested)
-    Label.DoneTalking -> stringResource(Res.string.label_done_talking)
-    is Label.SayStanding -> when (label.where) {
-        TableTalk.Standing.Where.LOW -> stringResource(Res.string.label_standing_low)
-        TableTalk.Standing.Where.HIGH -> stringResource(Res.string.label_standing_high)
-        TableTalk.Standing.Where.BIN -> stringResource(Res.string.label_standing_bin)
-    }
+    Label.Ready -> stringResource(Res.string.label_ready)
+    Label.SayIt -> stringResource(Res.string.label_say_it)
     Label.DeclineSuggestion -> stringResource(Res.string.label_decline_suggestion)
     is Label.ThisWayRound -> stringResource(
         Res.string.label_this_way_round,
@@ -462,15 +510,14 @@ fun labelled(label: Label): String = when (label) {
     Label.CallVinto -> stringResource(Res.string.choice_call_vinto)
     Label.Done -> stringResource(Res.string.choice_done)
     Label.Agree -> stringResource(Res.string.label_agree)
-    Label.DoAsPlanned -> stringResource(Res.string.label_do_as_planned)
-    Label.KeepItInstead -> stringResource(Res.string.label_keep_it_instead)
-    Label.PlanADeclare -> stringResource(Res.string.label_plan_declare)
     Label.PlayTheCard -> stringResource(Res.string.label_play_the_card)
-    Label.KeepTheCard -> stringResource(Res.string.label_keep_the_card)
+    Label.PutACardDown -> stringResource(Res.string.label_put_a_card_down)
+    Label.WellSee -> stringResource(Res.string.label_well_see)
     Label.LetTheCardGo -> stringResource(Res.string.label_let_the_card_go)
-    Label.PlanTakeTheDiscard -> stringResource(Res.string.label_plan_take_discard)
-    Label.ClearLane -> stringResource(Res.string.label_plan_clear)
-    Label.PlanAShed -> stringResource(Res.string.label_plan_shed)
+    is Label.RankSaidBy ->
+        stringResource(Res.string.label_rank_said_by, label.rank.serialName, speakerName(label.who))
+    Label.AnotherRank -> stringResource(Res.string.label_another_rank)
+    Label.RemoveThrow -> stringResource(Res.string.label_remove_throw)
 }
 
 /**
@@ -482,6 +529,7 @@ fun labelled(label: Label): String = when (label) {
  */
 fun keyOf(label: Label): String = when (label) {
     is Label.UseFromPile -> "use-from-pile"
+    is Label.RankSaidBy -> "rank-said-by"
     else -> label.toString()
 }
 
@@ -511,9 +559,22 @@ fun asked(ask: Ask): String = when (ask) {
     Ask.WhichWayRound -> stringResource(Res.string.ask_which_way_round)
     Ask.SayWhatYouKnow -> stringResource(Res.string.ask_say_what_you_know)
     Ask.ThePlan -> stringResource(Res.string.board_title)
-    Ask.WhichRankWillYouThrowIn -> stringResource(Res.string.ask_which_rank_throw_in)
+    is Ask.WhichRankWillTheyThrowIn ->
+        aboutTurn(ask.who, Res.string.ask_which_rank_throw_in, Res.string.ask_which_rank_they_throw_in)
+    is Ask.WhichCardWillTheyThrowIn ->
+        aboutTurn(ask.who, Res.string.ask_which_card_you_throw_in, Res.string.ask_which_card_they_throw_in)
+    is Ask.WhichCardWillItLookAt ->
+        stringResource(Res.string.ask_which_card_will_it_look_at, cardName(ask.rank))
+    Ask.WhichCardDoesTheKingPointAt -> stringResource(Res.string.ask_which_card_king_points_at)
+    Ask.WhoShouldDraw -> stringResource(Res.string.ask_who_should_draw)
     is Ask.WhatShouldTheyDo ->
         aboutTurn(ask.who, Res.string.ask_what_will_you_do, Res.string.ask_what_should_they_do)
+    is Ask.WhereShouldTheirCardComeFrom -> aboutTurn(
+        ask.who,
+        Res.string.ask_where_will_your_card_come_from,
+        Res.string.ask_where_should_their_card_come_from,
+    )
+    is Ask.WhichTwoWillItSwap -> stringResource(Res.string.ask_which_two_will_it_swap, cardName(ask.rank))
     is Ask.WhichRankShouldTheyDeclare -> aboutTurn(
         ask.who,
         Res.string.ask_which_rank_will_you_declare,
@@ -525,6 +586,7 @@ fun asked(ask: Ask): String = when (ask) {
         Res.string.ask_which_card_should_they_put_down,
     )
     Ask.WhatDoYouSayThisCardIs -> stringResource(Res.string.ask_what_do_you_say)
+    Ask.WhatDoYouSayTheseCardsAre -> stringResource(Res.string.ask_what_do_you_say_these)
     Ask.SayWhatItIsAndPlayIt -> stringResource(Res.string.ask_say_and_play)
     Ask.LookAtOneOfYourOwn -> stringResource(Res.string.ask_look_at_one_of_yours)
     Ask.LookAtOneOfAnotherPlayers -> stringResource(Res.string.ask_look_at_one_of_theirs)
@@ -569,8 +631,12 @@ fun asked(ask: Ask): String = when (ask) {
  * fixtures pin against TypeScript, so it is data rather than copy and cannot be translated —
  * `CardCopyIsDataTest` in `shared/shapes` fails loudly if anybody forgets. The King's borrowed
  * line was built from exactly that field until this slice.
+ *
+ * Detekt reads the `when` as complex; what it measures is the size of the vocabulary, as with
+ * [labelled] — one `stringResource` per arm, and no `else`.
  */
 @Composable
+@Suppress("CyclomaticComplexMethod")
 fun detailed(detail: Detail): String = when (detail) {
     // Named, priced and explained, because this line is now what the card's own picture used
     // to say by being there — the rail gives its column to the choice while an action is being
@@ -592,7 +658,7 @@ fun detailed(detail: Detail): String = when (detail) {
 
     Detail.TapACardToSayWhatItIs -> stringResource(Res.string.detail_tap_to_say)
     Detail.AnAceOnlyHurtsYourOwnSide -> stringResource(Res.string.detail_ace_hurts_your_side)
-    Detail.TableTalkIsTakenOnTrust -> stringResource(Res.string.detail_table_talk)
+    Detail.NameEveryRankItCouldBe -> stringResource(Res.string.detail_name_the_ranks)
     Detail.RightPlaysItWrongCostsACard -> stringResource(Res.string.detail_right_plays)
     Detail.AWrongOneCostsAPenaltyCard -> stringResource(Res.string.detail_wrong_costs)
     Detail.BarredFromThisCard -> stringResource(Res.string.detail_barred_card)
@@ -600,19 +666,14 @@ fun detailed(detail: Detail): String = when (detail) {
     is Detail.ScoredAgainstTheCaller ->
         stringResource(Res.string.detail_scored_against, speakerName(detail.caller))
     Detail.TheDeckRanOut -> stringResource(Res.string.detail_deck_ran_out)
-    is Detail.ThePlanAsksYouTo -> stringResource(Res.string.detail_plan_asks, stepWords(detail.step))
-    is Detail.YourDrawBeatsThePlan -> stringResource(
-        Res.string.detail_draw_beats_plan,
-        cardName(detail.rank),
-        detail.position + 1,
-    )
+    Detail.TouchTheCard -> stringResource(Res.string.detail_touch_the_card)
     Detail.APlanIsASuggestion -> stringResource(Res.string.detail_plan_is_a_suggestion)
+    Detail.CarryACardOrTouchIt -> stringResource(Res.string.board_carry_hint)
     Detail.AClaimWasWrong -> stringResource(Res.string.detail_claim_was_wrong)
-    is Detail.ShedRisk -> if (detail.pushed) {
-        stringResource(Res.string.detail_shed_risk_pushed)
-    } else {
-        stringResource(Res.string.detail_shed_risk)
-    }
+    Detail.TouchAWord -> stringResource(Res.string.detail_touch_a_word)
+    is Detail.ChangedBy -> stringResource(Res.string.detail_changed_by, speakerName(detail.who))
+    Detail.TouchACardToThrow -> stringResource(Res.string.detail_touch_a_card_to_throw)
+    Detail.TheCallerReads -> stringResource(Res.string.detail_the_caller_reads)
 }
 
 /**
@@ -641,23 +702,203 @@ fun stepWords(step: StepLine): String = when (step) {
         step.toSlot,
     )
 
-    is StepLine.Declare -> stringResource(Res.string.board_step_declare, step.rank.serialName)
+    is StepLine.Declare -> declareWords(step)
+    is StepLine.Peek -> peekWords(step)
+    is StepLine.ForceDraw -> stringResource(Res.string.board_step_force_draw, speakerName(step.who))
     StepLine.TakeTheDiscard -> stringResource(Res.string.board_step_take_discard)
     StepLine.Bin -> stringResource(Res.string.board_step_bin)
     StepLine.UseIt -> stringResource(Res.string.board_step_use_it)
-    is StepLine.PutDown -> {
-        // Bound locally: a smart cast on a property from another module is not allowed.
-        val rank = step.rank
-        if (rank == null) {
-            stringResource(Res.string.board_step_put_down, whose(step.who), step.slot)
-        } else {
-            stringResource(
-                Res.string.board_step_put_down_known,
-                whose(step.who),
-                step.slot,
-                rank.serialName,
-            )
-        }
+    is StepLine.PutDown -> putDownWords(step)
+}
+
+/**
+ * A King's declare — pointed at a card where the plan names one, with the rank where it has
+ * been said — and what that card then does. The King points first and names second, so a
+ * step can stand with the card and no rank yet.
+ */
+@Composable
+private fun declareWords(step: StepLine.Declare): String {
+    // Bound locally: a smart cast on a property from another module is not allowed.
+    val who = step.who
+    val slot = step.slot
+    val rank = step.rank
+    val named = when {
+        who != null && slot != null && rank != null ->
+            stringResource(Res.string.board_step_declare_card, whose(who), slot, rank.serialName)
+        who != null && slot != null -> stringResource(Res.string.board_step_point, whose(who), slot)
+        rank != null -> stringResource(Res.string.board_step_declare, rank.serialName)
+        else -> stringResource(Res.string.board_step_declare_unnamed)
+    }
+    val then = step.then
+    return if (then == null) named else stringResource(Res.string.board_step_then, named, stepWords(then))
+}
+
+/** A look at one card, or a Queen's at two. */
+@Composable
+private fun peekWords(step: StepLine.Peek): String {
+    val alsoWho = step.alsoWho
+    val alsoSlot = step.alsoSlot
+    return if (alsoWho != null && alsoSlot != null) {
+        stringResource(
+            Res.string.board_step_peek_two,
+            whose(step.who),
+            step.slot,
+            whose(alsoWho),
+            alsoSlot,
+        )
+    } else {
+        stringResource(Res.string.board_step_peek, whose(step.who), step.slot)
+    }
+}
+
+/**
+ * A put-down, called or silent, and what the call then does — "…and call it Jack, then swap
+ * your card 1 with Tide’s card 2": one sentence, because the trade is what the call is for.
+ */
+@Composable
+private fun putDownWords(step: StepLine.PutDown): String {
+    // Bound locally: a smart cast on a property from another module is not allowed.
+    val rank = step.rank
+    val call = step.call
+    val then = step.then
+    val putDown = when {
+        // A called card is named by its call, which is the rank the table knew it to be.
+        call != null -> stringResource(
+            Res.string.board_step_put_down_called,
+            whose(step.who),
+            step.slot,
+            cardName(call),
+        )
+
+        rank == null -> stringResource(Res.string.board_step_put_down, whose(step.who), step.slot)
+        else -> stringResource(
+            Res.string.board_step_put_down_known,
+            whose(step.who),
+            step.slot,
+            rank.serialName,
+        )
+    }
+    return if (then == null) putDown else stringResource(Res.string.board_step_then, putDown, stepWords(then))
+}
+
+/**
+ * One word of a planned turn, said whole: what a screen reader is given for the chip, and what
+ * the plan's row on the live rail reads. The sentence is [Says] in the model; these are its
+ * words in the phone's language, one resource per word so a translator sees each one whole.
+ *
+ * The chip itself draws less — see [chipWords] — because the cards a word names are drawn
+ * there as cards: "puts down" beside a picture of the card, rather than "puts down your card
+ * 2, the Jack" beside the same picture.
+ */
+@Composable
+@Suppress("CyclomaticComplexMethod")
+fun saysWords(says: Says): String = when (says) {
+    Says.Draws -> stringResource(Res.string.says_draws)
+    is Says.Takes -> takesWords(says)
+    is Says.Drew -> stringResource(Res.string.says_drew, cardName(says.rank))
+    Says.WellSee -> stringResource(Res.string.says_well_see)
+    Says.AndThen -> stringResource(Res.string.says_and_then)
+    Says.WhatWith -> stringResource(Res.string.says_what_with)
+    Says.PlaysIt -> stringResource(Res.string.says_plays_it)
+    is Says.PutsDown -> putsDownWords(says)
+    Says.WhichCard -> stringResource(Res.string.says_which_card)
+    Says.LetsItGo -> stringResource(Res.string.says_lets_it_go)
+    is Says.CallIt -> stringResource(Res.string.says_call_it, cardName(says.rank))
+    is Says.Trade -> tradeWords(says)
+    Says.WhichTwo -> stringResource(Res.string.says_which_two)
+    is Says.Looks -> stringResource(Res.string.says_looks_at_one, whose(says.card.who), says.card.slot)
+    Says.WhichToLookAt -> stringResource(Res.string.says_which_to_look_at)
+    is Says.Points -> pointsWords(says)
+    Says.WhichToPointAt -> stringResource(Res.string.says_which_to_point_at)
+    is Says.Names -> stringResource(Res.string.says_names, says.rank.serialName)
+    is Says.Forces -> stringResource(Res.string.says_forces, speakerName(says.who))
+    Says.WhoDraws -> stringResource(Res.string.says_who_draws)
+    is Says.Throws -> throwsWords(says)
+    Says.WhichToThrow -> stringResource(Res.string.says_which_to_throw)
+    Says.AddThrow -> stringResource(Res.string.says_add_throw)
+}
+
+/**
+ * The word as the chip draws it, beside the cards it names: the verb and nothing the picture
+ * already says. Every word that names no card is the same as its spoken form.
+ */
+@Composable
+fun chipWords(says: Says): String = when (says) {
+    is Says.Takes -> if (says.rank == null) {
+        stringResource(
+            Res.string.says_takes_the_pile,
+        )
+    } else {
+        stringResource(Res.string.says_takes_word)
+    }
+    is Says.Drew -> stringResource(Res.string.says_drew_word)
+    is Says.PutsDown -> stringResource(Res.string.says_puts_down_word)
+    is Says.Looks -> stringResource(Res.string.says_looks_at_word)
+    is Says.Throws -> stringResource(Res.string.says_throws_word)
+    is Says.Trade, is Says.Points -> ""
+    Says.Draws, Says.WellSee, Says.AndThen, Says.WhatWith, Says.PlaysIt, Says.WhichCard, Says.LetsItGo,
+    is Says.CallIt, Says.WhichTwo, Says.WhichToLookAt, Says.WhichToPointAt, is Says.Names, is Says.Forces,
+    Says.WhoDraws, Says.WhichToThrow, Says.AddThrow,
+    -> saysWords(says)
+}
+
+@Composable
+private fun takesWords(says: Says.Takes): String {
+    val rank = says.rank
+    return if (rank == null) {
+        stringResource(Res.string.says_takes_the_pile)
+    } else {
+        stringResource(Res.string.says_takes, cardName(rank))
+    }
+}
+
+@Composable
+private fun putsDownWords(says: Says.PutsDown): String {
+    val card = says.card
+    val rank = card.rank
+    return if (rank == null) {
+        stringResource(Res.string.says_puts_down_whose, whose(card.who), card.slot)
+    } else {
+        stringResource(Res.string.says_puts_down_whose_known, whose(card.who), card.slot, rank.serialName)
+    }
+}
+
+/** A Jack's swap, or a Queen's look at two — which is what the arrow between them says. */
+@Composable
+private fun tradeWords(says: Says.Trade): String = stringResource(
+    if (says.swap) Res.string.says_swaps_two else Res.string.says_looks_at_both,
+    whose(says.from.who),
+    says.from.slot,
+    whose(says.to.who),
+    says.to.slot,
+)
+
+/** The card a King points at, and what it is said to be — or the question, while nobody has said. */
+@Composable
+private fun pointsWords(says: Says.Points): String {
+    val rank = says.rank
+    return if (rank == null) {
+        stringResource(Res.string.says_points_at_what, whose(says.card.who), says.card.slot)
+    } else {
+        stringResource(Res.string.says_points_at, whose(says.card.who), says.card.slot, rank.serialName)
+    }
+}
+
+/**
+ * "then you throw in a five", or "then Nina throws in a five": the you-form is its own sentence.
+ * A throw the table cannot vouch for names the card and says it is blind.
+ */
+@Composable
+private fun throwsWords(says: Says.Throws): String {
+    val you = says.who == Speaker.You
+    val rank = says.rank
+    val slot = says.card?.slot
+    return when {
+        rank != null && !says.blind && you -> stringResource(Res.string.says_you_throw, rank.serialName)
+        rank != null && !says.blind ->
+            stringResource(Res.string.says_throws, speakerName(says.who), rank.serialName)
+        you -> stringResource(Res.string.says_you_throw_blind, slot ?: 0)
+        else -> stringResource(Res.string.says_throws_blind, speakerName(says.who), slot ?: 0)
     }
 }
 

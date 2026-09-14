@@ -41,12 +41,18 @@ import kotlinx.serialization.json.Json
  * existed.
  *
  * History: 1 — the wire as first shipped. 2 — coalition play: `say`, `done-conferring`,
- * `edit-plan`, `agree-plan`, `said`, `notice`, and the `DECLARE_CARDS` action.
+ * `edit-plan`, `agree-plan`, `said`, `notice`, and the `DECLARE_CARDS` action. 3 — `leave`, and a
+ * seat's face. 4 — the plan says the whole of the rules: a turn carries its throw-ins in order
+ * (`set-toss-ins`), a step can be a look (`peek`) or a forced draw (`force-draw`), a King points
+ * at a card, a put-down says what its call does. **The floor rose to 4 with it**: a step type is
+ * a polymorphic tag inside a plan, and a build that does not know one drops the whole message —
+ * which is the one thing that must never happen mid-game, so an older build is refused at the
+ * door instead.
  */
-public const val PROTOCOL_VERSION: Int = 3
+public const val PROTOCOL_VERSION: Int = 4
 
 /** The oldest protocol the room will seat. Below it, the join is refused with [UPDATE_NEEDED_CODE]. */
-public const val MIN_PROTOCOL: Int = 2
+public const val MIN_PROTOCOL: Int = 4
 
 /** The refusal code for a build below the floor: update the app, nothing else will help. */
 public const val UPDATE_NEEDED_CODE: String = "update-needed"

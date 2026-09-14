@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -85,9 +86,28 @@ fun GameButton(
      * recognisably the same button and lights up when its condition is met.
      */
     enabled: Boolean = true,
+    /**
+     * Whether this button is a **toggle that is currently on**.
+     *
+     * Drawn as its own tone held down — the lit face and the shaded face swapped, the rim at
+     * full strength, and no lift — because that is what a pressed-in key looks like and a
+     * player already knows it. Not a second colour: the tones carry meaning (`ButtonTone`), so
+     * a selected rank that borrowed gold would be saying "this ends the round".
+     *
+     * The rank rail is the reason it exists. Naming a card is a multiple choice now — one rank
+     * means the card is that card, several mean it is one of them — and a toggle whose state
+     * cannot be seen is a control that cannot be used.
+     *
+     * **Null means this button is not a toggle at all**, which is not the same as one that is
+     * off. It reaches the semantics tree either way, so a screen reader says "selected" or
+     * "not selected" exactly where a sighted player sees a key up or down, and says neither
+     * about an ordinary button.
+     */
+    selected: Boolean? = null,
 ) {
     val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
+    val held by interaction.collectIsPressedAsState()
+    val pressed = held || selected == true
     val live = enabled && !busy
     // A button that cannot be pressed does not stand off the surface. The shadow is the whole
     // affordance, so removing it says "not now" before any colour does.
@@ -106,28 +126,27 @@ fun GameButton(
             onClick()
         },
         enabled = live,
-        modifier = modifier.heightIn(min = if (compact) CompactTap else MinTap).pressable(),
+        modifier = modifier
+            .heightIn(min = if (compact) CompactTap else MinTap)
+            .pressable()
+            .semantics { if (selected != null) this.selected = selected },
         shape = shape,
         color = Color.Transparent,
-        contentColor = if (live) tone.ink else tone.ink.copy(alpha = Muted),
-        border = BorderStroke(Hairline, if (live) tone.rim else tone.rim.copy(alpha = Muted)),
+        // A selected toggle is the plaque **inverted** — see [faceOf] — so its letters are the
+        // dark shade that the parchment ground is legible against.
+        contentColor = when {
+            !live -> tone.ink.copy(alpha = Muted)
+            selected == true -> tone.low
+            else -> tone.ink
+        },
+        border = rimOf(tone, live, selected == true),
         shadowElevation = lift,
         interactionSource = interaction,
     ) {
         Box(
             modifier = Modifier
                 .clip(shape)
-                .background(
-                    Brush.verticalGradient(
-                        when {
-                            // Flat rather than lit: the gradient is what makes it look raised,
-                            // so a disabled button is the same colour top and bottom.
-                            !live -> listOf(tone.low.copy(alpha = Flat), tone.low.copy(alpha = Flat))
-                            pressed -> listOf(tone.low, tone.high)
-                            else -> listOf(tone.high, tone.low)
-                        },
-                    ),
-                ),
+                .background(faceOf(tone, live, pressed, selected == true)),
             contentAlignment = Alignment.Center,
         ) {
             val pad = Modifier.padding(
@@ -268,7 +287,50 @@ enum class ButtonTone(val high: Color, val low: Color, val rim: Color, val ink: 
 private val Spinner = 20.dp
 private val CompactSpinner = 16.dp
 private val Corner = 10.dp
+
+/**
+ * The lit face of a button, or the flat one it wears when there is nothing to press it for.
+ *
+ * Out of [GameButton] because that function had grown past what detekt will read as one
+ * decision, and because these two are the whole of what "a button is an object" means here: a
+ * gradient that runs one way when the key is up and the other when it is down.
+ */
+private fun faceOf(
+    tone: ButtonTone,
+    live: Boolean,
+    pressed: Boolean,
+    selected: Boolean,
+) = Brush.verticalGradient(
+    when {
+        // Flat rather than lit: the gradient is what makes it look raised, so a disabled
+        // button is the same colour top and bottom.
+        !live -> listOf(tone.low.copy(alpha = Flat), tone.low.copy(alpha = Flat))
+        // **Inverted, not merely pressed.** Swapping the lit and shaded faces is what a held
+        // key looks like, and on the amber the rank rail wears it is nearly nothing: the two
+        // faces are a shade apart, on purpose, because there are fourteen of them at once.
+        // Reported from a phone as a chosen rank being almost impossible to read. So a
+        // selected plaque turns over — the parchment that was its letters becomes its ground.
+        selected -> listOf(tone.ink, tone.ink)
+        pressed -> listOf(tone.low, tone.high)
+        else -> listOf(tone.high, tone.low)
+    },
+)
+
+/** The edge: thicker where the button is a toggle that is on, dimmer where it cannot be pressed. */
+private fun rimOf(tone: ButtonTone, live: Boolean, selected: Boolean) = BorderStroke(
+    if (selected) SelectedRim else Hairline,
+    if (live) tone.rim else tone.rim.copy(alpha = Muted),
+)
+
 private val Hairline = 1.dp
+
+/**
+ * The edge of a toggle that is on: thick enough to read across a grid of fourteen at a glance.
+ *
+ * The inverted gradient alone is not enough on the amber the rank rail wears — it is the
+ * quietest of the tones on purpose, so its lit and shaded faces are close together.
+ */
+private val SelectedRim = 2.dp
 private val Lift = 3.dp
 
 /** How much of its own colour a button keeps when there is nothing to press it for. */

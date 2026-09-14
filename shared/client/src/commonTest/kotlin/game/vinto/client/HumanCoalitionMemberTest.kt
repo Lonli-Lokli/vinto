@@ -203,10 +203,12 @@ class HumanCoalitionMemberTest {
         val tap = waiting.taps[CardRef(session.playerId, 0)]
         assertTrue(tap is Move.Ask && tap.question == Question.Claiming(session.playerId, listOf(0)))
 
-        // The tap opens the rank picker; a rank becomes a DECLARE_CARDS the engine accepts.
+        // The tap opens the rank picker; naming a rank and saying so becomes a DECLARE_CARDS
+        // the engine accepts.
         val picker = tableFor(view, Question.Claiming(session.playerId, listOf(0)))
         assertTrue(picker.ranks.isNotEmpty(), "no ranks on offer")
-        val claim = picker.ranks.first { it.rank == Rank.QUEEN }.move as Move.Send
+        val named = (picker.ranks.first { it.rank == Rank.QUEEN }.move as Move.Ask).question
+        val claim = tableFor(view, named).choices.first { it.label == Label.SayIt }.move as Move.Send
         session.dispatch(claim.action)
 
         val mine = session.view.value.players.first { it.id == session.playerId }
@@ -415,20 +417,20 @@ class HumanCoalitionMemberTest {
     // ------------------------------------------------------------ the confer window
 
     /**
-     * The coalition's one strategic question, askable by a person.
+     * The window's buttons are the way out of it, and nothing else.
      *
-     * A round is scored against the **lowest** coalition hand, so before anybody plans anything
-     * the table has to settle whose hand it is pushing. Bots have always known — they pool
-     * sightings — and until now a person could only imply it, by declaring enough cards for the
-     * others to add up. That is a lot of taps to say one thing, and it works only for somebody
-     * who has *seen* their hand.
+     * It carried three more — "I am low", "I am high", "Bin me" — and they were the wrong three
+     * on the wrong screen. `TableTalk.Standing` is produced by `BotRunner`, rendered into the
+     * log by `Say.Standing` and **read by nothing**: no planner, no bot decision, no view. So
+     * three of the four controls on the coalition's own screen were sentences with no
+     * consequence, while the thing the plan does read — a claim — had no button at all and
+     * lived on the felt. Reported from a phone as the screen not saying what to do.
      *
-     * `Standing` is the sentence for it, and it was written, rendered and translated into all
-     * nineteen locales before anything could send one: the phrasebook value, `Say.Standing` and
-     * `talkStanding` were all in place and no button anywhere produced it. This is that button.
+     * The sentence stays in the phrasebook and the bots go on saying it; what went is the
+     * button, until something consumes one.
      */
     @Test
-    fun theConferWindowLetsYouSayWhereYourHandStands() = runTest {
+    fun theConferWindowsButtonsAreTheWayOutOfIt() = runTest {
         val session = LocalGameSession(
             seed = 5L,
             difficulty = Difficulty.MODERATE,
@@ -437,17 +439,13 @@ class HumanCoalitionMemberTest {
         session.dispatch(GameAction.Empty(JsonNull))
 
         val table = tableFor(session.view.value)
-        val where = table.choices
-            .mapNotNull { (it.move as? Move.Say)?.talk }
-            .filterIsInstance<TableTalk.Standing>()
-            .map { it.where }
 
         assertEquals(
-            TableTalk.Standing.Where.entries.toSet(),
-            where.toSet(),
-            "the confer window cannot say where this hand stands",
+            listOf(Label.Ready),
+            table.choices.map { it.label },
+            "the confer window offers something other than the way out",
         )
-        assertTrue(table.choices.any { it.move is Move.Done }, "the way out went with the additions")
+        assertTrue(table.choices.all { it.move is Move.Done }, "the way out stopped being one")
     }
 
     /**
@@ -466,8 +464,15 @@ class HumanCoalitionMemberTest {
         )
         session.dispatch(GameAction.Empty(JsonNull))
         val view = session.view.value
+        val suggested = TableTalk.Proposal(
+            by = "bot-3",
+            to = view.viewerId,
+            move = GameAction.DrawCard(PlayerIdPayload(view.viewerId)),
+        )
 
-        val spoken = tableFor(view).choices.mapNotNull { (it.move as? Move.Say)?.talk }
+        val spoken = tableFor(view, offered = suggested)
+            .choices
+            .mapNotNull { (it.move as? Move.Say)?.talk }
 
         assertTrue(spoken.isNotEmpty(), "nothing to say at all")
         assertTrue(
@@ -513,7 +518,7 @@ class HumanCoalitionMemberTest {
         // And the table offers the way out, with every card still tappable to claim.
         val table = tableFor(view)
         assertEquals(Ask.SayWhatYouKnow, table.prompt)
-        assertTrue(table.choices.any { it.label == Label.DoneTalking }, "a window with no button")
+        assertTrue(table.choices.any { it.label == Label.Ready }, "a window with no button")
         assertTrue(table.taps.isNotEmpty(), "nothing to say during the talking window")
     }
 

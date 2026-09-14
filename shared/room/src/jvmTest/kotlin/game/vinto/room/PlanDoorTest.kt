@@ -8,6 +8,7 @@ import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
 import game.vinto.shapes.TableTalk
+import game.vinto.shapes.coalitionInTurnOrder
 import game.vinto.shapes.laneOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -99,34 +100,43 @@ class PlanDoorTest {
     }
 
     @Test
-    fun aLockedLaneCannotBeSetOrCleared() {
-        // The turn in progress is the one step that must stop moving. An edit *names* its lane,
-        // so "not a target" is the whole check — where a whole-draft door had to notice the
-        // locked lane being left out.
+    fun aPlayedTurnCannotBeSetOrCleared() {
+        // A turn that has been played is history. An edit *names* its lane, so "not a target"
+        // is the whole check — where a whole-draft door had to notice the locked lane being
+        // left out.
         val state = finalRoundCalledByABot()
         val room = decodeRoom(state)
-        val mine = seatId(state, 0)
-        val bob = seatId(state, 1)
+        val game = checkNotNull(room.game)
+        val coalition = coalitionInTurnOrder(game.players.map { it.id }, checkNotNull(game.vintoCallerId))
+        val (first, second, third) = coalition
 
-        // Planned in the window, with the caller still on play; then Bob's turn begins, and
-        // pacing — an alarm here — is what notices and locks his lane.
-        val planned = editPlan(room, TOKEN_A, PlanEdit.SetLane(bob, take()), START).state
-        val onBobsTurn = planned.copy(game = checkNotNull(planned.game).copy(currentPlayerIndex = 1))
-        val locked = decodeLifecycle(onAlarm(encode(onBobsTurn), START + 2_000.0)).state
-        assertTrue(locked.plan?.laneOf(bob)?.locked == true, "the fixture never locked the lane")
+        // Planned in the window, with the caller still on play; then the first turn is played
+        // and the second begins, and pacing — an alarm here — is what notices and locks it.
+        val planned = editPlan(room, TOKEN_A, PlanEdit.SetLane(first, take()), START).state
+        val onSecond = planned.copy(
+            game = game.copy(currentPlayerIndex = game.players.indexOfFirst { it.id == second }),
+        )
+        val locked = decodeLifecycle(onAlarm(encode(onSecond), START + 2_000.0)).state
+        assertTrue(locked.plan?.laneOf(first)?.locked == true, "the fixture never locked the lane")
 
-        assertNotNull(editPlan(locked, TOKEN_A, PlanEdit.SetLane(bob, Step.Declare(Rank.KING)), START).error)
-        assertNotNull(editPlan(locked, TOKEN_A, PlanEdit.ClearLane(bob), START).error)
-        assertNull(editPlan(locked, TOKEN_A, PlanEdit.SetLane(mine, take()), START).error, "a later lane froze too")
+        assertNotNull(editPlan(locked, TOKEN_A, PlanEdit.SetLane(first, Step.Declare(Rank.KING)), START).error)
+        assertNotNull(editPlan(locked, TOKEN_A, PlanEdit.ClearLane(first), START).error)
+        assertNull(editPlan(locked, TOKEN_A, PlanEdit.SetLane(second, take()), START).error, "the turn on play froze")
+        assertNull(editPlan(locked, TOKEN_A, PlanEdit.SetLane(third, take()), START).error, "a later lane froze too")
     }
 
     @Test
-    fun aTurnInProgressCannotBeGivenAFreshLane() {
-        // Before pacing has stamped the lock: the seat on play right now is the same turn.
-        val state = finalRoundCalledByABot(onPlay = 1)
-        val bob = seatId(state, 1)
+    fun theTurnInProgressStaysOpenAndThePlayedOneIsRefusedBeforeAnyStamp() {
+        // The seat on play may be planned for — its drawn card is the news the plan turns on —
+        // and the seat before it in turn order is refused from the order alone, before pacing
+        // has stamped anything.
+        val state = finalRoundCalledByABot()
+        val game = checkNotNull(decodeRoom(state).game)
+        val coalition = coalitionInTurnOrder(game.players.map { it.id }, checkNotNull(game.vintoCallerId))
+        val onSecond = finalRoundCalledByABot(onPlay = game.players.indexOfFirst { it.id == coalition[1] })
 
-        assertNotNull(editPlan(decodeRoom(state), TOKEN_A, PlanEdit.SetLane(bob, take()), START).error)
+        assertNull(editPlan(decodeRoom(onSecond), TOKEN_A, PlanEdit.SetLane(coalition[1], take()), START).error)
+        assertNotNull(editPlan(decodeRoom(onSecond), TOKEN_A, PlanEdit.SetLane(coalition[0], take()), START).error)
     }
 
     @Test
@@ -276,10 +286,10 @@ class PlanDoorTest {
     fun theBotsSeedTheBoardForThePeopleAndStopOnceAPersonHasEdited() {
         // Two people in the coalition and two bots: the bots' proposals are on the board the
         // first time the room drives them, and a lane a person clears stays clear.
-        // The one coalition bot is given a King it knows about, so there is a trade worth
-        // proposing whatever the deal dealt. Two people with five unread cards each are the
-        // lowest hands in the shared picture, and the only way to lower one is to bring a card
-        // worth less than an unread one into it — a King is worth nothing.
+        // The one coalition bot is given a Jack and a King it knows about, so there is a trade
+        // the rules let it propose whatever the deal dealt: the Jack put down and called, and
+        // the King — worth nothing — traded into a hand of unread cards, which the shared picture
+        // prices at the deck's mean each.
         val room = decodeRoom(finalRoundCalledByABot())
         val game = checkNotNull(room.game)
         val bot = game.players.first { it.isBot && it.id != game.vintoCallerId }
@@ -291,16 +301,15 @@ class PlanDoorTest {
                     } else {
                         player.copy(
                             cards = player.cards.mapIndexed { i, card ->
-                                if (i == 0) {
-                                    card.copy(
-                                        rank = Rank.KING,
-                                        value = 0,
-                                    )
-                                } else {
-                                    card
+                                when (i) {
+                                    0 -> card.copy(rank = Rank.JACK, value = 10, actionText = "swap")
+                                    1 -> card.copy(rank = Rank.KING, value = 0, actionText = "declare")
+                                    // And a ten it would like rid of, so a trade helps whichever hand is lowest.
+                                    2 -> card.copy(rank = Rank.TEN, value = 10, actionText = "peek")
+                                    else -> card
                                 }
                             },
-                            knownCardPositions = (player.knownCardPositions + 0).distinct(),
+                            knownCardPositions = (player.knownCardPositions + 0 + 1 + 2).distinct(),
                         )
                     }
                 },

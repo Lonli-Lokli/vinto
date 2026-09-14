@@ -231,7 +231,9 @@
     <string name="seat_pointed_vinto">%1$s a appelé Vinto</string>
     <string name="seat_pointed_penalty">%1$s prend une carte dans la pioche</string>
     <string name="seat_pointed_coalition">%1$s mène la coalition</string>
-    <string name="table_final_round">Manche finale</string>
+    <string name="table_called_vinto">%1$s a appelé Vinto !</string>
+    <string name="table_you_are_with">Vous êtes avec %1$s. Dites-leur ce que vous savez, puis établissez un plan ensemble.</string>
+    <string name="table_called_vinto_go">Partager ce que je sais</string>
     <string name="detail_ace_hurts_your_side">Les cartes de la personne qui a appelé sont hors de portée, donc un As ne peut faire piocher que quelqu’un de votre propre camp.</string>
     <string name="talk_low">Vous dites que votre main est la plus basse.</string>
     <string name="talk_low_they">%1$s dit que sa main est la plus basse.</string>
@@ -478,8 +480,8 @@
     <!-- The smaller line under the prompt. -->
     <string name="detail_card_does">%1$s, qui vaut %2$d : %3$s</string>
     <string name="detail_king_declared">Le Roi a déclaré un %1$s : %2$s</string>
-    <string name="detail_tap_to_say">Touchez une de vos cartes pour dire ce que vous pensez qu’elle est.</string>
-    <string name="detail_table_talk">Parole donnée — la coalition vous croit sur parole, juste ou fausse.</string>
+    <string name="detail_tap_to_say">Touchez n’importe quelle carte pour dire ce que vous pensez qu’elle est — la vôtre, celle d’un coéquipier, ou celle d’un adversaire.</string>
+    <string name="detail_name_the_ranks">Touchez tous les rangs possibles — un seul s’il n’y a aucun doute.</string>
     <string name="detail_right_plays">Juste joue son action ; faux vous coûte une carte.</string>
     <string name="detail_wrong_costs">Une erreur vous coûte une carte de pénalité.</string>
     <string name="detail_barred_card">Vous vous êtes trompé sur cette carte, vous êtes donc exclu de celle-ci. La prochaine carte qui tombe offre une nouvelle chance.</string>
@@ -499,72 +501,87 @@
     <string name="ask_name_what_you_put_down">Nommez la carte que vous posez ?</string>
     <string name="ask_which_way_round">Dans quel ordre sont-elles ?</string>
     <string name="ask_say_what_you_know">Dites aux autres ce que vous savez.</string>
-    <string name="label_standing_low">Score bas</string>
-    <string name="label_standing_high">Score élevé</string>
-    <string name="label_standing_bin">Poubelle</string>
-    <string name="label_done_talking">J'ai terminé</string>
+    <string name="label_ready">C’est bon</string>
+    <string name="label_say_it">Terminé</string>
     <string name="label_agree">D’accord</string>
-    <string name="label_do_as_planned">Faire comme prévu</string>
-    <string name="label_keep_it_instead">Garder celle-ci</string>
     <string name="label_play_the_card">La jouer</string>
-    <string name="label_keep_the_card">La garder</string>
     <string name="label_let_the_card_go">La laisser de côté</string>
-    <string name="label_plan_declare">Déclarer une valeur</string>
-    <string name="label_plan_take_discard">Prendre la défausse</string>
-    <string name="label_plan_clear">Effacer</string>
-    <string name="label_plan_shed">Riposter</string>
+    <!-- One throw-in, taken off the turn it was said on. -->
+    <string name="label_remove_throw">Ne pas riposter</string>
+    <!-- Watch one turn of the plan again, from the table it starts on. -->
+    <string name="label_plan_replay">Revoir ce tour</string>
     <string name="ask_which_rank_throw_in">Avec quelle valeur riposterez-vous si l’occasion se présente ?</string>
-    <string name="detail_shed_risk">Seulement une valeur que vous avez vue dans votre main : une riposte erronée vous coûte une carte et vous exclut pour le reste de la manche.</string>
-    <string name="detail_shed_risk_pushed">C’est votre main que la coalition met en avant. Une riposte erronée lui coûte une carte et l’exclut pour le reste de la manche — ne ripostez qu’avec ce que vous avez vu.</string>
+    <string name="ask_which_rank_they_throw_in">Avec quelle valeur %1$s ripostera si l’occasion se présente ?</string>
+    <!-- A known 7, 8, 9 or 10 on the turn: the one card it looks at is touched on the felt. %1$s is the card's name. -->
+    <string name="ask_which_card_will_it_look_at">Quelle carte regarde le %1$s ? Touchez-la.</string>
+    <string name="ask_which_card_king_points_at">Quelle carte désigne le Roi ? Touchez-la.</string>
+    <string name="ask_who_should_draw">Qui pioche une carte ?</string>
+    <string name="detail_touch_the_card">Touchez la carte sur la table.</string>
     <string name="detail_claim_was_wrong">Une étape ici reposait sur une affirmation que les cartes ont depuis démentie. C’est le jeu qui fonctionne, pas une erreur : quelqu’un se souvenait d’une carte autrement qu’elle n’est en réalité.</string>
     <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
-    <string name="table_rehearsal">Répétition — rien n’a bougé</string>
     <string name="ask_what_will_you_do">Que ferez-vous de votre tour ?</string>
     <string name="ask_what_should_they_do">Que devrait faire %1$s de son tour ?</string>
+    <string name="ask_where_will_your_card_come_from">D’où viendra votre carte ?</string>
+    <string name="ask_where_should_their_card_come_from">D’où viendra la carte de %1$s ?</string>
+    <string name="ask_which_two_will_it_swap">Quelles deux cartes échange %1$s ? Touchez l’une, puis l’autre.</string>
     <string name="ask_which_rank_will_you_declare">Quelle valeur allez-vous déclarer avec le Roi ?</string>
     <string name="ask_which_rank_should_they_declare">Quelle valeur %1$s devrait déclarer avec le Roi ?</string>
-    <string name="ask_which_card_will_you_put_down">Quelle carte allez-vous poser pour qu’un coéquipier riposte dessus ?</string>
-    <string name="ask_which_card_should_they_put_down">Quelle carte %1$s devrait poser pour qu’un coéquipier riposte dessus ?</string>
-    <string name="detail_plan_asks">Le plan : %1$s.</string>
-    <string name="detail_draw_beats_plan">Votre %1$s vaut mieux que le plan : gardez-la à la place de la carte %2$d.</string>
+    <string name="ask_which_card_will_you_put_down">Laquelle de vos cartes sort pour lui faire de la place ?</string>
+    <string name="ask_which_card_should_they_put_down">Laquelle des cartes de %1$s sort pour lui faire de la place ?</string>
     <string name="detail_plan_is_a_suggestion">Un plan n’est qu’une suggestion. C’est à la personne dont c’est le tour de décider.</string>
     <string name="board_title">Le plan</string>
     <string name="label_plan_open">Plan</string>
-    <string name="label_plan_run">Lire</string>
     <string name="label_plan_halt">Arrêter</string>
-    <string name="label_plan_back">Précédent</string>
-    <string name="label_plan_on">Suivant</string>
-    <string name="label_plan_rewind">Début</string>
-    <string name="board_turn_planned">Tour %1$d, %2$s : %3$s</string>
-    <string name="board_played">%1$s, jouée</string>
-    <string name="board_now">Maintenant</string>
+    <string name="board_turn_stop">Tour %1$d</string>
+    <string name="board_turn_stop_spoken">Tour %1$d, %2$s</string>
     <string name="board_unplayable">Ce tour ne peut plus être joué depuis ici : une carte qu’il désigne n’est plus là.</string>
     <string name="board_broken">Une hypothèse sous ce tour s’est révélée fausse.</string>
     <string name="board_carry_hint">Faites glisser une carte jusqu’à sa destination — ou touchez-la, puis touchez l’emplacement.</string>
-    <string name="board_arrival_title">Où cela nous mène</string>
-    <string name="board_arrival_ours">Notre meilleure main : %1$d</string>
-    <string name="board_arrival_theirs">On lui prête : %1$d</string>
-    <string name="board_arrival_unseen">Personne n’a parlé de %1$d de ses cartes.</string>
-    <string name="board_your_call">à vous de voir</string>
     <string name="board_owner_you">vous</string>
     <string name="board_owner_named">%1$s</string>
     <string name="board_step_swap">échanger la carte %2$d de %1$s avec la carte %4$d de %3$s</string>
     <string name="board_step_declare">déclarer %1$s avec un Roi</string>
+    <!-- A King pointed at a card: %1$s the owner ("your" / "Nina’s"), %2$d the card, %3$s the rank named. -->
+    <string name="board_step_declare_card">déclarer la carte %2$d de %1$s comme un %3$s avec un Roi</string>
+    <string name="board_step_peek">regarder la carte %2$d de %1$s</string>
+    <string name="board_step_peek_two">regarder la carte %2$d de %1$s et la carte %4$d de %3$s</string>
+    <string name="board_step_force_draw">faire piocher une carte à %1$s</string>
+    <!-- The turn as a sentence, one chip per word that names a decision. The open questions of a
+         turn — which pile, and then what, which card, which two — are words too, drawn where their
+         answer will go, so the shape of a turn shows before it is decided. Owners are named as the
+         table names them ("You", "Nina"); a card is its 1-based place along the row. -->
+    <string name="says_draws">pioche</string>
+    <string name="says_takes">prend le %1$s</string>
+    <string name="says_takes_the_pile">prend la carte de la pile</string>
+    <string name="says_plays_it">et la joue</string>
+    <string name="says_lets_it_go">et la laisse de côté</string>
+    <string name="says_what_with">et ensuite ?</string>
+    <string name="says_which_card">quelle carte sort ?</string>
+    <string name="says_call_it">+ la nommer %1$s</string>
+    <string name="says_which_two">quelles deux cartes ?</string>
+    <string name="says_which_to_look_at">laquelle regarder ?</string>
+    <string name="says_forces">et fait piocher %1$s</string>
+    <string name="says_who_draws">qui pioche ?</string>
+    <!-- Who throws in on the turn, in the you-form for the viewer and the named form for anybody else. -->
+    <string name="says_you_throw">puis vous ripostez avec un %1$s</string>
+    <string name="says_throws">puis %1$s riposte avec un %2$s</string>
+    <string name="says_add_throw">+ riposter</string>
+    <!-- Said of the word the rail is waiting on, so it is marked by more than its colour. -->
+    <string name="says_asked">actuellement demandé</string>
+    <!-- Between the words of a turn when it is said in one line rather than as chips. -->
     <string name="board_step_take_discard">prendre la défausse</string>
-    <string name="board_from_the_deck">piocher dans la pioche</string>
-    <string name="board_part_end">%1$s %2$d</string>
-    <string name="board_part_card">carte %1$d</string>
-    <string name="board_part_card_called">carte %1$d = %2$s</string>
-    <string name="board_nobody_throws_in">personne ne riposte encore</string>
     <string name="board_step_bin">laisser la carte de côté</string>
     <string name="board_step_use_it">jouer la carte, quelle qu’elle soit</string>
     <string name="board_step_put_down">poser la carte %2$d de %1$s</string>
     <string name="board_step_put_down_known">poser la carte %2$d de %1$s, le %3$s</string>
+    <string name="board_step_put_down_called">poser la carte %2$d de %1$s et la nommer %3$s</string>
+    <string name="board_step_then">%1$s, puis %2$s</string>
+    <string name="seat_plan_your_turn">Planifier votre tour</string>
+    <string name="seat_plan_their_turn">Planifier le tour de %1$s</string>
     <string name="board_would_rather">%1$s préférerait %2$s</string>
-    <string name="board_shed">%1$s va riposter avec un %2$s</string>
-    <string name="board_edited_by">dernière modification par %1$s</string>
     <!-- What a claim badge says to a screen reader beyond its ranks: how it stands. -->
     <string name="badge_plain">le rang déclaré pour cette carte</string>
+    <string name="badge_draft">pas encore transmis</string>
     <string name="badge_disputed">contestée</string>
     <string name="badge_paired">l’une d’une paire, ordre inconnu</string>
     <string name="badge_right">juste</string>
@@ -575,6 +592,7 @@
     <string name="label_this_way_round">%1$s, puis %2$s</string>
     <string name="label_not_sure_which_way">Ordre incertain</string>
     <string name="ask_what_do_you_say">Selon vous, quelle est cette carte ?</string>
+    <string name="ask_what_do_you_say_these">Selon vous, que sont ces deux cartes ?</string>
     <string name="ask_say_and_play">Dites ce que c’est, et jouez l’action de cette carte</string>
     <string name="ask_look_at_one_of_yours">Regardez une de vos propres cartes</string>
     <string name="ask_look_at_one_of_theirs">Regardez une carte d’un adversaire</string>
@@ -713,4 +731,50 @@
     <string name="card_help_joker">Joker de valeur -1</string>
     <string name="invite_scan">Ou scannez ce code</string>
     <string name="settings_share_scan">Scannez pour ouvrir Vinto</string>
+
+    <!-- The plan's rail: a word beside a picture of the card, so the chip carries the verb alone. -->
+    <string name="says_takes_word">prend le</string>
+    <string name="says_drew">a pioché le %1$s</string>
+    <string name="says_drew_word">a pioché le</string>
+    <string name="says_well_see">et on verra</string>
+    <string name="says_and_then">+ et ensuite…</string>
+    <string name="says_puts_down_word">pose</string>
+    <string name="says_puts_down_whose">pose la carte %2$d de %1$s</string>
+    <string name="says_puts_down_whose_known">pose la carte %2$d de %1$s, le %3$s</string>
+    <string name="says_swaps_two">échange la carte %2$d de %1$s avec la carte %4$d de %3$s</string>
+    <string name="says_looks_at_both">regarde la carte %2$d de %1$s et la carte %4$d de %3$s</string>
+    <string name="says_looks_at_word">regarde</string>
+    <string name="says_looks_at_one">regarde la carte %2$d de %1$s</string>
+    <string name="says_points_at">désigne la carte %2$d de %1$s : un %3$s</string>
+    <string name="says_points_at_what">désigne la carte %2$d de %1$s — quelle valeur ?</string>
+    <string name="says_which_to_point_at">désigne quelle carte ?</string>
+    <string name="says_names">déclare %1$s</string>
+    <string name="says_is_a">est un %1$s</string>
+    <string name="says_is_a_what">est un…?</string>
+    <string name="says_throws_word">riposte avec</string>
+    <string name="says_blind">à l’aveugle</string>
+    <string name="says_throws_blind">puis %1$s riposte avec la carte %2$d à l’aveugle</string>
+    <string name="says_you_throw_blind">puis vous ripostez avec la carte %1$d à l’aveugle</string>
+    <string name="says_which_to_throw">quelle carte ?</string>
+    <string name="board_then">puis</string>
+    <string name="board_lands">Arrivée</string>
+    <string name="board_named">%1$d nommées</string>
+    <string name="board_unnamed">%1$d non nommées</string>
+    <string name="board_ours">les nôtres</string>
+    <string name="board_hand_unknown">+%1$d inconnues</string>
+    <string name="card_arrives">Une carte que personne n’a vue, qui arrive au tour %1$d</string>
+    <string name="label_plan_play_all">Jouer tous les tours</string>
+    <string name="label_plan_changed_by">Plan — %1$s a modifié votre tour</string>
+    <string name="label_put_a_card_down">Poser une carte</string>
+    <string name="label_well_see">On verra</string>
+    <string name="label_rank_said_by">%1$s — selon %2$s</string>
+    <string name="label_another_rank">Une autre valeur…</string>
+    <string name="detail_touch_a_word">Touchez un mot encadré pour le changer.</string>
+    <string name="detail_changed_by">%1$s a modifié ce tour.</string>
+    <string name="detail_touch_a_card_to_throw">Touchez une carte pour riposter : les cartes dorées correspondent, les cartes ternes ripostent à l’aveugle.</string>
+    <string name="detail_the_caller_reads">Le plan de la coalition, tel qu’ils l’ont établi. Vous avez appelé Vinto, il est donc à lire, pas à modifier.</string>
+    <string name="ask_which_card_you_throw_in">Quelle carte ripostez-vous ? Touchez-la.</string>
+    <string name="ask_which_card_they_throw_in">Quelle carte riposte %1$s ? Touchez-la.</string>
+    <string name="board_step_point">désigner la carte %2$d de %1$s avec un Roi</string>
+    <string name="board_step_declare_unnamed">déclarer une valeur avec un Roi</string>
 </resources>

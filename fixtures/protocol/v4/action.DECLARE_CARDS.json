@@ -1,0 +1,1 @@
+{"type":"action","token":"tok","action":{"type":"DECLARE_CARDS","payload":{"playerId":"p1","about":"p1","claims":[{"by":"p1","positions":[0],"ranks":["K"]}]}}}

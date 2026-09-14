@@ -5,7 +5,11 @@ import game.vinto.engine.PublicReveal
 import game.vinto.shapes.CardAt
 import game.vinto.shapes.Claim
 import game.vinto.shapes.CoalitionPlan
+import game.vinto.shapes.Lane
+import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
+import game.vinto.shapes.TossIn
+import game.vinto.shapes.cardsNamed
 
 /**
  * How a step is bearing up.
@@ -58,6 +62,10 @@ data class PlanReading(
  * Bots need none of it: `CoalitionPlanner` recomputes at every decision point rather than
  * storing a line, so the shared human plan is the only stored one and therefore the only one
  * that can go stale. Staleness is a UI problem, not a bot problem.
+ *
+ * A turn is as well as the worst thing in it: its own step, and every throw-in said on it —
+ * a throw by a seat no longer known to hold the rank stands on nothing, and a thrown card's
+ * trade follows its cards and breaks with them like any other.
  */
 fun readPlan(view: PlayerView, plan: CoalitionPlan, reveals: List<PublicReveal>): PlanReading {
     val contradicted = reveals.filter { reveal ->
@@ -66,54 +74,135 @@ fun readPlan(view: PlayerView, plan: CoalitionPlan, reveals: List<PublicReveal>)
         believed.sources.isNotEmpty() && reveal.card.rank !in believed.candidates
     }
 
-    val lanes = plan.lanes.map { lane -> lane to lane.step }
-    val repaired = mutableListOf<game.vinto.shapes.Lane>()
+    val repaired = mutableListOf<Lane>()
     val health = mutableListOf<StepHealth>()
 
-    for ((lane, step) in lanes) {
-        when (step) {
-            null -> {
-                repaired += lane
-                health += StepHealth.LIVE
-            }
-
-            is Step.Swap -> {
-                val from = follow(view, step.from, contradicted)
-                val to = follow(view, step.to, contradicted)
-                val worst = worseOf(from.second, to.second)
-                repaired += lane.copy(step = Step.Swap(from.first, to.first))
-                health += worst
-            }
-
-            is Step.Declare -> {
-                // A rank nobody is believed to hold any more is a King aimed at nothing.
-                val stillThere = view.players.any { seat ->
-                    seat.id != view.vintoCallerId &&
-                        seat.cards.indices.any { believedOnView(seat, it).candidates == setOf(step.rank) }
-                }
-                repaired += lane
-                health += if (stillThere) StepHealth.LIVE else StepHealth.BROKEN
-            }
-
-            // None of them names a card, so none has one to follow or to lose.
-            Step.TakeTheDiscard, Step.Bin, Step.UseIt -> {
-                repaired += lane
-                health += StepHealth.LIVE
-            }
-
-            is Step.PutDown -> {
-                val at = follow(view, step.card, contradicted)
-                // **The guess travels with the card.** Rebuilding the step rather than copying
-                // it would drop the rank its owner meant to call, silently, every time a step
-                // followed a card that moved.
-                repaired += lane.copy(step = step.copy(card = at.first))
-                health += at.second
-            }
-        }
+    for (lane in plan.lanes) {
+        val step = lane.step?.let { read(view, it, contradicted) }
+        val throws = lane.tossIns.map { readThrow(view, it, contradicted) }
+        repaired += lane.copy(step = step?.first, tossIns = throws.map { it.first })
+        health += (listOfNotNull(step?.second) + throws.map { it.second }).fold(StepHealth.LIVE, ::worseOf)
     }
 
     return PlanReading(plan.copy(lanes = repaired), spreadBreakage(repaired, health))
 }
+
+/**
+ * One step, following its cards: where they are now, and how well it stands on them.
+ *
+ * Recursive for a put-down and a King, because the called card's action — and the pointed-at
+ * card's — names cards of its own, and the step is as well as the worst card it names.
+ */
+private fun read(view: PlayerView, step: Step, contradicted: List<PublicReveal>): Pair<Step, StepHealth> =
+    when (step) {
+        is Step.Swap -> {
+            val from = follow(view, step.from, contradicted)
+            val to = follow(view, step.to, contradicted)
+            Step.Swap(from.first, to.first) to worseOf(from.second, to.second)
+        }
+
+        is Step.Peek -> {
+            val card = follow(view, step.card, contradicted)
+            val also = step.also?.let { follow(view, it, contradicted) }
+            val standing = also?.let { worseOf(card.second, it.second) } ?: card.second
+            Step.Peek(card.first, also?.first) to standing
+        }
+
+        is Step.Declare -> {
+            readKing(view, step, contradicted)
+        }
+
+        // None of them names a card, so none has one to follow or to lose. A forced draw
+        // names a seat, which is always there.
+        Step.TakeTheDiscard, Step.Bin, Step.UseIt, is Step.ForceDraw -> {
+            step to StepHealth.LIVE
+        }
+
+        is Step.PutDown -> {
+            readPutDown(view, step, contradicted)
+        }
+    }
+
+/**
+ * A King, following the card it points at and what that card goes on to do. A rank nobody is
+ * believed to hold any more is a King aimed at nothing; a King that has pointed and not yet
+ * named stands on the card it pointed at.
+ */
+private fun readKing(
+    view: PlayerView,
+    step: Step.Declare,
+    contradicted: List<PublicReveal>,
+): Pair<Step, StepHealth> {
+    val pointed = step.card?.let { follow(view, it, contradicted) }
+    val then = step.then?.let { read(view, it, contradicted) }
+    val rank = step.rank
+    val standing = when {
+        pointed != null -> pointed.second
+        rank == null || stillHeld(view, rank, contradicted) -> StepHealth.LIVE
+        else -> StepHealth.BROKEN
+    }
+    return step.copy(card = pointed?.first, then = then?.first) to
+        (then?.let { worseOf(standing, it.second) } ?: standing)
+}
+
+/**
+ * A put-down, following its card and what its call goes on to do.
+ *
+ * **The guess travels with the card.** Rebuilding the step rather than copying it would drop
+ * the rank its owner meant to call, silently, every time a step followed a card that moved —
+ * and the call's trade with it.
+ */
+private fun readPutDown(
+    view: PlayerView,
+    step: Step.PutDown,
+    contradicted: List<PublicReveal>,
+): Pair<Step, StepHealth> {
+    val at = follow(view, step.card, contradicted)
+    val then = step.then?.let { read(view, it, contradicted) }
+    return step.copy(card = at.first, then = then?.first) to
+        (then?.let { worseOf(at.second, it.second) } ?: at.second)
+}
+
+/**
+ * One throw-in: broken where its seat is no longer known to hold the rank it promised — the
+ * claim it rested on has been contradicted, or has gone — and otherwise as well as what the
+ * thrown card goes on to do. A blind throw rests on nothing but its card being there, so it
+ * stands for as long as the card does.
+ */
+private fun readThrow(
+    view: PlayerView,
+    tossIn: TossIn,
+    contradicted: List<PublicReveal>,
+): Pair<TossIn, StepHealth> {
+    val hand = view.players.firstOrNull { it.id == tossIn.seat }
+    val card = tossIn.card
+    val rank = tossIn.rank
+    val held = when {
+        hand == null -> false
+        card != null ->
+            card.position in hand.cards.indices &&
+                contradicted.none { it.playerId == card.seat && it.position == card.position } &&
+                (rank == null || knownRankOf(view, hand, card.position) == rank)
+        rank == null -> false
+        else -> hand.cards.indices.any { position ->
+            knownRankOf(view, hand, position) == rank &&
+                contradicted.none { it.playerId == tossIn.seat && it.position == position }
+        }
+    }
+    val then = tossIn.then?.let { read(view, it, contradicted) }
+    val standing = if (held) StepHealth.LIVE else StepHealth.BROKEN
+    return tossIn.copy(then = then?.first) to (then?.let { worseOf(standing, it.second) } ?: standing)
+}
+
+/** Whether some coalition card is still believed to be [rank], by a claim no reveal has contradicted. */
+private fun stillHeld(view: PlayerView, rank: Rank, contradicted: List<PublicReveal>): Boolean =
+    view.players.any { seat ->
+        seat.id != view.vintoCallerId &&
+            seat.cards.indices.any { position ->
+                believedOnView(seat, position).candidates == setOf(rank) &&
+                    contradicted.none { it.playerId == seat.id && it.position == position }
+            }
+    }
 
 /**
  * A step that follows its card.
@@ -169,6 +258,11 @@ private fun follow(
 private fun sameThing(claim: Claim, other: Claim): Boolean =
     claim.by == other.by && claim.ranks == other.ranks
 
+/** Every card a turn touches — its step's, every card thrown, and every thrown card's action's. */
+private fun Lane.touches(): Set<CardAt> =
+    step?.cardsNamed().orEmpty().toSet() +
+        tossIns.flatMap { listOfNotNull(it.card) + it.then?.cardsNamed().orEmpty() }
+
 private fun worseOf(a: StepHealth, b: StepHealth): StepHealth =
     listOf(a, b).maxBy { it.ordinal }
 
@@ -181,12 +275,12 @@ private fun worseOf(a: StepHealth, b: StepHealth): StepHealth =
  * what they agreed still holds.
  */
 private fun spreadBreakage(
-    lanes: List<game.vinto.shapes.Lane>,
+    lanes: List<Lane>,
     health: List<StepHealth>,
 ): List<StepHealth> {
     val poisoned = mutableSetOf<CardAt>()
     return lanes.mapIndexed { index, lane ->
-        val touched = (lane.step as? Step.Swap)?.let { setOf(it.from, it.to) }.orEmpty()
+        val touched = lane.touches()
         when {
             health[index] == StepHealth.BROKEN -> {
                 poisoned += touched

@@ -44,10 +44,7 @@ class MainActivity : ComponentActivity() {
         // in `src/debug` and returns null from `src/release`, so the shipped binary has no
         // reader at all. `MarketingScene` says what the states are and why this is a variant
         // gate rather than an `if`.
-        // The rig that makes the last bot call Vinto travels the same way and is gated the same
-        // way: a `src/debug` twin answers true, a `src/release` twin answers false, so the
-        // shipped binary has no rig in it at all. `DebugRig` says what it is for.
-        setContent { App(marketing = captureScene(intent), lastBotCallsVinto = lastBotCallsVinto()) }
+        setContent { App(marketing = captureScene(intent)) }
     }
 
     /**

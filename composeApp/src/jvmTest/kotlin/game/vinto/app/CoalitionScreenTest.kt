@@ -75,8 +75,16 @@ class CoalitionScreenTest {
             "the window does not say what it is for: $words",
         )
         assertTrue(
-            words.any { it.contains("Done talking", ignoreCase = true) },
+            words.any { it.contains("ready", ignoreCase = true) },
             "a window with no way out: $words",
+        )
+        // And nothing else. The three standings that used to sit beside it were sentences
+        // nothing reads — no planner, no bot decision, no view — so three of the four controls
+        // on the coalition's own screen had no consequence, while the claims the plan *does*
+        // read had no button at all.
+        assertTrue(
+            words.none { it.contains("I am low", ignoreCase = true) },
+            "the confer window still offers a sentence nothing reads: $words",
         )
     }
 
@@ -301,16 +309,15 @@ class CoalitionScreenTest {
 
         val words = textsOn(view, plan = plan, question = Question.ThePlan())
 
-        // The row names the rank and no more — the sentence it replaced is what a screen reader
-        // is given, because a caption that long over a felt is the thing the row was built to
-        // remove. Both are asserted, because both are promises.
+        // The sentence names the rank in the words a person would use, and the same words are
+        // what a screen reader is given.
         assertTrue(
-            words.any { it == Rank.KING.serialName },
-            "the rank the King names is not on the row: $words",
+            words.any { it == "declares " + Rank.KING.serialName },
+            "the rank the King names is not in the sentence: $words",
         )
         val spokenStep = describedOn(view, plan = plan, question = Question.ThePlan())
         assertTrue(
-            spokenStep.any { it.contains("declare K", ignoreCase = true) },
+            spokenStep.any { it.contains("declares K", ignoreCase = true) },
             "the step is not said in full for a screen reader: $spokenStep",
         )
 
@@ -339,18 +346,18 @@ class CoalitionScreenTest {
         // plan has arrived, and the numbers describe the hands on the felt beside them. The
         // last position counts the *coalition's* turns, not the lanes anybody has filled in.
         val turns = assertNotNull(tableFor(view, question = Question.ThePlan(), plan = plan).board).lanes.size
-        val landed = Question.ThePlan(at = turns)
+        val landed = Question.ThePlan(at = turns + 1)
         val words = textsOn(view, plan = plan, question = landed)
         assertTrue(
-            words.any { it.contains("Our best hand", ignoreCase = true) },
+            words.any { it.equals("Lands", ignoreCase = true) },
             "the plan does not say where it leaves the round: $words",
         )
         assertTrue(
-            words.any { it.contains("believed to hold", ignoreCase = true) },
+            words.any { it.contains("named", ignoreCase = true) && !it.contains("unnamed", ignoreCase = true) },
             "the caller's believed total is missing: $words",
         )
         assertTrue(
-            words.any { it.contains("Nobody has spoken about", ignoreCase = true) },
+            words.any { it.contains("unnamed", ignoreCase = true) },
             "a believed total with no count of what is a guess: $words",
         )
         // And no verdict, anywhere (design D12). The comparison is two numbers and both are on
@@ -420,13 +427,15 @@ class CoalitionScreenTest {
 
         show(view, plan = plan, question = Question.ThePlan())
 
-        // One named stop per coalition turn, in the band, and the table as it is among them.
+        // One named stop per coalition turn, under the felt, and where the plan lands after them.
         assertTrue(
-            onAllNodesWithContentDescription("Now").fetchSemanticsNodes().isNotEmpty(),
-            "the transport does not name the table as it is",
+            onAllNodesWithContentDescription("Lands").fetchSemanticsNodes().isNotEmpty(),
+            "the transport does not name where the plan lands",
         )
         assertTrue(
-            onAllNodesWithContentDescription(mate.nickname).fetchSemanticsNodes().isNotEmpty(),
+            onAllNodesWithContentDescription(mate.nickname, substring = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty(),
             "no stop names the turn it ends",
         )
 
@@ -520,13 +529,13 @@ class CoalitionScreenTest {
             "the window has no way into the plan",
         )
 
-        // An empty turn is drawn as its own empty parts rather than as a gap: the turn exists
+        // An empty turn is drawn as its own open words rather than as a gap: the turn exists
         // either way — every turn takes a card from somewhere and does something with it — and
-        // it is the empty one a member most needs to fill. Read as a screen reader reads it,
-        // because the parts are marks and the marks carry the words.
+        // it is the empty one a member most needs to fill. "and then?" is the word waiting for
+        // its answer, and it is what invites the plan.
         val opened = describedOn(view, plan = null, question = Question.ThePlan())
         assertTrue(
-            opened.any { it.contains("your call", ignoreCase = true) },
+            opened.any { it.contains("and then", ignoreCase = true) },
             "an empty turn is not drawn, so nothing invites a plan: $opened",
         )
         assertTrue(
@@ -541,22 +550,20 @@ class CoalitionScreenTest {
     fun yourOwnLaneIsUnderThePromptOnYourTurn() = runComposeUiTest {
         val view = suggestedTo()
         val plan = CoalitionPlan(
-            lanes = listOf(Lane(view.viewerId, Step.TakeTheDiscard)),
+            lanes = listOf(Lane(view.viewerId, Step.PutDown(CardAt(view.viewerId, 0)))),
             agreed = listOf(view.viewerId),
             editedBy = view.viewerId,
         )
 
         val words = textsOn(view, plan = plan)
 
+        // The plan's line under the prompt: the turn's words, in one line, for reading only.
         assertTrue(
-            words.any {
-                it.contains(
-                    "The plan:",
-                    ignoreCase = true,
-                ) && it.contains("take the discard", ignoreCase = true)
-            },
-            "the viewer's lane is not written on their turn: $words",
+            words.any { it.contains("draws") && it.contains("puts down your card 1") },
+            "the viewer's turn is not written on their turn: $words",
         )
+        // Information only: the ordinary turn's buttons, and nothing the plan armed.
+        assertTrue(words.none { it.equals("Do as planned", ignoreCase = true) }, "the plan armed a button")
     }
 
     /** One of each, spoken by [by] — the compiler is what keeps this list complete. */
@@ -623,13 +630,14 @@ class CoalitionScreenTest {
         )
     }
 
-    /** A final round somebody else called, with this seat's confer window open. */
+    /** A final round somebody else called, with this seat's confer window open and play still parked on the caller. */
     private fun conferring(): PlayerView {
         val whole = teachingSession().view.value
         val caller = whole.players.first { it.id != whole.viewerId }
         return whole.copy(
             phase = GamePhase.FINAL,
             vintoCallerId = caller.id,
+            currentPlayerIndex = whole.players.indexOf(caller),
             conferMsRemaining = 20_000L,
         )
     }

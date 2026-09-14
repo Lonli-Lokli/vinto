@@ -36,11 +36,14 @@ import game.vinto.shapes.Claim
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Lane
+import game.vinto.shapes.Opening
 import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
 import game.vinto.shapes.coalitionInTurnOrder
 import game.vinto.shapes.edited
+import game.vinto.shapes.getCardShortDescription
+import game.vinto.shapes.getCardValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -106,9 +109,10 @@ class PlanOnTheFeltTest {
 
         val second = textsOn(view, plan = plan, question = Question.ThePlan(at = 2))
         assertTrue(second.any { it == order[1].nickname }, "the undecided turn lost its place: $second")
+        // An undecided turn is a sentence whose second word is still a question.
         assertTrue(
             describedOn(view, plan = plan, question = Question.ThePlan(at = 2))
-                .any { it.contains("your call", ignoreCase = true) },
+                .any { it.contains("and then", ignoreCase = true) },
             "an undecided turn is not drawn as one: $second",
         )
     }
@@ -204,7 +208,9 @@ class PlanOnTheFeltTest {
         assertTrue(seats.size == TURNS, "the fixture is not a three-seat coalition")
         for (seat in seats) {
             assertTrue(
-                onAllNodesWithContentDescription(seat).fetchSemanticsNodes().isNotEmpty(),
+                onAllNodesWithContentDescription(seat, substring = true)
+                    .fetchSemanticsNodes()
+                    .isNotEmpty(),
                 "$seat has no stop on the transport",
             )
         }
@@ -257,8 +263,9 @@ class PlanOnTheFeltTest {
     fun theSameSwapIsMadeByCarryingACardOrByTouchingTwo() {
         // The drag and the non-dragging path are the same edit reached another way, not a
         // reduced one (design D5) — so both are built here and the resulting plans compared.
-        val view = finalRound()
-        val plan = CoalitionPlan()
+        // A trade needs a Jack to make it: the pile's, taken.
+        val view = jackOnThePile(finalRound())
+        val plan = takingTheJack(view)
         // Stop 1: the first coalition turn, which is the one this composes.
         val at = 1
         val board = assertNotNull(tableFor(view, question = Question.ThePlan(at = at), plan = plan).board)
@@ -294,8 +301,8 @@ class PlanOnTheFeltTest {
     fun onlyTheDestinationsTheComposerAllowsAreOffered() {
         // A drop is refused by never lighting up, not by an error afterwards (design D5). The
         // caller's cards are the case that matters: the coalition may not touch them.
-        val view = finalRound()
-        val board = assertNotNull(tableFor(view, question = Question.ThePlan(), plan = CoalitionPlan()).board)
+        val view = jackOnThePile(finalRound())
+        val board = assertNotNull(tableFor(view, question = Question.ThePlan(), plan = takingTheJack(view)).board)
         val composer = assertNotNull(board.lanes[0].composer)
 
         val callers = view.players.first { it.id == view.vintoCallerId }.cards.indices
@@ -374,7 +381,17 @@ class PlanOnTheFeltTest {
         val ours = assertNotNull(tableFor(view, question = Question.ThePlan(), plan = plan).board)
 
         assertEquals(ours.lanes.map { it.step }, theirs.lanes.map { it.step }, "different turns")
-        assertEquals(ours.outcome, theirs.outcome, "different arrival")
+        // The same numbers; each seat is addressed as it addresses itself ("You" to itself).
+        assertEquals(
+            ours.outcome?.copy(hands = emptyList()),
+            theirs.outcome?.copy(hands = emptyList()),
+            "different arrival",
+        )
+        assertEquals(
+            ours.outcome?.hands?.map { Triple(it.seat, it.named, it.unnamed) },
+            theirs.outcome?.hands?.map { Triple(it.seat, it.named, it.unnamed) },
+            "different hands",
+        )
 
         assertTrue(theirs.lanes.all { it.composer == null }, "the caller was offered an edit")
         assertTrue(
@@ -514,6 +531,23 @@ class PlanOnTheFeltTest {
     private fun twoCards(view: PlayerView): Pair<CardRef, CardRef> {
         val mate = view.players.first { it.id != view.viewerId && it.id != view.vintoCallerId }
         return CardRef(view.viewerId, 0) to CardRef(mate.id, 0)
+    }
+
+    /** The same table with an unplayed Jack on the pile: the one card a plan can trade with in advance. */
+    private fun jackOnThePile(view: PlayerView): PlayerView = view.copy(
+        discardTop = Card(
+            id = "jack-on-the-pile",
+            rank = Rank.JACK,
+            value = getCardValue(Rank.JACK),
+            played = false,
+            actionText = getCardShortDescription(Rank.JACK),
+        ),
+    )
+
+    /** The first coalition turn takes the pile's Jack, which is what makes its two cards a question. */
+    private fun takingTheJack(view: PlayerView): CoalitionPlan {
+        val first = coalitionInTurnOrder(view.players.map { it.id }, view.vintoCallerId.orEmpty())[0]
+        return CoalitionPlan(lanes = listOf(Lane(first, Step.UseIt, opening = Opening.TAKE_THE_DISCARD)))
     }
 
     /** A plan whose only lane belongs to a teammate. */

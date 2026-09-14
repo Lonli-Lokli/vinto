@@ -67,8 +67,9 @@ class SharedPlanTest {
             seat("human-1", isHuman = true, callerId, ranks = listOf(Rank.NINE)),
             seat("bot-2", isHuman = false, callerId, ranks = listOf(Rank.KING, Rank.TWO)),
             seat("bot-3", isHuman = false, callerId, ranks = listOf(Rank.FIVE)),
-            // A King beside a six, so there is a trade worth proposing: the King into the low hand.
-            seat("bot-4", isHuman = false, callerId, ranks = listOf(Rank.KING, Rank.SIX)),
+            // A Jack to put down and call, and a King beside it worth trading into the low hand:
+            // the one shape of trade a bot may propose, since nothing is aimed on a blind draw.
+            seat("bot-4", isHuman = false, callerId, ranks = listOf(Rank.JACK, Rank.KING, Rank.SIX)),
         ),
         currentPlayerIndex = listOf("human-1", "bot-2", "bot-3", "bot-4").indexOf(callerId),
         vintoCallerId = callerId,

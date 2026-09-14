@@ -2,10 +2,7 @@ package game.vinto.client
 
 import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
-import game.vinto.shapes.CardAt
 import game.vinto.shapes.CoalitionPlan
-import game.vinto.shapes.Rank
-import game.vinto.shapes.Step
 import game.vinto.shapes.getCardValue
 
 /**
@@ -27,6 +24,11 @@ data class PlanOutcome(
     val theirBelieved: Int,
     /** How many of the caller's cards nobody has spoken about. */
     val unseen: Int,
+    /**
+     * Every coalition hand as the plan leaves it, in turn order: what is named, and how many
+     * cards are not.
+     */
+    val hands: List<HandReading> = emptyList(),
 ) {
     /**
      * Strictly below, because level is a loss.
@@ -43,8 +45,16 @@ data class PlanOutcome(
     val confident: Boolean get() = unseen == 0
 }
 
+/** One hand as the plan leaves it: the total of the cards somebody has named, and the count nobody has. */
+data class HandReading(val seat: String, val who: Speaker, val named: Int, val unnamed: Int)
+
 /**
  * Reads a plan against the table, from public information alone.
+ *
+ * **Priced off the table the plan arrives at**, which the rehearsal already builds: every hand
+ * as the turns leave it — cards traded, thrown, pointed at by a King, put down for an unseen
+ * draw, drawn on an Ace's say-so — with what was said about each card still on it. One picture
+ * for the film, the felt and the numbers, so the three cannot disagree about where a plan lands.
  *
  * The numbers come from [believedOnView] — standing claims — rather than from anybody's real
  * hand, so this is the same arithmetic the coalition could do out loud, and a plan built on a
@@ -53,11 +63,11 @@ data class PlanOutcome(
  */
 fun planOutcome(view: PlayerView, plan: CoalitionPlan): PlanOutcome? {
     val caller = view.players.firstOrNull { it.id == view.vintoCallerId } ?: return null
-    val coalition = view.players.filter { it.id != caller.id }
-    if (coalition.isEmpty()) return null
+    if (view.players.all { it.id == caller.id }) return null
 
-    val hands = coalition.associate { seat -> seat.id to seat.cards.indices.map { valueAt(seat, it) } }
-    val after = applied(hands, plan, view)
+    val arrival = rehearsal(view, plan).arrival
+    val order = game.vinto.shapes.coalitionInTurnOrder(view.players.map { it.id }, caller.id)
+    val coalition = order.mapNotNull { id -> arrival.players.firstOrNull { it.id == id } }
 
     val believed = caller.cards.indices.map { position ->
         val claims = believedOnView(caller, position)
@@ -65,131 +75,21 @@ fun planOutcome(view: PlayerView, plan: CoalitionPlan): PlanOutcome? {
     }
 
     return PlanOutcome(
-        ourBest = after.values.minOfOrNull { hand -> hand.sum() } ?: 0,
+        ourBest = coalition.minOfOrNull { seat -> seat.cards.indices.sumOf { valueAt(seat, it) } } ?: 0,
         theirBelieved = believed.filterNotNull().sum(),
         unseen = believed.count { it == null },
+        hands = coalition.map { seat ->
+            val named = seat.cards.indices.map { position ->
+                believedOnView(seat, position).takeIf { it.sources.isNotEmpty() }?.value
+            }
+            HandReading(
+                seat.id,
+                speakerFor(view, seat.id),
+                named.filterNotNull().sum(),
+                named.count { it == null },
+            )
+        },
     )
-}
-
-/** Keeping a drawn card: what it is, and the viewer's position it would take. */
-internal data class KeepInstead(val rank: Rank, val position: Int)
-
-/**
- * Whether keeping [drawn] does more for the coalition than the plan's step for the viewer's
- * turn (task 3.11), measured the way the readout measures everything: the lowest coalition
- * hand, from standing claims. The card goes where it saves the most — the viewer's
- * highest-priced position, ties to the first — and the viewer's own lane is dropped from the
- * plan, since a turn spent keeping a card is not spent on the step. Strictly better, or null:
- * level is the plan's.
- */
-internal fun keepingBeatsThePlan(view: PlayerView, plan: CoalitionPlan, drawn: Rank): KeepInstead? {
-    val me = view.viewerId
-    val caller = view.players.firstOrNull { it.id == view.vintoCallerId } ?: return null
-    if (me == caller.id) return null
-    val coalition = view.players.filter { it.id != caller.id }
-    val hands = coalition.associate { seat -> seat.id to seat.cards.indices.map { valueAt(seat, it) } }
-    val mine = hands[me] ?: return null
-    val position = mine.indices.maxByOrNull { mine[it] } ?: return null
-
-    val planned = lowest(applied(hands, plan, view))
-    val kept = mine.mapIndexed { at, value -> if (at == position) getCardValue(drawn) else value }
-    val keeping = hands + (me to kept)
-    val withoutMyLane = plan.copy(lanes = plan.lanes.filterNot { it.seat == me })
-    val keptBest = lowest(applied(keeping, withoutMyLane, view))
-    return KeepInstead(drawn, position).takeIf { keptBest < planned }
-}
-
-private fun lowest(hands: Map<String, List<Int>>): Int = hands.values.minOfOrNull { hand -> hand.sum() } ?: 0
-
-/**
- * The hands a plan would leave behind.
- *
- * Positions rather than cards, because that is all a plan can name: a swap trades what is at
- * two positions, whatever those turn out to be. A step naming a position nobody has spoken
- * about simply moves an unknown, which is honest — the plan is worth what the claims behind it
- * are worth.
- */
-private fun applied(
-    hands: Map<String, List<Int>>,
-    plan: CoalitionPlan,
-    view: PlayerView,
-): Map<String, List<Int>> {
-    var working = hands
-
-    for (lane in plan.lanes) {
-        when (val step = lane.step) {
-            is Step.Swap -> working = swap(working, step.from, step.to)
-
-            // A King empties a rank out of every coalition hand — and only theirs, since the
-            // caller may not toss in once they have called.
-            is Step.Declare -> working = working.mapValues { (seat, hand) ->
-                val owner = view.players.first { it.id == seat }
-                hand.filterIndexed { position, _ ->
-                    believedOnView(owner, position).candidates.singleOrNull() != step.rank
-                }
-            }
-
-            is Step.PutDown -> working = putDown(working, step.card, view)
-
-            // Neither moves a card between hands, so neither changes what the round is scored
-            // on. Binning protects a hand rather than improving it.
-            // None of them moves a card between hands, so none changes what the round is
-            // scored on. Binning protects a hand rather than improving it, and using a card
-            // nobody has seen cannot be priced at all.
-            Step.TakeTheDiscard, Step.Bin, Step.UseIt, null -> Unit
-        }
-    }
-
-    // A shed leaves the hand it came from, which is the cheapest way to lower one and costs no
-    // turn at all.
-    for (shed in plan.sheds) {
-        val owner = view.players.firstOrNull { it.id == shed.seat } ?: continue
-        working = working.mapValues { (seat, hand) ->
-            if (seat != shed.seat) {
-                hand
-            } else {
-                hand.filterIndexed { position, _ ->
-                    believedOnView(owner, position).candidates.singleOrNull() != shed.rank
-                }
-            }
-        }
-    }
-
-    return working
-}
-
-/**
- * The card at [card] put down: it leaves, every coalition card believed to match its rank
- * leaves with it — the toss-in the step sets up — and the draw that takes its place is an
- * unseen card, priced as one.
- */
-private fun putDown(hands: Map<String, List<Int>>, card: CardAt, view: PlayerView): Map<String, List<Int>> {
-    val owner = view.players.firstOrNull { it.id == card.seat } ?: return hands
-    if (hands[card.seat]?.getOrNull(card.position) == null) return hands
-    val rank = believedOnView(owner, card.position).candidates.singleOrNull()
-    return hands.mapValues { (seat, hand) ->
-        val holder = view.players.first { it.id == seat }
-        val kept = hand.filterIndexed { position, _ ->
-            val isTheCard = seat == card.seat && position == card.position
-            val matches = rank != null && believedOnView(holder, position).candidates.singleOrNull() == rank
-            !isTheCard && !matches
-        }
-        if (seat == card.seat) kept + UNSEEN_CARD else kept
-    }
-}
-
-private fun swap(hands: Map<String, List<Int>>, from: CardAt, to: CardAt): Map<String, List<Int>> {
-    val here = hands[from.seat]?.getOrNull(from.position) ?: return hands
-    val there = hands[to.seat]?.getOrNull(to.position) ?: return hands
-    return hands.mapValues { (seat, hand) ->
-        hand.mapIndexed { position, value ->
-            when {
-                seat == from.seat && position == from.position -> there
-                seat == to.seat && position == to.position -> here
-                else -> value
-            }
-        }
-    }
 }
 
 /** What a position is worth as far as the table has been told; the deck's average otherwise. */

@@ -21,7 +21,6 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.PlanEditOutcome
-import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.actorId
 import game.vinto.shapes.agreeing
@@ -85,21 +84,6 @@ class LocalGameSession(
      * every game but the lesson. See [BotDirector].
      */
     private val director: BotDirector? = null,
-    /**
-     * Whether the last bot at the table calls Vinto the moment its turn comes, whatever it holds.
-     *
-     * **A testing rig, and off by default.** The coalition's final round is the part of this game
-     * hardest to get at deliberately: it needs a bot to *decide* to call, which needs a good hand
-     * and a search that agrees, so reaching it means playing rounds and hoping — and the round
-     * you get by playing is usually the one you called yourself, which is the other side of the
-     * table. With this on, the seat before the person's calls at once and the person is next.
-     *
-     * **Local games only**, by construction: this is `LocalGameSession`, and a room deals its own
-     * bots. And debug builds only, by where it is switched on — `MainActivity` has a `src/debug`
-     * twin that answers true and a `src/release` twin that answers false, so the shipped binary
-     * cannot reach it however the flag is threaded.
-     */
-    private val theLastBotCallsVinto: Boolean = false,
 ) : GameSession {
 
     // Internal rather than private so the tests can drive the *person's* seat with the same
@@ -200,7 +184,18 @@ class LocalGameSession(
     override val plan: StateFlow<CoalitionPlan?> = _plan.asStateFlow()
 
     private val _reveals = MutableStateFlow<List<PublicReveal>>(emptyList())
+
+    /**
+     * The reveals still standing: each at the place its card lies now, and gone once the card
+     * has left the table's hands. See `following`.
+     */
     override val reveals: StateFlow<List<PublicReveal>> = _reveals.asStateFlow()
+
+    /**
+     * Every reveal of the round as the engine reported it, at the position it was reported at.
+     * Internal for `RevealsFollowTheCardTest`, which holds [reveals] against this and the state.
+     */
+    internal val revealedSoFar: MutableList<PublicReveal> = mutableListOf()
 
     override suspend fun editPlan(edit: PlanEdit): String? {
         val caller = state.vintoCallerId
@@ -234,14 +229,19 @@ class LocalGameSession(
     }
 
     /**
-     * The board, kept in step with the table: the lane of whoever is on play locks, and a
-     * scored round has no plan — the room throws its away at scoring, and so does this.
+     * The board, kept in step with the table: the lanes of the turns already played lock, the
+     * turn on play stays open for the coalition to rewrite round its drawn card, and a scored
+     * round has no plan — the room throws its away at scoring, and so does this.
      */
     private fun settlePlan() {
-        _plan.value = if (state.phase == GamePhase.SCORING) {
-            null
-        } else {
-            _plan.value?.lockingLaneOf(state.players.getOrNull(state.currentPlayerIndex)?.id)
+        val caller = state.vintoCallerId
+        _plan.value = when {
+            state.phase == GamePhase.SCORING -> null
+            caller == null -> _plan.value
+            else -> _plan.value?.lockingLaneOf(
+                state.players.getOrNull(state.currentPlayerIndex)?.id,
+                coalitionInTurnOrder(state.players.map { it.id }, caller),
+            )
         }
     }
 
@@ -437,17 +437,19 @@ class LocalGameSession(
         // The bots watch the player play, exactly as they watch each other: every accepted
         // action feeds the runner's public-information model of the table.
         runner.observe(action, before, state)
-        if (revealed.isNotEmpty()) _reveals.value = _reveals.value + revealed
 
         publish()
+        // What the table was shown rides beside the move, because it is not in the state: a
+        // card turned face up by a wrong declaration is public for that moment and private
+        // again afterwards. The reveals that stand follow the cards the same scenes move.
+        val scenes = scenesFor(action, seenBefore, _view.value, revealed)
+        _reveals.value = _reveals.value.following(scenes, seenBefore, _view.value) + revealed
+        revealedSoFar += revealed
         val line = narrate(action, before, state, playerId)
         val seen = mutableListOf(
             Frame(
                 action = action,
-                // What the table was shown rides beside the move, because it is not in the
-                // state: a card turned face up by a wrong declaration is public for that
-                // moment and private again afterwards.
-                scenes = scenesFor(action, seenBefore, _view.value, revealed),
+                scenes = scenes,
                 view = _view.value,
                 said = listOfNotNull(line),
             ),
@@ -597,19 +599,18 @@ class LocalGameSession(
         // They used to be dropped here, which meant a bot's wrong King or failed throw turned
         // a card face up for the table and the one person at it never saw the card.
         val lines = told.map { move -> narrate(move.action, move.before, move.after, playerId) }
+        var standing = _reveals.value
         val seen = told.zip(lines) { move, line ->
             val before = projectView(move.before, playerId)
             val after = projectView(move.after, playerId)
-            Frame(
-                move.action,
-                scenesFor(move.action, before, after, move.revealed),
-                after,
-                said = listOfNotNull(line),
-            )
+            val scenes = scenesFor(move.action, before, after, move.revealed)
+            standing = standing.following(scenes, before, after) + move.revealed
+            Frame(move.action, scenes, after, said = listOfNotNull(line))
         }
 
         told.zip(lines) { move, line -> record(move.action, move.after, line) }
-        told.flatMap { it.revealed }.takeIf { it.isNotEmpty() }?.let { _reveals.value = _reveals.value + it }
+        revealedSoFar += told.flatMap { it.revealed }
+        _reveals.value = standing
         state = next
         // Announced before the view is published, so a round the bots finished reads in the
         // order it happened: they moved, and then it ended.
@@ -625,26 +626,7 @@ class LocalGameSession(
      * as a stuck game rather than one papered over by trying the next move.
      */
 
-    /**
-     * The seat rigged to call Vinto at once, when a debug build has asked for one.
-     *
-     * The **last** bot, which is the seat before the person's own turn comes round again — so
-     * calling there puts the person first in the coalition, which is the position worth testing.
-     */
-    private fun riggedCaller(): String? =
-        if (theLastBotCallsVinto) state.players.lastOrNull { it.isBot }?.id else null
-
     private fun nextBotAction(from: GameState): GameAction? {
-        // The rig, above the search and above the lesson's director: it answers "call now" for
-        // one seat and nothing at all for any other, and the call still goes through the
-        // validator below like every other proposed move.
-        riggedCaller()?.let { rigged ->
-            if (from.vintoCallerId == null && from.players.getOrNull(from.currentPlayerIndex)?.id == rigged) {
-                val call = GameAction.CallVinto(PlayerIdPayload(rigged))
-                if (ActionValidator.validate(from, call) is Validation.Valid) return call
-            }
-        }
-
         // The director speaks first, and only the lesson has one. A move it names still has to
         // pass the validator below, and a refused one falls through to the search — a script
         // that has drifted should cost the lesson its shape, not the game.

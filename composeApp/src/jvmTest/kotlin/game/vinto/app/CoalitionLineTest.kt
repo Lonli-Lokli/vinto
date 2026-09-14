@@ -22,6 +22,7 @@ import game.vinto.app.game.TableState
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.Move
 import game.vinto.client.Question
+import game.vinto.client.finalRoundTurnsLeft
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
@@ -55,12 +56,84 @@ class CoalitionLineTest {
     fun theHeaderCarriesTheCountdownAndTheWayIntoThePlan() = runComposeUiTest {
         val words = textsOn(finalRound())
 
-        assertTrue(words.any { it == "FINAL ROUND" }, "the round is not named: $words")
+        // **And not the words "FINAL ROUND".** They said the same thing on the fortieth second
+        // as on the first, over a felt that says it four other ways — the caller's crown, the
+        // coalition marks on the plates, the panel that announced the call. What is left in the
+        // band is the one thing in it that moves.
+        assertFalse(words.any { it == "FINAL ROUND" }, "the band is a label again: $words")
         assertTrue(
             words.any { it.contains("turn", ignoreCase = true) },
             "the countdown is gone, and it is the one thing up here that moves: $words",
         )
         assertTrue(words.any { it.equals("Plan", ignoreCase = true) }, "no way into the plan: $words")
+    }
+
+    /**
+     * The call is announced, over the table, to the seats it makes a coalition of.
+     *
+     * It shipped not working: the guard read `state.teaching == null` against a `Boolean`, which
+     * Kotlin compiles as a warning and evaluates as *always false*, so the panel could never
+     * open. Reported from a phone as not noticing it at all — which is exactly what the panel
+     * exists to prevent, and exactly what a test at this layer would have caught.
+     */
+    @Test
+    fun theCallIsAnnouncedToTheCoalition() = runComposeUiTest {
+        val words = textsOn(finalRound())
+
+        assertTrue(
+            words.any { it.contains("called Vinto", ignoreCase = true) },
+            "nothing said that anybody had called: $words",
+        )
+        assertTrue(
+            words.any { it.contains("You are with", ignoreCase = true) },
+            "the coalition was not named: $words",
+        )
+    }
+
+    /**
+     * And never over the plan: an announcement telling somebody to go and make a plan, drawn on
+     * top of the plan, is telling them to do what they are looking at.
+     */
+    @Test
+    fun theCallIsNotAnnouncedOverThePlan() = runComposeUiTest {
+        val words = textsOn(finalRound(), plan = wholePlan(), question = Question.ThePlan())
+
+        assertFalse(
+            words.any { it.contains("You are with", ignoreCase = true) },
+            "the arrival panel is covering the plan: $words",
+        )
+    }
+
+    @Test
+    fun theCallerIsNotToldTheyCalled() = runComposeUiTest {
+        val whole = teachingSession().view.value
+        val theirs = finalRound().copy(viewerId = whole.viewerId).let { view ->
+            view.copy(vintoCallerId = view.viewerId)
+        }
+
+        val words = textsOn(theirs, plan = null)
+
+        assertFalse(
+            words.any { it.contains("You are with", ignoreCase = true) },
+            "the caller was told they are in a coalition with the people playing against them: $words",
+        )
+    }
+
+    /**
+     * And the switch says its own name on a phone, where it never used to.
+     *
+     * The other three header controls are marks — a gear, a question mark, a door — and a
+     * player can read those. A lit pill is not a mark anybody knows, and it was the only way
+     * into the one thing this round is for. Reported from a phone as not clear.
+     */
+    @Test
+    fun thePlanSwitchIsLabelledOnAPhoneInPortrait() = runComposeUiTest {
+        val words = textsOn(finalRound())
+
+        assertTrue(
+            words.any { it.equals("Plan", ignoreCase = true) },
+            "the way into the plan is an unlabelled pill: $words",
+        )
     }
 
     @Test
@@ -108,10 +181,35 @@ class CoalitionLineTest {
 
         val words = textsOn(theirs, plan = null)
 
-        assertTrue(words.any { it == "FINAL ROUND" }, "the caller is not told the round: $words")
         assertFalse(
             words.any { it.equals("Plan", ignoreCase = true) },
             "the caller was offered a plan that does not exist: $words",
+        )
+    }
+
+    /**
+     * A band with nothing to put in it is not drawn at all.
+     *
+     * The countdown has nothing to say while play is still parked on the caller — which is
+     * exactly the confer window, the longest the band is ever on screen — so what a member saw
+     * for the whole of it was one word between two rules. Reported from a phone as wasted space.
+     */
+    @Test
+    fun theBandIsAbsentWhileThereIsNothingForItToSay() = runComposeUiTest {
+        val whole = teachingSession().view.value
+        val quiet = finalRound().copy(
+            viewerId = whole.viewerId,
+            currentPlayerIndex = finalRound().players.indexOfFirst { it.id == finalRound().vintoCallerId },
+            activeTossIn = null,
+        )
+        assertEquals(null, finalRoundTurnsLeft(quiet), "the fixture has a countdown after all")
+
+        val words = textsOn(quiet, plan = null)
+
+        assertFalse(words.any { it == "FINAL ROUND" }, "the empty band is still drawn: $words")
+        assertFalse(
+            words.any { it.contains("to the reveal", ignoreCase = true) },
+            "a countdown appeared out of nothing: $words",
         )
     }
 
@@ -159,8 +257,12 @@ class CoalitionLineTest {
         )
     }
 
-    private fun ComposeUiTest.textsOn(view: PlayerView, plan: CoalitionPlan? = null): List<String> {
-        show(view, plan)
+    private fun ComposeUiTest.textsOn(
+        view: PlayerView,
+        plan: CoalitionPlan? = null,
+        question: Question = Question.None,
+    ): List<String> {
+        show(view, plan, question)
         return onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text))
             .fetchSemanticsNodes()
             .mapNotNull { it.config.getOrNull(SemanticsProperties.Text)?.firstOrNull()?.text }

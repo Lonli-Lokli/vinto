@@ -3,9 +3,18 @@ package game.vinto.app.game
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -26,7 +35,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -34,20 +45,32 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.GraphicsLayerScope
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import game.vinto.app.CountStalls
 import game.vinto.app.LocalPacing
 import game.vinto.app.LocalReducedMotion
+import game.vinto.app.art.Res
+import game.vinto.app.art.board_turn_stop
+import game.vinto.app.art.board_turn_stop_spoken
 import game.vinto.app.theme.Feedback
 import game.vinto.app.theme.LocalFeedback
 import game.vinto.app.theme.LocalSounds
+import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Sfx
 import game.vinto.app.theme.Signal
 import game.vinto.app.theme.Sounds
@@ -81,6 +104,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -225,6 +249,29 @@ class Stage {
     internal var rehearsing: Boolean by mutableStateOf(false)
 
     /**
+     * What the ghost frame on the felt says about its own table: the cards the plan has drawn
+     * or dealt by then, tagged with the turn each arrives on, and the turn since which the
+     * pile's top is a card nobody knows. The felt paints those rose while the film plays,
+     * exactly as it paints the parked board's `fresh`; cleared with [rehearsing].
+     */
+    internal var ghostFresh: Map<CardRef, Int> by mutableStateOf(emptyMap())
+    internal var ghostPileUnknown: Int? by mutableStateOf(null)
+
+    /**
+     * The turn of the plan whose ghost frame last finished flying, or null before any has in
+     * this batch. The plan's runner parks the head when the last turn it asked for lands here,
+     * rather than when the batch goes quiet — see `PlanRunner`.
+     */
+    internal var ghostPlayed: Int? by mutableStateOf(null)
+
+    /**
+     * The card over the felt between two turns of the plan's film (design D14): whose turn
+     * has just played and whose comes next. Held for a beat before the turn's cards move, so
+     * three coalition turns do not run into one stream of cards.
+     */
+    internal var banner: Banner? by mutableStateOf(null)
+
+    /**
      * Which table the felt is drawing (design D1): the round, or the coalition's plan.
      *
      * Beside [rehearsing] and not the same thing. `rehearsing` says the *frame* on the felt is
@@ -351,6 +398,13 @@ class Stage {
     internal var reducedMotion: Boolean by mutableStateOf(false)
 
     /**
+     * Ghosts walk. The plan's film is watched to see *where a card goes*, which a real move's
+     * pace — tuned for a table that has to keep moving — was too quick for; asked for from a
+     * phone as "be sure the speed of animation is slower to understand how the card moves".
+     */
+    private val slow: Float get() = if (rehearsing) GHOST_SLOW else 1f
+
+    /**
      * Whose phone this is, and what it can do about it.
      *
      * A penalty landing in a bot's hand is a thing to see; one landing in yours is a thing to
@@ -380,14 +434,14 @@ class Stage {
             berths[anchor]?.holds(point) == true
         }
 
-    /** A duration, at the pace the player asked for. */
-    internal fun ms(base: Int): Int = (base * pace).toInt()
+    /** A duration, at the pace the player asked for — and slower still for a ghost. */
+    internal fun ms(base: Int): Int = (base * pace * slow).toInt()
 
     /** A *movement's* duration: zero under reduced motion, [ms] otherwise. */
     internal fun travel(base: Int): Int = if (reducedMotion) 0 else ms(base)
 
     /** The same, for the pauses between things, which are counted in milliseconds of delay. */
-    internal fun paced(base: Long): Long = (base * pace).toLong()
+    internal fun paced(base: Long): Long = (base * pace * slow).toLong()
 
     fun isPeeking(anchor: Anchor): Boolean = anchor in peeking
 
@@ -641,6 +695,18 @@ class Stage {
 }
 
 /**
+ * Between two turns of the plan's film: [turn] is about to play, for [seat], after [previous]
+ * — null where this is the first turn the film shows.
+ */
+internal data class Banner(val turn: Int, val seat: String?, val previous: String?)
+
+/** How much slower a ghost's every movement and pause is than a real move's. */
+private const val GHOST_SLOW = 1.5f
+
+/** How long the card between two turns of the film stays up, at the player's pace. */
+private const val BANNER_MS = 1_200L
+
+/**
  * A place on the table a card can lie, measured by whatever drew it.
  *
  * Everything an overlay needs to draw a card *as it rests there*: where the slot is, where
@@ -759,6 +825,81 @@ private fun Carried(stage: Stage, sizes: TableSizes) {
 /** How solid a carried card is drawn: enough to follow, not enough to hide what is under it. */
 private const val CARRIED_ALPHA = 0.85f
 
+/**
+ * Between two turns of the plan's film: whose turn has just played, and whose comes next.
+ *
+ * Three coalition turns ran into one stream of cards — asked for from a phone as "turn goes
+ * to Ember", with clearly visible arrows. On the rail's own ground so it reads in either
+ * scheme, held for a beat before the turn's cards move, and said whole to a screen reader.
+ */
+@Composable
+private fun TurnBanner(banner: Banner, view: PlayerView, sizes: TableSizes) {
+    val next = view.players.firstOrNull { it.id == banner.seat }
+    val previous = view.players.firstOrNull { it.id == banner.previous }
+    val spoken = stringResource(Res.string.board_turn_stop_spoken, banner.turn, next?.nickname.orEmpty())
+    val gold = Rail.gold
+    Box(
+        modifier = Modifier.fillMaxSize().semantics { contentDescription = spoken },
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(BannerCorner))
+                .background(Rail.fill)
+                .border(BannerRim, gold, RoundedCornerShape(BannerCorner))
+                .padding(horizontal = BannerPad, vertical = BannerPadTall),
+            horizontalArrangement = Arrangement.spacedBy(BannerGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            previous?.let { was ->
+                Box(modifier = Modifier.clearAndSetSemantics { }) {
+                    Avatar(name = was.nickname, size = sizes.avatar)
+                }
+                Canvas(modifier = Modifier.size(BannerArrow)) { drawArrowRight(gold) }
+            }
+            Text(
+                text = stringResource(Res.string.board_turn_stop, banner.turn),
+                fontSize = BannerText,
+                fontWeight = FontWeight.Bold,
+                color = gold,
+            )
+            next?.let { now ->
+                Box(modifier = Modifier.clearAndSetSemantics { }) {
+                    Avatar(name = now.nickname, size = sizes.avatar)
+                }
+                Text(
+                    text = now.nickname,
+                    fontSize = BannerText,
+                    fontWeight = FontWeight.Bold,
+                    color = Rail.ink,
+                )
+            }
+        }
+    }
+}
+
+/** An arrow pointing right: the turn passing from one seat to the next. */
+private fun DrawScope.drawArrowRight(ink: Color) {
+    val w = size.width
+    val y = size.height / 2f
+    val pen = w * ARROW_PEN
+    val back = w * ARROW_BARB
+    val out = w * (1f - ARROW_BARB)
+    drawLine(ink, Offset(0f, y), Offset(w, y), pen, StrokeCap.Round)
+    drawLine(ink, Offset(w, y), Offset(back, y - out), pen, StrokeCap.Round)
+    drawLine(ink, Offset(w, y), Offset(back, y + out), pen, StrokeCap.Round)
+}
+
+private val BannerCorner = 10.dp
+private val BannerRim = 2.dp
+private val BannerPad = 14.dp
+private val BannerPadTall = 8.dp
+private val BannerGap = 8.dp
+private val BannerArrow = 26.dp
+private val BannerText = 16.sp
+private const val ARROW_PEN = 0.1f
+private const val ARROW_BARB = 0.62f
+
 val LocalStage = compositionLocalOf { Stage() }
 
 /**
@@ -839,6 +980,10 @@ private class Drawing(
     private var lastActor: String? = null
     private var lastDrawn: Frame? = null
 
+    /** The last turn of the plan's film announced, and whose it was — so a turn is announced once. */
+    private var lastGhostTurn: Int? = null
+    private var lastGhostActor: String? = null
+
     /**
      * **Arrivals are taken off the flow as they are made, not when the last batch has finished
      * being drawn.** Collecting *around* the drain meant a batch emitted mid-animation sat in
@@ -888,6 +1033,7 @@ private class Drawing(
     private suspend fun drainWhatIsWaiting() {
         draining.value = true
         stage.drawing = true
+        stage.ghostPlayed = null
 
         // Hold the table where it is until the first frame steps it. Nothing in this batch has
         // been drawn yet, so the screen must go on showing what it was showing — see [settled].
@@ -941,6 +1087,11 @@ private class Drawing(
         // `ControlBlinkTest` counts that as it happens.
         behind.value = null
         stage.rehearsing = false
+        stage.ghostFresh = emptyMap()
+        stage.ghostPileUnknown = null
+        stage.banner = null
+        lastGhostTurn = null
+        lastGhostActor = null
         stage.holdUp(live())
         stage.tellAll(log.value)
     }
@@ -954,10 +1105,24 @@ private class Drawing(
         if (frame.hasSomethingToSee) lastActor = frame.actorId
         lastDrawn = frame
 
+        // Between two turns of the plan's film, a card over the felt saying whose turn comes
+        // next — held for a beat before its cards move, and once per turn however many frames
+        // the turn's throws take. A real move keeps the table's own rhythm.
+        val turn = frame.turn
+        if (frame.ghost && turn != null && turn != lastGhostTurn) {
+            stage.banner = Banner(turn, frame.actorId, lastGhostActor)
+            delay(stage.paced(BANNER_MS))
+            stage.banner = null
+            lastGhostTurn = turn
+            lastGhostActor = frame.actorId
+        }
+
         // What this move is about to move and to reveal, marked before the table steps to
         // it — see [prepareFor].
         stage.prepareFor(frame)
         stage.rehearsing = frame.ghost
+        stage.ghostFresh = frame.fresh
+        stage.ghostPileUnknown = frame.pileUnknown
 
         // The table steps to this move before its cards fly, because the overlay draws a gap
         // where a card is landing: the seat has to be showing the card for the gap to be in
@@ -968,6 +1133,7 @@ private class Drawing(
         stage.tell(frame.said)
 
         next = stage.playScenes(frame, next)
+        if (frame.ghost) stage.ghostPlayed = frame.turn
 
         // Nothing is expected any more: every flight this move had has started, and a beat
         // that never flew (a card already where it was going) must not leave a place waiting
@@ -1168,6 +1334,9 @@ fun CardStage(
         // table is face-down, and the plan moves cards by what the table has been *told* they
         // are rather than by what they are.
         stage.carrying?.let { Carried(stage, sizes) }
+
+        // Whose turn of the plan is about to play, over the felt, for a beat.
+        stage.banner?.let { TurnBanner(it, behind.value ?: live, sizes) }
 
         stage.borrowed?.let { Borrowed(it, sizes, stage.tableCentre(), stage.travel(STAGE_GROW_MS)) }
         // The sweep is pure movement; under reduced motion the count still shows for the

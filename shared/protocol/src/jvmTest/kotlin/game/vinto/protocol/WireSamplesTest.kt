@@ -13,6 +13,7 @@ import game.vinto.shapes.GameAction
 import game.vinto.shapes.InitiatorIdPayload
 import game.vinto.shapes.Lane
 import game.vinto.shapes.LeaderIdPayload
+import game.vinto.shapes.Opening
 import game.vinto.shapes.ParticipateInTossInPayload
 import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.PlayerIdPayload
@@ -25,6 +26,7 @@ import game.vinto.shapes.Step
 import game.vinto.shapes.SwapCardPayload
 import game.vinto.shapes.SwapHandWithDeckPayload
 import game.vinto.shapes.TableTalk
+import game.vinto.shapes.TossIn
 import kotlinx.serialization.json.JsonObject
 import java.io.File
 import kotlin.test.Test
@@ -65,8 +67,30 @@ class WireSamplesTest {
         humans = 1,
     )
     private val claim = Claim(by = "p1", positions = listOf(0), ranks = listOf(Rank.KING))
+
+    // Every shape the plan can carry, so a change to any of them moves a frozen sample: a
+    // trade, a pointed-at King and what its card does, a called put-down with a look, a turn's
+    // throw-ins in order with what each thrown card does, a forced draw, a blind throw of a
+    // card nobody has named, and a King that has pointed at a card and not yet named a rank.
     private val plan = CoalitionPlan(
-        lanes = listOf(Lane("p2", Step.Swap(CardAt("p2", 0, claim), CardAt("p3", 1)))),
+        lanes = listOf(
+            Lane(
+                seat = "p2",
+                step = Step.Declare(
+                    Rank.JACK,
+                    CardAt("p3", 0, claim),
+                    then = Step.Swap(CardAt("p2", 0, claim), CardAt("p3", 1)),
+                ),
+                opening = Opening.TAKE_THE_DISCARD,
+                tossIns = listOf(
+                    TossIn("p3", Rank.QUEEN, then = Step.Peek(CardAt("p3", 1), CardAt("p4", 0))),
+                    TossIn("p4", Rank.ACE, then = Step.ForceDraw("p3")),
+                    TossIn("p2", rank = null, card = CardAt("p2", 1)),
+                ),
+            ),
+            Lane("p3", Step.PutDown(CardAt("p3", 0), Rank.NINE, Step.Peek(CardAt("p4", 0)))),
+            Lane("p4", Step.Declare(card = CardAt("p3", 1)), opening = Opening.DRAW),
+        ),
         sheds = listOf(Shed("p3", Rank.SEVEN)),
         agreed = listOf("p2"),
         editedBy = "p2",
@@ -115,7 +139,13 @@ class WireSamplesTest {
         "more-time" to ClientMessage.MoreTime(token = "tok"),
         "done-conferring" to ClientMessage.DoneConferring(token = "tok"),
         "say" to ClientMessage.Say(talk),
-        "edit-plan" to ClientMessage.EditPlan(token = "tok", edit = PlanEdit.SetLane("p2", Step.TakeTheDiscard)),
+        "edit-plan" to ClientMessage.EditPlan(
+            token = "tok",
+            edit = PlanEdit.SetTossIns(
+                "p2",
+                listOf(TossIn("p3", Rank.QUEEN, then = Step.Swap(CardAt("p3", 0), CardAt("p4", 0)))),
+            ),
+        ),
         "agree-plan" to ClientMessage.AgreePlan(token = "tok", agree = true),
     )
 

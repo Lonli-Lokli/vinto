@@ -236,6 +236,124 @@ world, not the plan, and invalidating everyone's yes every time the round teache
 something would make agreement unholdable in the round that needs it most. The mark is the signal;
 what to do about it is the coalition's business.
 
+### D15 — The plan says the whole of the rules, and a throw-in is part of its turn
+
+**Decided by the product owner, against the first draft of this section**, which proposed
+keeping the shed as a standing promise and giving it an action. The plan stands in for what a
+coalition says at a physical table, and what it says is a sequence of everybody's actions in
+the order they happen: *"you play this Queen, then I throw in my Queen and play mine"*. A
+promise beside the turns can say neither *then* nor *and play mine*, and the order of two
+throws on one turn is the order their actions resolve — which the engine takes from the order
+people throw, so it is the coalition's to plan.
+
+So a lane carries its throw-ins ([Lane.tossIns]), each with what the thrown card does, and the
+step vocabulary covers every action a card has: a look, a trade, a King that points at a card
+and plays that card's action, an Ace that names who draws. The door holds each to the rank that
+plays it and keeps every one of them off the caller's hand, as the validator does live.
+
+The cost is on the record: a step is a polymorphic tag inside a message, an older build cannot
+skip one it does not know, and the wire went to version 4 with the floor at 4 (`PROTOCOL.md`).
+The plan's vocabulary is frozen per version beside the messages' so the next growth is a bump
+by construction rather than by memory.
+
+*Alternative considered:* `Shed.then` on the standing promise. Rejected — it could not say
+order, could not say *then*, and left two ways to say a throw.
+
+### D16 — The turn is a sentence
+
+The rail draws the turn as the words a person would say it in, one chip per word that names a
+decision, and touching a word opens the question that word answers. The open questions of a
+turn are words too — *which pile?*, *and then?*, *which two cards?*, *who draws?* — drawn where
+their answer will go, so the shape of a turn shows before it is decided. A throw-in is a clause
+of its own, *then Tide throws in a five, and looks at …*; what is on offer — another throw, a
+call — is a dimmer word at the end.
+
+Nineteen languages are the reason each word is its own resource and the order of words is the
+model's: a translator sees whole phrases, and the sentence reads in the order a turn happens
+in every locale rather than in one locale's syntax. A row of six drawn marks was tried first
+and two people could not say what any of it meant.
+
+### D17 — The plan is information, never a control
+
+The live rail keeps the ordinary turn's buttons whatever the plan says, with one line under
+the prompt saying what the coalition agreed about this turn. Nothing is pre-armed and nothing
+re-plans: a good draw is the player's to judge, as it would be at a table. "I'm ready" lands on
+the live table, and a table that plays straight on from what it has heard declared, never
+opening the plan, is using the app as intended.
+
+Plan mode and the round's controls are never on screen together (D9), which has one cost: a
+card lands that this seat could throw in on, or the turn comes round, and the plan hides the
+buttons for it. So the plan steps aside for exactly those two moments — closes, parked where it
+was — and is one switch away again after.
+
+*Alternative considered:* keep "Do as planned" as a one-tap convenience. Rejected by the product
+owner: a button the plan arms is the plan acting, and the plan must only ever say.
+
+*Amended by D18:* "I'm ready" opens the plan after all, and the turn coming round no longer
+closes it. The reasoning above about a button the plan arms stands whole; what changed is where
+a member lands when they have finished talking.
+
+### D18 — Five rows that never move, and a turn a page
+
+**Decided by the product owner, from a design page of mockups** ("Plan as Table Talk", five
+revisions) before any code was rebuilt. The rail under the felt is a pager — one page per
+coalition turn, in the order the seats play, and a last page where the plan lands — and under
+the page three rows that are always there at one height: the answers to the word being asked
+for, the stops, and the one standing button. Nothing above the felt is spent on the plan any
+more; the stops moved down beside the two buttons that play the film, ▶ for this turn again and
+▶▶ for every turn to the end, which reads ■ while it runs.
+
+**Boxed means touchable.** A decision is a boxed word, the one the rail is asking for wears the
+coalition's blue, the next decision is a dashed box at the end of the line, and a fact —
+"draws" with one pile to draw from, the card that was drawn, "and we'll see" — is plain and
+answers no touch. A question with one answer is not asked. A card the sentence names is drawn
+as the card on the felt is, so the two are read as one thing; a card that is not on the table
+yet is rose, tagged with the turn it arrives on, on the felt and in the sentence, from the page
+its turn lands on to the last. The turn on play stays editable, because the drawn card is the
+news the plan turns on; a played turn locks. "I'm ready" opens the plan on the member's own
+turn, since the plan is what the talking was for and the switch was the tap nobody found.
+
+*Alternative considered:* all three turns on one rail, the transport in the band above the felt.
+Rejected on a phone: three turns at once did not fit without scrolling, the band took a strip
+of the four hands' height, and "which turn am I reading" was answered nowhere.
+
+### D19 — The film is watched to see where a card goes
+
+Between two turns of the film a card over the felt names the turn and the seat it passes to,
+with an arrow from the seat before, and holds for a beat before the cards move; a ghost's every
+movement and pause is half again slower than a real move's. Both asked for from a phone. A card
+nobody has seen — a put-down's replacement, an Ace's forced draw, a blind throw's penalty card —
+is rose on the felt while the film plays exactly as on the parked page, because the ghost frame
+carries its own account of them. A throw-in of a card the table cannot vouch for is said to be
+blind and rehearses as the card coming back with a penalty card: the fault real tables sometimes
+choose on purpose, because a wrong throw shows the card.
+
+Every colour is measured in both schemes: the rose at 6.2:1 off the felt with its ink at 8.5:1
+on it, the asked word's blue at 5.4:1 under slate ink and a deeper blue at 7.5:1 under white on
+paper, a boxed word's outline at 3:1 on its box. `ContrastTest` holds every pair.
+
+### D20 — A reveal is a position, and it follows its card
+
+A card turned face up for the whole table — the throw that missed, the card a King pointed at —
+is public for as long as it lies where it was shown, and `PublicReveal` says where: a seat and a
+position. Positions move. A trade carries the card to another seat, a throw or a swap-out takes
+it away, and a hand a card has left closes up behind it. A reveal left where it was described
+whatever card took the place next, and D13's "a claim under this turn has been proved wrong"
+then fired against a card that was no longer there — which is what the phone showed, and what
+nobody at the table could account for.
+
+A client never learns a hidden card's identity, so it cannot follow the card the way the engine
+could. It follows the flights instead: the same `Beat.Move`s the felt animates say where every
+card went, and `Reveals.following()` moves each reveal with them — to the seat a trade lands it
+in, away for anything that leaves a seat for the pile or the deck, and one place down for every
+card thrown from below it out of a hand that shrank. Both sessions keep their reveals this way,
+and `RevealsFollowTheCardTest` holds the local one against the engine's own answer by card
+identity over whole games, so the choreography and the bookkeeping cannot quietly disagree.
+
+The alternative — the engine carrying reveals by card identity in `PlayerView` — was rejected:
+it would put a card id into a view whose whole point is to redact card ids, and it would be a
+wire change for a defect that lies entirely on the client's side.
+
 ## Risks / Trade-offs
 
 - **Drag on a small phone is fiddly**, and a mis-drop that silently edits the plan is worse than
@@ -280,5 +398,8 @@ produce a divergence nobody notices.
 
 ## Open Questions
 
-- Whether "play it through" — the whole plan animated end to end, as `rehearse()` returns it
-  today — is worth a control of its own beside stepping, or is redundant once stepping exists.
+- ~~Whether "play it through" is worth a control of its own beside stepping.~~ Settled: the
+  band's Play runs the whole plan from wherever the head is parked, and each turn carries its
+  own replay at the head of its sentence (D16).
+- Whether a Queen's look-only — two cards looked at and not traded — needs a word in the builder,
+  or whether two touches making a trade is what every coalition means by a Queen.

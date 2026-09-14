@@ -21,8 +21,11 @@ import game.vinto.client.rehearsal
 import game.vinto.client.tableFor
 import game.vinto.engine.PlayerView
 import game.vinto.engine.PublicReveal
+import game.vinto.engine.tossInIsOpen
 import game.vinto.shapes.CoalitionPlan
+import game.vinto.shapes.Lane
 import game.vinto.shapes.TableTalk
+import game.vinto.shapes.laneOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -99,9 +102,28 @@ class GameHolder(
     var sending: Boolean by mutableStateOf(false)
         private set
 
+    /**
+     * The viewer's own turn of the plan as it was when they last had the plan open, so the
+     * switch in the header can say a teammate has changed it since (`PlanSummary.changedBy`).
+     * Kept in step for as long as the plan is open, and left alone while it is closed.
+     */
+    private var seen: Lane? by mutableStateOf(null)
+
+    /**
+     * The pile's top when the plan last opened.
+     *
+     * A toss-in window already open at that moment is the one the call itself opened — the
+     * caller's last card, which the member has had the whole confer window to throw in on —
+     * and it must not close the plan they asked for: "I'm ready" opened the plan and the
+     * window's own view, delivered a beat later, shut it again (product owner). Only a card
+     * landing *while* the plan is open steps it aside; see [noticed].
+     */
+    private var openedOn: String? = null
+
     val playerId: String get() = session.playerId
     val current: PlayerView get() = view.value
-    val table: Table get() = tableFor(view.value, question, away.value, offered, plan.value, reveals.value)
+    val table: Table
+        get() = tableFor(view.value, question, away.value, offered, plan.value, reveals.value, seen)
     val isOver: Boolean get() = session.isOver
 
     /**
@@ -113,7 +135,7 @@ class GameHolder(
      * by accident.
      */
     fun tableFor(view: PlayerView): Table =
-        tableFor(view, question, away.value, offered, plan.value, reveals.value)
+        tableFor(view, question, away.value, offered, plan.value, reveals.value, seen)
 
     /**
      * The table as a SCREEN should draw it: [tableFor] the view on the felt, minus the taps that
@@ -131,12 +153,56 @@ class GameHolder(
      *   the two batches a dispatch emits, the stage has let go of its lag and is drawing the
      *   live table while the bots' turns are still to come. Null before anything is animated.
      */
-    fun tableAsShown(shown: PlayerView, drawn: PlayerView? = null): Table =
-        tableFor(shown).withoutStaleOffers(shown, drawn ?: shown, current)
+
+    /**
+     * @param rehearsing whether [shown] is a ghost frame's table — the plan's film playing.
+     *   A board rebuilt from one would replay the plan on top of its own result, so the rail
+     *   keeps reading the live table while the film plays; the felt follows the frames on its
+     *   own (`FeltTable`).
+     */
+    fun tableAsShown(shown: PlayerView, drawn: PlayerView? = null, rehearsing: Boolean = false): Table {
+        val basis = if (rehearsing) current else shown
+        return tableFor(basis).withoutStaleOffers(basis, drawn ?: basis, current)
+    }
 
     /** One sentence off the channel, for the holder to keep if it is addressed here. */
     fun heard(talk: TableTalk) {
         if (talk is TableTalk.Proposal && talk.to == session.playerId) offered = talk
+    }
+
+    /**
+     * The round has moved under an open plan: the plan steps aside when the round needs this
+     * seat *now*.
+     *
+     * Plan mode and the round's controls are never on screen together (design D9), which is
+     * the right rule and has one cost: a card lands that this seat could throw in on, and the
+     * plan is hiding the button for it — a toss-in window closes on a clock, and a member who
+     * said "then I throw in my Queen" is reading the sentence while the Queen goes by. So the
+     * plan closes for exactly that moment, and is one switch away again afterwards, parked
+     * where it was.
+     *
+     * **Not for the turn coming round.** It used to close then too, and the turn on play is
+     * the one turn the plan most needs to be open for: the card just drawn is the news the
+     * plan turns on, and a member reading their own turn had it snatched away as it became
+     * theirs. The turn's buttons are one switch away, the same as the plan is.
+     */
+    fun noticed(view: PlayerView) {
+        if (!question.isPlanning) return
+        val me = session.playerId
+        val myThrow = view.tossInIsOpen && view.vintoCallerId != me && me !in view.barredFromTossIn
+        val landedSince = view.discardTop?.id != openedOn
+        if (myThrow && landedSince) question = Question.None
+    }
+
+    /** Puts the screen at [next], remembering the pile's top if this is the plan opening. */
+    private fun ask(next: Question) {
+        if (next.isPlanning && !question.isPlanning) openedOn = session.view.value.discardTop?.id
+        question = next
+    }
+
+    /** The plan has changed: while it is open the viewer is looking at it, so what they have seen moves. */
+    fun sawPlan(standing: CoalitionPlan?) {
+        if (question.isPlanning) seen = standing?.laneOf(session.playerId)
     }
 
     /**
@@ -158,13 +224,17 @@ class GameHolder(
     private suspend fun film(focus: Question.ThePlan) {
         val target = focus.runningTo ?: return
         val standing = plan.value ?: return
-        rehearsals.emit(rehearsal(view.value, standing).between(focus.at, target))
+        // Pages, not positions: page k starts from the table after k − 1 turns, so the film
+        // from page k to page t plays turns k to t − 1 — and to the last page, every turn to
+        // the end. A replay is the one film whose destination is its own page: turn k alone.
+        val film = rehearsal(view.value, standing)
+        rehearsals.emit(film.between(focus.at - 1, minOf(target, film.turns)))
     }
 
     suspend fun act(move: Move) {
         when (move) {
             is Move.Ask -> {
-                question = move.question
+                ask(move.question)
                 refusal = null
 
                 // Starting the plan's film is the one question that also has something to play.
@@ -181,9 +251,15 @@ class GameHolder(
             // would mean a player who wanted to say "wait" had to wait first.
             // Not held behind `sending` either: ending your share of a window is not a move,
             // and a player who has finished talking should not wait on one.
+            // **And the plan opens.** "I'm ready" ends the talking, and the plan is what the
+            // talking was for: it is the coalition's table talk made visible, and a member who
+            // has finished saying what they know is looking for where to say what to do with
+            // it. It used to land them on the live table with the switch one tap away, and the
+            // tap was the one nobody found (product owner). Opened where there is something
+            // to do — their own turn while it can still be built, else the first that can.
             is Move.Done -> {
                 refusal = session.doneConferring()
-                if (refusal == null) question = Question.None
+                if (refusal == null) ask(table.planSummary?.opens ?: Question.None)
             }
 
             is Move.Say -> {
@@ -196,14 +272,22 @@ class GameHolder(
 
             // Planning is talk-shaped: nothing waits on it and the answer is the board coming
             // back, so neither is held behind `sending` either.
+            //
+            // **And the plan stays open.** An edit wiped the question, which closed the plan:
+            // every answer to the rail — which pile, what becomes of the card, which card goes
+            // out — dropped the player onto the live table, and the next answer meant finding
+            // the switch, the stop and the turn again. Building a turn is three or four edits
+            // in a row. Reported from a phone as not being able to work out how to build a plan
+            // at all, which is exactly what it was.
             is Move.Plan -> {
                 refusal = session.editPlan(move.edit)
-                if (refusal == null) question = Question.None
+                if (refusal == null) question = question.backOnThePlan()
             }
 
+            // Agreeing is the end of talking, not the end of reading.
             is Move.Agree -> {
                 refusal = session.agreePlan(move.agree)
-                if (refusal == null) question = Question.None
+                if (refusal == null) question = question.backOnThePlan()
             }
 
             is Move.Send -> {
@@ -220,8 +304,36 @@ class GameHolder(
                 }
             }
         }
+        sawPlan(plan.value)
     }
 }
+
+/**
+ * Where the screen is once a plan edit has landed: the plan, parked where the edit was made.
+ *
+ * A chooser's question has been answered, so the chooser closes onto the plan at its own stop;
+ * a card picked up is put down by the edit it made; and anything else — an edit made from no
+ * plan at all — leaves the screen asking nothing, as before.
+ */
+private fun Question.backOnThePlan(): Question = when (this) {
+    is Question.ThePlan -> copy(picked = null)
+    is Question.Doing -> Question.ThePlan(at = at)
+    is Question.PuttingDown -> Question.ThePlan(at = at)
+    is Question.Naming -> Question.ThePlan(at = at)
+    is Question.Aiming -> Question.ThePlan(at = at)
+    is Question.Forcing -> Question.ThePlan(at = at)
+    is Question.Throwing -> Question.ThePlan(at = at)
+    Question.None, Question.WhichSlot, is Question.CallRank, is Question.Claiming -> Question.None
+}
+
+/** Whether the screen is somewhere in the plan: reading it, or answering a question about it. */
+private val Question.isPlanning: Boolean
+    get() = when (this) {
+        is Question.ThePlan, is Question.Doing, is Question.PuttingDown, is Question.Naming,
+        is Question.Aiming, is Question.Forcing, is Question.Throwing,
+        -> true
+        Question.None, Question.WhichSlot, is Question.CallRank, is Question.Claiming -> false
+    }
 
 /** A holder for one round, rebuilt when the round is. */
 @Composable
@@ -246,6 +358,12 @@ fun rememberHolder(session: GameSession, opening: Question = Question.None): Gam
     // is already in the strip, because the session puts it there.
     LaunchedEffect(session) {
         session.talk.collect { holder.heard(it) }
+    }
+    LaunchedEffect(session) {
+        session.view.collect { holder.noticed(it) }
+    }
+    LaunchedEffect(session) {
+        session.plan.collect { holder.sawPlan(it) }
     }
 
     return holder
@@ -275,9 +393,9 @@ fun rememberActor(
     LaunchedEffect(rehearseFor) {
         if (rehearseFor is Question.ThePlan) {
             delay(REHEARSE_AFTER_MS)
-            // The transport's own last stop, so a capture records the plan exactly as a player
+            // The transport's own play-all, so a capture records the plan exactly as a player
             // watches it — one way to play the film, not a second one kept for the camera.
-            holder.table.board?.transport?.stops?.lastOrNull()?.go?.let { holder.act(it) }
+            holder.table.board?.transport?.playAll?.let { holder.act(it) }
         }
     }
 

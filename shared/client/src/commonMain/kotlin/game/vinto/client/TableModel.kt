@@ -17,6 +17,7 @@ import game.vinto.shapes.DeclareKingActionPayload
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameSubPhase
+import game.vinto.shapes.Lane
 import game.vinto.shapes.ParticipateInTossInPayload
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.PlanEdit
@@ -127,6 +128,12 @@ data class Table(
     val board: Board? = null,
     /** The plan in one line, with the tap that opens the board. Null outside a final round. */
     val planSummary: PlanSummary? = null,
+    /**
+     * The plan's row on the live rail: what the plan says about the turn on play, as
+     * information only. There for the whole final round — empty when nothing is planned —
+     * so nothing under it moves; null while the plan itself is open, and outside a final round.
+     */
+    val planLine: PlanLine? = null,
 )
 
 /**
@@ -168,6 +175,18 @@ data class Badge(
     val disputed: Boolean = false,
     val paired: Boolean = false,
     val verdict: Verdict? = null,
+    /**
+     * A claim being **composed**, which nobody else can see yet.
+     *
+     * The rank rail is a multiple choice and the thing it is choosing about is on the felt, not
+     * in the rail — so with nothing drawn until "Say it", a player naming three ranks had no
+     * way to check what they were about to tell the table except by reading the plaques back.
+     * Reported from a phone as the card not updating until afterwards.
+     *
+     * It has to be **visibly** provisional: a draft that looked like a claim would leave a
+     * member unable to tell what they have actually said, which is worse than not drawing it.
+     */
+    val draft: Boolean = false,
 )
 
 /** How the reveal settled a claim. */
@@ -206,10 +225,29 @@ data class SeatChoice(
     val nickname: String,
     val who: Speaker,
     val move: Move,
+    /**
+     * True where naming the seat opens its turn of the plan rather than answering a question
+     * about a card — the plate says "Plan Nina's turn" for one and the seat's name for the other.
+     */
+    val planTurn: Boolean = false,
 )
 
-/** A rank the player may name. */
-data class RankChoice(val rank: Rank, val move: Move, val muted: Boolean = false)
+/**
+ * A rank the player may name.
+ *
+ * [muted] is a rank that is legal but unrewarding — a King may name an actionless rank on
+ * purpose. [picked] is whether this rank is already in the claim being built, and is **null
+ * where the rail is not building one**: a King's rail is fourteen sentences, each of which
+ * sends on touch, while the claim rail is fourteen toggles. Somebody hearing the screen read
+ * to them has to be able to tell those apart, so "not chosen" and "not a toggle" cannot be the
+ * same value.
+ */
+data class RankChoice(
+    val rank: Rank,
+    val move: Move,
+    val muted: Boolean = false,
+    val picked: Boolean? = null,
+)
 
 /**
  * What kind of move a button is.
@@ -364,38 +402,61 @@ sealed interface Question {
          * no position, so there is nothing to drop onto and nothing to drag.
          */
         val runningTo: Int? = null,
+        /**
+         * Whether the page's turn has just been watched, so the felt shows the table it leaves
+         * rather than the one it starts from. Set by the runner when a film parks; cleared by
+         * any swipe or touch, which is where the page's start table comes back.
+         */
+        val landed: Boolean = false,
     ) : Question {
         /** Whether the transport is moving. See [runningTo]. */
         val running: Boolean get() = runningTo != null
     }
 
     /**
-     * Final round: naming a rank [seat] will throw in if one lands.
-     *
-     * **Any coalition seat, not only your own.** The plan is one shared thing — every member
-     * reads the same board — so who throws in on a turn is a part of that turn like any other,
-     * set in the belt beside it. It was your own hand or nothing, which made it a floating
-     * button about you rather than a part of the turn it pays off.
-     */
-    data class Shedding(val seat: String, val at: Int = 0) : Question
-
-    /**
-     * Final round: I am naming the rank [seat] should declare with a King.
-     *
-     * The one step of a plan with no destination to carry a card to, so the one that is still
-     * a rail rather than a gesture (design D5). The answer is a single `PlanEdit` for a single
-     * turn — a part of the plan, never the whole draft.
-     */
-    data class Planning(val seat: String, val at: Int = 0) : Question
-
-    /**
      * Final round: what should [seat] do with the card their turn takes?
      *
      * The middle part of a turn — play it, keep it, or let it go — asked as its own question
-     * because it is its own decision. A turn is a sequence and the belt draws it as one, so
-     * each part of the row opens the choice that part is about.
+     * because it is its own decision. A turn is a sequence and the sentence says it as one, so
+     * each word of the sentence opens the choice that word is about.
      */
     data class Doing(val seat: String, val at: Int = 0) : Question
+
+    /**
+     * Final round: which of [seat]'s cards goes out when they keep the card their turn takes?
+     *
+     * Asked before anything lands on the board. "Keep it" used to write the seat's first card
+     * onto the plan and leave the row to correct it — a guess, broadcast to the coalition as if
+     * somebody had decided it. The answer is a card touched on the felt, or carried to the pile.
+     */
+    data class PuttingDown(val seat: String, val at: Int = 0) : Question
+
+    /**
+     * Final round: which rank the King at [part] of [seat]'s turn declares — the turn's own
+     * King, a called one, a thrown one, or one a King pointed at. A rank off the rail.
+     */
+    data class Naming(val seat: String, val at: Int, val part: Part) : Question
+
+    /**
+     * Final round: the cards the action at [part] of [seat]'s turn names, touched on the felt —
+     * the two a Jack or a Queen trades, the one a 7 to 10 looks at, the one a King points at.
+     * [picked] is the first of two, already up (design D5).
+     */
+    data class Aiming(val seat: String, val at: Int, val part: Part, val picked: CardRef? = null) : Question
+
+    /** Final round: who the Ace at [part] of [seat]'s turn makes draw. A seat off the felt or the rail. */
+    data class Forcing(val seat: String, val at: Int, val part: Part) : Question
+
+    /**
+     * Final round: the [index]th throw-in on [seat]'s turn — who throws, and what rank.
+     *
+     * **Any coalition seat, not only your own.** The plan is one shared thing — every member
+     * reads the same board — so who throws in on a turn is a part of that turn like any other,
+     * said in the sentence beside it. [thrower] defaults to the viewer, since "I will throw one
+     * in" is the common case, and the plates are the way to say somebody else will. An [index]
+     * past the end adds a throw; one inside the list changes that throw.
+     */
+    data class Throwing(val seat: String, val at: Int, val index: Int, val thrower: String? = null) : Question
 }
 
 /** How many cards a single claim may pair. Three would be six orderings, which nobody reads. */
@@ -451,6 +512,11 @@ fun revealedTo(view: PlayerView): Set<CardRef> {
         .mapTo(mutableSetOf()) { CardRef(it.playerId, it.position) }
 }
 
+/**
+ * @param seen the viewer's own lane as it was when they last had the plan open, so the header
+ *   can say a teammate has changed their turn since. See [PlanSummary.changedBy].
+ */
+@Suppress("LongParameterList")
 fun tableFor(
     view: PlayerView,
     question: Question = Question.None,
@@ -458,8 +524,15 @@ fun tableFor(
     offered: TableTalk.Proposal? = null,
     plan: CoalitionPlan? = null,
     reveals: List<PublicReveal> = emptyList(),
+    seen: Lane? = null,
 ): Table = tableBody(view, question, plan, away, reveals)
-    .copy(away = away, planSummary = summaryFor(view, plan))
+    .let { table ->
+        table.copy(
+            away = away,
+            planSummary = summaryFor(view, plan, seen),
+            planLine = if (table.board == null) planLineFor(view, plan) else null,
+        )
+    }
     .offering(offered, view)
 
 /**
@@ -536,7 +609,7 @@ private fun tableBody(
     // "not clear how I should declare mine or other cards" is that bug, reported. The picker
     // *is* what the window is for, so it takes the table over the way the plan does.
     if (question is Question.Claiming && mayDeclare(view)) {
-        return claimingTable(view, question).showing(view)
+        return claimingTable(view, question).showing(view).drafting(view, question)
     }
 
     // **A card on the pile, before the window the call opened.**
@@ -561,7 +634,7 @@ private fun tableBody(
 
     val pending = view.pendingAction
     if (pending != null && pending.playerId == view.viewerId) {
-        return pendingTable(view, pending, question).planned(view, plan).showing(view)
+        return pendingTable(view, pending, question).showing(view)
     }
 
     val current = view.players.getOrNull(view.currentPlayerIndex)
@@ -577,7 +650,7 @@ private fun tableBody(
         }
     }
 
-    return turnStartTable(view).planned(view, plan).showing(view)
+    return turnStartTable(view).showing(view)
 }
 
 /**
@@ -595,9 +668,13 @@ private fun planTable(
     question is Question.ThePlan && view.phase == GamePhase.FINAL ->
         boardTable(view, plan, away, reveals, question)
 
-    question is Question.Planning && mayDeclare(view) -> planningTable(view, question, plan, away, reveals)
     question is Question.Doing && mayDeclare(view) -> doingTable(view, question, plan, away, reveals)
-    question is Question.Shedding && mayDeclare(view) -> sheddingTable(view, question, plan, away, reveals)
+    question is Question.PuttingDown && mayDeclare(view) ->
+        puttingDownTable(view, question, plan, away, reveals)
+    question is Question.Naming && mayDeclare(view) -> namingTable(view, question, plan, away, reveals)
+    question is Question.Aiming && mayDeclare(view) -> aimingTable(view, question, plan, away, reveals)
+    question is Question.Forcing && mayDeclare(view) -> forcingTable(view, question, plan, away, reveals)
+    question is Question.Throwing && mayDeclare(view) -> throwingTable(view, question, plan, away, reveals)
     else -> null
 }
 
@@ -662,9 +739,10 @@ private fun conferringTable(view: PlayerView): Table {
         // Where this hand stands, then the way out. The three come first because they are what
         // the window is *for*: the coalition is scored on its lowest hand, and until the table
         // knows whose that is, nothing else anybody says here can be acted on.
-        choices = TableTalk.Standing.Where.entries.map { where ->
-            Choice(Label.SayStanding(where), Move.Say(TableTalk.Standing(view.viewerId, where)))
-        } + Choice(Label.DoneTalking, Move.Done),
+        // Green, like every other move that gets on with the game: both controls in this window
+        // are ones a player presses to make something happen, and the tones are muscle memory
+        // (`Tone`). Slate said "decline", which is what neither of them is.
+        choices = listOf(Choice(Label.Ready, Move.Done, Tone.PLAY)),
         taps = claimable,
         waiting = false,
     )
@@ -673,48 +751,112 @@ private fun conferringTable(view: PlayerView): Table {
 /**
  * Saying what you believe, built by tapping rather than composed as a sentence.
  *
- * The flow is three steps and the third only exists when it has to:
+ * One table, two rails and one rule: **touch the cards you mean, then touch every rank they
+ * could be.** Nothing is sent until the player says it is finished, which is what lets one
+ * control carry the whole of what a person actually remembers:
  *
- *  1. **cards** — tapping a card adds it to the claim, tapping it again takes it out. At most
- *     [CLAIM_PAIR], because three cards is six orderings and nobody reads six;
- *  2. **ranks** — the same rail a King declares with. One card wants one rank and sends at
- *     once; two cards want two;
- *  3. **which way round** — offered only for two cards and two ranks, as three answers of
- *     equal standing: each pairing, and **not sure**.
+ *  - one card, one rank — "my third is a King", the claim that was already reachable;
+ *  - one card, several ranks — "it is a 7 or an 8", which is what memory usually holds ten
+ *    turns after setup and which the rail could not say at all, because it sent on the first
+ *    rank touched. `Claim` has carried it since the day it was written;
+ *  - two cards, two ranks — the pair, which leaves exactly one question, and the three answers
+ *    to it sit under the rail rather than on a screen of their own. The rail stays live beneath
+ *    them: the order is a *refinement* of the ranks named, so changing one must not mean
+ *    starting again;
+ *  - two cards, any other number of ranks — "those two are both low", "they are among these
+ *    three". No order to settle, so none is asked for.
  *
- * That third step is the reason the whole control exists. "These two are a King and an Ace and
- * I have lost which is which" is what a person actually holds ten turns after setup, and a
- * picker that could only say exact ranks would make them guess — after which the coalition
- * plans on a coin toss dressed up as a fact. So "not sure" is one tap, sits beside the two
- * orderings rather than under them, and is never a mode.
+ * At most [CLAIM_PAIR] cards, because three is six orderings and nobody reads six. Ranks have
+ * no such limit: naming all fourteen is [Claim.vacuous], which is the take-back.
  *
- * A speaker may also take back what they said: a standing claim of their own offers
- * [Label.Withdraw], which is information too — it tells teammates to stop planning on it.
+ * A speaker may also unsay what they said, and **only about the cards under their finger** —
+ * see [takingBack].
  */
 private fun claimingTable(view: PlayerView, question: Question.Claiming): Table {
     val seat = view.players.firstOrNull { it.id == question.about } ?: return Table(Ask.Watching)
-    val picked = question.positions
-
-    // Two cards and two ranks: the only thing left to say is the order, and one of the
-    // answers is that there isn't one. Sorted, so "first" on a button means the left-hand
+    val picked = question.positions.sorted()
+    val named = question.ranks
+    // Two cards and two ranks: the only thing left to say is the order, and one of the answers
+    // is that there isn't one. Positions sorted, so "first" on a button means the left-hand
     // card on the felt rather than whichever the player happened to tap first.
-    if (picked.size == CLAIM_PAIR && question.ranks.size == CLAIM_PAIR) {
-        return pairingTable(view, question, picked.sorted(), question.ranks)
-    }
+    val pair = picked.size == CLAIM_PAIR && named.size == CLAIM_PAIR
 
     return Table(
-        prompt = Ask.WhatDoYouSayThisCardIs,
-        detail = Detail.TableTalkIsTakenOnTrust,
+        prompt = when {
+            picked.isEmpty() -> Ask.SayWhatYouKnow
+            pair -> Ask.WhichWayRound
+            picked.size > 1 -> Ask.WhatDoYouSayTheseCardsAre
+            else -> Ask.WhatDoYouSayThisCardIs
+        },
+        // The rail's instruction while there is a rail; otherwise the felt's, because with the
+        // last card taken back out there is nothing to name ranks *for* and the next touch is
+        // on a card again.
+        detail = if (picked.isEmpty()) Detail.TapACardToSayWhatItIs else Detail.NameEveryRankItCouldBe,
         choices = buildList {
+            when {
+                pair -> addAll(orderings(view, question.about, picked, named))
+                picked.isNotEmpty() && named.isNotEmpty() -> add(
+                    Choice(
+                        label = Label.SayIt,
+                        tone = Tone.PLAY,
+                        move = Move.Send(
+                            saying(
+                                view.viewerId,
+                                seat.id,
+                                // Covering where the claim names as many ranks as cards: "this
+                                // one is a King". Fewer ranks than cards, or more, and each card
+                                // is merely *one of* them — which is a different sentence and the
+                                // one the wider claims are for.
+                                Claim(view.viewerId, picked, named, covering = named.size == picked.size),
+                            ),
+                        ),
+                    ),
+                )
+            }
             if (mineHere(view, seat, picked)) {
-                add(Choice(Label.Withdraw, Move.Send(withdrawal(view.viewerId, seat.id))))
+                add(Choice(Label.Withdraw, Move.Send(takingBack(view.viewerId, seat.id, picked))))
             }
             add(Choice(Label.Back, Move.Ask(Question.None)))
         },
-        taps = claimTaps(seat, question, picked),
-        ranks = claimRanks(view, seat, question, picked),
+        // Taking the last card back out returns the whole felt, not just this seat's row: the
+        // question is open again, and the prompt above says so. Reaching another hand used to
+        // mean finding "Back" first.
+        taps = if (picked.isEmpty()) declareTaps(view) else claimTaps(seat, question, question.positions),
+        ranks = claimRanks(question, picked),
     )
 }
+
+/**
+ * The claim being composed, drawn on the cards it is about before anybody else can see it.
+ *
+ * Applied **after** [showing], so it sits on top of whatever the table already believes: while
+ * a member is changing their mind about a card, what they are changing it *to* is the thing
+ * worth reading, and the old word is one tap away again if they go back.
+ *
+ * Carried as [Badge.draft] rather than as an ordinary badge because the difference is the whole
+ * point — a draft that looked like a claim would leave a member unable to tell what they have
+ * actually told the table.
+ */
+private fun Table.drafting(view: PlayerView, question: Question.Claiming): Table {
+    val positions = question.positions
+    if (positions.isEmpty()) return this
+
+    // No rank named yet is still worth drawing: it says *this* is the card the rail is about,
+    // which is otherwise only knowable by remembering which one was tapped.
+    val text = question.ranks.joinToString("/") { it.serialName }.ifEmpty { UNNAMED }
+    val draft = positions.associate { position ->
+        CardRef(question.about, position) to Badge(
+            text = text,
+            speakers = listOf(speakerFor(view, view.viewerId)),
+            paired = positions.size > 1,
+            draft = true,
+        )
+    }
+    return copy(badges = badges + draft)
+}
+
+/** A card the claim names before any rank does: the mark that says "this one". */
+private const val UNNAMED = "?"
 
 /** Tapping a card adds it to the claim; tapping it again takes it back out. */
 private fun claimTaps(
@@ -732,77 +874,69 @@ private fun claimTaps(
     .toMap()
 
 /**
- * The rank rail: one card wants one rank and sends at once, two want two and then ask which
- * way round.
+ * The rank rail: **the whole of it, every time, as toggles.**
+ *
+ * It used to send the moment a single card had a single rank, which made the rail a list of
+ * fourteen sentences rather than a way of building one — and made "a 7 or an 8" unsayable. A
+ * toggle costs the exact claim one extra touch and buys every partial one, which is the trade
+ * worth making: exact is what a player has about two cards, and partial is what they have
+ * about the rest.
  */
-private fun claimRanks(
-    view: PlayerView,
-    seat: PlayerSeatView,
-    question: Question.Claiming,
-    picked: List<Int>,
-): List<RankChoice> {
+private fun claimRanks(question: Question.Claiming, picked: List<Int>): List<RankChoice> {
     if (picked.isEmpty()) return emptyList()
-    val wanted = picked.size
-
     return ALL_RANKS.map { rank ->
-        val named = question.ranks + rank
+        val held = rank in question.ranks
         RankChoice(
-            rank,
-            if (named.size < wanted || wanted > 1) {
-                Move.Ask(question.copy(ranks = named))
-            } else {
-                Move.Send(saying(view.viewerId, seat.id, Claim(view.viewerId, picked, named)))
-            },
+            rank = rank,
+            move = Move.Ask(
+                question.copy(ranks = if (held) question.ranks - rank else question.ranks + rank),
+            ),
+            picked = held,
         )
     }
 }
 
 /** The one question a pair leaves: which way round — or neither, which is an answer. */
-private fun pairingTable(
+private fun orderings(
     view: PlayerView,
-    question: Question.Claiming,
+    about: String,
     positions: List<Int>,
     ranks: List<Rank>,
-): Table = Table(
-    prompt = Ask.WhichWayRound,
-    detail = Detail.TableTalkIsTakenOnTrust,
-    choices = listOf(
-        // An assigned pairing is simply two exact claims, and one action carries both — so
-        // "which way round" costs the same one tap that "not sure" does.
-        Choice(
-            Label.ThisWayRound(positions[0], ranks[0], positions[1], ranks[1]),
-            Move.Send(
-                saying(
-                    view.viewerId,
-                    question.about,
-                    exact(view.viewerId, positions[0], ranks[0]),
-                    exact(view.viewerId, positions[1], ranks[1]),
-                ),
+): List<Choice> = listOf(
+    // An assigned pairing is simply two exact claims, and one action carries both — so
+    // "which way round" costs the same one tap that "not sure" does.
+    Choice(
+        Label.ThisWayRound(positions[0], ranks[0], positions[1], ranks[1]),
+        Move.Send(
+            saying(
+                view.viewerId,
+                about,
+                exact(view.viewerId, positions[0], ranks[0]),
+                exact(view.viewerId, positions[1], ranks[1]),
             ),
         ),
-        Choice(
-            Label.ThisWayRound(positions[0], ranks[1], positions[1], ranks[0]),
-            Move.Send(
-                saying(
-                    view.viewerId,
-                    question.about,
-                    exact(view.viewerId, positions[0], ranks[1]),
-                    exact(view.viewerId, positions[1], ranks[0]),
-                ),
+    ),
+    Choice(
+        Label.ThisWayRound(positions[0], ranks[1], positions[1], ranks[0]),
+        Move.Send(
+            saying(
+                view.viewerId,
+                about,
+                exact(view.viewerId, positions[0], ranks[1]),
+                exact(view.viewerId, positions[1], ranks[0]),
             ),
         ),
-        // Third, and equal: the answer most people actually have.
-        Choice(
-            Label.NotSureWhichWayRound,
-            Move.Send(
-                saying(
-                    view.viewerId,
-                    question.about,
-                    Claim(view.viewerId, positions, ranks, covering = true),
-                ),
+    ),
+    // Third, and equal: the answer most people actually have.
+    Choice(
+        Label.NotSureWhichWayRound,
+        Move.Send(
+            saying(
+                view.viewerId,
+                about,
+                Claim(view.viewerId, positions, ranks, covering = true),
             ),
         ),
-        Choice(Label.Back, Move.Ask(Question.None)),
     ),
 )
 
@@ -812,9 +946,20 @@ internal fun saying(speaker: String, about: String, vararg claims: Claim) =
 private fun exact(speaker: String, position: Int, rank: Rank) =
     Claim(speaker, listOf(position), listOf(rank))
 
-/** An empty claim list is how a speaker takes back everything they said about a hand. */
-private fun withdrawal(speaker: String, about: String) =
-    GameAction.DeclareCards(DeclareCardsPayload(speaker, about, emptyList()))
+/**
+ * Unsaying what you said about **these** cards, and nothing else.
+ *
+ * A claim naming every rank narrows nothing, so belief reads straight past it
+ * ([Claim.vacuous]) and the speaker's earlier word on those positions is superseded — which is
+ * the model's own per-card take-back, and is what the bots have always used to answer a
+ * contradiction about one card.
+ *
+ * The button sent the *empty claim list* instead, which unsays everything about the whole
+ * hand. It sits in a picker scoped to one card, so correcting a single word silently cost a
+ * player every other thing they had told the coalition about that seat.
+ */
+private fun takingBack(speaker: String, about: String, positions: List<Int>) =
+    saying(speaker, about, Claim(speaker, positions, ALL_RANKS, covering = false))
 
 /** Whether the viewer has anything of their own standing on the cards they have picked. */
 private fun mineHere(view: PlayerView, seat: PlayerSeatView, positions: List<Int>): Boolean =

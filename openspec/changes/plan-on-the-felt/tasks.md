@@ -82,6 +82,21 @@ gestures a meaning there. Build the guard before building anything that relies o
       state finds neither the ring nor the sentence
 - [x] 5.3 Verify the claim produced by a felt tap is the same `GameAction` the rail's claim
       produced — a test comparing both paths
+- [x] 5.4 Make the rank rail a multiple choice: every rank a toggle, the claim sent by a confirm,
+      and one card able to carry several ranks — and verify one card plus two ranks records a
+      single non-covering claim, tapping a named rank takes it out, and nothing sends until a
+      rank is named
+- [x] 5.5 Ask the pair's "which way round" with the rail still live under it, so a member who
+      changes their mind about one of the two ranks does not start again — and verify the three
+      answers and the fourteen plaques are on the same table
+- [x] 5.6 Scope "take it back" to the cards under the finger, as the vacuous claim the model
+      already carries — and verify a correction to one card leaves the speaker's other claims
+      about that hand standing
+- [x] 5.7 Retire the three standing buttons from the confer window and rename its way out, and
+      verify the window's only choice is `Label.Ready` and no screen still draws "I am low"
+- [x] 5.8 Carry a toggle's state to a screen reader, distinguishing a rank that is off from a
+      rail whose ranks are not toggles — and verify the claim rail says which and the King's
+      rail says neither
 
 ## 6. The caller, and an emptied table
 
@@ -190,12 +205,64 @@ looking for things that were deliberately removed.
 
 ### The debug rig
 
+**Removed on 2026-09-14** at the product owner's request ("remove hardcoded vinto call from bot 3"):
+every debug build had the last bot call Vinto on its first turn, which was the rig doing exactly
+what it was for, and it had outlived the purpose — the final round is reached by playing now.
+What follows is the record of what it was.
+
 `androidApp/src/{debug,release}/…/DebugRig.kt` — the same variant gate `captureScene` uses. In a
 **local** game only, the last bot calls Vinto the moment its turn comes, whatever it holds, so
 the person is first in the coalition. Off by default and absent from the release binary.
 
 The app still starts cold on the home screen. An earlier attempt made the debug build *open* on a
 staged scene; that was not what was asked for and is reverted, along with the scene itself.
+
+### What the claim rail was, and why it changed
+
+Reported from a phone: the confer window "does not say what to do". Two findings behind it.
+
+**The rail sent on the first rank touched**, so one card could only ever carry one rank. `Claim`
+has carried partial knowledge since the day it was written — "it is a 7 or an 8" is one position,
+two ranks, not covering — and `believedAt` already *pools* partial claims, its own example being
+"it is an action card" ∩ "it is a King or a Queen" = {K, Q}. None of it was reachable. The rail is
+fourteen toggles and a confirm now; the exact claim costs one extra touch and every partial one
+becomes sayable.
+
+**Three of the window's four buttons had no consequence.** `TableTalk.Standing` — "I am low", "I
+am high", "Bin me" — is produced by `BotRunner`, rendered into the log by `Say.Standing`, and read
+by no planner, no bot decision and no view. So the coalition's own screen offered three sentences
+that changed nothing, while the claims the plan *does* read had no button at all and lived on the
+felt. The three are gone; the phrasebook value stays and the bots go on saying it, until something
+consumes one.
+
+Two smaller things fell out of reading that code. **"Take it back" wiped the whole hand** — it sat
+in a picker scoped to one card and sent the empty claim list, so correcting one word silently cost
+a player every other thing they had told the coalition about that seat. It is the per-card vacuous
+claim now, which is what the bots have always used. And **the felt's instruction said "one of your
+cards"** while `declareTaps` has always offered every seat's — a member who peeked the caller's
+third card was being told they could not say so.
+
+### Asks are not answered, and are not meant to be
+
+`TableTalk.GiveMe` — "Ember asks You for their card 1" — has no control anywhere that answers
+it, and **that is settled rather than missing.** Decided against building one, for three reasons
+read off the tree:
+
+- **Nothing consumes an ask.** `BotRunner.askForACard` produces it, `Say.GiveMe` renders it into
+  the log, and no planner, no bot decision and no view reads one. The same shape as the standings
+  this pass retired.
+- **The plan is the channel for it.** "Which cards should end up where" is a lane's swap step —
+  a thing a member can build, agree to and watch replayed — and an ask is a weaker duplicate of
+  it that carries no authority and leaves no trace.
+- **The information an ask would trade on is already shared.** Claims go round at the start of
+  the round and may be added at any time; the card in play is public by rule (`projectView`:
+  "a player draws the top card and *reveals it publicly*", and every other way a card becomes
+  pending is public too), and the discard is face up. What is private is what sits face down in
+  a hand, which is exactly what a claim is for.
+
+The sentence stays in the phrasebook and the bots go on saying it, because unlike a standing it
+is **playable by hand**: a member holding a Jack or a Queen can grant it on their own turn. It is
+a hint in the log, not a prompt the screen owes an answer to.
 
 ### Still open
 
@@ -206,3 +273,317 @@ staged scene; that was not what was asked for and is reverted, along with the sc
 - **The rigged seat calls instead of taking its turn**, rather than playing a card and then
   declaring. Not yet decided which is wanted.
 - 8.5 and 9.1 above: a human looking at the goldens, and the drag confirmed on real hardware.
+
+## 11. The turn builder, after the second report
+
+Reported from a phone, with the plan open: *"how should I create plan myself eg to show that I
+want to toss now, then swap with my jack and move some cards? And how to design moves for
+them?"* Two wants — **a turn as a sequence**, and **somebody else's turn** — and an ask for an
+"excellent ergonomic mobile-focused UI action builder". `TurnBuilderTest` is the model's half,
+`PlanBuilderTest` the screen's.
+
+### The shape chosen: a builder that walks the turn's own grammar
+
+A turn in this game has a fixed shape — take a card from one of two piles, do one of three
+things with it, and if that plays an action the action names something — and toss-ins hang off
+whatever lands. So the builder does not let a person assemble steps in any order; it **asks the
+next open part of the turn and offers the answers as buttons**, and the felt takes the answers
+that are cards:
+
+1. *Where does the card come from?* — only while the pile holds an unplayed action card;
+   with a plain card on it the deck is the only pile and nothing is asked.
+2. *What becomes of it?* — **Play it**, **Swap it in**, **Let it go**. Each is a whole plan.
+3. *Which card goes out?* — touched on the felt, or carried to the pile: the same edit.
+4. *Call it: Jack* — an **offer**, once the put-down reads whole, only for a card the table can
+   name and whose action a right call would play.
+5. *Which two cards does the Jack swap?* — touched on the felt, one then the other.
+6. *Throw in* — a rank off the rail, lit where the seat is known to hold it.
+
+The belt under the prompt draws the turn built so far as a row of parts in the order they
+happen, and touching a part reopens its own question. Every edit leaves the plan open at the
+turn it was made on. The reporter's example — *toss now, then swap with my jack and move some
+cards* — is a shed (**Throw in · 7**) plus one lane: **Draw · Swap it in · card 1 = J · call J ·
+Nina 1 ⇄ Don 1**, six taps, and the film plays it back.
+
+**Somebody else's turn** is reached from the person it belongs to: every coalition plate is a
+control while the plan is open ("Plan Tide's turn"), and each stop on the band wears the seat's
+face. The same builder, the same door.
+
+### What was rejected, and why
+
+- **A free-form step list** ("+ add step" → toss / draw / take / swap in / call / swap two /
+  declare / discard), which is the literal shape of the sentence reported. It would let a plan
+  say things the rules forbid (toss, then draw, then toss again on nothing), so the client would
+  need a second copy of the turn's grammar to validate it; it would widen `Lane` to a list of
+  steps, which is a wire change every room and every client has to agree on at once; and a
+  vertical list scrolls, which is the one thing a phone's plan must not do (§4.3). Most of the
+  freedom it offers is illegal freedom.
+- **A palette of whole plays** — one-tap recipes such as "put the Jack down, call it, trade X
+  for Y". Fast for the common case and the closest thing to the reporter's sentence, but the
+  targets vary per table, so the palette is either a scrolling menu or a menu that still has to
+  ask for the cards — at which point it is this builder with a longer first step.
+- **A form with every slot open at once** (from / do / name / then / throw-in, all editable
+  from the start). A row of five empty boxes reads as paperwork, and four of the five have no
+  legal answer until the one before them is chosen. The belt keeps the *shape* visible — the
+  parts appear in order as they get content — without asking for them out of order.
+
+### The model was widened once, and the cost is on the record
+
+`Step.PutDown` gained `then: Step?` — what the called card's action does: a `Swap` for a Jack or
+a Queen, a `Declare` for a King. On the put-down rather than beside it because it is one turn
+and the trade is what the call is *for*; a lane holding two steps would let a plan say the trade
+without the call that makes it possible. **Additive on the wire**, exactly as `guess` was: an
+older build reads the put-down and the call and loses the trade, which is a plan that says less
+rather than one it cannot read. `WireFreezeTest` is untouched. The door (`edited`) holds what a
+call may go on to do: only a Jack or a Queen swaps, only a King declares, and the card put down
+is on the pile by then and cannot be traded. The bots price it (`answerForLane`), the film plays
+it, `PlanHealth` follows it and breaks with it, and the live rail pre-arms it.
+
+`Opening`, `Step.Bin`, `Step.UseIt` and `PutDown.guess` had already been added by §10 on the
+same additive terms. Nothing else on the wire changed.
+
+### What this pass added on top
+
+- **The plan opens on your own turn** (`openingStop`), not on the first turn of the round —
+  which online is somebody else's two times out of three. Your own question on the rail, your
+  own plate lit; the stops and the plates are the way to the others. With nothing of yours left
+  to build it opens on the first turn that can be, then on where the plan lands; the caller,
+  who came to watch, lands on the table now, where Play starts from. `Move.Done` lands in the
+  same place, so "I'm ready" puts a member straight on their own turn.
+- **The throw-in rail lights the ranks the seat is known to hold** — said to the table, or read
+  in the viewer's own hand — and mutes the rest, as the King's rail does. A wrong throw in the
+  final round costs a card and bars the seat, and the rail now says which throws are guesses
+  before one is made.
+- **A promise is read where it pays off.** Nina's turn puts her five down and you have said you
+  will throw a five in: the chip is on *her* row, wearing your face — the same face her stop
+  wears — beside her own promises. A King's declare and a played pile card land a rank the same
+  way. It was only ever on the row of the seat that made the promise, where it said nothing
+  about whose card it was waiting for.
+- **"Keep it" is "Swap it in".** The live turn's rail says "Swap Cards" for the same move and the
+  reporter's word was *swap*; the question that follows asks which card goes out to make room,
+  rather than presuming the toss-in was the reason.
+- `Said.kt` was using nine `Res.string` accessors it never imported — the previous pass died
+  before `composeApp` compiled — and four functions had grown past detekt's complexity bar.
+  Both fixed; the complexity by extraction, not by baseline.
+
+### Still open, from this pass
+
+- The caller's plan lands on "Now" so that Play is one press away; a member with nothing left
+  to build lands on the arrival, where there is no Play — the transport only runs *forward*
+  from a stop before the end. Whether the arrival should also carry "watch it again" is a
+  question for the next report.
+- A live toss-in window that opens while the plan is open is hidden by design D9, and nothing
+  on the plan says "close the plan to throw in". Reading *toss now* literally, that is the one
+  way the sentence could still fail.
+
+## 12. The whole of the rules, as a sentence — after the third report
+
+Reported with two screenshots, of the belt: *"not satisfied about current state … we must support
+rich clever UI for creating turn actions, visible and available for edit by coalition … plan each
+turn in the bottom and be able to replay it and whole round by button in top … think about it as a
+way of transforming offline talk into visible UI where everyone can tell verbally like — I want
+you to play this Q card, then I will toss in mine Q and play mine."* Options were put with their
+costs and three decisions came back, each of which reshaped a layer.
+
+### The decisions
+
+- **A throw-in is part of the turn it lands on, in the order people throw, with what its card
+  does** — and the plan must be able to say *any* coalition action the rules allow, order of
+  players included. Not a standing promise beside the plan (the shed), which could say neither
+  "then" nor "and play mine".
+- **The turn is a sentence of tappable words**, not a row of six marks. Two people had looked at
+  the marks and could not say what any of them meant.
+- **The plan is information only.** No "Do as planned", no "Keep it instead": the live rail is
+  the ordinary turn's, and one line under the prompt says what the coalition agreed. The plan
+  stands in for the talk at a physical table; the person on play picks up the cards themselves.
+  Plan mode and the round's controls are never on screen together, and a table that never opens
+  the plan is using the app as intended.
+
+### The model (`shared/shapes`) — additive, and a floor
+
+- [x] 12.1 `Lane.tossIns: List<TossIn>` — who throws, what rank, what the thrown card then does,
+      in the order they throw. `PlanEdit.SetTossIns` sets the whole ordered list, so adding,
+      removing and reordering are one edit and two members naming the order cannot cross.
+      `PlanEditTest.aTurnCarriesItsThrowInsInTheOrderTheyAreThrown`
+- [x] 12.2 `Step.Peek(card, also)` for a 7 to 10 and a Queen's look; `Step.ForceDraw(seat)` for
+      an Ace; `Step.Declare` gains the card the King points at and what that card does. The door
+      holds every action to the rank that plays it — a 7 looks at one of your own, a 9 at
+      somebody else's, a Queen at two hands, only a King declares, only an Ace makes somebody
+      draw, a five has no action to plan — and nothing in a plan touches the caller: not a look,
+      not a pointed card, not a forced draw, and the caller throws nothing in.
+      `aThrowInSaysWhatItsCardDoesAndOnlyWhatItCan`, `nothingInAPlanTouchesTheCaller…`,
+      `aKingPointsAtACardAndSaysWhatThatCardDoes`
+- [x] 12.3 **Protocol 4, floor 4.** A step is a polymorphic tag inside `edit-plan`, `joined`,
+      `events` and `sync`; a build that does not know `peek` drops the whole message, mid-game.
+      So the plan's vocabulary is frozen per version beside the messages' (`WireFreezeTest.
+      planShapes`, with a test that a version growing it raises the floor), and `fixtures/protocol/
+      v4/` holds every shape. The `bin`, `use-it`, `open-lane` and `then` that §10–§11 had called
+      additive were the same kind of break and go out under 4 with the rest. The room deploys
+      before the clients.
+
+### The film, the numbers, the health, the bots (`shared/client`, `shared/bot`)
+
+- [x] 12.4 The rehearsal plays a turn as the seat's step **and** its throw-ins in order, each from
+      the table the one before leaves; a look is drawn at its cards; a forced draw lengthens a hand
+      with an unseen card; a pointed King takes one card out and plays its action. **What was said
+      follows the card**: a trade moves the claims, a card leaving takes its claim and slides the
+      rest down, a dealt card arrives unspoken — and a later turn names a card by its claim and is
+      drawn from wherever the film has put it. `WholeRulesFilmTest`
+- [x] 12.5 The readout is priced **off the table the plan arrives at**, the same picture as the
+      film and the felt, so the three cannot disagree. A put-down alone sweeps nothing now: what
+      leaves a teammate's hand is what a throw-in says leaves it. `PlanOutcomeTest`
+- [x] 12.6 A turn is as well as the worst thing in it: a throw by a seat no longer known to hold
+      the rank is broken, a thrown card's trade follows its cards and breaks with them, a look at
+      a disproved card is broken, a forced draw names a seat and cannot break. `PlanHealth`
+- [x] 12.7 The bots price the whole turn — `answerForTurn` — a throw the table has no grounds for
+      is a no, a look is a yes, an Ace on the lowest hand leaves us worse. `LaneAnswerTest`
+
+### The sentence (`PlanBoard`, `PlanFelt`)
+
+- [x] 12.8 `TurnSentence`: one clause for the turn's own move, one per throw-in, one of offers;
+      every word a `Slot` with what touching it opens; the open questions of a turn — which pile,
+      and then, which card, which two, which rank, who draws — are words too, drawn where the
+      answer will go and lit while the rail asks for them. `Part` names where in a turn a question
+      is about — the step, a called card, a thrown card, a pointed-at card, at any depth — so one
+      composer writes every answer into the right place. `TurnBuilderTest`
+- [x] 12.9 The questions: `Doing`, `PuttingDown`, `Naming(part)`, `Aiming(part)`, `Forcing(part)`,
+      `Throwing(index, thrower)`. The thrower defaults to the viewer and the plates say who else;
+      the rank rail lights what the thrower is known to hold. `PlanModeTest` walks every one of
+      them and finds nothing loud.
+- [x] 12.10 The rail is three zones and no scroll: the heading; the sentence, which gives way
+      first — collapsing to the clause being asked about while a rank rail or a row of seats
+      needs the room, hidden while both do; and the foot, which is the answers while a question
+      is open and Clear / Agree otherwise. A tappable word is a control's size; a read word is a
+      word. `PlanBuilderTest`, `RailFitsTest`, `TouchTargetTest`
+- [x] 12.11 **Replay.** Each turn carries its own — back to the table it starts on and run to its
+      end — at the head of its sentence; the band's Play runs the whole plan from wherever the
+      head is parked, the arrival included. `eachTurnCanBeWatchedAgainAndTheWholePlanFromAnywhere`
+- [x] 12.12 The live rail: `Table.planned` sets one `Detail.ThePlanAsksYouTo` line from the
+      sentence's said words and arms nothing; `KeepItInstead`, `DoAsPlanned`,
+      `YourDrawBeatsThePlan` and `keepingBeatsThePlan` are gone. "I'm ready" lands on the live
+      table, not in the plan. The plan steps aside — closes, parked where it was — when a toss-in
+      window opens that this seat may throw in on, or when the turn comes round to this seat
+      (`GameHolder.noticed`): the two moments the round needs the buttons the plan hides.
+- [x] 12.13 The shed rail, the six marks and their words are gone; `TurnMarks` keeps the trade's
+      arrow. Seventeen strings retired from every locale, thirty-nine added to English.
+
+### Still open, from this pass
+
+- The builder does not yet offer a Queen's look-only (`Peek` of two cards with no trade): two
+  touches on a Queen make a trade. The wire and the film say it; the sentence only reads it.
+- The `?` sheet says nothing about the plan's rail. With the words in the sentence there is no
+  legend to give, but "a plan is talk, not a move" is worth a line there.
+- 9.1 stands: the sentence, the throw-in clause and the plan stepping aside for a live window are
+  held by tests and have not been touched on a phone.
+
+## 13. The plan as table talk, on five rows — after the fourth report
+
+Reported with five numbered corrections across a design page of mockups ("Plan as Table Talk",
+five revisions, approved with *"implement and remember to use colors/sizes acceptable from wcag
+for both light and dark themes"*): no band above the felt in plan mode; one turn at a time in a
+swiper; the header's switch says the plan was edited while playing; a Queen's look-and-swap on
+one line, reusing the card images; fixed rows so nothing jumps, one height, vertically aligned;
+never offer taking the pile when the rules do not allow it; a card drawn during the plan
+visualised wherever it goes, in a WCAG-acceptable rose; turn transitions as an overlay with
+arrows, slower; the final state after all three turns; "draws" and "and we'll see" visibly
+untouchable; turn order as on the board; ▶ and ▶▶ icons; the rare blind throw of an unknown card;
+a rank picker that fits.
+
+### The model (`shared/shapes`, `shared/client`, `shared/bot`)
+
+- [x] 13.1 `TossIn.card` and `TossIn.blind` — a throw names a card, and one nobody has named
+      is blind; `Step.Declare.rank` is nullable so a King points first and names second; a
+      played turn locks and the turn on play stays open (`lockingLaneOf`). Protocol 4 is
+      unreleased on this branch, so its shapes grew in place and `fixtures/protocol/v4/` was
+      regenerated. `PlanEditTest`, `WireSamplesTest`
+- [x] 13.2 A plan speaks only of cards the table can see or has been told about: no action on a
+      blind draw — the film refuses it and the sentence reads plain; a question with one answer
+      is not asked; the pile's unknown card can never be taken. `PlanAsTalkTest`,
+      `WholeRulesFilmTest`
+- [x] 13.3 `Rehearsal.fresh` and `pileUnknown` tag every card the plan draws or deals with
+      the turn it arrives on; a blind throw rehearses as the card coming back with a penalty
+      card; a ghost `Frame` carries its own `fresh`/`pileUnknown` and its `turn`, and merged
+      throws keep them (`tossedTogether`). `TossedTogetherTest`
+- [x] 13.4 `Board` is a pager: `pages` (a sentence per turn), `transport` with a stop per
+      turn and "lands", stops that jump and two films (replay, play-all), `watchable` for the
+      runner, `answers` for the row under the sentence, `fresh`/`pileUnknown` for the felt.
+      `Slot` says whether a word is open, asked or on offer; plain is none of them.
+      `TransportTest`, `TurnBuilderTest`, `PlanBoardTest`
+- [x] 13.5 The bots propose only rules-true steps and never a blind throw. `BoardProposalsTest`,
+      `LaneAnswerTest`
+
+### The screen (`composeApp`)
+
+- [x] 13.6 `PlanFelt`: five fixed rows — a `HorizontalPager` of turns and the lands page, the
+      answers row (answers, seats, the turn's news, or the hint), the stops with ▶ ▶▶ ■, Agree —
+      at one height; boxed words on `Rail.chip` with a 3:1 outline, the asked word on
+      `Rail.asked`, offers dashed, facts plain and untouchable; mini cards drawn as the felt
+      draws them; the rank grid inside the page while a rank is asked. `PlanAsTalkScreenTest`,
+      `PlanBuilderTest`, `PlanOnTheFeltTest`, `TouchTargetTest`, `RailFitsTest`
+- [x] 13.7 The felt: no band above it while the plan is open; a card the plan has not dealt yet
+      is rose (`CardState.arrived`) with the turn in its corner and a question mark on its
+      face, on the felt and on the pile; the switch wears whoever changed your turn while the
+      plan was closed (`PlanSummary.changedBy`, held by the holder's `seen` lane).
+      `CoalitionLineTest`, `PlanAsTalkScreenTest`, `ContrastTest`, `ScreenContrastTest`
+- [x] 13.8 The film: a banner between turns naming the seat the turn passes to, held for
+      `BANNER_MS`; ghosts at `GHOST_SLOW`; the felt follows the frames while the film plays and
+      the rail keeps reading the live table (`tableAsShown(rehearsing)`); the runner parks the
+      head as the last turn's cards land (`ghostPlayed`) so the end of a film never blinks back
+      to the start table.
+- [x] 13.9 `GameHolder`: "I'm ready" opens the plan on the member's own turn; the turn coming
+      round no longer closes it; the film is asked for in pages. `PlanBuilderTest`
+- [x] 13.10 Words: `saysWords`/`chipWords` for the new sentence, thirty strings retired from
+      every locale and forty-four added and translated into nineteen. The live rail's plan row
+      is one line of the plan's own words rather than a row of chips, so the log keeps its last
+      line on a phone (`everySentenceTheCoalitionCanSpeakIsDrawnInTheLog`).
+
+### Still open, from this pass
+
+- ~~9.1 stands: everything above is held by tests and the goldens, and has not been touched on a
+  phone.~~ It has now — §14 is what the phone said.
+- The bots do not yet plan a King's point-then-name or an Ace's victim; they propose put-downs,
+  calls, trades and vouched throws.
+- The design page's legend still names the rose edge as `#B8607F`; it shipped as `#A04C6A` to
+  clear 3:1 on the card.
+
+## 14. Five reports from the phone
+
+The build above went onto a phone and came back with five numbered reports and two screenshots:
+*"1) during vinto round when I said I'm ready we must switch to plan mode 2) remove hardcoded
+vinto call from bot 3 3) I cannot switch to turn 2 in plan mode 4) bot tide name jumped when
+their cards became for some reason two rows - it should stay aligned to edge plus we should not
+have jump at all as 5 cards must be displayed one row 5) a claim under this turn error displayed
+in plan mode, why do we have some errors there"*. Each was reproduced by a test first, watched
+go red on the code as it stood, and only then fixed.
+
+- [x] 14.1 **Ready opens the plan, even over an open window.** The call's own card opens a
+      toss-in window, and `noticed()` closed the plan for every open window in which the member
+      could throw — including the one already open when they pressed Ready, so the plan shut
+      the moment it opened. The holder now remembers which card was on the pile when the plan
+      opened (`openedOn`) and steps aside only for a card that lands *after* that.
+      `PlanBuilderTest.aWindowAlreadyOpenWhenThePlanOpensLeavesItOpen`
+- [x] 14.2 **The rig is gone.** A debug-build rig made the last bot call Vinto on its first turn
+      so the plan could be reached quickly; it shipped in the APK the phone had. Removed from
+      `LocalGameSession`, `LocalGame`, `App` and `MainActivity`, with its two `DebugRig`
+      twins and its test. The bots call Vinto when the search says so, and nothing else.
+- [x] 14.3 **A stop turns the page and nothing turns it back.** The pager's collector was keyed
+      on the board, so every new board restarted it; the restart read the page still on screen
+      against the page the board had just moved to, and sent the head straight back. It is keyed
+      on the pager alone now and reads the latest transport through `rememberUpdatedState`.
+      `PlanAsTalkScreenTest.touchingAStopTurnsThePageAndNothingTurnsItBack`
+- [x] 14.4 **A badge is worn, not laid out.** Two faces and "Joker" on one card are wider than
+      the card, and a badge laid out inside the card's box widened the box until five cards no
+      longer fitted the row — the hand wrapped and the whole seat re-pitched, plate and all. The
+      badge sits in a `matchParentSize` layer and overflows to the trailing edge unbounded, so
+      the card's own width is what the row measures.
+      `ClaimsOnTheFeltTest.aWideClaimDoesNotWrapAHandOntoASecondRow`
+- [x] 14.5 **A reveal follows its card.** A card turned face up for the table — a throw that
+      missed, the card a King pointed at — is a `PublicReveal` at a *position*, and both
+      sessions kept it there after the card had gone. A claim about whatever card slid into the
+      place next then read as contradicted by a card no longer there, and the turn naming it
+      wore "a claim under this turn has been proved wrong" for no reason anyone could see.
+      `Reveals.following()` moves a reveal with the flights the move drew — to the seat a trade
+      lands it in, away for a throw or a swap-out, and one place down for every card thrown from
+      below it in a hand that closed up. `RevealsFollowTheCardTest` holds the local session
+      against the engine's own answer, by card identity, over whole games; the line itself is
+      by design (D13) and now appears only while the shown card still lies where it was shown.

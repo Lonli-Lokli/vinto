@@ -91,7 +91,8 @@ class TheCallerReadsThePlanTest {
         finalTurnTriggered = false,
         players = listOf(
             seat(me, listOf(Rank.NINE), human = true),
-            seat(ann, listOf(Rank.TWO, Rank.TEN)),
+            // A Jack, so there is a trade the rules let a bot propose: put down, called, and made.
+            seat(ann, listOf(Rank.TWO, Rank.JACK)),
             seat(bob, listOf(Rank.KING, Rank.SEVEN)),
             seat(cid, listOf(Rank.THREE)),
         ),

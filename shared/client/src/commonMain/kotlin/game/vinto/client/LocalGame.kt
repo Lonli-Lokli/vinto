@@ -27,13 +27,6 @@ class LocalGame private constructor(
     standings: Map<String, Int>,
     private val botDispatcher: CoroutineDispatcher?,
     resuming: game.vinto.shapes.GameState?,
-    /**
-     * A debug rig carried across rounds, so the next deal is rigged like the last.
-     *
-     * See `LocalGameSession.theLastBotCallsVinto`. False in every real launch; the release binary
-     * has no way to pass anything else.
-     */
-    private val lastBotCallsVinto: Boolean = false,
 ) {
     /** Which round is being played, counting from one. */
     var round: Int = round
@@ -129,7 +122,6 @@ class LocalGame private constructor(
         botDispatcher = botDispatcher,
         random = Random(seedForRound(seed, round)),
         resuming = resuming,
-        theLastBotCallsVinto = lastBotCallsVinto,
     )
 
     companion object {
@@ -144,8 +136,6 @@ class LocalGame private constructor(
             seed: Long,
             difficulty: Difficulty,
             botDispatcher: CoroutineDispatcher? = null,
-            /** A debug rig; see `LocalGameSession.theLastBotCallsVinto`. False everywhere else. */
-            lastBotCallsVinto: Boolean = false,
         ): LocalGame = LocalGame(
             vault = vault,
             difficulty = difficulty,
@@ -154,15 +144,12 @@ class LocalGame private constructor(
             standings = emptyMap(),
             botDispatcher = botDispatcher,
             resuming = null,
-            lastBotCallsVinto = lastBotCallsVinto,
         ).also { it.save() }
 
         /** Picks up the saved game, or null if there is not one to pick up. */
         fun resume(
             vault: Vault,
             botDispatcher: CoroutineDispatcher? = null,
-            /** A debug rig; see `LocalGameSession.theLastBotCallsVinto`. False everywhere else. */
-            lastBotCallsVinto: Boolean = false,
         ): LocalGame? {
             val saved = vault.loadGame() ?: return null
 
@@ -174,7 +161,6 @@ class LocalGame private constructor(
                 standings = saved.standings,
                 botDispatcher = botDispatcher,
                 resuming = saved.state,
-                lastBotCallsVinto = lastBotCallsVinto,
             )
         }
     }

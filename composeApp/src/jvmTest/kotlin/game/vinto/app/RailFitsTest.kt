@@ -34,8 +34,8 @@ import game.vinto.shapes.Lane
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import game.vinto.shapes.Rank
-import game.vinto.shapes.Shed
 import game.vinto.shapes.Step
+import game.vinto.shapes.TossIn
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -153,35 +153,33 @@ class RailFitsTest {
     }
 
     /**
-     * The confer window's four, whole, at the doubled system font.
+     * The confer window's way out, whole, at the doubled system font.
      *
-     * Four is one more than the rail has ever had to fit — three assessments and the way out —
-     * and the two of them that grow are the ones a player most needs: a button that says where
-     * your hand stands is no use half under the edge of the screen. This is the same measurement
-     * the two-button turn gets, on the row that is one button wider.
+     * The one control the window has, and the one a player must be able to reach: talking is
+     * free and costs no turn, so the only thing that *has* to work here is leaving.
      */
     @Test
-    fun theConferWindowsFourChoicesAreWhollyOnScreenAtADoubledFont() {
+    fun theConferWindowsWayOutIsWhollyOnScreenAtADoubledFont() {
         val view = conferring()
         eachChoiceWhole(view, emptyList(), CONFER_CHOICES, PHONE_W, PHONE_H, fontScale = 2f)
     }
 
     @Test
-    fun theConferWindowsFourChoicesAreWhollyOnATallPhone() {
+    fun theConferWindowsWayOutIsWhollyOnATallPhone() {
         val view = conferring()
         eachChoiceWhole(view, emptyList(), CONFER_CHOICES, PHONE_W, TALL_H, fontScale = 1f)
     }
 
     @Test
-    fun theFourChoicesStayWholeWithABoardStandingAboveThem() {
-        // The board joins the foot: three lanes, the nods and "Agree". The buttons under it
-        // are still the way out of the window and must not be pushed under the screen's edge.
+    fun theWayOutStaysWholeWithABoardStandingAboveIt() {
+        // The board joins the foot: three lanes, the nods and "Agree". The button under it
+        // is still the way out of the window and must not be pushed under the screen's edge.
         val view = conferring()
         eachChoiceWhole(view, emptyList(), CONFER_CHOICES, PHONE_W, PHONE_H, fontScale = 1f, plan = standingPlan(view))
     }
 
     @Test
-    fun theFourChoicesStayWholeWithABoardAtADoubledFont() {
+    fun theWayOutStaysWholeWithABoardAtADoubledFont() {
         val view = conferring()
         eachChoiceWhole(view, emptyList(), CONFER_CHOICES, PHONE_W, PHONE_H, fontScale = 2f, plan = standingPlan(view))
     }
@@ -208,8 +206,13 @@ class RailFitsTest {
     private fun standingPlan(view: PlayerView): CoalitionPlan {
         val coalition = view.players.filter { it.id != view.vintoCallerId }.map { it.id }
         return CoalitionPlan(
-            lanes = coalition.map { Lane(it, Step.Declare(Rank.KING)) },
-            sheds = listOf(Shed(coalition.first(), Rank.SEVEN)),
+            lanes = coalition.mapIndexed { index, seat ->
+                Lane(
+                    seat,
+                    Step.Declare(Rank.KING),
+                    tossIns = if (index == 0) listOf(TossIn(coalition.last(), Rank.SEVEN)) else emptyList(),
+                )
+            },
             agreed = coalition.drop(1),
             editedBy = coalition.first(),
         )
@@ -301,8 +304,15 @@ class RailFitsTest {
     private companion object {
         val CHOICES = setOf("Swap Cards", "Discard")
 
-        /** The three assessments and the way out. */
-        val CONFER_CHOICES = setOf("I am low", "I am high", "Bin me", "Done talking")
+        /**
+         * The way out, and now the whole of the window's row.
+         *
+         * It was four — three assessments and the exit — and the three went because nothing
+         * read them: `TableTalk.Standing` reaches the log and no planner, no bot decision and
+         * no view. The measurement is worth more on one button than it was on four, because a
+         * window whose only button is under the edge of the screen is a window nobody can leave.
+         */
+        val CONFER_CHOICES = setOf("I’m ready")
         val PHONE_W = 411.dp
         val PHONE_H = 740.dp
 
