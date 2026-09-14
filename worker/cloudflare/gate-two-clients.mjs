@@ -1,10 +1,16 @@
 // Platform gate 2a.3 — two WebSocket clients through one Durable Object.
 //
-// Run against a local `wrangler dev` (see docs/kotlin/PLATFORM-GATE.md):
-//   npx wrangler dev --port 8787 --local --var ROOM_OPEN:true   # in worker/cloudflare
+// Run against a local `wrangler dev` (see docs/kotlin/PLATFORM-GATE.md), with all three vars —
+// this is the line `kmp.yml` uses, and the reason it is copied here rather than summarised is
+// that a short version of it cost somebody an afternoon:
+//   npx wrangler dev --port 8787 \
+//     --var ROOM_OPEN:true --var ROOM_DEBUG_KEY:local-harness --var RECORDINGS_KEY:local-harness
 //   node gate-two-clients.mjs
 //
-// ROOM_OPEN must be set: the room refuses every request while it is shut.
+// ROOM_OPEN must be set: the room refuses every request while it is shut. ROOM_DEBUG_KEY opens
+// the plain-GET state door this gate reads to prove durability — without it the last three checks
+// get a 404 whose body is the text `not found`, and the gate dies parsing that as JSON, which
+// looks like a broken room rather than a missing flag.
 //
 // What this gate is for is the *platform*: two sockets on one Durable Object, hibernation,
 // reconnect to the same seat, resync from a cursor, and state that survives the object being
@@ -15,12 +21,16 @@
 // string, and the events a client receives are the actions the room accepted — its own and
 // the bots' that followed.
 
+import { PROTOCOL_VERSION as PROTOCOL } from './protocol-version.mjs';
+
 const BASE = process.env.GATE_URL ?? 'http://localhost:8787';
 
-// The wire's number, as a real client sends it (`PROTOCOL_VERSION` in shared/protocol). A join
-// without one is a build from before the number existed, and the room refuses it at the door —
-// which is what this gate would be testing by accident if it forgot to say which wire it speaks.
-const PROTOCOL = 2;
+// The wire's number, as a real client sends it — READ from `Protocol.kt` rather than typed here,
+// because it was typed here and went stale. A join below `MIN_PROTOCOL` is refused at the door
+// with `update-needed`, and the socket then sits waiting for a message that is never coming, which
+// from the outside is indistinguishable from a hung Durable Object. That is precisely what this
+// gate would be testing by accident if it forgot to say which wire it speaks — and for five days
+// it was, because the floor rose to 4 while this file still said 2.
 
 // `--verify <room>` re-checks an existing room without touching it. Used to prove the room
 // is rebuilt from storage after the object is gone: run the gate, restart `wrangler dev`

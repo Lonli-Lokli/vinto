@@ -16,9 +16,13 @@
  * game rather than scripting it: what a seat does next is decided from the view the room just
  * sent, which is what makes it survive a change to the deal.
  */
+import { PROTOCOL_VERSION as PROTOCOL } from './protocol-version.mjs';
+
 const BASE = process.env.GATE_URL ?? 'http://localhost:8787';
 const KEY = process.env.RECORDINGS_KEY ?? 'local-harness';
-const PROTOCOL = 5;
+// Read, not typed. This said 5 while the wire was at 4 — harmless only because the room enforces a
+// floor and not a ceiling, so a number from the future is seated. The copy in `gate-two-clients`
+// was below the floor instead, and that one cost five days of red CI.
 
 let failures = 0;
 const check = (name, ok, detail = '') => {
