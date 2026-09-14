@@ -267,7 +267,6 @@
 
     <string name="deck_title">关于牌堆</string>
     <string name="deck_body">还有 %1$d 张牌可以摸。\n\n牌堆摸完后，弃牌堆会重新洗回牌堆，之前所有人从弃牌堆看到的信息都将失效——包括你知道的那些。牌堆快摸完时，正是喊 Vinto 的好时机。</string>
-    <string name="deck_dismiss">知道了</string>
 
     <string name="card_described">%1$s，点数 %2$d</string>
     <string name="card_face_down">一张扣着的牌</string>

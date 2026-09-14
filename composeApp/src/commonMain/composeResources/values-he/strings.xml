@@ -267,7 +267,6 @@
 
     <string name="deck_title">החפיסה</string>
     <string name="deck_body">%1$d קלפים נותרו למשיכה.\n\nכשהיא נגמרת, ערמת ההשלכה מעורבבת בחזרה לתוכה, וכל מה שמישהו למד מצפייה בערמה הזו מפסיק להיות שווה כלום — כולל מה שאתם למדתם. סיבוב שהחפיסה שלו כמעט אוזלת הוא סיבוב לקרוא בו Vinto.</string>
-    <string name="deck_dismiss">הבנתי</string>
 
     <string name="card_described">%1$s, שווה %2$d</string>
     <string name="card_face_down">קלף הפוך</string>

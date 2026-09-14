@@ -283,7 +283,6 @@
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">山札</string>
     <string name="deck_body">引ける残り%1$dです。\n\nなくなると捨て札の山がシャッフルされて山札に戻り、その山を見て学んだことはすべて — あなたが学んだことも含めて — 意味を失います。山札が残り少ないラウンドはVintoを宣言するタイミングです。</string>
-    <string name="deck_dismiss">わかりました</string>
 
     <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
     <string name="card_described">%1$s、%2$d点</string>

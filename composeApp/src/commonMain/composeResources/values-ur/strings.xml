@@ -278,7 +278,6 @@
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">ڈیک</string>
     <string name="deck_body">نکالنے کے لیے %1$d پتے باقی ہیں۔\n\nجب یہ ختم ہو جائے گا تو ڈسکارڈ پائل واپس اس میں ملا دی جائے گی اور اس پائل کو دیکھ کر جو کچھ کسی نے سیکھا تھا وہ بیکار ہو جائے گا — بشمول جو آپ نے سیکھا۔ ایسا دور جس کا ڈیک تقریباً ختم ہو، Vinto کہنے کا موقع ہے۔</string>
-    <string name="deck_dismiss">سمجھ گئے</string>
 
     <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
     <string name="card_described">%1$s، قیمت %2$d</string>

@@ -267,7 +267,6 @@
 
     <string name="deck_title">ডেক</string>
     <string name="deck_body">ড্র করার জন্য %1$d তাস বাকি।\n\nএটি ফুরিয়ে গেলে, বাতিল স্তূপটি আবার এলোমেলো করে তাতে মিশিয়ে দেওয়া হয়, আর ওই স্তূপ দেখে কেউ যা শিখেছিলেন তার মূল্য শেষ হয়ে যায় — আপনি যা শিখেছেন তা-সহ। ডেক প্রায় শেষ হয়ে আসা একটি রাউন্ড হলো Vinto ডাকার উপযুক্ত সময়।</string>
-    <string name="deck_dismiss">বুঝেছি</string>
 
     <string name="card_described">%1$s, মূল্য %2$d</string>
     <string name="card_face_down">একটি উপুড় করা তাস</string>

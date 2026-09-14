@@ -281,7 +281,6 @@
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">डेक</string>
     <string name="deck_body">उठाने के लिए %1$d पत्ते बचे हैं।\n\nजब यह खत्म हो जाता है, तो छोड़े गए पत्तों का ढेर वापस इसमें फेंटा जाता है और उस ढेर को देखकर किसी ने भी जो सीखा था वह बेकार हो जाता है — जिसमें आपने जो सीखा वह भी शामिल है। जब डेक लगभग खत्म हो, तो वह Vinto बोलने का सही समय है।</string>
-    <string name="deck_dismiss">समझ गया</string>
 
     <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
     <string name="card_described">%1$s, कीमत %2$d</string>

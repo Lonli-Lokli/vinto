@@ -281,7 +281,6 @@
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">Deste</string>
     <string name="deck_body">Çekilecek %1$d kart kaldı.\n\nBittiğinde, atım destesi tekrar karılır ve o desteyi izleyerek öğrenilen her şey — senin öğrendiğin dahil — değerini kaybeder. Destesi neredeyse tükenen bir tur, Vinto demek için bir turdur.</string>
-    <string name="deck_dismiss">Anladım</string>
 
     <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
     <string name="card_described">%1$s, değeri %2$d</string>

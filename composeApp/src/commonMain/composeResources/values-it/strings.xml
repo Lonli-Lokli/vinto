@@ -282,7 +282,6 @@
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">Il mazzo</string>
     <string name="deck_body">%1$d carte ancora da pescare.\n\nQuando finiscono, la pila degli scarti viene rimescolata nel mazzo e tutto ciò che chiunque aveva imparato osservando quella pila smette di valere qualcosa — incluso ciò che hai imparato tu. Un round quasi senza mazzo è un round in cui chiamare Vinto.</string>
-    <string name="deck_dismiss">Capito</string>
 
     <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
     <string name="card_described">%1$s, vale %2$d</string>

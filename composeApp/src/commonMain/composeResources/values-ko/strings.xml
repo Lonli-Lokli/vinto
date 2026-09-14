@@ -267,7 +267,6 @@
 
     <string name="deck_title">덱</string>
     <string name="deck_body">뽑을 수 있는 카드가 %1$d장 남았어요.\n\n다 떨어지면 버림 더미가 다시 덱으로 섞여 들어가고, 그 더미를 지켜보며 알게 된 건 — 당신이 알아낸 것까지 포함해서 — 더 이상 쓸모가 없어져요. 덱이 거의 바닥나는 라운드는 Vinto를 외치기 좋은 라운드예요.</string>
-    <string name="deck_dismiss">알겠어요</string>
 
     <string name="card_described">%1$s, %2$d점</string>
     <string name="card_face_down">뒤집힌 카드</string>

@@ -23,9 +23,6 @@ import game.vinto.app.CountRefusals
 import game.vinto.app.LocalCounting
 import game.vinto.app.LocalVault
 import game.vinto.app.art.Res
-import game.vinto.app.art.deck_body
-import game.vinto.app.art.deck_dismiss
-import game.vinto.app.art.deck_title
 import game.vinto.app.art.report_subject
 import game.vinto.app.art.table_see_score
 import game.vinto.app.counted
@@ -35,7 +32,6 @@ import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.LocalSounds
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Sfx
-import game.vinto.app.theme.VintoDialog
 import game.vinto.client.LocalGame
 import game.vinto.client.Pace
 import game.vinto.client.Question
@@ -46,7 +42,6 @@ import game.vinto.client.plus
 import game.vinto.client.saveStats
 import game.vinto.protocol.AnalyticsEvent
 import game.vinto.shapes.GamePhase
-import game.vinto.shapes.Rank
 import org.jetbrains.compose.resources.stringResource
 
 private val Pad = 12.dp
@@ -98,7 +93,6 @@ fun GameScreen(
     var scoreOpen by remember(round) { mutableStateOf(game.result != null) }
     val reportSubject = stringResource(Res.string.report_subject)
     var reported by remember { mutableStateOf(false) }
-    var deckOpen by remember { mutableStateOf(false) }
 
     // `LocalClipboardManager` is deprecated in favour of `LocalClipboard`, and the
     // replacement is still not usable from common code in Compose Multiplatform 1.12:
@@ -180,12 +174,6 @@ fun GameScreen(
         }
     }
 
-    DeckExplained(
-        open = deckOpen,
-        left = holder.current.drawPileSize,
-        onDismiss = { deckOpen = false },
-    )
-
     HelpSheet(
         open = help.open,
         now = holder.table.help,
@@ -264,30 +252,11 @@ private fun SoloScore(
     }
 }
 
-/**
- * What the number in the corner is.
- *
- * It is the one figure on the screen that decides how a round ends, and it was silent: a
- * count with no units and nothing to tap. The reshuffle is the part worth saying — everything
- * anybody had learned from watching the pile becomes worthless the moment the deck runs dry,
- * which is a reason to call Vinto rather than a curiosity.
- */
-@Composable
-private fun DeckExplained(open: Boolean, left: Int, onDismiss: () -> Unit) {
-    VintoDialog(
-        open = open,
-        onDismiss = onDismiss,
-        title = stringResource(Res.string.deck_title),
-        body = stringResource(Res.string.deck_body, left),
-    ) {
-        GameButton(
-            label = stringResource(Res.string.deck_dismiss),
-            tone = ButtonTone.NEUTRAL,
-            onClick = onDismiss,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
+// `DeckExplained` stood here: a dialog saying what the deck count meant, written when that count
+// was a chip in the header. The chip came out at 41f9aa1 and took with it the only thing that
+// could open the dialog — `deckOpen` was set to false in two places and to true in none — so what
+// was left was a dialog no player could reach. The answer lives in `HelpSheet` now, reached by
+// pressing the pile itself, which is where somebody with the question is already looking.
 
 private val DialogGap = 6.dp
 
@@ -387,11 +356,11 @@ private fun RecordRound(result: RoundResult, viewerId: String) {
 private class HelpState {
     var open by mutableStateOf(false)
         private set
-    var focus by mutableStateOf<Rank?>(null)
+    var focus by mutableStateOf<HelpTopic?>(null)
         private set
 
-    fun show(rank: Rank?) {
-        focus = rank
+    fun show(topic: HelpTopic?) {
+        focus = topic
         open = true
     }
 

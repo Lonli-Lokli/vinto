@@ -160,7 +160,6 @@ import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PendingCardOrigin
-import game.vinto.shapes.Rank
 import game.vinto.shapes.actionIsLive
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
@@ -284,7 +283,7 @@ fun TableScreen(
     state: TableState,
     layout: TableLayout,
     onMove: (Move) -> Unit,
-    onHelp: (Rank?) -> Unit,
+    onHelp: (HelpTopic?) -> Unit,
     onSettings: () -> Unit,
     modifier: Modifier = Modifier,
     /**
@@ -526,7 +525,7 @@ private fun FeltTable(
     state: TableState,
     sizes: TableSizes,
     onMove: (Move) -> Unit,
-    onHelp: (Rank?) -> Unit,
+    onHelp: (HelpTopic?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // While the plan is open the felt draws the table the transport is parked on rather than
@@ -1004,7 +1003,7 @@ private fun widthOf(text: String, style: TextStyle): Dp {
 internal fun TableHeader(
     view: PlayerView,
     round: Int,
-    onHelp: (Rank?) -> Unit,
+    onHelp: (HelpTopic?) -> Unit,
     onSettings: () -> Unit,
     onLeave: (() -> Unit)?,
     /**
@@ -1386,7 +1385,7 @@ private fun MiddleRow(
     table: Table,
     sizes: TableSizes,
     onMove: (Move) -> Unit,
-    onHelp: (Rank?) -> Unit,
+    onHelp: (HelpTopic?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Centred rather than top-aligned: the middle row takes whatever height the panel leaves,
@@ -1997,7 +1996,7 @@ private val DraftRim = 1.5.dp
 
 /** The deck and the discard, labelled as on the web table, with the toss-in rank beneath. */
 @Composable
-private fun Piles(view: PlayerView, sizes: TableSizes, board: Board?, onHelp: (Rank?) -> Unit) {
+private fun Piles(view: PlayerView, sizes: TableSizes, board: Board?, onHelp: (HelpTopic?) -> Unit) {
     // The turn being built, asked of the board rather than indexed by the transport's position:
     // a stop names the turn it *ends*, so the lane at index `at` is the turn *after* the one
     // being composed — whose composer is always null. The pile therefore never lit for a card
@@ -2024,6 +2023,12 @@ private fun Piles(view: PlayerView, sizes: TableSizes, board: Board?, onHelp: (R
                         // The count as well as the name: it is the number that decides how
                         // a round ends, and a reader hears it where a glance would see it.
                         label = stringResource(Res.string.header_deck_left, view.drawPileSize),
+                        // And now a player who can see the screen gets the same answer, by
+                        // pressing the pile the way they already press the discard. Nothing
+                        // else was using this tap: a card is drawn from the rail, never from
+                        // the felt, so the deck was the one thing on the table that looked
+                        // touchable and did nothing.
+                        onClick = { onHelp(HelpTopic.Deck) },
                     )
                 } else {
                     EmptySlot(sizes.theirs, "—", deck)
@@ -2057,7 +2062,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes, board: Board?, onHelp: (R
  * The slot is always there, empty or not, so nothing moves when a card arrives in it.
  */
 @Composable
-private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (Rank?) -> Unit) {
+private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (HelpTopic?) -> Unit) {
     // Only while its player is *deciding* about it. The moment the action is engaged the
     // card is on the pile — that is `cardInPlay`'s exact rule, and this is its complement:
     // without the phase check a drawn 8 being aimed sat in this slot and on the discard at
@@ -2087,7 +2092,7 @@ private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp:
                 sizes.theirs,
                 modifier = slot,
                 label = drawnLabel(view, drawn),
-                onClick = { onHelp((drawn.card as? CardView.Visible)?.card?.rank) },
+                onClick = { onHelp((drawn.card as? CardView.Visible)?.card?.rank?.let(HelpTopic::Card)) },
             )
         }
     }
@@ -2359,7 +2364,7 @@ private fun Discard(
     stage: Stage,
     board: Board?,
     composer: PlanComposer?,
-    onHelp: (Rank?) -> Unit,
+    onHelp: (HelpTopic?) -> Unit,
 ) {
     val pile = Modifier.anchoredAt(stage, Anchor.Discard, sizes.theirs)
 
@@ -2440,7 +2445,7 @@ private fun Discard(
             face.rank.serialName,
         ),
         // What does this one do — asked of the card itself, answered about the card itself.
-        onClick = { onHelp(face.rank) },
+        onClick = { onHelp(HelpTopic.Card(face.rank)) },
     )
 }
 

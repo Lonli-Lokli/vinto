@@ -287,7 +287,6 @@
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">El mazo</string>
     <string name="deck_body">%1$d cartas por robar.\n\nCuando se agota, la pila de descarte se mezcla de nuevo en él y todo lo que alguien había aprendido observando esa pila deja de valer nada — incluido lo que aprendiste tú. Una ronda con el mazo casi agotado es una ronda para cantar Vinto.</string>
-    <string name="deck_dismiss">Entendido</string>
 
     <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
     <string name="card_described">%1$s, vale %2$d</string>

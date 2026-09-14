@@ -279,7 +279,6 @@
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">La pioche</string>
     <string name="deck_body">%1$d cartes restantes à piocher.\n\nQuand elle est épuisée, la défausse est remélangée dedans, et tout ce que chacun avait appris en observant cette pile ne vaut plus rien — y compris ce que vous aviez appris. Une manche où la pioche s’épuise est une manche où il faut appeler Vinto.</string>
-    <string name="deck_dismiss">Compris</string>
 
     <!-- A card, for somebody who cannot see it. -->
     <string name="card_described">%1$s, qui vaut %2$d</string>

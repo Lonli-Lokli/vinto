@@ -280,7 +280,6 @@
 
     <string name="deck_title">المكدس</string>
     <string name="deck_body">%1$d بطاقة متبقية للسحب.\n\nعند نفادها، تُخلط بطاقات التخلّص من جديد داخل المكدس، وكل ما تعلّمه أي أحد من مراقبة تلك البطاقات يفقد قيمته — بما في ذلك ما تعلمته أنت. الجولة التي أوشك مكدسها على النفاد جولة مناسبة لمناداة Vinto فيها.</string>
-    <string name="deck_dismiss">فهمت</string>
 
     <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
     <string name="card_described">%1$s، بقيمة %2$d</string>

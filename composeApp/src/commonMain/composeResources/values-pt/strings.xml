@@ -278,7 +278,6 @@
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">O baralho</string>
     <string name="deck_body">%1$d cartas por comprar.\n\nQuando se esgotar, a pilha de descarte é baralhada de volta para dentro dele e tudo o que alguém tinha aprendido a observar essa pilha deixa de valer alguma coisa — incluindo o que tu aprendeste. Uma ronda quase sem baralho é uma ronda para chamar Vinto.</string>
-    <string name="deck_dismiss">Entendido</string>
 
     <string name="card_described">%1$s, vale %2$d</string>
     <string name="card_face_down">uma carta virada para baixo</string>

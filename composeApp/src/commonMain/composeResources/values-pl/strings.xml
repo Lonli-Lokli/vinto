@@ -267,7 +267,6 @@
 
     <string name="deck_title">Talia</string>
     <string name="deck_body">Zostało %1$d kart do dobrania.\n\nGdy się skończą, stos odrzuconych kart zostaje potasowany z powrotem do talii, a wszystko, czego ktoś dowiedział się z obserwowania tego stosu, przestaje mieć znaczenie — łącznie z twoją wiedzą o nim. Runda, w której talia się kończy, to dobra runda, by zawołać Vinto.</string>
-    <string name="deck_dismiss">Rozumiem</string>
 
     <string name="card_described">%1$s, warta %2$d</string>
     <string name="card_face_down">karta zakryta</string>

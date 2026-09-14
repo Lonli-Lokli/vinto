@@ -104,12 +104,26 @@ private val Chip = 46.dp
  * app shows. One set of rules, written once.
  */
 @Composable
-fun HelpSheet(open: Boolean, now: Explains?, left: Int, onDismiss: () -> Unit, focus: Rank? = null) {
-    // A tap on one card asks about that card and nothing else: its line, its row, and the
+fun HelpSheet(open: Boolean, now: Explains?, left: Int, onDismiss: () -> Unit, focus: HelpTopic? = null) {
+    // A tap on one thing asks about that thing and nothing else: its line, its row, and the
     // sheet is done. The whole reference is behind the "?" for whoever wants it.
-    if (focus != null) {
-        FocusedHelp(open, focus, onDismiss)
-        return
+    //
+    // Exhaustive and with no `else`, so a third thing worth touching is a compile error here
+    // rather than a tap that silently opens the whole reference.
+    when (focus) {
+        is HelpTopic.Card -> {
+            FocusedHelp(open, focus.rank, onDismiss)
+            return
+        }
+
+        HelpTopic.Deck -> {
+            DeckHelp(open, left, onDismiss)
+            return
+        }
+
+        null -> {
+            // The whole reference, which is what the "?" opens.
+        }
     }
 
     VintoSheet(open = open, onDismiss = onDismiss) {
@@ -298,6 +312,66 @@ private fun RulesLink() {
             onClick = { openUrl(Pages.RULES) },
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+/**
+ * What one touchable thing on the felt is, when somebody touches it.
+ *
+ * A `Rank?` said this badly. Null meant "the whole reference" and a rank meant "this card", which
+ * left no way to say "this pile" — and the deck is the other thing on that table a player presses
+ * expecting an answer. Naming the topic instead of nullably naming a card makes the third case a
+ * case rather than a special value.
+ */
+sealed interface HelpTopic {
+    /** One rank, from tapping the card that carries it. */
+    data class Card(val rank: Rank) : HelpTopic
+
+    /** The draw pile, whose answer is a live count and what happens when it runs out. */
+    data object Deck : HelpTopic
+}
+
+/**
+ * The deck, and how much of it is left.
+ *
+ * The count is the one figure on the felt that decides how a round *ends*, and until now it was
+ * only ever spoken: it is the deck's accessible name, so a screen reader had it and a player
+ * looking at the screen did not. It used to be a chip in the header; six controls were too many
+ * for a phone, so the chip went (41f9aa1) and left a dialog behind in `GameScreen` that nothing
+ * could open.
+ *
+ * It answers here, beside the discard's answer and in the same shape, because they are the same
+ * question asked of two piles. The reshuffle is the half worth saying — everything anybody had
+ * learned from watching the discard becomes worthless the moment the deck runs dry, which is a
+ * reason to call Vinto rather than a curiosity — and `deck_body` has said so all along.
+ */
+@Composable
+private fun DeckHelp(open: Boolean, left: Int, onDismiss: () -> Unit) {
+    VintoSheet(open = open, onDismiss = onDismiss) {
+        Column(
+            modifier = Modifier.padding(horizontal = Pad).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(RowGap),
+        ) {
+            Surface(
+                shape = RoundedCornerShape(Corner),
+                color = Rail.fill,
+                border = BorderStroke(1.dp, Rail.line),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(modifier = Modifier.padding(Gap)) {
+                    Text(
+                        text = stringResource(Res.string.deck_title),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = TitleSize,
+                    )
+                    Text(
+                        text = stringResource(Res.string.deck_body, left),
+                        fontSize = BodySize,
+                        color = Rail.inkDim,
+                    )
+                }
+            }
+        }
     }
 }
 

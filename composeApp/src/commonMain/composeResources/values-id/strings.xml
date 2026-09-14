@@ -278,7 +278,6 @@
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">Dek kartu</string>
     <string name="deck_body">%1$d kartu tersisa untuk diambil.\n\nSaat habis, tumpukan buangan dikocok kembali ke dalamnya dan semua yang dipelajari siapa pun dari mengamati tumpukan itu tidak lagi berguna — termasuk yang Anda pelajari. Ronde yang dek-nya hampir habis adalah ronde yang tepat untuk memanggil Vinto.</string>
-    <string name="deck_dismiss">Mengerti</string>
 
     <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
     <string name="card_described">%1$s, bernilai %2$d</string>

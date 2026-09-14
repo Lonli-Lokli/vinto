@@ -283,7 +283,6 @@
 
     <string name="deck_title">Калода</string>
     <string name="deck_body">Картак для ўзяцця засталося: %1$d.\n\nКалі калода скончыцца, скід ператасуюць назад у яе — і ўсё, што хто-небудзь вычытаў з гэтага скіду, разам страціць каштоўнасць, уключна з тым, што вычыталі вы. Раунд на зыходзе калоды — гэта раунд, у якім варта абвяшчаць Vinto.</string>
-    <string name="deck_dismiss">Зразумела</string>
 
     <string name="card_described">%1$s, каштуе %2$d</string>
     <string name="card_face_down">картка рубашкай уверх</string>
