@@ -63,6 +63,9 @@ class ScreenshotTest {
     @Test
     fun theSettingsScreen() = shoot("settings") {
         SettingsScreen(
+            // Pinned for the same reason the home screen's is: this screen draws the build
+            // number too, and reading the real one made this golden gain a digit per commit.
+            build = PINNED_BUILD,
             settings = Settings(),
             canForget = true,
             page = SettingsPage.ROOT,

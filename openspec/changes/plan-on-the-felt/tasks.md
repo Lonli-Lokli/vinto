@@ -634,3 +634,34 @@ go red on the code as it stood, and only then fixed.
       below it in a hand that closed up. `RevealsFollowTheCardTest` holds the local session
       against the engine's own answer, by card identity, over whole games; the line itself is
       by design (D13) and now appears only while the shown card still lies where it was shown.
+
+## 15. The stops say the order instead of spelling it
+
+Asked from a phone, after reading the row: *"instead of duplicating word turn I think better to
+show beautiful arrows between turns"*, with a second proposal to drop the lands page since the
+final table is on screen once turn three has played.
+
+- [x] 15.1 **The lands page stays.** A turn’s page shows the table that turn *starts* on
+      (`feltPosition()` returns `turn`), because those are the cards the composer aims at — so
+      swiping to turn three cold shows the board before it, not the result. `focus.landed` flips
+      it after the film, which is why the premise holds there and nowhere else. The arrival table
+      has no other page it could live on, and the caller’s believed total is the one figure that
+      cannot be counted off the felt, since their cards are face down and what is known comes from
+      claims. Decided by the product owner on that reading.
+- [x] 15.2 **The stops carry a numeral and an arrow, not the word.** A stop wears the turn’s digit
+      in a circle — the mark a rose card already wears for the turn it arrives on (`RoseBack`), so
+      a stop and the cards naming it read as one thing — and the stops are joined by the arrow the
+      film draws between seats (D19). It is still “Turn 2, Dune” to a screen reader.
+      This **reverses** `PlanBuilderTest`’s recorded reason for the word: *“‘1’ alone on a header
+      row is a mark a player stopped to ask the meaning of”*. It is not alone — circle, face, and
+      an arrow to the next — and the localisation half of that reason was already moot, since the
+      rose tag draws a bare digit in every locale. The test carries the new rule and the why.
+- [x] 15.3 **And it fixes 14.x’s width properly.** The scroll added when ▶▶ measured 19dp is gone:
+      four stops and two buttons fit a 411dp phone once the word does, “Lands” is whole again, and
+      `TouchTargetTest` still measures both buttons at a thumb. Treating the symptom was the
+      wrong fix; the row was simply saying one word three times.
+- [x] 15.4 **The settings golden could never be green twice.** It draws the build number, which is
+      `git rev-list --count HEAD`, so it gained a digit with every commit — the same defect fixed
+      for `HomeScreen` and missed here. `SettingsScreen` takes `build` as a parameter now and
+      `ScreenshotTest` pins it, as the home screen’s already was.
+

@@ -198,6 +198,13 @@ fun SettingsScreen(
      * that sent an empty report would be worse than one that is not offered. See [Reporting].
      */
     report: (() -> Recording)? = null,
+    /**
+     * The build number under the version, taken as a parameter for the same reason
+     * [HomeScreen] takes it: the real one is `git rev-list --count HEAD`, so a golden that
+     * reads it gains a wrong digit with every commit and can never be green twice. This screen
+     * was missed when the home screen was fixed.
+     */
+    build: String = BUILD_NUMBER,
 ) {
     var pickingLanguage by remember { mutableStateOf(false) }
     var reporting by remember { mutableStateOf(false) }
@@ -249,7 +256,7 @@ fun SettingsScreen(
             // and the marketing version alone identifies twenty builds at once. One string for
             // both places, so the two can never disagree about what this build is called.
             Text(
-                text = stringResource(Res.string.home_version, VERSION, BUILD_NUMBER),
+                text = stringResource(Res.string.home_version, VERSION, build),
                 fontSize = FootnoteSize,
                 // Below the last panel, so on the felt rather than on paper. Centred, because a
                 // colophon left-aligned under a column of panels reads as one more setting that

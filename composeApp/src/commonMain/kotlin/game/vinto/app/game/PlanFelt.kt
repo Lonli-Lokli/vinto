@@ -64,7 +64,6 @@ import game.vinto.app.art.board_lands
 import game.vinto.app.art.board_named
 import game.vinto.app.art.board_ours
 import game.vinto.app.art.board_then
-import game.vinto.app.art.board_turn_stop
 import game.vinto.app.art.board_turn_stop_spoken
 import game.vinto.app.art.board_unnamed
 import game.vinto.app.art.board_unplayable
@@ -157,6 +156,12 @@ private val MiniCorner = 3.dp
 private val MiniFace = 11.dp
 private val MiniBadge = 8.sp
 private val MiniTag = 12.dp
+
+/** The arrow between two stops: a shaft, and two barbs meeting at its tip. */
+private const val THEN_TAIL = 0.15f
+private const val THEN_TIP = 0.75f
+private const val THEN_BARB = 0.55f
+private const val THEN_HEAD = 0.2f
 
 /** The dashed edge of a word on offer. */
 private const val DashOn = 6f
@@ -476,18 +481,17 @@ internal fun PlanStops(transport: Transport, onMove: (Move) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(Half),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // The stops take what the two buttons leave and scroll sideways inside it, the way a
-        // long sentence does a row above. A plain row shared the width instead, and a row out
-        // of width takes it out of its last child: ▶▶ measured 19dp across on a 411dp phone the
-        // moment a plan gave it something to play — which is the only state it can be pressed
-        // in, and the reason an empty board never showed it (`TouchTargetTest`).
-        Row(
-            modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(Half),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            transport.stops.forEach { stop -> StopChip(stop, transport, onMove) }
+        // Joined by arrows rather than each carrying the word "Turn": the row reads as the
+        // order the seats play in, which is what the word was for, and the width it gives back
+        // is what the two buttons need. A plain row shared the width instead, and a row out of
+        // width takes it out of its last child — ▶▶ measured 19dp across on a 411dp phone the
+        // moment a plan gave it something to play, which is the only state it can be pressed in
+        // and the reason an empty board never showed it (`TouchTargetTest`).
+        transport.stops.forEachIndexed { index, stop ->
+            if (index > 0) ThenArrow()
+            StopChip(stop, transport, onMove)
         }
+        Spacer(Modifier.weight(1f))
         val here = transport.stops.firstOrNull { it.here }
         val replay = stringResource(Res.string.label_plan_replay)
         TransportButton(replay, here?.replay, "plan:replay", onMove) { ink -> drawPlay(ink) }
@@ -528,7 +532,17 @@ private fun StopChip(stop: Stop, transport: Transport, onMove: (Move) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(Half),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = words.label, fontSize = WordSize, fontWeight = FontWeight.Bold, color = ink, maxLines = 1)
+        if (stop.seat == null) {
+            Text(
+                text = words.label,
+                fontSize = WordSize,
+                fontWeight = FontWeight.Bold,
+                color = ink,
+                maxLines = 1,
+            )
+        } else {
+            TurnMark(words.label, stop.here)
+        }
         stop.nickname?.let { nickname ->
             Box(modifier = Modifier.clearAndSetSemantics { }) { Avatar(name = nickname, size = FaceSize) }
         }
@@ -541,6 +555,56 @@ private fun StopChip(stop: Stop, transport: Transport, onMove: (Move) -> Unit) {
 /** A stop's words: what it shows, the name it shows beside its face while lit, and what it says whole. */
 private class StopWords(val label: String, val name: String?, val spoken: String)
 
+/**
+ * A turn's numeral, drawn as the mark a rose card wears for the turn it arrives on
+ * (`RoseBack`) — one circle, one digit — so a stop and the cards that name it read as the same
+ * thing. Not cleared from the semantics, unlike the arrow: the chip merges it and answers with
+ * its own "Turn 2, Dune", so the digit costs a screen reader nothing and stays something a test
+ * can see drawn.
+ *
+ * **It introduces no colour pair.** The mark is the chip it sits on, inverted — gold ground
+ * and panel ink while lit, reading ink and chip ground while not — and contrast is a ratio
+ * between two luminances, so an inversion clears exactly what the chip's own label clears.
+ * That is why `ContrastTest` needs no new entry for it.
+ */
+@Composable
+private fun TurnMark(numeral: String, here: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(MiniTag)
+            .background(if (here) Rail.fill else Rail.ink, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = numeral,
+            fontSize = MiniBadge,
+            fontWeight = FontWeight.Bold,
+            color = if (here) Rail.gold else Rail.chip,
+        )
+    }
+}
+
+/**
+ * Between two stops: play passes on. The same mark the film draws over the felt between turns
+ * (design D19), so the row reads as the order the seats play in rather than as four buttons.
+ * Decorative — the order is already in the tabs.
+ */
+@Composable
+private fun ThenArrow() {
+    // Read outside the draw lambda: a theme colour is a composable read, and a draw scope is
+    // not a composable one — the same reason `TradeArrow` hands its ink to `drawTrade`.
+    val ink = Rail.inkDim
+    Canvas(modifier = Modifier.size(MiniTag).clearAndSetSemantics { }) {
+        val w = size.width
+        val mid = size.height / 2
+        val head = w * THEN_HEAD
+        val tip = w * THEN_TIP
+        drawLine(ink, Offset(w * THEN_TAIL, mid), Offset(tip, mid), strokeWidth = Hair.toPx())
+        drawLine(ink, Offset(w * THEN_BARB, mid - head), Offset(tip, mid), strokeWidth = Hair.toPx())
+        drawLine(ink, Offset(w * THEN_BARB, mid + head), Offset(tip, mid), strokeWidth = Hair.toPx())
+    }
+}
+
 @Composable
 private fun stopWords(stop: Stop, transport: Transport): StopWords {
     val seat = stop.seat
@@ -550,7 +614,10 @@ private fun stopWords(stop: Stop, transport: Transport): StopWords {
     }
     val who = seat?.let { speakerName(it) }.orEmpty()
     return StopWords(
-        label = stringResource(Res.string.board_turn_stop, stop.at),
+        // The numeral, not the word: what a stop is for is said by the face beside it and the
+        // arrow after it, and the word was costing the row the width its two buttons needed.
+        // The screen reader still hears the whole of it.
+        label = stop.at.toString(),
         name = who.takeIf { stop.here && seat != null },
         spoken = stringResource(Res.string.board_turn_stop_spoken, stop.at, who),
     )

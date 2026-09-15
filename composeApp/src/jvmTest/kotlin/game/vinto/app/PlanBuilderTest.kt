@@ -296,10 +296,17 @@ class PlanBuilderTest {
     @Test
     fun everyStopWearsTheSeatWhoseTurnItEnds() = runComposeUiTest {
         // A stop carries **both**: the seat's face, so a member asking "how to design moves for
-        // them" can see whose turn each one is, and the turn's number in words, because "1"
-        // alone on a header row is a mark a player stopped to ask the meaning of. Numerals are
-        // copy like any other — a locale may want "Turn 1", "1-й ход" or "第1轮" — so the chip
-        // reads its word from `board_turn_stop` rather than interpolating the integer.
+        // them" can see whose turn each one is, and the turn's numeral — the same mark a rose
+        // card wears for the turn it arrives on (`RoseBack`), so the two pair by eye.
+        //
+        // It used to read "Turn 1", and the reason was that "1" alone on a header row is a mark
+        // a player stops to ask the meaning of. It is not alone: it sits in a circle beside a
+        // face, in a row of them joined by arrows that say what the word was carrying, and it is
+        // the mark the cards already use for the same thing. What the word bought in width was
+        // the whole transport row — four stops and two buttons do not fit a phone, and ▶▶ was
+        // taking the shortfall out of its own thumb.
+        //
+        // It is still "Turn 2, Dune" to a screen reader, where there is no width to buy.
         val view = finalRound()
         show(view, plan = CoalitionPlan(), question = Question.ThePlan())
 
@@ -314,9 +321,9 @@ class PlanBuilderTest {
             assertTrue(chips.isNotEmpty(), "stop ${index + 1} does not say whose turn it ends")
             val words = chips.first().config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }
             assertEquals(
-                "Turn ${index + 1}",
+                "${index + 1}",
                 words.firstOrNull(),
-                "the stop shows a bare numeral instead of naming the turn: $words",
+                "the stop spends width on a word the arrows already carry: $words",
             )
         }
     }
