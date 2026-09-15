@@ -74,7 +74,6 @@ targets:
         # gets the layout the wider screen wants rather than a stretched phone.
         TARGETED_DEVICE_FAMILY: "1,2"
 
-
         # Where `embedAndSignAppleFrameworkForXcode` leaves the Kotlin framework, and the
         # `-framework ComposeApp` that links it. `ContentView.swift` imports it by that name;
         # renaming the framework in `composeApp/build.gradle.kts` breaks this and the import
