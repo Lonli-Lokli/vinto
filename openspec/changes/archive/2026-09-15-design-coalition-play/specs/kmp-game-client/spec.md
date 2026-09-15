@@ -299,17 +299,21 @@ and SHALL update it as the plan is edited.
 - **WHEN** a step is added or removed
 - **THEN** the plan's stated best hand updates to match
 
-### Requirement: An agreed step arms its owner's turn
+### Requirement: An agreed step is said on its owner's turn, and arms nothing
 
-When a plan's step belongs to the viewer and the viewer has agreed to it, the client SHALL open
-their turn with that move already aimed, committable in one action, and SHALL leave every other
-move available.
+When a plan's step belongs to the viewer, the client SHALL say what the coalition agreed about
+that turn, and SHALL arm nothing: the turn opens with the ordinary controls, nothing pre-aimed
+and nothing committable in one action that would not be without the plan.
+
+A plan is what the table said, and a control the plan arms is the plan acting. The line saying
+what was agreed SHALL be present for the whole of the final round, empty when nothing is planned,
+so that a plan arriving moves no button.
 
 #### Scenario: The turn opens on the plan
 
 - **WHEN** the viewer's turn begins and an agreed step names it
-- **THEN** the table presents that move ready to commit, and the viewer can still do anything
-  else the rules allow
+- **THEN** the table says what was agreed and offers exactly the controls it would have offered
+  had nothing been planned
 
 ### Requirement: A plan decays honestly
 

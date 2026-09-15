@@ -519,3 +519,18 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
 - [x] `:shared:bot:jvmTest` including `SelfPlayGateTest` — every proposed action through
       `ActionValidator`, every game to `scoring`
       — 189 tests green after the plan's wire landed
+
+## Corrected before archiving
+
+- **"An agreed step arms its owner's turn" was reversed and the delta said so.** This change
+  specified a turn that opens with the agreed move already aimed and committable in one action.
+  `plan-on-the-felt` put that in front of the product owner as "Do as planned" and it was
+  rejected (design D17: *a button the plan arms is the plan acting, and the plan must only ever
+  say*); 12.12 removed `DoAsPlanned`, `KeepItInstead` and `YourDrawBeatsThePlan`, and the live
+  rail keeps the ordinary buttons with one line under the prompt saying what was agreed.
+  Merging the delta as written would have put a requirement into `openspec/specs/` that the
+  shipped app deliberately fails, and would have contradicted `plan-on-the-felt`'s own
+  "The plan is information on the live table, never a control" in another capability. The
+  requirement is rewritten to what was decided rather than deleted, because a plan that says and
+  does not arm is a real requirement and something has to hold it.
+
