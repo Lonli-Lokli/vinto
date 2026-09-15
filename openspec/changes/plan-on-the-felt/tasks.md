@@ -469,8 +469,11 @@ costs and three decisions came back, each of which reshaped a layer.
 
 ### Still open, from this pass
 
-- The builder does not yet offer a Queen's look-only (`Peek` of two cards with no trade): two
-  touches on a Queen make a trade. The wire and the film say it; the sentence only reads it.
+- ~~The builder does not yet offer a Queen's look-only (`Peek` of two cards with no trade): two
+  touches on a Queen make a trade. The wire and the film say it; the sentence only reads it.~~
+  **It does offer one, and it had no test** — see §14's list for what writing that test turned up.
+  The arrow between the two cards is the word: lit she trades, dim she only looks, and touching it
+  flips the two. The design's open question is settled there.
 - ~~The `?` sheet says nothing about the plan's rail. With the words in the sentence there is no
   legend to give, but "a plan is talk, not a move" is worth a line there.~~ **Done**, as one
   paragraph under More: what the last round is, that the rail becomes a plan written together one
