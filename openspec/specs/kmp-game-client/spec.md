@@ -353,23 +353,27 @@ does and SHALL make putting it down the readiest answer, without removing any le
 - **THEN** the consequence is stated and putting it down is offered first, with every legal
   target still available
 
-### Requirement: The plan says whether it wins, not what it totals
+### Requirement: The plan shows the numbers and pronounces no verdict
 
-The round is decided by the caller's total against the **lowest** coalition hand, and a tie goes
-to the caller — so the coalition must finish strictly below.
+Where a plan lands, the client SHALL show the coalition's best hand under the plan, the caller's
+total as the coalition believes it, and how many of the caller's cards nobody has named — beside
+the hands themselves. It SHALL NOT state whether the plan wins or falls short.
 
-The client SHALL show the plan's standing as an outcome rather than as a bare number: what the
-coalition's best hand would be, what the caller is believed to hold, and whether that wins. A
-level result SHALL NOT be presented as a draw, because it pays the caller.
+The round is decided by the caller's total against the **lowest** coalition hand and a tie pays
+the caller, so the numbers matter. But comparing them is the act a player opened the plan to do,
+and every total is already on screen: a verdict there would grade every candidate plan, and a
+round whose whole pleasure is three people arguing about what to do becomes dragging cards until
+the app agrees. The numbers inform the argument; a verdict ends it.
 
 The caller's believed total SHALL be built from what the coalition has actually seen and
-claimed, and SHALL show how much of that hand is unknown rather than implying a total nobody
-knows.
+claimed, and SHALL carry the count of that hand nobody has named, since a total stated without
+saying how much of it is a guess is a number pretending to be information.
 
-#### Scenario: The plan draws level
+#### Scenario: The plan lands
 
-- **WHEN** a plan would leave the coalition's best hand equal to the caller's believed total
-- **THEN** it is shown as losing, not as level
+- **WHEN** the transport reaches the page where the plan lands
+- **THEN** the coalition's best hand, the caller's believed total and the count of their unnamed
+  cards are shown beside the hands, and neither a win nor a loss is stated
 
 #### Scenario: Most of the caller's hand is unseen
 

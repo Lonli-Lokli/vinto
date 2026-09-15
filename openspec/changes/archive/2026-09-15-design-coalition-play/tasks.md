@@ -534,3 +534,15 @@ so one dropped teammate stops the round. Test first, per the repository's rule o
   requirement is rewritten to what was decided rather than deleted, because a plan that says and
   does not arm is a real requirement and something has to hold it.
 
+- **"The plan says whether it wins" was reversed too, and this was missed until after the
+  archive.** `plan-on-the-felt` D12 states the reversal in as many words — *"This reverses
+  `PlanOutcome`'s own reasoning"* — and names why the old reasoning was right about the thing it
+  was written for and wrong here: it was written for a one-line strip on the live table, where a
+  bare pair of numbers slides past a player doing something else, and that strip is deleted. In a
+  plan view comparing is the act the player came for, so a verdict would grade every candidate
+  plan and a round whose pleasure is three people arguing becomes dragging cards until the app
+  says WINS. Keeping the verdict inside the plan view was considered and rejected by the product
+  owner. `LandsPage` draws no verdict and `PlanOutcome.wins`/`level`/`confident` have no caller
+  outside tests. The requirement is rewritten to what shipped, in this archive and in
+  `openspec/specs/kmp-game-client`, after the archive rather than before it.
+
