@@ -92,7 +92,7 @@ private fun ownLaneAlternative(state: GameState, bot: String, offered: Step): St
         .filter { hand[it].rankKnown && (hand[it].rank == Rank.JACK || hand[it].rank == Rank.QUEEN) }
         .mapNotNull { position ->
             val slot = Slot(bot, position)
-            bestSwap(hands.puttingDown(slot), coalition, excluding = slot)?.let { slot to it }
+            bestSwap(hands.puttingDown(slot), coalition, excluding = setOf(slot))?.let { slot to it }
         }
         .minByOrNull { (_, swap) -> swap.minAfter }
         ?.takeIf { (_, swap) -> swap.minAfter < before }

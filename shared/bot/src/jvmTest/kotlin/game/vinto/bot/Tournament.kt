@@ -11,6 +11,7 @@ import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
+import game.vinto.shapes.SelectActionTargetPayload
 import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
@@ -48,6 +49,17 @@ internal data class PlayedGame(
      * what they score.
      */
     val callerHandChanged: Boolean = false,
+    /**
+     * Non-empty when a coalition seat aimed an ace at anybody in the final round; says who at
+     * whom, and after how many actions.
+     *
+     * An ace makes its target draw, and from the call onwards the caller's hand is out of
+     * reach — so every seat an ace can still name is a teammate, and the only thing it can do
+     * is lengthen a hand the coalition is trying to keep short. There is no good victim, so
+     * there is no move: a coalition bot puts an ace down unplayed and swaps or discards one it
+     * draws.
+     */
+    val aimedAnAce: String = "",
     /**
      * Non-empty when a seat held a belief about another seat's card that was not true; says
      * who believed what, and after which action it went wrong.
@@ -169,6 +181,7 @@ private fun playOut(
     var decisionNanos = 0L
     var decisions = 0
     var falseBelief = ""
+    var aimedAnAce = ""
 
     while (actions < ACTION_LIMIT && state.phase != GamePhase.SCORING) {
         val startedAt = System.nanoTime()
@@ -189,6 +202,7 @@ private fun playOut(
             )
         }
 
+        val before = state
         when (val applied = apply(state, action, actions)) {
             is Applied.Refused -> return PlayedGame(
                 seed = seed,
@@ -204,6 +218,7 @@ private fun playOut(
             is Applied.Accepted -> state = applied.state
         }
         falseBelief = falseBelief.ifEmpty { falseBeliefIn(state, action, actions) }
+        aimedAnAce = aimedAnAce.ifEmpty { aceAimedInTheFinalRound(before, action, actions) }
         if (action is GameAction.CallVinto) {
             calledVinto = true
             callerFrozenHand = state.players.first { it.id == state.vintoCallerId }.cards.map { it.id }
@@ -233,10 +248,26 @@ private fun playOut(
         // The rules give a tie to the caller, so this is `<=` and not `<`.
         callerWon = callerTotal != null && bestCoalition != null && callerTotal <= bestCoalition,
         callerHandChanged = callerFrozenHand != null && callerFrozenHand != caller?.cards?.map { it.id },
+        aimedAnAce = aimedAnAce,
         falseBelief = falseBelief,
         decisionNanos = decisionNanos,
         decisions = decisions,
     )
+}
+
+/**
+ * The ace a coalition seat pointed at a teammate, or "" — see [PlayedGame.aimedAnAce].
+ *
+ * Read off the action rather than off the hands, because the two symptoms part company: a hand
+ * growing in the final round is also what a wrong throw-in costs, which is legal and somebody's
+ * own risk to take.
+ */
+private fun aceAimedInTheFinalRound(before: GameState, action: GameAction, index: Int): String {
+    if (before.phase != GamePhase.FINAL) return ""
+    val payload = (action as? GameAction.SelectActionTarget)?.payload as? SelectActionTargetPayload.Ace
+        ?: return ""
+    if (payload.playerId == before.vintoCallerId) return ""
+    return "after action #" + index + ": " + payload.playerId + " aimed an ace at " + payload.targetPlayerId
 }
 
 /**

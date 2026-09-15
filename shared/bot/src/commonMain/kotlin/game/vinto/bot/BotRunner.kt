@@ -727,11 +727,13 @@ class BotRunner(
                     declareKing(state, player, pending, plan, trustPlan = coalition != null)
                 }
 
-            // The victim draws; there is no position to name. In the final round every
-            // possible victim is a teammate — the caller is out of reach — so a coalition
-            // bot's Ace (a tossed-in one; the planner never plays one from hand) is put down
-            // unaimed rather than forced on the one hand that might still win.
-            Rank.ACE -> if (coalition != null) abandonAction(player) else aceTarget(state, player, plan)
+            // The victim draws; there is no position to name.
+            Rank.ACE ->
+                if (state.hasNoVictimForAnAce(player)) {
+                    abandonAction(player)
+                } else {
+                    aceTarget(state, player, plan)
+                }
 
             else -> abandonAction(player)
         }
@@ -752,6 +754,23 @@ class BotRunner(
             SelectActionTargetPayload.Positional(player.id, target.playerId, target.position),
         )
     }
+
+    /**
+     * Whether an Ace has anybody left worth pointing at, for [actor].
+     *
+     * In the final round it never does. The caller's hand is frozen from the call and out of
+     * reach, so every seat an Ace can still name is a teammate, and all it can do there is put
+     * a card nobody has seen into a hand the coalition is trying to keep short — including,
+     * quite possibly, the one hand that can still win the round. So a coalition bot's Ace is
+     * put down unplayed, which is the same answer the planner gives one it *draws*: swap it in
+     * for the point it is worth, or discard it, but never play it.
+     *
+     * Keyed on the round rather than on whether a coalition plan was built. The two agree
+     * today, and only one of them is the rule — an Ace with no good victim is a fact about the
+     * final round, not about a planner having something to say.
+     */
+    private fun GameState.hasNoVictimForAnAce(actor: PlayerState): Boolean =
+        phase == GamePhase.FINAL && vintoCallerId != null && actor.id != vintoCallerId
 
     /**
      * Whether [actor] is allowed to aim an action at [targetId] right now.

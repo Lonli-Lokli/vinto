@@ -541,8 +541,25 @@ a rank picker that fits.
 
 - ~~9.1 stands: everything above is held by tests and the goldens, and has not been touched on a
   phone.~~ It has now — §14 is what the phone said.
-- The bots do not yet plan a King's point-then-name or an Ace's victim; they propose put-downs,
-  calls, trades and vouched throws.
+- ~~The bots do not yet plan a King's point-then-name or an Ace's victim; they propose put-downs,
+  calls, trades and vouched throws.~~ **Done, and the ace half is settled the other way.** A bot
+  now proposes a King it is known to hold — put down, called, pointing at the card the table can
+  name whose leaving lowers the coalition's lowest hand most, with the trade attached when that
+  card is a Jack or a Queen — and the pile's unplayed King on the round's first turn, which is
+  the cheapest declaration there is. Both are costed against the same lowest hand as a trade and
+  the lower wins, so a King is not preferred for being dramatic; the toss-in window it opens
+  covers King *and* the named rank, which is what the engine does.
+  **An ace has no victim to plan.** Once Vinto is called the caller's hand is frozen and out of
+  reach, so every seat an ace can name is a teammate and all it can do is lengthen a hand the
+  coalition is keeping short — so no proposal names one, whether as a turn's card or as the card
+  a King points at. `BoardProposalsTest.noProposalEverAimsAnAceAtATeammate` holds it, with the
+  same board and a nine in the ace's place to show the silence is about the ace.
+  The report behind it — *"bots when they play in coalition use an ace against each other"* — did
+  **not** reproduce: over 120 whole games (60 seeds × moderate and hard) no coalition seat aimed
+  an ace in a final round and no coalition hand grew in one. The runner was already putting one
+  down unplayed and swapping or discarding one it drew. What changed is that the rule is now
+  keyed on the round (`hasNoVictimForAnAce`) rather than on a coalition plan happening to have
+  been built, and `SelfPlayGateTest` fails on an aimed ace, so it cannot drift back.
 - The design page's legend still names the rose edge as `#B8607F`; it shipped as `#A04C6A` to
   clear 3:1 on the card.
 

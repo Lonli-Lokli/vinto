@@ -22,6 +22,10 @@ import kotlin.test.assertTrue
  * - a **stall**. Every action can be individually legal while the game never finishes,
  *   because two states hand back and forth. That is why reaching `scoring` is asserted rather
  *   than just "nothing threw".
+ * - **friendly fire**. Once Vinto is called the caller is out of reach, so an ace aimed at
+ *   anybody is aimed at a teammate — a card added to a hand the coalition is trying to keep
+ *   short. Nothing refuses it, which is why it is asked of whole games rather than left to the
+ *   validator: it is a bad move, not an illegal one, and the one the bots must never make.
  * - a **false belief**. The engine records what each seat has been shown, and a seat that has
  *   been told something untrue plays on it for the rest of the deal. This is checked here
  *   rather than in the parity corpus because the corpus can no longer prove it: TypeScript
@@ -59,6 +63,13 @@ class SelfPlayGateTest {
         assertTrue(
             moved.isEmpty(),
             "the caller's hand changed during the final round: " + moved.map { it.seed },
+        )
+
+        val aimed = played.filter { it.aimedAnAce.isNotEmpty() }
+        assertTrue(
+            aimed.isEmpty(),
+            "a coalition seat aimed an ace at a teammate:\n" +
+                aimed.joinToString("\n") { "seed " + it.seed + ": " + it.aimedAnAce },
         )
 
         // A game that ends only because the deck ran dry is a game the bots never took charge

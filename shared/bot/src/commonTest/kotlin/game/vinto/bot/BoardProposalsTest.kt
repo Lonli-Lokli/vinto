@@ -5,12 +5,15 @@ import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.Lane
+import game.vinto.shapes.Opening
+import game.vinto.shapes.Pile
 import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.PlayerState
 import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
 import game.vinto.shapes.coalitionInTurnOrder
 import game.vinto.shapes.edited
+import game.vinto.shapes.getCardValue
 import game.vinto.shapes.laneOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -34,8 +37,13 @@ class BoardProposalsTest {
     private var counter = 0
     private fun card(rank: Rank) = testCard(rank, "${rank.serialName}-${counter++}")
 
-    private fun seat(id: String, ranks: List<Rank>, claims: List<Claim>? = null): PlayerState =
-        testPlayer(id, id, isHuman = id == me, cards = ranks.map(::card))
+    private fun seat(
+        id: String,
+        ranks: List<Rank>,
+        claims: List<Claim>? = null,
+        read: List<Int> = if (id == me) emptyList() else ranks.indices.toList(),
+    ): PlayerState =
+        testPlayer(id, id, isHuman = id == me, cards = ranks.map(::card), knownCardPositions = read)
             .copy(claims = claims, isVintoCaller = id == caller)
 
     /**
@@ -213,6 +221,163 @@ class BoardProposalsTest {
             vintoCallerId = caller,
         )
         assertTrue(seedTheBoard(flat, plan = null).plan.isEmpty, "a pointless trade was proposed")
+    }
+
+    /**
+     * A King is the coalition's demolition charge: point at the highest card the table can name
+     * and it leaves the game outright, where a trade only moves points between two hands.
+     *
+     * Nina holds a King and a ten, so she has no trade to offer at all; Don has said he holds a
+     * ten and a two. Putting the King down costs Nina her own King slot — she draws into it —
+     * and takes Don's ten off the table, which is worth more than either card she could move.
+     */
+    @Test
+    fun aKingIsProposedAsAPutDownThatPointsAtTheHighestCardTheTableCanName() {
+        val seeded = seedTheBoard(kingTable(don = listOf(Rank.TEN, Rank.TWO)), plan = null)
+
+        val step = assertIs<Step.PutDown>(assertNotNull(seeded.plan.laneOf(nina), "no proposal for the King").step)
+        assertEquals(Rank.KING, step.guess, "the King put down was not called")
+        val declare = assertIs<Step.Declare>(step.then, "the called King declared nothing")
+        assertEquals(Rank.TEN, declare.rank, "the King named the wrong rank")
+        assertEquals(don, assertNotNull(declare.card, "the King pointed at nothing").seat)
+        assertEquals(0, declare.card?.position, "the King pointed at the two rather than the ten")
+    }
+
+    /**
+     * An ace makes somebody draw, and in a final round every seat it can reach is the coalition's
+     * own — the caller's hand is frozen from the call. So a bot never names one, even where naming
+     * it is the best arithmetic on the board: a correct declaration hands the named card's action
+     * to whoever played the King, and there is no good victim for that one.
+     *
+     * Don holds a single card. Empty it and the coalition has a hand of nothing, which is the
+     * lowest hand there is — and no other card on this table lowers anything. A nine there and
+     * the King says so; an ace and the bots would rather leave the turn at "your call".
+     */
+    @Test
+    fun noProposalEverAimsAnAceAtATeammate() {
+        val tempting = seedTheBoard(kingTable(don = listOf(Rank.ACE)), plan = null)
+
+        assertTrue(
+            tempting.plan.lanes.none { lane -> lane.step.forcesADraw() },
+            "a proposal made a teammate draw: " + tempting.plan.lanes,
+        )
+        assertNull(
+            tempting.plan.laneOf(nina)?.step,
+            "a King was pointed at an ace, which hands its forced draw to the coalition",
+        )
+
+        // The same table with a nine in the ace's place, so the silence above is about the ace
+        // and not about the shape of the board.
+        val named = seedTheBoard(kingTable(don = listOf(Rank.NINE)), plan = null)
+        val step = assertIs<Step.PutDown>(assertNotNull(named.plan.laneOf(nina), "no proposal for the King").step)
+        assertEquals(Rank.NINE, assertIs<Step.Declare>(step.then).rank, "the King named the wrong rank")
+    }
+
+    /**
+     * Nina holds the King, and a ten she cannot trade with; the person has said they hold a two
+     * and a three. What Don holds is the question each King test asks.
+     */
+    private fun kingTable(don: List<Rank>): GameState = testState(
+        players = listOf(
+            seat(
+                me,
+                listOf(Rank.TWO, Rank.THREE),
+                claims = listOf(Claim(me, listOf(0), listOf(Rank.TWO)), Claim(me, listOf(1), listOf(Rank.THREE))),
+            ),
+            seat(caller, listOf(Rank.SIX)),
+            seat(nina, listOf(Rank.KING, Rank.TEN)),
+            seat(
+                this.don,
+                don,
+                claims = don.indices.map { Claim(this.don, listOf(it), listOf(don[it])) },
+            ),
+        ),
+        phase = GamePhase.FINAL,
+        vintoCallerId = caller,
+    ).let { it.copy(currentPlayerIndex = it.players.indexOfFirst { p -> p.id == caller }) }
+
+    /**
+     * A King that names a Jack or a Queen says the trade it makes on the way out.
+     *
+     * The card leaving the game is only half of what a correct declaration is worth: its action
+     * belongs to whoever played the King, and for those two ranks that action is a trade — the
+     * strongest single turn of the round. The addresses are the ones on the felt now, before the
+     * named card is taken off it, which is the order a lane is read in.
+     *
+     * Everything but Don's hand is unspoken here, so the Jack is the only card worth naming and
+     * the trade is what settles where the points end up.
+     */
+    @Test
+    fun aKingThatNamesAJackSaysTheTradeThatJackThenMakes() {
+        val hands = mapOf(
+            nina to listOf(unspoken(nina, 0), unspoken(nina, 1)),
+            don to listOf(spoken(Rank.JACK, 0), spoken(Rank.TWO, 1)),
+            me to listOf(unspoken(me, 0), unspoken(me, 1)),
+        )
+
+        val named = assertNotNull(bestDeclare(hands, listOf(nina, don, me)), "the King named nothing")
+
+        assertEquals(Rank.JACK, named.rank, "the King named the two rather than the Jack")
+        assertEquals(Slot(don, 0), named.at)
+        val trade = assertNotNull(named.then, "the named Jack's own trade went unsaid")
+        assertTrue(
+            Slot(don, 0) != trade.from && Slot(don, 0) != trade.to,
+            "the trade moved the card the King had just taken off the table: " + trade,
+        )
+        assertTrue(named.minAfter < 10, "the trade bought nothing: " + named)
+    }
+
+    /**
+     * The King off the pile, which is the cheapest declaration there is — nothing has to leave
+     * the taker's hand to buy it — and the one that shows a King doing the whole of its job.
+     *
+     * Nina's Jack is the only card at this table anybody can name, so it is what the King points
+     * at; and a named Jack does not merely leave the game, it trades on the way out. The door
+     * takes the whole sentence, which is the half a test can get wrong by believing: a call may
+     * not name the card it put down, and this one names two cards under a card it removed.
+     */
+    @Test
+    fun aKingTakenOffThePileNamesAJackAndTheTradeGoesThroughTheDoor() {
+        val state = testState(
+            players = listOf(
+                seat(me, listOf(Rank.SEVEN, Rank.EIGHT)),
+                seat(caller, listOf(Rank.SIX)),
+                seat(nina, listOf(Rank.TWO, Rank.JACK)),
+                // Read nothing, and say nothing: Don's hand is a pair of cards the table can
+                // price and nobody can name, which is what most of a hand is most of the time.
+                seat(don, listOf(Rank.FOUR, Rank.FIVE), read = emptyList()),
+            ),
+            phase = GamePhase.FINAL,
+            vintoCallerId = caller,
+            discardPile = Pile(listOf(testCard(Rank.KING, "pile-king"))),
+        ).let { it.copy(currentPlayerIndex = it.players.indexOfFirst { p -> p.id == caller }) }
+
+        val seeded = seedTheBoard(state, plan = null)
+
+        val lane = assertNotNull(seeded.plan.laneOf(nina), "no proposal for the King on the pile")
+        assertEquals(Opening.TAKE_THE_DISCARD, lane.opening, "the turn does not open on the pile")
+        val declare = assertIs<Step.Declare>(lane.step, "the taken King declared nothing")
+        assertEquals(Rank.JACK, declare.rank)
+        assertEquals(Slot(nina, 1), assertNotNull(declare.card).let { Slot(it.seat, it.position) })
+        val trade = assertIs<Step.Swap>(declare.then, "the named Jack's trade went unsaid")
+        assertTrue(trade.from.seat != trade.to.seat, "a swap within one hand")
+        assertTrue(nina in seeded.plan.agreed, "the bot did not nod to its own line")
+    }
+
+    /** A card the table has been told about, so a King may name it. */
+    private fun spoken(rank: Rank, at: Int) =
+        PlanCard("${rank.serialName}-$at", rank, getCardValue(rank), played = false)
+
+    /** A card nobody has spoken about: priced at the deck's mean, and nameable by nobody. */
+    private fun unspoken(seat: String, at: Int) =
+        PlanCard("unspoken-$seat-$at", Rank.SIX, UNSEEN_CARD_VALUE, played = false, rankKnown = false)
+
+    /** Whether a step, or anything it sets off, makes a seat draw. */
+    private fun Step?.forcesADraw(): Boolean = when (this) {
+        is Step.ForceDraw -> true
+        is Step.PutDown -> then.forcesADraw()
+        is Step.Declare -> then.forcesADraw()
+        else -> false
     }
 
     @Test
