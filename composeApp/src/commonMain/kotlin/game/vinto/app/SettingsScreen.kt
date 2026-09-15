@@ -99,6 +99,7 @@ import game.vinto.app.art.settings_studio_detail
 import game.vinto.app.art.settings_support
 import game.vinto.app.art.settings_support_buy
 import game.vinto.app.art.settings_support_detail
+import game.vinto.app.art.settings_support_given
 import game.vinto.app.art.settings_support_link
 import game.vinto.app.art.settings_support_link_detail
 import game.vinto.app.art.settings_support_thanks
@@ -732,6 +733,62 @@ private fun About() {
 }
 
 /**
+ * The button, the thank-you and the standing count.
+ *
+ * Extracted from [SupportRow] because that function now holds two pieces of state and three
+ * offers, and detekt was right that it had stopped being one thing. What is here is the only
+ * branch with anything to do.
+ *
+ * **The button stays after a purchase**, which it did not used to: the thank-you replaced it, so
+ * somebody who wanted to give twice had to leave Settings and come back — on the one screen whose
+ * whole point is that the gift can be repeated.
+ */
+@Composable
+private fun GiveThanks(price: String, thanked: Boolean, given: Int, onGiven: (Int) -> Unit) {
+    val scope = rememberCoroutineScope()
+
+    Column(verticalArrangement = Arrangement.spacedBy(Tight)) {
+        // A store that names no figure gets the figure-less label rather than "Say thanks — " with
+        // the separator hanging off it, which reads as a string that failed to load on the one
+        // control here that asks somebody for money. Play returns an empty `formattedPrice` for a
+        // product that is active but priced in no territory the buyer is in — a live product, so
+        // nothing upstream rejects it. `SupportPriceTest` holds both halves.
+        GameButton(
+            label = if (price.isBlank()) {
+                stringResource(Res.string.settings_support_link)
+            } else {
+                stringResource(Res.string.settings_support_buy, price)
+            },
+            tone = ButtonTone.PLAY,
+            // A count, because Play's quantity stepper turns one tap into several — `Support.kt`
+            // has the whole of it. Zero for every way of not having bought, so a cancelled sheet
+            // moves nothing and says nothing.
+            onClick = { scope.launch { buySupport().takeIf { it > 0 }?.let(onGiven) } },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        if (thanked) {
+            Text(
+                text = stringResource(Res.string.settings_support_thanks),
+                fontSize = TitleRowSize,
+                color = Rail.gold,
+            )
+        }
+
+        // The standing record, quieter than the thank-you above it and absent until there is
+        // something to say. A zero here would be a screen telling somebody they have never been
+        // generous, which is not a thing to put in front of anybody.
+        if (given > 0) {
+            Text(
+                text = stringResource(Res.string.settings_support_given, given),
+                fontSize = DetailSize,
+                color = Rail.inkDim,
+            )
+        }
+    }
+}
+
+/**
  * A way to say thanks, at the top of the settings.
  *
  * One price and no box to type in, because neither store lets a buyer choose a figure — see
@@ -760,8 +817,17 @@ private fun SupportRow() {
     // offer, on the screen a player opened to change a setting. The phones keep it: their offer
     // is an in-app purchase, it has no header of its own, and this is the only place it lives.
     if (offer is Support.Elsewhere) return
+
+    // Both stores, taking the larger — `Enduring.kt` carries why that needs no clock. Read once
+    // per visit and then kept in state, so the line under the button moves the moment a purchase
+    // lands rather than on the next trip to Settings.
+    val vault = LocalVault.current
+    var given by remember(vault) { mutableStateOf(vault?.let { thanksGiven(it) }?.given ?: 0) }
+
+    // Whether a thank-you was given *on this visit*, which is a different question from how many
+    // have ever been given and is why it is not derived from [given]. It earns the warm line;
+    // the count earns the quiet one.
     var thanked by rememberSaveable { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
     val failed = remember { mutableStateOf<String?>(null) }
 
     Setting(
@@ -769,26 +835,23 @@ private fun SupportRow() {
         detail = stringResource(Res.string.settings_support_detail),
     ) {
         when {
-            thanked -> Text(
-                text = stringResource(Res.string.settings_support_thanks),
-                fontSize = TitleRowSize,
-                color = Rail.gold,
-            )
-
             // A store that names no figure gets the figure-less label rather than "Say thanks — "
             // with the separator hanging off it, which reads as a string that failed to load on the
             // one control here that asks somebody for money. Play returns an empty `formattedPrice`
             // for a product that is active but priced in no territory the buyer is in — a live
             // product, so nothing upstream rejects it. `SupportPriceTest` holds both halves.
-            offer is Support.Offered -> GameButton(
-                label = if (offer.price.isBlank()) {
-                    stringResource(Res.string.settings_support_link)
-                } else {
-                    stringResource(Res.string.settings_support_buy, offer.price)
+            //
+            // **The button stays after a purchase**, which it did not used to. The thank-you
+            // replaced it, so somebody who wanted to give twice had to leave Settings and come
+            // back — on the one screen whose whole point is that the gift can be repeated.
+            offer is Support.Offered -> GiveThanks(
+                price = offer.price,
+                thanked = thanked,
+                given = given,
+                onGiven = { bought ->
+                    thanked = true
+                    given = vault?.let { recordThanks(bought, it) }?.given ?: given + bought
                 },
-                tone = ButtonTone.PLAY,
-                onClick = { scope.launch { thanked = buySupport() } },
-                modifier = Modifier.fillMaxWidth(),
             )
 
             // Web and desktop, where no store's rules reach and the amount is the giver's own.

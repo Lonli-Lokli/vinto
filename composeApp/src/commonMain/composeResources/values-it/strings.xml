@@ -143,6 +143,7 @@
     <string name="settings_support_link_detail">Apre una pagina dove scegli l'importo. Le versioni per telefono non possono farlo — lì è uno store a gestire i pagamenti, e sono le sue regole a fissare il prezzo.</string>
     <string name="settings_support_unavailable">Non ancora disponibile qui. Non c'è nulla da fare da questa schermata; serve uno store, e i telefoni ne avranno uno per primi.</string>
     <string name="settings_support_thanks">Grazie. Davvero.</string>
+    <string name="settings_support_given">%1$d ringraziamenti inviati</string>
     <string name="settings_explain">Altro su %1$s</string>
     <string name="settings_privacy">Informativa sulla privacy</string>
     <string name="settings_privacy_detail">Cosa viene conteggiato, cosa no, e come disattivarlo.</string>

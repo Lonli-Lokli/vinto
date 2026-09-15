@@ -20,5 +20,26 @@
     <array>
         <string>applinks:vinto.kupalinka.app</string>
     </array>
+
+    <!-- THE COUNT OF THANKS, and the only thing this app keeps that outlives a reinstall.
+         `NSUserDefaults` goes with a deleted app, so the number in `Thanks` — how many times
+         somebody has said thanks — would be lost by a phone upgrade. Android needs nothing here:
+         its vault file is already named in `backup_rules.xml`, so Auto Backup carries it.
+
+         Neither store can rebuild this number, which is why it is kept at all rather than asked
+         for. A consumable that has been finished is gone from the receipt, exactly as a consumed
+         purchase is gone from Play's `queryPurchasesAsync`.
+
+         KEY-VALUE ONLY. No document storage, no CloudKit container — this is one small integer,
+         and `NSUbiquitousKeyValueStore` is the API Apple documents for exactly that.
+
+         THE CAPABILITY IS NOT ENABLED IN THE PORTAL YET, and this entitlement changes nothing
+         until it is: `Enduring.ios.kt` reads and writes nothing when the store is unavailable or
+         the player is not signed into iCloud, and the count falls back to the device's own copy.
+         Declared now for the same reason `associated-domains` above was — adding a capability
+         reissues the provisioning profile, and doing that during a release is how a build stops
+         signing on the afternoon it was meant to ship. -->
+    <key>com.apple.developer.ubiquity-kvstore-identifier</key>
+    <string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
 </dict>
 </plist>

@@ -76,6 +76,61 @@ None of this is a console setting. Play has no consumable flag on a one-time pro
 is a call the client makes, so a product that looks perfect in the console still only sells once
 if nobody makes it.
 
+### Several at once, and the count that outlives the phone
+
+**Multi-quantity is Play's, and the app only reads it.** A buyer can take several of a consumable
+in one transaction by working a stepper in Play's own purchase sheet — there is no `setQuantity`
+on `ProductDetailsParams.Builder`, so this app cannot offer, preset or price one. What comes back
+is a **single** `Purchase` carrying `quantity`, cleared by a single `consumeAsync`. Google's
+condition for enabling the feature is that the app honours that number first, and warns you may
+need to force an update before flipping the console toggle — so the build ships, then the flag.
+
+Honouring it is nearly free here, because there is nothing to provision. The only place a quantity
+can land is the count below, and `buySupport()` answers an `Int` for exactly that reason: a
+`Boolean` would lose the three at the first hop.
+
+**Apple works the other way round, and that is not a gap.** StoreKit has no picker of its own — an
+app sets `SKMutablePayment.quantity` itself — so a stepper on iOS would be a control this app drew
+and a total this app multiplied, which is the type-in-a-figure shape the store rules at the top of
+this section forbid. iOS reads `payment.quantity`, gets 1, and is correct rather than aspirational.
+
+**The count is a memento, not a receipt.** `Thanks` (in `shared/client`) holds one integer: how
+many times this player has said thanks, shown under the button as "Said thanks: N" once it is
+above zero. It unlocks nothing and nothing checks it — invariant 2 is untouched — and a tampered
+client that wrote itself a 90 would have given itself a number.
+
+Three decisions in it, all the product owner's:
+
+* **Thanks, not transactions.** A quantity of three counts three. Somebody who gives three in one
+  tap has done what somebody who crossed three sheets did, and should not see a smaller number.
+* **"Clear it" does not reach it.** That control forgets a *game record*, and a losing streak is
+  somebody's own business; erasing four acts of generosity as a side effect of it would be the
+  wrong thing happening for a right-sounding reason. The cost, stated because it cuts against this
+  document's own line that data nobody can clear is data nobody agreed to keep: there is no way to
+  reset it from inside the app.
+* **It survives a reinstall**, which needed two different answers because the stores give none.
+  **Neither store can rebuild it**: Play's `queryPurchasesAsync` returns only what is *unconsumed*,
+  and a consumable finished with StoreKit leaves the receipt — a consumable's history is not
+  retrievable, by design, on both platforms. So it is kept rather than asked for.
+
+| | |
+| --- | --- |
+| **Android** | Already solved, and nothing was added. `AndroidStorage` writes the `SharedPreferences` file `vinto.xml`; `allowBackup` is set and both `backup_rules.xml` and `backup_rules_legacy.xml` name that file for cloud backup *and* device-to-device transfer. `enduringVault()` answers null here, which says "the vault you have is the durable one" |
+| **iOS** | `NSUserDefaults` goes with a deleted app, so the count is mirrored to **iCloud key-value storage** — Apple's documented API for a few small values belonging to the person rather than the device, and it syncs across their devices as a welcome side effect. Not the keychain: its survival across a delete is a well-known behaviour rather than a promise, and a counter is not a credential |
+
+The two readings are reconciled by taking **the larger**, which needs no clock and no conflict
+resolution because the count only ever goes up. A fresh install reads local-empty against
+cloud-four; a device with no iCloud reads local-four against cloud-empty; both are the same
+question with the same answer (`EnduringThanksTest`).
+
+**One step is left, and it is in the Apple developer portal.** The entitlement
+`com.apple.developer.ubiquity-kvstore-identifier` is declared in `iosApp/iosApp.entitlements`
+already, for the reason written beside `associated-domains` there: adding a capability reissues the
+provisioning profile, and doing that during a release is how a build stops signing on the afternoon
+it was meant to ship. Until iCloud is enabled on the App ID the store reads and writes nothing, the
+count falls back to the device's own copy, and nothing else changes — the same absent-safe shape
+every telemetry path here has. No code change when it is turned on.
+
 ### It is a tip, and it must never be called a donation
 
 The wording is a store rule, not a preference. **Apple's Guideline 3.2.2 reserves the word for

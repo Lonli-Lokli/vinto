@@ -12,7 +12,7 @@ actual fun supportOffer(): Support = Support.Elsewhere(Pages.SUPPORT)
 /**
  * Nothing to buy in-process: [supportOffer] hands back a link and the screen opens it.
  *
- * False rather than opening the page here, so there is exactly one place a link is followed and
+ * Zero rather than opening the page here, so there is exactly one place a link is followed and
  * one place a failure to open it is reported.
  */
-actual suspend fun buySupport(): Boolean = false
+actual suspend fun buySupport(): Int = 0

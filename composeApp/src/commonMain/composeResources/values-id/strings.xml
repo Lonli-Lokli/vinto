@@ -139,6 +139,7 @@
     <string name="settings_support_link_detail">Membuka halaman tempat Anda memilih jumlahnya. Versi ponsel tidak bisa melakukan itu — pembayaran di sana diambil alih toko aplikasi, dan aturannya yang menetapkan harga.</string>
     <string name="settings_support_unavailable">Belum tersedia di sini. Tidak ada yang bisa dilakukan dari layar ini; ini butuh toko aplikasi, dan ponsel akan mendapatkannya lebih dulu.</string>
     <string name="settings_support_thanks">Terima kasih. Sungguh.</string>
+    <string name="settings_support_given">Berterima kasih: %1$d kali</string>
     <string name="settings_explain">Lebih lanjut tentang %1$s</string>
     <string name="settings_privacy">Kebijakan privasi</string>
     <string name="settings_privacy_detail">Apa yang dihitung, apa yang tidak, dan cara mematikannya.</string>

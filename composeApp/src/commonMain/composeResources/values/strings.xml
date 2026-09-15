@@ -186,6 +186,12 @@
     <string name="settings_support_link_detail">Opens a page where you choose the amount. The phone versions cannot do that — a store takes payments there, and its rules set the price.</string>
     <string name="settings_support_unavailable">Not available here yet. Nothing to do about it from this screen; it needs a store, and the phones will get one first.</string>
     <string name="settings_support_thanks">Thank you. Genuinely.</string>
+    <!-- A count, not a sentence about one: "%1$d given" rather than "you have given %1$d times",
+         for the same reason stats_played is "%1$d played". A number agreeing with its noun needs
+         four forms in Arabic and three in Russian, Ukrainian, Belarusian and Polish, and this
+         project has no <plurals> anywhere. A label and a numeral is the shape that survives
+         twenty-two languages without any of them needing grammar. -->
+    <string name="settings_support_given">Said thanks: %1$d</string>
     <string name="settings_explain">More about %1$s</string>
     <string name="settings_privacy">Privacy policy</string>
     <string name="settings_privacy_detail">What is counted, what is not, and how to switch it off.</string>

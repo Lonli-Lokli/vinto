@@ -144,6 +144,7 @@
     <string name="settings_support_link_detail">Abre una página donde eliges el importe. Las versiones para móvil no pueden hacer eso — ahí una tienda gestiona los pagos, y son sus reglas las que fijan el precio.</string>
     <string name="settings_support_unavailable">Aún no disponible aquí. No hay nada que hacer desde esta pantalla; hace falta una tienda, y los teléfonos tendrán una primero.</string>
     <string name="settings_support_thanks">Gracias. De verdad.</string>
+    <string name="settings_support_given">%1$d agradecimientos</string>
     <string name="settings_explain">Más sobre %1$s</string>
 
     <!-- Pages that belong to the game but are not in it. -->

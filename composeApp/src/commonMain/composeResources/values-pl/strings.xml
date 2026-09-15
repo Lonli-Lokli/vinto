@@ -131,6 +131,7 @@
     <string name="settings_support_link_detail">Otworzy się strona, na której można wybrać kwotę. Wersje telefoniczne tego nie umożliwiają — tam płatności obsługuje sklep i to on ustala cenę.</string>
     <string name="settings_support_unavailable">Tutaj jeszcze niedostępne. Nic z tego poziomu nie da się zrobić — potrzebny jest sklep, a najpierw pojawi się on w telefonach.</string>
     <string name="settings_support_thanks">Dziękujemy. Naprawdę.</string>
+    <string name="settings_support_given">Podziękowań: %1$d</string>
     <string name="settings_explain">Więcej o %1$s</string>
     <string name="settings_privacy">Polityka prywatności</string>
     <string name="settings_privacy_detail">Co jest liczone, co nie, i jak to wyłączyć.</string>

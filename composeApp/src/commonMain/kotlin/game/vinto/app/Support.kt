@@ -78,14 +78,25 @@ sealed interface Support {
 }
 
 /**
- * Asks the platform to take the payment, returning true when it went through.
+ * Asks the platform to take the payment, answering **how many thanks were given**, or 0.
  *
- * Deliberately coarse. There is no receipt to keep, nothing to unlock and nothing to restore: a
- * consumable that grants no entitlement has no state worth persisting, which is what makes this
- * the one purchase in `MONETIZATION.md` needing neither a vault entry nor a restore flow. What
- * the player gets is the transaction itself, and the app saying thank you.
+ * A count rather than a flag, and the difference is Play's multi-quantity feature: a buyer can
+ * take several of a consumable in one transaction by working a stepper in Play's own sheet, and
+ * what comes back is a single purchase carrying `quantity`. Google's condition for enabling that
+ * is that the app honours the number. This product provisions nothing — there is still no
+ * entitlement and nothing to restore — so the only place a quantity can show is the count in
+ * `Thanks`, and a `Boolean` here would lose it at the first hop.
+ *
+ * **Apple works the other way round and that is not a gap to close.** StoreKit has no quantity
+ * picker of its own; an app sets `SKMutablePayment.quantity` itself, so a stepper on iOS would be
+ * a control this app drew and a price this app multiplied — which is the figure-you-type shape
+ * the store rules above forbid. iOS therefore answers 1, read from the payment rather than
+ * assumed, so the code is already right if that ever changes.
+ *
+ * Still deliberately coarse about *failure*: every way of not buying is 0. A player cannot act on
+ * the difference between refused, cancelled and unreachable.
  */
-expect suspend fun buySupport(): Boolean
+expect suspend fun buySupport(): Int
 
 /** The one product id, shared by both consoles so a single string names it everywhere. */
 const val SUPPORT_PRODUCT: String = "vinto.support.five"

@@ -131,6 +131,7 @@
     <string name="settings_support_link_detail">Öffnet eine Seite, auf der Sie den Betrag wählen. Die Telefonversionen können das nicht — dort übernimmt ein Store die Zahlung, und dessen Regeln setzen den Preis.</string>
     <string name="settings_support_unavailable">Hier noch nicht verfügbar. Von diesem Bildschirm aus lässt sich nichts daran ändern; es braucht einen Store, und die Telefone bekommen zuerst einen.</string>
     <string name="settings_support_thanks">Danke. Wirklich.</string>
+    <string name="settings_support_given">%1$d Mal gedankt</string>
     <string name="settings_explain">Mehr über %1$s</string>
     <string name="settings_privacy">Datenschutzerklärung</string>
     <string name="settings_privacy_detail">Was gezählt wird, was nicht, und wie man es abschaltet.</string>

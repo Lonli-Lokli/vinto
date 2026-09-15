@@ -77,17 +77,20 @@ object AndroidBilling {
     private var details: ProductDetails? = null
     private var activity: Activity? = null
 
+    /** Every way of not having bought anything, which the caller cannot tell apart anyway. */
+    private const val NONE = 0
+
     /** Long enough for a real payment method, short enough not to wait forever on silence. */
     private const val FLOW_TIMEOUT_MS = 10 * 60 * 1000L
 
     /**
-     * Whether Play last reported a completed purchase, waiting to be collected by [buy].
+     * How many thanks Play last reported, waiting to be collected by [buy].
      *
      * A field rather than a parameter because Play answers through a listener registered on the
      * client, not through the call that started the flow — so the coroutine that launched it has
      * to be handed the result from outside itself.
      */
-    private var pending: CompletableDeferred<Boolean>? = null
+    private var pending: CompletableDeferred<Int>? = null
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -100,9 +103,17 @@ object AndroidBilling {
         // product from then on.
         if (paid.isNotEmpty()) scope.launch { consume(paid) }
 
-        // Every other outcome is the same `false`, including cancellation. The caller cannot act
-        // on the difference between refused, cancelled and unreachable, and neither can a player.
-        pending?.complete(result.responseCode == BillingClient.BillingResponseCode.OK && paid.isNotEmpty())
+        // A quantity, because Play's multi-quantity sheet returns one purchase of three rather
+        // than three purchases. Every other outcome is the same `NONE`, including cancellation:
+        // the caller cannot act on the difference between refused, cancelled and unreachable,
+        // and neither can a player.
+        pending?.complete(
+            if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                paid.sumOf { it.quantity }
+            } else {
+                NONE
+            },
+        )
     }
 
     /** Called from `MainActivity`. Idempotent: a configuration change replaces, never stacks. */
@@ -210,11 +221,19 @@ object AndroidBilling {
     internal fun price(): String? =
         details?.oneTimePurchaseOfferDetails?.formattedPrice
 
-    /** Runs the flow, having first made sure there is nothing owned for Play to refuse it over. */
-    internal suspend fun buy(): Boolean {
-        val client = client ?: return false
-        val activity = activity ?: return false
-        val product = details ?: return false
+    /**
+     * Runs the flow, having first made sure there is nothing owned for Play to refuse it over,
+     * and answers how many thanks it bought.
+     *
+     * More than one when the buyer worked the quantity stepper: Play's multi-quantity feature
+     * hands back a **single** purchase carrying `quantity`, not several purchases, so the count
+     * is a sum over the field rather than over the list. Google's condition for enabling the
+     * feature on a product is that the app honours that number.
+     */
+    internal suspend fun buy(): Int {
+        val client = client ?: return NONE
+        val activity = activity ?: return NONE
+        val product = details ?: return NONE
 
         // Before the sheet, not only on connection. Somebody who has just been told they already
         // own this taps it again; a repair that only ran at startup would ask them to close the
@@ -231,20 +250,20 @@ object AndroidBilling {
             )
             .build()
 
-        val waiting = CompletableDeferred<Boolean>()
+        val waiting = CompletableDeferred<Int>()
         pending = waiting
         val opened = client.launchBillingFlow(activity, flow)
         if (opened.responseCode != BillingClient.BillingResponseCode.OK) {
             // The sheet never opened, so [updates] will never fire for it. Without this the
             // caller waits out the whole timeout below for an answer that is not coming.
             pending = null
-            return false
+            return NONE
         }
 
         // Bounded, because a listener that never fires would otherwise hang the coroutine for
         // the life of the process — Play's sheet can be dismissed in ways that report nothing.
         val paid = withTimeoutOrNull(FLOW_TIMEOUT_MS) { waiting.await() }
         pending = null
-        return paid == true
+        return paid ?: NONE
     }
 }

@@ -49,10 +49,13 @@ object IosBilling {
 
     private var product: SKProduct? = null
 
+    /** Every way of not having bought anything, which the caller cannot tell apart anyway. */
+    private const val NONE = 0
+
     /** Long enough for a real payment method, short enough not to wait forever on silence. */
     private const val FLOW_TIMEOUT_MS = 10 * 60 * 1000L
 
-    private var pending: CompletableDeferred<Boolean>? = null
+    private var pending: CompletableDeferred<Int>? = null
 
     private val observer = object : NSObject(), SKPaymentTransactionObserverProtocol {
         override fun paymentQueue(queue: SKPaymentQueue, updatedTransactions: List<*>) {
@@ -69,13 +72,16 @@ object IosBilling {
                         // Finished before the caller is told, so a purchase can never be left in
                         // the queue by a screen that went away while it was being paid for.
                         queue.finishTransaction(transaction)
-                        pending?.complete(true)
+                        // The payment's own quantity, not an assumed 1. StoreKit has no picker of
+                        // its own and this app deliberately draws none (`Support.kt`), so it is 1
+                        // today — read rather than assumed so the number stays the transaction's.
+                        pending?.complete(transaction.payment.quantity.toInt())
                     }
 
                     // Failed, deferred, or anything a later StoreKit adds. All the same answer.
                     else -> {
                         queue.finishTransaction(transaction)
-                        pending?.complete(false)
+                        pending?.complete(NONE)
                     }
                 }
             }
@@ -122,12 +128,17 @@ object IosBilling {
         return formatter.stringFromNumber(offer.price)
     }
 
-    /** Puts the payment on the queue and waits for the observer to report what became of it. */
-    internal suspend fun buy(): Boolean {
-        val offer = product ?: return false
-        if (!SKPaymentQueue.canMakePayments()) return false
+    /**
+     * Puts the payment on the queue and waits for the observer to report what became of it.
+     *
+     * Answers how many thanks it bought — 1 in practice, since the quantity is the payment's and
+     * this app sets none. See [buySupport] for why a picker here would be the wrong shape.
+     */
+    internal suspend fun buy(): Int {
+        val offer = product ?: return NONE
+        if (!SKPaymentQueue.canMakePayments()) return NONE
 
-        val waiting = CompletableDeferred<Boolean>()
+        val waiting = CompletableDeferred<Int>()
         pending = waiting
         SKPaymentQueue.defaultQueue().addPayment(SKPayment.paymentWithProduct(offer))
 
@@ -135,6 +146,6 @@ object IosBilling {
         // time, and the screen that started it should not wait for the life of the process.
         val paid = withTimeoutOrNull(FLOW_TIMEOUT_MS) { waiting.await() }
         pending = null
-        return paid == true
+        return paid ?: NONE
     }
 }

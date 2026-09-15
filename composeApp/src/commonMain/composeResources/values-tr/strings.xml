@@ -141,6 +141,7 @@
     <string name="settings_support_link_detail">Tutarı seçtiğin bir sayfa açılır. Telefon sürümleri bunu yapamaz — orada ödemeyi bir mağaza alır, ve fiyatı onun kuralları belirler.</string>
     <string name="settings_support_unavailable">Burada henüz yok. Bu ekrandan yapılabilecek bir şey yok; bunun için bir mağaza gerekiyor, ve onu önce telefonlar alacak.</string>
     <string name="settings_support_thanks">Teşekkürler. Gerçekten.</string>
+    <string name="settings_support_given">Teşekkür sayısı: %1$d</string>
     <string name="settings_explain">%1$s hakkında daha fazla</string>
 
     <string name="settings_privacy">Gizlilik politikası</string>

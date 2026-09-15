@@ -131,6 +131,7 @@
     <string name="settings_support_link_detail">会打开一个可以自选金额的页面。手机版做不到这一点——那里由应用商店处理付款，价格也由它的规则决定。</string>
     <string name="settings_support_unavailable">这里暂时还不能用。这个页面无法解决——需要先有应用商店，而手机版会先支持。</string>
     <string name="settings_support_thanks">谢谢你，真心的。</string>
+    <string name="settings_support_given">已表达谢意：%1$d 次</string>
     <string name="settings_explain">了解更多关于 %1$s 的信息</string>
     <string name="settings_privacy">隐私政策</string>
     <string name="settings_privacy_detail">我们统计什么、不统计什么，以及如何关闭它。</string>

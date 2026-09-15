@@ -131,6 +131,7 @@
     <string name="settings_support_link_detail">금액을 직접 정할 수 있는 페이지가 열려요. 폰 버전에서는 이럴 수 없어요 — 스토어가 결제를 처리하고, 가격도 그 규정을 따르거든요.</string>
     <string name="settings_support_unavailable">여기서는 아직 이용할 수 없어요. 이 화면에서 할 수 있는 건 없고, 스토어가 필요하며, 폰 버전이 먼저 지원될 거예요.</string>
     <string name="settings_support_thanks">고맙습니다. 진심으로요.</string>
+    <string name="settings_support_given">감사를 전한 횟수: %1$d회</string>
     <string name="settings_explain">%1$s에 대해 더 알아보기</string>
     <string name="settings_privacy">개인정보 처리방침</string>
     <string name="settings_privacy_detail">무엇이 집계되고 무엇이 아닌지, 그리고 끄는 방법.</string>

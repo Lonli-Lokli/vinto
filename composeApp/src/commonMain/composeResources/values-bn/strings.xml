@@ -131,6 +131,7 @@
     <string name="settings_support_link_detail">একটি পাতা খোলে যেখানে আপনি অঙ্কটি বেছে নেন। ফোন সংস্করণগুলো তা করতে পারে না — সেখানে একটি স্টোর পেমেন্ট নেয়, আর তার নিয়ম দাম ঠিক করে।</string>
     <string name="settings_support_unavailable">এখনো এখানে পাওয়া যাচ্ছে না। এই স্ক্রিন থেকে এ নিয়ে কিছু করার নেই; এর জন্য একটি স্টোর দরকার, আর ফোনগুলো সেটা আগে পাবে।</string>
     <string name="settings_support_thanks">ধন্যবাদ। সত্যিই।</string>
+    <string name="settings_support_given">ধন্যবাদ জানানো হয়েছে: %1$d</string>
     <string name="settings_explain">%1$s সম্পর্কে আরও</string>
     <string name="settings_privacy">গোপনীয়তা নীতি</string>
     <string name="settings_privacy_detail">কী গোনা হয়, কী হয় না, আর কীভাবে তা বন্ধ করবেন।</string>

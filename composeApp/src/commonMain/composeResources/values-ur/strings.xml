@@ -138,6 +138,7 @@
     <string name="settings_support_link_detail">ایک صفحہ کھلتا ہے جہاں آپ رقم منتخب کرتے ہیں۔ فون ورژنز ایسا نہیں کر سکتے — وہاں ادائیگی اسٹور کے ذریعے ہوتی ہے، اور قیمت اس کے قواعد طے کرتے ہیں۔</string>
     <string name="settings_support_unavailable">یہاں ابھی دستیاب نہیں۔ اس اسکرین سے کچھ نہیں کیا جا سکتا؛ اس کے لیے اسٹور درکار ہے، اور فونز کو یہ پہلے ملے گا۔</string>
     <string name="settings_support_thanks">شکریہ۔ دل سے۔</string>
+    <string name="settings_support_given">شکریہ ادا کیا: %1$d</string>
     <string name="settings_explain">%1$s کے بارے میں مزید</string>
 
     <string name="settings_privacy">پرائیویسی پالیسی</string>

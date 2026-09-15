@@ -142,6 +142,7 @@
     <string name="settings_support_link_detail">एक पेज खुलता है जहां आप रकम चुनते हैं। फ़ोन वाले संस्करण यह नहीं कर सकते — वहां भुगतान एक स्टोर लेता है, और कीमत उसके नियम तय करते हैं।</string>
     <string name="settings_support_unavailable">अभी यहां उपलब्ध नहीं है। इस स्क्रीन से इस बारे में कुछ नहीं किया जा सकता; इसके लिए एक स्टोर चाहिए, और फ़ोन को यह पहले मिलेगा।</string>
     <string name="settings_support_thanks">धन्यवाद। सच में।</string>
+    <string name="settings_support_given">धन्यवाद कहा: %1$d</string>
     <string name="settings_explain">%1$s के बारे में और जानें</string>
     <string name="settings_privacy">गोपनीयता नीति</string>
     <string name="settings_privacy_detail">क्या गिना जाता है, क्या नहीं, और इसे कैसे बंद करें।</string>

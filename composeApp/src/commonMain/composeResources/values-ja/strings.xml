@@ -144,6 +144,7 @@
     <string name="settings_support_link_detail">金額を選べるページを開きます。スマートフォン版ではこれができません — ストアが決済を扱い、価格もその規約に従うためです。</string>
     <string name="settings_support_unavailable">ここではまだ利用できません。この画面でできることはありません — ストアが必要で、まずスマートフォン版から対応します。</string>
     <string name="settings_support_thanks">ありがとうございます。心から。</string>
+    <string name="settings_support_given">感謝を伝えた回数：%1$d回</string>
     <string name="settings_explain">%1$sについて詳しく</string>
     <string name="settings_privacy">プライバシーポリシー</string>
     <string name="settings_privacy_detail">何が計測され、何がされないか、そしてオフにする方法。</string>

@@ -139,6 +139,7 @@
     <string name="settings_support_link_detail">Abre uma página onde escolhes o valor. As versões para telemóvel não conseguem fazer isso — aí é uma loja que trata dos pagamentos, e são as suas regras que definem o preço.</string>
     <string name="settings_support_unavailable">Ainda não disponível aqui. Nada a fazer a partir deste ecrã; precisa de uma loja, e os telemóveis vão ter uma primeiro.</string>
     <string name="settings_support_thanks">Obrigado. A sério.</string>
+    <string name="settings_support_given">%1$d agradecimentos enviados</string>
     <string name="settings_explain">Mais sobre %1$s</string>
     <string name="settings_privacy">Política de privacidade</string>
     <string name="settings_privacy_detail">O que é contabilizado, o que não é, e como desativar.</string>

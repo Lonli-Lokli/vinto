@@ -140,6 +140,7 @@
     <string name="settings_support_link_detail">Ouvre une page où vous choisissez le montant. Les versions mobiles ne peuvent pas le faire — une boutique y gère les paiements, et ce sont ses règles qui fixent le prix.</string>
     <string name="settings_support_unavailable">Pas encore disponible ici. Rien à faire depuis cet écran ; il faut une boutique, et les téléphones en auront une en premier.</string>
     <string name="settings_support_thanks">Merci. Sincèrement.</string>
+    <string name="settings_support_given">%1$d remerciements envoyés</string>
     <string name="settings_explain">En savoir plus sur %1$s</string>
     <string name="settings_privacy">Politique de confidentialité</string>
     <string name="settings_privacy_detail">Ce qui est compté, ce qui ne l’est pas, et comment le désactiver.</string>

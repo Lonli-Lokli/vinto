@@ -130,6 +130,7 @@
     <string name="settings_support_link_detail">פותח דף שבו בוחרים את הסכום. גרסאות הטלפון לא יכולות לעשות זאת — שם החנות מטפלת בתשלומים, והכללים שלה קובעים את המחיר.</string>
     <string name="settings_support_unavailable">עדיין לא זמין כאן. אין מה לעשות בעניין הזה מהמסך הזה; זה דורש חנות, והטלפונים יקבלו אותה קודם.</string>
     <string name="settings_support_thanks">תודה. באמת.</string>
+    <string name="settings_support_given">תודות: %1$d</string>
     <string name="settings_explain">עוד על %1$s</string>
 
     <string name="settings_privacy">מדיניות פרטיות</string>

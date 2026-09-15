@@ -149,6 +149,7 @@
     <string name="settings_support_link_detail">Відкриється сторінка, де можна обрати суму. На телефонах так не можна — там платежі проходять через магазин, і ціну визначає він.</string>
     <string name="settings_support_unavailable">Тут це поки недоступне. З цього екрана нічого не зробити — потрібен магазин, а він з'явиться спершу на телефонах.</string>
     <string name="settings_support_thanks">Дякую. Справді.</string>
+    <string name="settings_support_given">Подяк: %1$d</string>
     <string name="settings_explain">Детальніше — %1$s</string>
     <string name="settings_privacy">Політика конфіденційності</string>
     <string name="settings_privacy_detail">Що рахується, що ні, і як це вимкнути.</string>

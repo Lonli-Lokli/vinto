@@ -141,6 +141,7 @@
     <string name="settings_support_link_detail">يفتح صفحة تختار فيها المبلغ. لا يمكن للنسختين على الهاتف فعل ذلك — يتولى المتجر الدفع هناك، وقواعده تحدد السعر.</string>
     <string name="settings_support_unavailable">غير متاح هنا بعد. لا شيء يمكن فعله بخصوص ذلك من هذه الشاشة؛ يحتاج الأمر إلى متجر، وستحصل الهواتف عليه أولاً.</string>
     <string name="settings_support_thanks">شكرًا لك. بصدق.</string>
+    <string name="settings_support_given">مرات الشكر: %1$d</string>
     <string name="settings_explain">المزيد عن %1$s</string>
 
     <string name="settings_privacy">سياسة الخصوصية</string>

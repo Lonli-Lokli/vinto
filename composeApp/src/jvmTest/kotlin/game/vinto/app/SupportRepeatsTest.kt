@@ -125,4 +125,42 @@ class SupportRepeatsTest {
                 "is never handed to the app at all",
         )
     }
+
+    /**
+     * A quantity of three is three thanks, not one purchase.
+     *
+     * Play's multi-quantity feature puts a stepper in its own purchase sheet — there is no
+     * `setQuantity` on `ProductDetailsParams.Builder`, so the app cannot offer or preset one —
+     * and hands back a **single** `Purchase` carrying `quantity`. Google's requirement for
+     * enabling it is that provisioning logic honours that number. This product provisions
+     * nothing, so the only place it can show is the count, and dropping it there would tell
+     * somebody who gave three in one tap that they had given once.
+     */
+    @Test
+    fun theQuantityOnAMultiQuantityPurchaseIsRead() {
+        val billing = actual("androidMain/kotlin/game/vinto/app/AndroidBilling.android.kt")
+
+        assertTrue(
+            billing.contains("quantity"),
+            "the quantity on a purchase is ignored, so a multi-quantity tip counts as one. " +
+                "Google requires an app to honour it before the console flag may be enabled",
+        )
+    }
+
+    /**
+     * And the seam carries a count rather than a flag, on every platform at once.
+     *
+     * A `Boolean` cannot express "three", so the plumbing has to be a number the whole way or
+     * the quantity is lost at the first hop regardless of what the actual read.
+     */
+    @Test
+    fun theSupportSeamReportsHowManyRatherThanWhether() {
+        val seam = File(sources, "commonMain/kotlin/game/vinto/app/Support.kt")
+        assertTrue(seam.exists(), "no Support.kt to check — has the seam moved?")
+
+        assertTrue(
+            Regex("""expect suspend fun buySupport\(\)\s*:\s*Int""").containsMatchIn(seam.readText()),
+            "buySupport still answers a Boolean, which cannot carry a quantity of three",
+        )
+    }
 }

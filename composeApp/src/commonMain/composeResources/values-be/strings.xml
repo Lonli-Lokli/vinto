@@ -147,6 +147,7 @@
     <string name="settings_support_link_detail">Адкрыецца старонка, дзе можна выбраць суму. На тэлефонах так нельга — там плацяжы праходзяць праз краму, і цану вызначае яна.</string>
     <string name="settings_support_unavailable">Тут гэта пакуль недаступна. З гэтага экрана нічога не зрабіць — патрэбна крама, а яна з'явіцца спачатку на тэлефонах.</string>
     <string name="settings_support_thanks">Дзякуй. Сапраўды.</string>
+    <string name="settings_support_given">Падзяк: %1$d</string>
     <string name="settings_explain">Падрабязней — %1$s</string>
     <string name="settings_privacy">Палітыка прыватнасці</string>
     <string name="settings_privacy_detail">Што лічыцца, што не, і як гэта выключыць.</string>

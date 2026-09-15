@@ -5,10 +5,11 @@ actual fun supportOffer(): Support =
     AndroidBilling.price()?.let { Support.Offered(it) } ?: Support.Unavailable
 
 /**
- * Takes the payment.
+ * Takes the payment, and answers how many thanks it bought.
  *
- * Every failure is the same `false`: cancelled, refused, no network, no product, no activity. A
- * player cannot act on the difference, and a thank-you that explained why it failed would be
- * telling them about our problems at the moment they were trying to be generous.
+ * Several, when the buyer worked the quantity stepper in Play's sheet. Every failure is the same
+ * `0`: cancelled, refused, no network, no product, no activity. A player cannot act on the
+ * difference, and a thank-you that explained why it failed would be telling them about our
+ * problems at the moment they were trying to be generous.
  */
-actual suspend fun buySupport(): Boolean = AndroidBilling.buy()
+actual suspend fun buySupport(): Int = AndroidBilling.buy()
