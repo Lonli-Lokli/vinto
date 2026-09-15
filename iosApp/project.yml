@@ -26,6 +26,12 @@ options:
 
 settings:
   base:
+    # Swift 6 language mode, where strict concurrency checking is an error rather than a warning.
+    # At the PROJECT level rather than on the target: set on the target, the project's own
+    # configurations keep xcodegen's default of 5.0, and any target added later silently inherits
+    # that instead. Two numbers in one generated file is one too many.
+    SWIFT_VERSION: "6.0"
+
     # The version, single-sourced here so the Info.plist can reference it and the two cannot
     # drift. MARKETING_VERSION is what a person reads in the App Store; CURRENT_PROJECT_VERSION
     # is the build number, which App Store Connect requires to increase on every upload of the
@@ -68,11 +74,6 @@ targets:
         # gets the layout the wider screen wants rather than a stretched phone.
         TARGETED_DEVICE_FAMILY: "1,2"
 
-        # Swift 6 language mode, which is where strict concurrency checking becomes an error
-        # rather than a warning. There is almost no Swift here — an entry point and a bridge —
-        # so the cost of being in the strict mode is near zero and the cost of not being is a
-        # migration that gets harder every release.
-        SWIFT_VERSION: "6.0"
 
         # Where `embedAndSignAppleFrameworkForXcode` leaves the Kotlin framework, and the
         # `-framework ComposeApp` that links it. `ContentView.swift` imports it by that name;

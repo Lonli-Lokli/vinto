@@ -39,6 +39,10 @@ disabled_rules:
   # `ComposeView` is a six-line bridge used by exactly one view, in the file that uses it. A file
   # of its own would be a file nobody opens except to find the other half.
   - one_declaration_per_file
+  # Wants an initializer *after* the properties. Every SwiftUI `App` in the portfolio puts
+  # `init()` first, because what it does — starting crash reporting — happens before anything
+  # the `body` describes, and reading it second reads the file out of order.
+  - type_contents_order
 
 line_length:
   # The Swift here is mostly comment, and the comments explain decisions rather than restating
