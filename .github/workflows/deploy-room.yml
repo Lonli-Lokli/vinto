@@ -93,7 +93,7 @@ jobs:
     environment: room
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # The same guard `deploy-web.yml` carries, and it matters more now there is a push
       # trigger: the paths above do not exist on `master` until the Kotlin branch merges, so
