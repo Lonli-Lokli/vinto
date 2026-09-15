@@ -484,6 +484,21 @@ expect fun freshSeed(): Long
 expect fun platformName(): String
 
 /**
+ * Whether this build is one somebody could be playing, as opposed to one of ours.
+ *
+ * It exists for the crash reporter, which has one bucket that has to stay clean: the first crash
+ * a stranger has wants to be findable rather than buried among the simulator runs, the desktop
+ * windows and the CI jobs. Each target has its own honest answer — a debuggable package, a debug
+ * binary, the site the web build is actually served from — and none of them is a flag anybody has
+ * to remember to pass, which is the way this goes wrong in a year.
+ *
+ * **Only a build that can say it is a release is one.** Where a target cannot tell, it says no:
+ * a release filed among ours is in the wrong place and still findable, while ours filed among the
+ * players’ quietly refills the bucket this exists to keep empty.
+ */
+expect fun isReleaseBuild(): Boolean
+
+/**
  * Installs the crash reporter, once, for the life of the app.
  *
  * Same discipline as the counter and deliberately a different pipe. The DSN is a build

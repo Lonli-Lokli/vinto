@@ -65,7 +65,7 @@ object Crashes {
             dsn = dsn,
             platform = platformName(),
             release = "vinto@$VERSION",
-            environment = "production",
+            environment = sentryEnvironment(),
             scope = scope,
             now = ::elapsedMs,
             nowIso = ::nowIso,

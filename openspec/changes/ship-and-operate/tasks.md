@@ -78,7 +78,7 @@ app — which is why the `vinto://` scheme is there and works today.
       reporter was firing from a DEBUG simulator build during a screenshot run. That is the catch
       — see 3.7
 
-- [ ] 3.7 Stop debug and developer crashes being reported as `production`.
+- [x] 3.7 Stop debug and developer crashes being reported as `production`.
       `Crashes.install` hardcodes `environment = "production"`, so a crash from a simulator, a
       `:composeApp:run` desktop window or a CI job is indistinguishable in Sentry from a crash a
       player had. Proven by 3.6, whose event came from a debug build on a simulator and is tagged
@@ -88,6 +88,20 @@ app — which is why the `vinto://` scheme is there and works today.
       report wants to be findable rather than buried among the team's own. The DSN is already a
       build input (`-Pvinto.sentryDsn=`), so the environment can be one too; the alternative is an
       `expect fun isDebugBuild()` with four actuals, which is more honest and more code.
+      **Done, as the four actuals** — `isReleaseBuild()` beside `platformName()` — because a build
+      input has no good default. Passed on the release command it is a thing to forget, and the day
+      it is forgotten a player’s crash is filed among ours; defaulted the other way it is today’s
+      bug with an extra flag. The generated `BuildInfo.kt` cannot help either: it is one constant in
+      `commonMain`, so it cannot differ between `assembleDebug` and `assembleRelease`.
+      Each target answers for itself: a debuggable package on Android (read off the package, not
+      `BuildConfig.DEBUG`, which in a *library* is the library’s own variant); `isDebugBinary` on
+      iOS; `false` on the JVM, whose only window is `:composeApp:run`; and on the web, the one host
+      `deploy-web.yml` publishes to. **Where a target cannot tell it says no**, so a release filed
+      among ours is in the wrong place and still findable, where the other way round quietly refills
+      the bucket this exists to keep clean. `CrashEnvironmentTest` holds the derivation, that all
+      four actuals exist, that `Crashes.kt` names no environment of its own, and that Android
+      attaches its storage before installing the reporter — which is what gives it a context to
+      read.
 
 ## 4. Reading the live service
 
