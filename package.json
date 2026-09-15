@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "lefthook": "^2.1.12",
-    "vydanne": "^0.13.0",
+    "vydanne": "^0.14.0",
     "zdymak": "^0.25.0"
   }
 }
