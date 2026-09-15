@@ -16,30 +16,29 @@ excluded:
   - iosApp/build
   - iosApp/iosApp.xcodeproj
 
+# **Every rule SwiftLint ships**, which is the same standard `config/detekt/detekt.yml` holds
+# the Kotlin side to. `all` rather than a list, so a new SwiftLint version's new rules arrive
+# switched on rather than waiting for somebody to notice them.
 opt_in_rules:
-  - closure_end_indentation
-  - closure_spacing
-  - collection_alignment
-  - contains_over_first_not_nil
-  - empty_count
-  - empty_string
-  - explicit_init
-  - fatal_error_message
-  - first_where
-  - force_unwrapping
-  - implicitly_unwrapped_optional
-  - joined_default_parameter
-  - literal_expression_end_indentation
-  - modifier_order
-  - multiline_parameters
-  - operator_usage_whitespace
-  - overridden_super_call
-  - prohibited_super_call
-  - redundant_nil_coalescing
-  - sorted_imports
-  - toggle_bool
-  - unavailable_function
-  - vertical_whitespace_closing_braces
+  - all
+
+# Where this project disagrees with a rule, the disagreement is written here — the same bargain
+# detekt gets, and the reason there is no inline `swiftlint:disable` anywhere in the Swift.
+disabled_rules:
+  # Wants `{` on a line of its own, which is the opposite of what Swift is written like
+  # everywhere including Apple's own samples — and the opposite of `opening_brace`, a rule that
+  # is on by default and enforces the brace on the declaration line. The two cannot both hold.
+  - contrasted_opening_brace
+
+  # Want `internal` spelled out on every declaration. This is an app target, not a library: there
+  # is no other module to be internal *to*, so the keyword would be 58 lines of noise saying what
+  # the default already says. The Kotlin side does not spell it either.
+  - explicit_acl
+  - explicit_top_level_acl
+
+  # `ComposeView` is a six-line bridge used by exactly one view, in the file that uses it. A file
+  # of its own would be a file nobody opens except to find the other half.
+  - one_declaration_per_file
 
 line_length:
   # The Swift here is mostly comment, and the comments explain decisions rather than restating

@@ -68,7 +68,11 @@ targets:
         # gets the layout the wider screen wants rather than a stretched phone.
         TARGETED_DEVICE_FAMILY: "1,2"
 
-        SWIFT_VERSION: "5.0"
+        # Swift 6 language mode, which is where strict concurrency checking becomes an error
+        # rather than a warning. There is almost no Swift here — an entry point and a bridge —
+        # so the cost of being in the strict mode is near zero and the cost of not being is a
+        # migration that gets harder every release.
+        SWIFT_VERSION: "6.0"
 
         # Where `embedAndSignAppleFrameworkForXcode` leaves the Kotlin framework, and the
         # `-framework ComposeApp` that links it. `ContentView.swift` imports it by that name;

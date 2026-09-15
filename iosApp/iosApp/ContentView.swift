@@ -5,11 +5,14 @@ import SwiftUI
 /// in `composeApp/src/iosMain/.../MainViewController.kt`, exported through the `ComposeApp`
 /// framework — renaming either side breaks this.
 struct ComposeView: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> UIViewController {
+    func makeUIViewController(context _: Context) -> UIViewController {
         MainViewControllerKt.MainViewController()
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    func updateUIViewController(_: UIViewController, context _: Context) {
+        // Nothing to do: the Compose side owns its own state and redraws itself. SwiftUI has no
+        // update to hand it, and the protocol requires the method whether or not there is work.
+    }
 }
 
 struct ContentView: View {
