@@ -766,7 +766,6 @@
     <string name="label_plan_play_all">すべて再生</string>
     <string name="label_plan_changed_by">計画 — %1$sがあなたの手番を変更</string>
     <string name="label_put_a_card_down">カードを出す</string>
-    <string name="label_well_see">様子を見る</string>
     <string name="label_rank_said_by">%1$s — %2$sの申告</string>
     <string name="label_another_rank">別のランク…</string>
     <string name="detail_touch_a_word">枠で囲まれた言葉に触れると変更できます。</string>

@@ -2045,7 +2045,7 @@ private fun Piles(view: PlayerView, sizes: TableSizes, board: Board?, onHelp: (H
             verticalAlignment = Alignment.Top,
             modifier = Modifier.padding(top = Tight),
         ) {
-            DrawnCard(view, sizes, stage, onHelp)
+            DrawnCard(view, sizes, stage, board?.drawing?.takeIf { !stage.rehearsing }, onHelp)
             TossIn(view)
         }
     }
@@ -2062,7 +2062,13 @@ private fun Piles(view: PlayerView, sizes: TableSizes, board: Board?, onHelp: (H
  * The slot is always there, empty or not, so nothing moves when a card arrives in it.
  */
 @Composable
-private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp: (HelpTopic?) -> Unit) {
+private fun DrawnCard(
+    view: PlayerView,
+    sizes: TableSizes,
+    stage: Stage,
+    arriving: Int?,
+    onHelp: (HelpTopic?) -> Unit,
+) {
     // Only while its player is *deciding* about it. The moment the action is engaged the
     // card is on the pile — that is `cardInPlay`'s exact rule, and this is its complement:
     // without the phase check a drawn 8 being aimed sat in this slot and on the discard at
@@ -2083,6 +2089,23 @@ private fun DrawnCard(view: PlayerView, sizes: TableSizes, stage: Stage, onHelp:
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         if (drawn == null || elsewhere) {
             EmptySlot(sizes.theirs, "", slot)
+        } else if (arriving != null) {
+            // The card the page's turn draws, on a page whose turn has not happened yet: rose
+            // and tagged with the turn, like every other card the plan deals rather than finds.
+            // It is the whole of what "and we'll see" means — a card is coming and nobody knows
+            // what it is — and without it an undecided turn drew a seat about to do something
+            // with nothing.
+            //
+            // The label says *whose* card it is, and nothing more: the rose mark announces the
+            // turn itself, so passing `card_arrives` here as well would say it twice to a
+            // screen reader landing on the slot.
+            CardFace(
+                card = CardView.Hidden,
+                scale = sizes.theirs,
+                modifier = slot,
+                state = CardState(arrived = arriving),
+                label = drawnLabel(view, drawn),
+            )
         } else {
             // Tapping the drawn card opens the help sheet, whose "right now" block explains
             // exactly this card — the shortest route to "what does this do" for somebody who

@@ -771,7 +771,6 @@
     <string name="label_plan_play_all">Reproducir todo</string>
     <string name="label_plan_changed_by">Plan — %1$s cambió tu turno</string>
     <string name="label_put_a_card_down">Soltar una carta</string>
-    <string name="label_well_see">Ya veremos</string>
     <string name="label_rank_said_by">%1$s — lo dijo %2$s</string>
     <string name="label_another_rank">Otro rango…</string>
     <string name="detail_touch_a_word">Toca una palabra recuadrada para cambiarla.</string>

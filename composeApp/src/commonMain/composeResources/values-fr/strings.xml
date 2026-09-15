@@ -768,7 +768,6 @@
     <string name="label_plan_play_all">Jouer tous les tours</string>
     <string name="label_plan_changed_by">Plan — %1$s a modifié votre tour</string>
     <string name="label_put_a_card_down">Poser une carte</string>
-    <string name="label_well_see">On verra</string>
     <string name="label_rank_said_by">%1$s — selon %2$s</string>
     <string name="label_another_rank">Une autre valeur…</string>
     <string name="detail_touch_a_word">Touchez un mot encadré pour le changer.</string>

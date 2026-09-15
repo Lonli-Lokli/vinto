@@ -111,21 +111,42 @@ class TransportTest {
 
     @Test
     fun aTurnWithNothingToDrawStillKeepsItsPosition() {
-        // ② has to mean the same turn to every member reading it, so a lane with no step is a
-        // stop the transport passes through rather than one it skips (design D6).
-        val undecided = CoalitionPlan(
+        // ② has to mean the same turn to every member reading it, so a turn the film cannot
+        // draw is a stop the transport passes through rather than one it skips (design D6).
+        // A step naming a card that is not there is the case: there is no honest picture of it.
+        val gone = CoalitionPlan(
             lanes = listOf(
                 Lane(nina, Step.PutDown(CardAt(nina, 0))),
-                Lane(don, null),
-                Lane(me, null),
+                Lane(don, Step.PutDown(CardAt(don, 4))),
+                Lane(me, Step.Bin),
             ),
+        )
+        val stops = rehearsal(view(), gone)
+
+        assertEquals(4, stops.tables.size, "a turn with nothing to draw was dropped from the film")
+        assertNotNull(stops.frames[0], "the decided turn drew nothing")
+        assertNull(stops.frames[1], "a step naming a card that has gone invented a picture")
+        assertEquals(stops.tables[1], stops.tables[2], "a turn with nothing to draw moved a card")
+    }
+
+    @Test
+    fun aTurnNobodyHasDecidedLeavesEveryHandWhereItWas() {
+        // Undecided is not the same as undrawable. The seat draws either way, so the turn has
+        // a picture — and since nothing the table can name has moved, the picture is every
+        // hand exactly as it was, with a card nobody can name on the pile.
+        val undecided = CoalitionPlan(
+            lanes = listOf(Lane(nina, Step.PutDown(CardAt(nina, 0))), Lane(don, null), Lane(me, null)),
         )
         val stops = rehearsal(view(), undecided)
 
-        assertEquals(4, stops.tables.size, "an undecided turn was dropped from the film")
-        assertNotNull(stops.frames[0], "the decided turn drew nothing")
-        assertNull(stops.frames[1], "an undecided turn invented a picture")
-        assertEquals(stops.tables[1], stops.tables[2], "an undecided turn moved a card")
+        assertNotNull(stops.frames[1], "a turn nobody had decided had nothing to watch")
+        assertEquals(
+            stops.tables[1].players.map { it.cards },
+            stops.tables[2].players.map { it.cards },
+            "an undecided turn moved a card",
+        )
+        assertNull(stops.tables[2].discardTop, "an undecided turn named the card it left on the pile")
+        assertEquals(2, stops.pileUnknown[2], "the pile was still takeable after a blind draw")
     }
 
     /**
@@ -138,14 +159,15 @@ class TransportTest {
     @Test
     fun everyCoalitionTurnIsAPositionEvenWhenNobodyHasDecidedIt() {
         val film = rehearsal(view(), oneDecidedTurn())
+        fun hands(at: Int) = film.tables[at].players
 
         assertEquals(4, film.tables.size, "three turns did not make four positions")
         assertEquals(3, film.turns, "a turn nobody has decided lost its place")
-        assertEquals(listOf(false, true, false), film.frames.map { it != null })
+        assertEquals(listOf(true, true, true), film.frames.map { it != null }, "a turn lost its picture")
 
-        assertEquals(view(), film.tables[1], "an undecided turn moved a card")
-        assertTrue(film.tables[2] != film.tables[1], "the decided turn changed nothing")
-        assertEquals(film.tables[2], film.tables[3], "an undecided turn moved a card")
+        assertEquals(view().players, hands(1), "an undecided turn moved a card")
+        assertTrue(hands(2) != hands(1), "the decided turn changed nothing")
+        assertEquals(hands(2), hands(3), "an undecided turn moved a card")
         assertTrue(film.arrival != view(), "the plan's arrival is the table as it is now")
     }
 
@@ -157,7 +179,10 @@ class TransportTest {
      */
     @Test
     fun theFilmFromAPositionKeepsEveryTurnStillToCome() {
-        val film = rehearsal(view(), oneDecidedTurn())
+        // The middle turn is the only one with a picture: the other two name a card that has
+        // gone, so their places in `frames` are null. That is what the drop has to step over.
+        val film = rehearsal(view(), oneDrawableTurn())
+        assertEquals(listOf(false, true, false), film.frames.map { it != null }, "the fixture has changed shape")
 
         assertEquals(1, film.from(0).size, "the whole film is missing its only move")
         assertEquals(1, film.from(1).size, "the step was dropped by a position that is not its own")
@@ -176,6 +201,24 @@ class TransportTest {
         return CoalitionPlan(lanes = listOf(Lane(order[1], Step.PutDown(CardAt(don, 0)))))
     }
 
+    /** Three turns, and only the middle one can be drawn: the other two name a card that is not there. */
+    private fun oneDrawableTurn(): CoalitionPlan {
+        val order = coalitionInTurnOrder(view().players.map { it.id }, caller)
+        assertEquals(listOf(nina, don, me), order, "the fixture's turn order has moved")
+        return CoalitionPlan(
+            lanes = listOf(
+                Lane(nina, Step.PutDown(CardAt(nina, 9))),
+                Lane(don, Step.PutDown(CardAt(don, 0))),
+                Lane(me, Step.PutDown(CardAt(me, 9))),
+            ),
+        )
+    }
+
+    /** [plan] with its open turn settled, so the pager reaches every page. See `Transport.reach`. */
+    private fun wholePlan() = CoalitionPlan(
+        lanes = plan().lanes.map { if (it.step == null) it.copy(step = Step.Bin) else it },
+    )
+
     /**
      * A card the plan has put down is rose from the turn it arrives on, and not before.
      *
@@ -187,7 +230,14 @@ class TransportTest {
     @Test
     fun aCardThePlanPutsDownIsRoseFromTheTurnItArrivesOn() {
         val order = coalitionInTurnOrder(view().players.map { it.id }, caller)
-        val standing = CoalitionPlan(lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 0)))))
+        // The turns before mine are settled so the pager reaches mine at all (`Transport.reach`).
+        val standing = CoalitionPlan(
+            lanes = listOf(
+                Lane(nina, Step.Bin),
+                Lane(don, Step.Bin),
+                Lane(me, Step.PutDown(CardAt(me, 0))),
+            ),
+        )
         val turn = order.indexOf(me) + 1
 
         val before = assertNotNull(tableFor(view(), question = Question.ThePlan(at = turn), plan = standing).board)
@@ -297,14 +347,14 @@ class TransportTest {
 
         for ((turn, seat) in order.withIndex()) {
             val board = assertNotNull(
-                tableFor(view(), question = Question.ThePlan(at = turn + 1), plan = plan()).board,
+                tableFor(view(), question = Question.ThePlan(at = turn + 1), plan = wholePlan()).board,
             )
             val lit = assertNotNull(board.transport.stops.first { it.here }.seat, "the lit stop names nobody")
             assertEquals(speakerFor(view(), seat), lit, "stop ${turn + 1} names the wrong seat")
             assertEquals(lit, board.sentence?.who, "the rail builds a different turn from the one lit")
         }
 
-        val atLands = assertNotNull(tableFor(view(), question = Question.ThePlan(at = lands), plan = plan()).board)
+        val atLands = assertNotNull(tableFor(view(), question = Question.ThePlan(at = lands), plan = wholePlan()).board)
         assertNull(atLands.sentence, "where the plan lands offered a turn to build")
         assertNull(atLands.building, "where the plan lands offered a composer")
         assertTrue(atLands.transport.arrived)
@@ -318,30 +368,42 @@ class TransportTest {
     @Test
     fun thePageShowsTheTurnsStartUntilItHasBeenWatched() {
         val order = coalitionInTurnOrder(view().players.map { it.id }, caller)
-        val film = rehearsal(view(), plan())
+        val film = rehearsal(view(), wholePlan())
         assertTrue(film.tables[0] != film.tables[1], "the fixture's first turn changes nothing")
+        // The page of a turn also has the card that turn draws in front of its seat: every turn
+        // opens with one, and it is what the turn is about to be aimed with.
+        val starts = film.tables[0].drawing(order[0])
 
-        val reading = assertNotNull(tableFor(view(), question = Question.ThePlan(at = 1), plan = plan()).board)
-        assertEquals(film.tables[0], reading.felt, "the page did not show the table its turn starts from")
+        val reading = assertNotNull(tableFor(view(), question = Question.ThePlan(at = 1), plan = wholePlan()).board)
+        assertEquals(starts, reading.felt, "the page did not show the table its turn starts from")
+        assertEquals(1, reading.drawing, "the turn's own draw was not marked as arriving on it")
 
         val watched = assertNotNull(
-            tableFor(view(), question = Question.ThePlan(at = 1, landed = true), plan = plan()).board,
+            tableFor(view(), question = Question.ThePlan(at = 1, landed = true), plan = wholePlan()).board,
         )
         assertEquals(film.tables[1], watched.felt, "the felt does not show what the turn did once watched")
+        assertNull(watched.drawing, "a turn already watched still had a card waiting to be drawn")
 
         // A card picked up is a builder that is open, exactly as a chooser is: back to the start.
         val held = CardRef(order[0], 0)
         val editing = assertNotNull(
-            tableFor(view(), question = Question.ThePlan(at = 1, picked = held, landed = true), plan = plan()).board,
+            tableFor(
+                view(),
+                question = Question.ThePlan(at = 1, picked = held, landed = true),
+                plan = wholePlan(),
+            ).board,
         )
-        assertEquals(film.tables[0], editing.felt, "editing a turn was aimed at the table it leaves behind")
+        assertEquals(starts, editing.felt, "editing a turn was aimed at the table it leaves behind")
 
-        val choosing = assertNotNull(tableFor(view(), question = Question.Doing(order[0], at = 1), plan = plan()).board)
-        assertEquals(film.tables[0], choosing.felt, "a chooser left the felt on the turn's result")
+        val choosing = assertNotNull(
+            tableFor(view(), question = Question.Doing(order[0], at = 1), plan = wholePlan()).board,
+        )
+        assertEquals(starts, choosing.felt, "a chooser left the felt on the turn's result")
         assertEquals(1, choosing.at, "opening a chooser sent the transport back to the start")
 
-        val landed = assertNotNull(tableFor(view(), question = Question.ThePlan(at = lands), plan = plan()).board)
+        val landed = assertNotNull(tableFor(view(), question = Question.ThePlan(at = lands), plan = wholePlan()).board)
         assertEquals(film.arrival, landed.felt, "the last page is not where the plan lands")
+        assertNull(landed.drawing, "where the plan lands had a turn still to draw")
     }
 
     /** The opening is a decision only while the pile has something to take; otherwise it is a fact. */
@@ -461,17 +523,21 @@ class TransportTest {
     }
 
     @Test
-    fun anEmptyPlanHasNothingToWatch() {
+    fun anEmptyPlanReachesItsFirstTurnAndNoFurther() {
         val bare = tableFor(view(), question = Question.ThePlan(), plan = CoalitionPlan())
         val empty = assertNotNull(bare.board, "a member has no plan to open")
 
         assertTrue(empty.lanes.all { it.step == null }, "the fixture already has a step in it")
-        assertNull(empty.transport.playAll, "an empty plan offered a film of nothing to watch")
-        assertTrue(empty.transport.stops.all { it.replay == null })
+        assertEquals(1, empty.transport.reach, "an empty plan reached past its first turn")
+        // Its one open page still has something to watch — the seat draws whatever is decided —
+        // and there is nothing beyond it for the whole-plan button to run to.
+        assertNotNull(empty.transport.stops[0].replay, "the first turn of an empty plan could not be watched")
+        assertTrue(empty.transport.stops.drop(1).all { it.replay == null }, "a closed page could be watched")
+        assertNull(empty.transport.playAll, "an empty plan offered a film past the page it reaches")
 
-        // And with a step in it, the film is back.
-        val standing = assertNotNull(tableFor(view(), question = Question.ThePlan(), plan = plan()).board)
-        assertNotNull(standing.transport.playAll, "a plan with steps in it cannot be watched")
+        // And with every turn decided, the whole thing plays.
+        val standing = assertNotNull(tableFor(view(), question = Question.ThePlan(), plan = wholePlan()).board)
+        assertNotNull(standing.transport.playAll, "a whole plan cannot be watched")
     }
 
     @Test
@@ -480,6 +546,84 @@ class TransportTest {
         assertEquals(lands, transportFor(Question.ThePlan(at = 99), seats()).at)
         assertEquals(1, transportFor(Question.ThePlan(at = -4), seats()).at)
         assertEquals(1, transportFor(Question.ThePlan(at = 2), seats = emptyList()).at)
+    }
+
+    // ------------------------------------------------------------------ the plan is read in order
+
+    @Test
+    fun aTurnIsClosedUntilTheOneBeforeItHasBeenDecided() {
+        // A page shows the table its turn starts from, and that is the table the turn before it
+        // leaves — so a turn nobody has decided is the end of the plan as far as the pager is
+        // concerned. The fixture decides ① and ③ and leaves ② open, so ② is as far as it goes.
+        val board = assertNotNull(tableFor(view(), question = Question.ThePlan(at = 1), plan = plan()).board)
+        val stops = board.transport.stops
+
+        assertEquals(listOf(false, false, true, true), stops.map { it.locked }, "the wrong pages are closed")
+        assertNotNull(stops[1].go, "the turn after a decided one was closed")
+        assertNull(stops[2].go, "a turn after an undecided one could be reached")
+        assertNull(stops[3].go, "where the plan lands was reachable with a turn still open")
+        assertNull(stops[2].replay, "a turn after an undecided one could be watched")
+    }
+
+    @Test
+    fun theWholePlanIsReachableOnceEveryTurnIsDecided() {
+        val whole = CoalitionPlan(
+            lanes = plan().lanes.map { if (it.step == null) it.copy(step = Step.Bin) else it },
+        )
+        val stops = assertNotNull(
+            tableFor(view(), question = Question.ThePlan(at = 1), plan = whole).board,
+        ).transport.stops
+
+        assertTrue(stops.none { it.locked }, "a whole plan still had a page closed")
+        assertNotNull(stops[3].go, "where a whole plan lands could not be reached")
+    }
+
+    @Test
+    fun theHeadComesBackWhenTheTurnBeforeItIsOpened() {
+        // A teammate can open a lane while you are reading a page beyond it (design D3). The
+        // page stops existing, so the head comes back to the last one that does rather than
+        // drawing a table nobody can account for.
+        val open = CoalitionPlan(lanes = listOf(Lane(nina, null), Lane(don, Step.Bin)))
+        val board = assertNotNull(tableFor(view(), question = Question.ThePlan(at = 3), plan = open).board)
+
+        assertEquals(1, board.at, "the head stayed on a page the plan no longer reaches")
+        assertEquals(1, board.transport.at, "the transport and the page disagree about where the head is")
+    }
+
+    // ------------------------------------------------------------------ a turn nobody has decided
+
+    @Test
+    fun aTurnNobodyHasDecidedStillDrawsACardNobodyKnows() {
+        // A turn happens whether or not it has been planned: the seat draws, and something
+        // lands on the pile. What the plan cannot say is what either card is — so every hand
+        // is left exactly as it was, and the pile's top becomes a card nobody can name, which
+        // is what stops a later turn planning to take it.
+        val here = view()
+        val film = rehearsal(here, CoalitionPlan())
+
+        assertNotNull(film.frames.first(), "a turn nobody had decided had nothing to watch")
+        assertEquals(
+            here.players.map { it.cards.size },
+            film.tables[1].players.map { it.cards.size },
+            "an undecided turn moved a card",
+        )
+        assertNull(film.tables[1].discardTop, "an undecided turn named the card it put on the pile")
+        assertEquals(1, film.pileUnknown[1], "the pile was still takeable after a blind draw")
+    }
+
+    @Test
+    fun theCardAnUndecidedTurnDrawsIsOnTheFeltAndIsNobodys() {
+        // "Draws, and we'll see" is a card on the table, not an absence: the seat has something
+        // in front of them and nobody knows what it is. Drawn rose, like every other card the
+        // plan has dealt rather than found (design D6).
+        val board = assertNotNull(
+            tableFor(view(), question = Question.ThePlan(at = 1), plan = CoalitionPlan()).board,
+        )
+        val order = coalitionInTurnOrder(view().players.map { it.id }, caller)
+
+        assertEquals(1, board.drawing, "the turn's own draw was not on the felt")
+        val pending = assertNotNull(board.felt?.pendingAction, "nothing was in front of the seat on the page")
+        assertEquals(order[0], pending.playerId, "the draw was put in front of the wrong seat")
     }
 
     // ------------------------------------------------------------------ fixtures

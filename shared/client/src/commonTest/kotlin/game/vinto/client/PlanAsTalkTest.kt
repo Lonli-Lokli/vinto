@@ -118,6 +118,24 @@ class PlanAsTalkTest {
     private fun view(state: GameState = finalRound(), viewer: String = me): PlayerView =
         projectView(state, viewer, conferMsRemaining = 20_000L)
 
+    /**
+     * [plan] with every turn before [page] settled, so the pager reaches [page] at all.
+     *
+     * The plan is read front to back: the page after a turn nobody has decided is closed,
+     * because the table it would start from is the one that turn leaves (`Transport.reach`).
+     * A fixture that sets one seat's turn and opens it would otherwise be clamped back to the
+     * first page and the test would be about a turn it never named. Let-go is the emptiest
+     * decision there is, which keeps the padding out of whatever the test is actually asking.
+     */
+    private fun reaching(page: Int, plan: CoalitionPlan = CoalitionPlan()): CoalitionPlan =
+        listOf(nina, don, me).take(page - 1).fold(plan) { standing, seat ->
+            if (standing.laneOf(seat)?.step != null) {
+                standing
+            } else {
+                standing.copy(lanes = standing.lanes.filterNot { it.seat == seat } + Lane(seat, Step.Bin))
+            }
+        }
+
     private fun Table.sentence(): TurnSentence = assertNotNull(board?.sentence, "the rail has no turn to build")
 
     /** The words of the turn's own row. */
@@ -192,8 +210,8 @@ class PlanAsTalkTest {
         val table = tableFor(view(), Question.Doing(nina, ninasPage))
         assertEquals(listOf(Says.Draws, Says.WhatWith), table.own())
         assertTrue(table.slot(Says.WhatWith).asked)
-        // Puts down, lets it go, or we'll see. Never "plays it": nobody knows what will be drawn.
-        assertEquals(listOf(Label.PutACardDown, Label.LetTheCardGo, Label.WellSee), table.answers())
+        // Puts down or lets it go. Never "plays it": nobody knows what will be drawn.
+        assertEquals(listOf(Label.PutACardDown, Label.LetTheCardGo), table.answers())
         assertEquals(Move.Plan(PlanEdit.SetLane(nina, Step.Bin)), table.board?.answers?.get(1)?.move)
     }
 
@@ -201,12 +219,12 @@ class PlanAsTalkTest {
     fun puttingDownOffersEveryOwnCardAndTheCallOnlyForAKnownActionCard() {
         // Any of my cards may go out, known or not; a call is offered only for a card the table
         // knows to be an action card, and there is no separate word for the call once made.
-        val asking = tableFor(view(), Question.PuttingDown(me, myPage))
+        val asking = tableFor(view(), Question.PuttingDown(me, myPage), plan = reaching(myPage))
         assertEquals(listOf(Says.Draws, Says.WhichCard), asking.own())
         assertEquals(setOf(CardRef(me, 0), CardRef(me, 1), CardRef(me, 2)), asking.taps.keys)
 
         val jack = CoalitionPlan(lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 0)))))
-        val putDown = tableFor(view(), Question.ThePlan(at = myPage), plan = jack)
+        val putDown = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, jack))
         assertEquals(
             listOf(Says.Draws, Says.PutsDown(CardWord(Speaker.You, "Human1", 1, Rank.JACK)), Says.CallIt(Rank.JACK)),
             putDown.own(),
@@ -218,14 +236,14 @@ class PlanAsTalkTest {
         )
 
         val two = CoalitionPlan(lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 1)))))
-        val silent = tableFor(view(), Question.ThePlan(at = myPage), plan = two)
+        val silent = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, two))
         assertEquals(listOf(Says.Draws, Says.PutsDown(CardWord(Speaker.You, "Human1", 2, null))), silent.own())
     }
 
     @Test
     fun callingTheJackAsksWhichTwoAndTheTradeTakesTheOffersPlace() {
         val called = CoalitionPlan(lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 0), guess = Rank.JACK))))
-        val asking = tableFor(view(), Question.ThePlan(at = myPage), plan = called)
+        val asking = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, called))
         assertEquals(Says.WhichTwo, asking.own().last())
         assertTrue(asking.slot(Says.WhichTwo).asked)
         // The Jack may trade anything the table has been told about — never the caller's cards,
@@ -243,7 +261,7 @@ class PlanAsTalkTest {
                 ),
             ),
         )
-        val said = tableFor(view(), Question.ThePlan(at = myPage), plan = traded)
+        val said = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, traded))
         val trade = Says.Trade(
             CardWord(Speaker.Named("Bot3"), "Bot3", 1, Rank.FIVE),
             CardWord(Speaker.Named("Bot4"), "Bot4", 1, Rank.SIX),
@@ -285,7 +303,11 @@ class PlanAsTalkTest {
             CoalitionPlan(lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 0), guess = Rank.QUEEN, then = then))))
 
         // Said as a trade: the arrow is lit, and touching it leaves the two cards where they are.
-        val trades = tableFor(view(holding), Question.ThePlan(at = myPage), plan = queenSaying(trading)).arrow()
+        val trades = tableFor(
+            view(holding),
+            Question.ThePlan(at = myPage),
+            plan = reaching(myPage, queenSaying(trading)),
+        ).arrow()
         assertTrue(assertIs<Says.Trade>(trades.says).swap, "a Queen said to trade read as only looking")
         assertEquals(
             Step.PutDown(CardAt(me, 0), guess = Rank.QUEEN, then = looking),
@@ -294,7 +316,11 @@ class PlanAsTalkTest {
         )
 
         // Said as a look: the arrow is dim, and touching it trades the two cards it looked at.
-        val looks = tableFor(view(holding), Question.ThePlan(at = myPage), plan = queenSaying(looking)).arrow()
+        val looks = tableFor(
+            view(holding),
+            Question.ThePlan(at = myPage),
+            plan = reaching(myPage, queenSaying(looking)),
+        ).arrow()
         assertFalse(assertIs<Says.Trade>(looks.says).swap, "a Queen said to look read as trading")
         assertEquals(
             Step.PutDown(CardAt(me, 0), guess = Rank.QUEEN, then = trading),
@@ -307,7 +333,7 @@ class PlanAsTalkTest {
             lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 0), guess = Rank.JACK, then = trading))),
         )
         assertNull(
-            tableFor(view(), Question.ThePlan(at = myPage), plan = jack).arrow().toggle,
+            tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, jack)).arrow().toggle,
             "a Jack was offered a look it may not take",
         )
     }
@@ -315,7 +341,7 @@ class PlanAsTalkTest {
     @Test
     fun aKingPointsAtACardAndThenTheTableSaysWhatItIs() {
         val king = CoalitionPlan(lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 2), guess = Rank.KING))))
-        val pointing = tableFor(view(), Question.ThePlan(at = myPage), plan = king)
+        val pointing = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, king))
         assertEquals(Says.WhichToPointAt, pointing.own().last())
         // Every coalition card can be pointed at, named or not; the caller's never.
         val touches = assertNotNull(pointing.board?.building?.composer).touches
@@ -331,7 +357,7 @@ class PlanAsTalkTest {
                 Lane(me, Step.PutDown(CardAt(me, 2), guess = Rank.KING, then = Step.Declare(card = CardAt(nina, 0)))),
             ),
         )
-        val naming = tableFor(view(), Question.ThePlan(at = myPage), plan = pointed)
+        val naming = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, pointed))
         val ninasFive = CardWord(Speaker.Named("Bot3"), "Bot3", 1, Rank.FIVE)
         assertEquals(Says.Points(ninasFive, rank = null), naming.own().last())
         assertTrue(naming.slot(Says.Points(ninasFive, null)).asked)
@@ -347,7 +373,7 @@ class PlanAsTalkTest {
                 ),
             ),
         )
-        val said = tableFor(view(), Question.ThePlan(at = myPage), plan = named)
+        val said = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, named))
         assertEquals(Says.Points(ninasFive, Rank.FIVE), said.own().last())
         assertTrue(said.board?.answers.orEmpty().isEmpty(), "answers were offered with nothing asked")
     }
@@ -359,10 +385,10 @@ class PlanAsTalkTest {
                 Lane(me, Step.PutDown(CardAt(me, 2), guess = Rank.KING, then = Step.Declare(card = CardAt(nina, 1)))),
             ),
         )
-        val naming = tableFor(view(), Question.ThePlan(at = myPage), plan = pointed)
+        val naming = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, pointed))
         assertEquals(listOf(Label.AnotherRank), naming.answers())
 
-        val grid = tableFor(view(), Question.Naming(me, myPage, Part.Called), plan = pointed)
+        val grid = tableFor(view(), Question.Naming(me, myPage, Part.Called), plan = reaching(myPage, pointed))
         assertEquals(game.vinto.shapes.ALL_RANKS.size, grid.ranks.size)
         assertEquals(
             Step.PutDown(CardAt(me, 2), guess = Rank.KING, then = Step.Declare(Rank.SEVEN, CardAt(nina, 1))),
@@ -407,7 +433,11 @@ class PlanAsTalkTest {
         // Don's turn lands a six if he puts his down; Nina's five is no match, and my Jack is
         // not either — only a card nobody has named, or one known to be a six, may be thrown.
         val plan = CoalitionPlan(lanes = listOf(Lane(don, Step.PutDown(CardAt(don, 0)))))
-        val throwing = tableFor(view(finalRound()), Question.Throwing(don, donsPage, index = 0), plan = plan)
+        val throwing = tableFor(
+            view(finalRound()),
+            Question.Throwing(don, donsPage, index = 0),
+            plan = reaching(donsPage, plan),
+        )
         assertEquals(setOf(CardRef(me, 1), CardRef(nina, 1)), throwing.taps.keys)
 
         val withSix = finalRound().let { state ->
@@ -425,7 +455,11 @@ class PlanAsTalkTest {
                 },
             )
         }
-        val vouched = tableFor(view(withSix), Question.Throwing(don, donsPage, index = 0), plan = plan)
+        val vouched = tableFor(
+            view(withSix),
+            Question.Throwing(don, donsPage, index = 0),
+            plan = reaching(donsPage, plan),
+        )
         assertEquals(
             PlanEdit.SetTossIns(don, listOf(TossIn(nina, Rank.SIX, card = CardAt(nina, 1)))),
             vouched.taps.getValue(CardRef(nina, 1)).edit().let { edit ->
@@ -473,10 +507,10 @@ class PlanAsTalkTest {
         assertNotNull(open.board?.building?.composer, "the turn on play was not open for changing")
 
         val doing = tableFor(view(drawn), Question.Doing(me, myPage))
-        assertEquals(listOf(Label.PlayTheCard, Label.PutACardDown, Label.LetTheCardGo, Label.WellSee), doing.answers())
+        assertEquals(listOf(Label.PlayTheCard, Label.PutACardDown, Label.LetTheCardGo), doing.answers())
 
         val plays = CoalitionPlan(lanes = listOf(Lane(me, Step.UseIt)))
-        val aiming = tableFor(view(drawn), Question.ThePlan(at = myPage), plan = plays)
+        val aiming = tableFor(view(drawn), Question.ThePlan(at = myPage), plan = reaching(myPage, plays))
         assertEquals(listOf(Says.Drew(Rank.QUEEN), Says.PlaysIt, Says.WhichTwo), aiming.own())
 
         val trade = Step.Swap(CardAt(nina, 0), CardAt(don, 0))
@@ -515,7 +549,7 @@ class PlanAsTalkTest {
         // unknown can be taken.
         assertNull(film.pileUnknown[1])
         assertEquals(2, film.pileUnknown[2])
-        val mine = tableFor(view(), Question.ThePlan(at = myPage), plan = plan)
+        val mine = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, plan))
         assertEquals(2, mine.board?.pileUnknown)
         assertTrue(mine.slot(Says.Draws).plain(), "an unknown pile card was offered for taking")
         assertEquals(mapOf(CardRef(nina, 0) to 1), mine.board?.fresh)
@@ -536,21 +570,30 @@ class PlanAsTalkTest {
         )
         assertEquals(donsPage, transport.at)
         assertFalse(transport.arrived)
+        // Don's turn is the first nobody has decided, so it is as far as the plan reads: the
+        // pages past it are drawn, and closed (`Transport.reach`).
+        assertEquals(donsPage, transport.reach)
+        assertNull(transport.stops.last().go, "where the plan lands was reachable with a turn still open")
         // A stop is a jump, in either direction: the pager, not a film.
-        assertEquals(Move.Ask(focus.copy(at = lands, landed = false)), transport.stops.last().go)
         assertEquals(Move.Ask(focus.copy(at = ninasPage, landed = false)), transport.stops.first().go)
         // Watching one turn runs it from the table it starts on and parks on it.
         assertEquals(Move.Ask(focus.copy(at = ninasPage, runningTo = ninasPage)), transport.stops.first().replay)
-        assertNull(transport.stops[1].replay, "a turn with nothing to watch offered a replay")
-        // Playing every turn runs from here to where the plan lands — where there is something
-        // left to watch; from Don's page nothing is, and from Nina's the whole plan is.
+        assertNull(transport.stops[2].replay, "a page the plan does not reach offered a replay")
+
+        // With every turn decided the whole thing is reachable, and the jump forward is back.
+        val whole = assertNotNull(tableFor(view(), focus, plan = reaching(lands, plan)).board).transport
+        assertEquals(lands, whole.reach)
+        assertEquals(Move.Ask(focus.copy(at = lands, landed = false)), whole.stops.last().go)
+
+        // Playing every turn runs from here to as far as the plan reads. From Don's page that
+        // is Don's page, so there is nothing to run; from Nina's, the whole plan.
         assertNull(transport.playAll, "a film of nothing was offered")
         val fromTheStart = assertNotNull(
             tableFor(view(), Question.ThePlan(at = ninasPage), plan = plan).board,
         ).transport
-        assertEquals(Move.Ask(Question.ThePlan(at = ninasPage, runningTo = lands)), fromTheStart.playAll)
+        assertEquals(Move.Ask(Question.ThePlan(at = ninasPage, runningTo = donsPage)), fromTheStart.playAll)
 
-        val landed = assertNotNull(tableFor(view(), Question.ThePlan(at = lands), plan = plan).board)
+        val landed = assertNotNull(tableFor(view(), Question.ThePlan(at = lands), plan = reaching(lands, plan)).board)
         assertTrue(landed.transport.arrived)
         assertNull(landed.sentence, "the last page has no turn to build")
         assertNotNull(landed.outcome)
@@ -562,15 +605,25 @@ class PlanAsTalkTest {
         // sentence read against its own start; and the runner that parks the head after a film
         // has to know which turn's cards are the last to land.
         val plan = CoalitionPlan(lanes = listOf(Lane(nina, Step.PutDown(CardAt(nina, 0)))))
-        val board = assertNotNull(tableFor(view(), Question.ThePlan(at = donsPage), plan = plan).board)
+        val board = assertNotNull(
+            tableFor(view(), Question.ThePlan(at = donsPage), plan = reaching(donsPage, plan)).board,
+        )
 
         assertEquals(3, board.pages.size, "one sentence per turn")
         assertEquals(board.sentence, board.pages[donsPage - 1], "the page on screen is not among the pages")
         assertEquals(listOf(Speaker.Named("Bot3"), Speaker.Named("Bot4"), Speaker.You), board.pages.map { it.who })
         assertTrue(board.pages[0].says.any { it is Says.PutsDown }, "a neighbouring page is not read whole")
-        assertEquals(listOf(true, false, false), board.watchable, "only the decided turn has a film")
+        // Every turn has a film: a turn nobody has decided still draws a card nobody knows.
+        assertEquals(listOf(true, true, true), board.watchable, "a turn lost its film")
 
-        val landed = assertNotNull(tableFor(view(), Question.ThePlan(at = lands), plan = plan).board)
+        // What has no film is a turn the table cannot draw — one naming a card that has gone.
+        val broken = plan.copy(lanes = plan.lanes + Lane(don, Step.PutDown(CardAt(don, 4))))
+        val cannot = assertNotNull(
+            tableFor(view(), Question.ThePlan(at = donsPage), plan = reaching(donsPage, broken)).board,
+        )
+        assertEquals(listOf(true, false, true), cannot.watchable, "a turn naming a card that has gone drew one")
+
+        val landed = assertNotNull(tableFor(view(), Question.ThePlan(at = lands), plan = reaching(lands, plan)).board)
         assertNull(landed.sentence, "the last page has a turn to build")
         assertEquals(3, landed.pages.size, "the last page lost the turns before it")
     }

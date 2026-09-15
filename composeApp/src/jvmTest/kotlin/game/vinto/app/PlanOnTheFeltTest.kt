@@ -197,7 +197,15 @@ class PlanOnTheFeltTest {
         // other. Reported as *"why do we have three steps in the bottom and in the header?"*.
         val view = finalRound()
         val (mine, theirs) = twoCards(view)
-        val plan = planFor(view, Step.Swap(mine.toCardAt(), theirs.toCardAt()))
+        // Every turn settled, because the head is moved to each of them in turn below and the
+        // pager does not reach past a turn nobody has decided (`Transport.reach`).
+        val plan = planFor(view, Step.Swap(mine.toCardAt(), theirs.toCardAt())).let { standing ->
+            standing.copy(
+                lanes = standing.lanes + view.players
+                    .filter { it.id != view.vintoCallerId && standing.lanes.none { lane -> lane.seat == it.id } }
+                    .map { Lane(it.id, Step.Bin) },
+            )
+        }
 
         show(view, plan = plan, question = Question.ThePlan())
 

@@ -265,7 +265,12 @@ class PlanBoardTest {
     @Test
     fun aDeclareIsOneRankOffTheRail() {
         // The one step with no destination to carry a card to: a King names a *rank*.
-        val table = tableFor(view(), question = Question.Naming(don, at = 2, part = Part.Own))
+        // Nina's turn is settled first, or the pager never reaches Don's (`Transport.reach`).
+        val table = tableFor(
+            view(),
+            question = Question.Naming(don, at = 2, part = Part.Own),
+            plan = CoalitionPlan(lanes = listOf(Lane(nina, Step.Bin))),
+        )
         assertEquals(Ask.WhichRankShouldTheyDeclare(Speaker.Named("Bot4")), table.prompt)
         val king = assertIs<Move.Plan>(table.ranks.first { it.rank == Rank.KING }.move)
         assertEquals(PlanEdit.SetLane(don, Step.Declare(Rank.KING)), king.edit)

@@ -54,6 +54,15 @@ class TurnBuilderTest {
     private val bot3 = Speaker.Named("Bot3")
     private val bot4 = Speaker.Named("Bot4")
 
+    /**
+     * The two turns before mine, settled with the emptiest decision there is.
+     *
+     * The plan is read front to back and the page after a turn nobody has decided is closed
+     * (`Transport.reach`), so a fixture that sets only my turn would be clamped back to Nina's
+     * and every test here would be about a turn it never named.
+     */
+    private fun before() = listOf(Lane(nina, Step.Bin), Lane(don, Step.Bin))
+
     private fun card(rank: Rank, id: String) = Card(
         id = id,
         rank = rank,
@@ -202,7 +211,7 @@ class TurnBuilderTest {
     @Test
     fun aCalledJackAsksWhichTwoCardsItSwapsAndTheAnswerRidesOnTheSameStep() {
         val called = Step.PutDown(CardAt(me, 0), guess = Rank.JACK)
-        val plan = CoalitionPlan(lanes = listOf(Lane(me, called)))
+        val plan = CoalitionPlan(lanes = before() + Lane(me, called))
         val table = tableFor(view(), question = Question.ThePlan(at = myPage), plan = plan)
         assertEquals(Ask.WhichTwoWillItSwap(Rank.JACK), table.prompt)
         assertEquals(listOf(Says.Draws, Says.PutsDown(mine(1, Rank.JACK)), Says.WhichTwo), table.words().first())
@@ -226,7 +235,7 @@ class TurnBuilderTest {
         val answered = tableFor(
             view(),
             question = Question.ThePlan(at = myPage),
-            plan = CoalitionPlan(lanes = listOf(Lane(me, whole))),
+            plan = CoalitionPlan(lanes = before() + Lane(me, whole)),
         )
         assertEquals(Ask.WhatShouldTheyDo(Speaker.You), answered.prompt)
         assertEquals(setOf(CardRef(me, 0), CardRef(nina, 0), CardRef(don, 0)), assertNotNull(answered.board).marks)
@@ -239,7 +248,7 @@ class TurnBuilderTest {
         val table = tableFor(
             view(),
             question = Question.ThePlan(at = myPage),
-            plan = CoalitionPlan(lanes = listOf(Lane(me, whole))),
+            plan = CoalitionPlan(lanes = before() + Lane(me, whole)),
         )
 
         // Which card goes out, and the trade reopens the felt aimed at what the call does.
@@ -248,20 +257,21 @@ class TurnBuilderTest {
             Move.Ask(Question.Aiming(me, myPage, Part.Called)),
             table.slot(Says.Trade(ninas(1, Rank.FIVE), dons(1, Rank.SIX), swap = true)).open,
         )
-        // What becomes of the card is asked of its own word, and the answers are the three.
+        // What becomes of the card is asked of its own word, and the answers are the two. Never
+        // "we'll see": undeciding a turn closes every page after it, so it is not on offer —
+        // a decision is changed by answering it again, not by taking it back (`doingTable`).
         val doing = tableFor(
             view(),
             question = Question.Doing(me, myPage),
-            plan = CoalitionPlan(lanes = listOf(Lane(me, whole))),
+            plan = CoalitionPlan(lanes = before() + Lane(me, whole)),
         )
         assertEquals(
-            listOf(Label.PutACardDown, Label.LetTheCardGo, Label.WellSee),
+            listOf(Label.PutACardDown, Label.LetTheCardGo),
             assertNotNull(doing.board).answers.map { it.label },
         )
-        assertEquals(
-            Move.Plan(PlanEdit.ClearLane(me)),
-            doing.board?.answers?.last()?.move,
-            "we'll see did not clear the turn",
+        assertTrue(
+            doing.board?.answers.orEmpty().none { it.move == Move.Plan(PlanEdit.ClearLane(me)) },
+            "a turn could be put back to undecided, which closes the pages after it",
         )
     }
 

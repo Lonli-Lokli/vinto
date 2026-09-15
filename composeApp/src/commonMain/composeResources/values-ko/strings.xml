@@ -730,7 +730,6 @@
     <string name="label_plan_play_all">모든 턴 재생하기</string>
     <string name="label_plan_changed_by">계획 — %1$s가 당신의 차례를 바꿨어요</string>
     <string name="label_put_a_card_down">카드 내려놓기</string>
-    <string name="label_well_see">두고 보기</string>
     <string name="label_rank_said_by">%1$s — %2$s가 그렇게 말했어요</string>
     <string name="label_another_rank">다른 등급…</string>
     <string name="detail_touch_a_word">상자로 표시된 단어를 눌러 바꾸세요.</string>

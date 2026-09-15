@@ -746,7 +746,6 @@
     <string name="label_plan_play_all">ہر باری کھیلیں</string>
     <string name="label_plan_changed_by">منصوبہ — %1$s نے آپ کی باری بدل دی</string>
     <string name="label_put_a_card_down">پتہ نیچے رکھیں</string>
-    <string name="label_well_see">دیکھیں گے</string>
     <string name="label_rank_said_by">%1$s — %2$s نے کہا</string>
     <string name="label_another_rank">کوئی اور درجہ…</string>
     <string name="detail_touch_a_word">تبدیل کرنے کے لیے کسی بکس میں موجود لفظ کو چھوئیں۔</string>

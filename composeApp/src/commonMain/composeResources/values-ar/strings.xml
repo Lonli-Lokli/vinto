@@ -756,7 +756,6 @@
     <string name="label_plan_play_all">تشغيل كل الأدوار</string>
     <string name="label_plan_changed_by">الخطة — عُدِّل دورك من %1$s</string>
     <string name="label_put_a_card_down">ضع بطاقة</string>
-    <string name="label_well_see">سنرى</string>
     <string name="label_rank_said_by">%1$s — كما قال %2$s</string>
     <string name="label_another_rank">رتبة أخرى…</string>
     <string name="detail_touch_a_word">المس كلمة محاطة بمربع لتغييرها.</string>

@@ -21,6 +21,8 @@ import game.vinto.shapes.getCardValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -245,10 +247,13 @@ class PlanDecayTest {
             matesClaims = listOf(Claim(mate, listOf(1), listOf(Rank.KING))),
         )
 
-        val frames = rehearse(projectView(state, me), swapPlan())
+        // One picture per turn: the swap, and then my own turn, which nobody has decided and
+        // which draws the card nobody knows it draws.
+        val film = rehearsal(projectView(state, me), swapPlan())
 
-        assertEquals(1, frames.size, "the plan drew no picture")
-        assertTrue(frames.single().scenes.isNotEmpty(), "the swap animated nothing")
+        assertEquals(2, film.frames.size, "the plan lost a turn")
+        val swap = assertNotNull(film.frames.first(), "the plan drew no picture")
+        assertTrue(swap.scenes.isNotEmpty(), "the swap animated nothing")
     }
 
     @Test
@@ -260,7 +265,7 @@ class PlanDecayTest {
         val view = projectView(state, me)
         val before = view.players.first { it.id == mate }.cards[1]
 
-        val after = rehearse(view, swapPlan()).single().view
+        val after = rehearse(view, swapPlan()).first().view
 
         assertEquals(
             before,
@@ -272,13 +277,16 @@ class PlanDecayTest {
     @Test
     fun aStepNamingACardThatIsNotThereDrawsNothing() {
         // A rehearsal of a broken plan would be a picture of something that cannot happen,
-        // which is worse than no picture.
+        // which is worse than no picture. The turn keeps its place with nothing in it — the
+        // turns around it are unaffected, and each still draws its own card.
         val state = table()
         val plan = CoalitionPlan(
             lanes = listOf(Lane(mate, Step.Swap(CardAt(me, 9), CardAt(mate, 9)))),
         )
 
-        assertTrue(rehearse(projectView(state, me), plan).isEmpty())
+        val film = rehearsal(projectView(state, me), plan)
+        assertNull(film.frames.first(), "a step naming a card that is not there drew a picture")
+        assertEquals(film.tables[0], film.tables[1], "a step that cannot happen moved a card")
     }
 
     @Test

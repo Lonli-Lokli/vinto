@@ -36,6 +36,16 @@ data class Transport(
      * with nothing to watch.
      */
     val playAll: Move.Quiet? = null,
+    /**
+     * The last page the plan reaches: the first turn nobody has decided, or [pages] once every
+     * turn is decided.
+     *
+     * **The plan is read front to back.** A page shows the table its turn starts from, and that
+     * table is the one the turn before it leaves — so a turn nobody has decided is the end of
+     * what can honestly be drawn. The pages past it are still *there*, and still say whose turn
+     * they are; they are closed until the turn before them is settled (design D14).
+     */
+    val reach: Int = turns + 1,
 ) {
     /** Whether it is running. Editing sleeps while it is. */
     val running: Boolean get() = travellingTo != null
@@ -61,6 +71,9 @@ data class Transport(
  *   nickname, and [seat] says only how to address them. Null on the last page.
  * @param replay watch this one turn again, from the table it starts on. Null on the last page,
  *   on a turn with nothing to watch, and while the film runs.
+ * @param locked whether the plan does not reach this page yet — see [Transport.reach]. Drawn
+ *   rather than dropped, because a page that vanished would make the plan look shorter than it
+ *   is: the turn exists, it is simply not readable until the one before it is decided.
  */
 data class Stop(
     val at: Int,
@@ -69,27 +82,35 @@ data class Stop(
     val go: Move.Quiet?,
     val nickname: String? = null,
     val replay: Move.Quiet? = null,
+    val locked: Boolean = false,
 )
 
 /**
  * The transport for [focus] over the coalition's [seats], in turn order. See [Transport].
  *
  * @param drawable one per turn: whether that turn has anything to *watch*. A turn nobody has
- *   decided still has a page — it is somebody's turn either way — but there is nothing to play
- *   on the way to it.
+ *   decided draws a card nobody knows, which is a picture; a turn naming a card that has gone
+ *   is not, and there is nothing to play on the way to it.
+ * @param decided one per turn: whether somebody has said what that turn does. The first turn
+ *   nobody has decided closes the pages after it — see [Transport.reach].
  */
 internal fun transportFor(
     focus: Question.ThePlan,
     seats: List<Speaker?>,
     drawable: List<Boolean> = List(seats.size) { true },
     names: List<String?> = List(seats.size) { null },
+    decided: List<Boolean> = List(seats.size) { true },
 ): Transport {
     val turns = seats.size
     val pages = turns + 1
     // Padded rather than trusted: a caller whose flags are shorter than the coalition is a
     // caller whose plan has fewer decisions than turns, and that is the ordinary case.
     val watchable = List(turns) { drawable.getOrElse(it) { false } }
-    val at = focus.at.coerceIn(1, pages)
+    // The first turn nobody has decided is as far as the plan goes; its own page is readable,
+    // because that page is where it is decided.
+    val open = (0 until turns).firstOrNull { !decided.getOrElse(it) { false } }
+    val reach = open?.plus(1) ?: pages
+    val at = focus.at.coerceIn(1, reach)
     val running = focus.running
 
     // A jump, forwards or back: the felt shows the table the page's turn starts from, and no
@@ -97,21 +118,27 @@ internal fun transportFor(
     fun goTo(target: Int): Move.Quiet? = when {
         running -> null
         target == at -> null
+        target > reach -> null
         else -> Move.Ask(focus.copy(at = target, picked = null, runningTo = null, landed = false))
     }
 
     // One turn again: the head goes back to the table the turn starts on and runs to its end.
+    // Only a turn's own page, only one the plan reaches, and only one there is a film of.
+    val watchableTurns = 1..minOf(turns, reach)
     fun replay(page: Int): Move.Quiet? =
-        if (running || page > turns || !watchable[page - 1]) {
+        if (running || page !in watchableTurns || !watchable[page - 1]) {
             null
         } else {
             Move.Ask(focus.copy(at = page, picked = null, runningTo = page, landed = false))
         }
 
-    // From the page on screen to where the plan lands; from the last page, the whole plan again.
+    // From the page on screen to as far as the plan goes; from the last page, the whole plan
+    // again. Never past `reach`: a film that ran into a turn nobody has decided would land the
+    // head on a page the pager cannot show.
     val from = if (at > turns) 1 else at
-    val playAll = Move.Ask(focus.copy(at = from, picked = null, runningTo = pages, landed = false))
-        .takeIf { !running && watchable.drop(from - 1).any { it } }
+    val anythingAhead = reach > from && (from - 1 until reach - 1).any { watchable[it] }
+    val playAll = Move.Ask(focus.copy(at = from, picked = null, runningTo = reach, landed = false))
+        .takeIf { !running && anythingAhead }
 
     return Transport(
         at = at,
@@ -125,8 +152,10 @@ internal fun transportFor(
                 go = goTo(page),
                 nickname = names.getOrNull(page - 1),
                 replay = replay(page),
+                locked = page > reach,
             )
         },
+        reach = reach,
         // Halting parks the head where it already is, on the result of whatever has played.
         halt = Move.Ask(focus.copy(picked = null, runningTo = null, landed = true)).takeIf { running },
         playAll = playAll,

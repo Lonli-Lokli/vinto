@@ -1,7 +1,9 @@
-The game is now called Vinto!, and the three bots are the four elements — fire, water, earth and air — each drawn as an engraved mark rather than a portrait.
+Vinto's first release.
 
-Text now scales with the screen, so a tablet reads like a tablet instead of a stretched phone, either way up.
+Five cards, two you have seen, and three opponents working out theirs at the same time. Call Vinto when you think you are lowest — right pays, wrong costs.
 
-Scoring corrections: a tie now pays the caller 2 rather than 3, and every player starts a session on 4 points.
+Solo against the computer at three strengths, fully offline. Or open a room, send six characters, and whoever gets them is at the table. No account, no sign-up.
 
-The home screen carries a link to the other games, and shows the build number beside the version.
+There is a tutorial that deals a real round instead of reciting rules, and you can skip it.
+
+Thank you for playing.

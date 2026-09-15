@@ -747,7 +747,6 @@
     <string name="label_plan_play_all">Зіграти всі ходи</string>
     <string name="label_plan_changed_by">План — зміна ходу від %1$s</string>
     <string name="label_put_a_card_down">Покласти карту</string>
-    <string name="label_well_see">Подивимось</string>
     <string name="label_rank_said_by">%1$s — так каже %2$s</string>
     <string name="label_another_rank">Інше достоїнство…</string>
     <string name="detail_touch_a_word">Торкніться виділеного слова, щоб змінити його.</string>

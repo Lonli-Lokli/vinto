@@ -71,6 +71,14 @@ data class Board(
     val fresh: Map<CardRef, Int> = emptyMap(),
     /** The turn since which the pile's top is a card nobody knows, or null while it is known. */
     val pileUnknown: Int? = null,
+    /**
+     * The turn whose own draw is in front of its seat on the felt, or null.
+     *
+     * Every turn begins with a card nobody has seen, and a page that left it out drew a seat
+     * about to do something with nothing. Rose and tagged like every other card the plan deals
+     * rather than finds, so "and we'll see" is a card on the table instead of an absence.
+     */
+    val drawing: Int? = null,
     /** The table the turn being built starts from, which is what its open questions are asked of. */
     val startsFrom: PlayerView? = null,
     /** The answers row: the alternatives for the word being asked, or nothing. */
@@ -78,9 +86,11 @@ data class Board(
     /** Of the cards the felt offers, the ones the table can vouch for — a throw of one of these matches. */
     val wanted: Set<CardRef> = emptySet(),
     /**
-     * One per turn: whether the film has anything to draw for it. A turn nobody has decided
-     * has a page and no film, and the runner that parks the head has to know which turn's
-     * cards are the last to land.
+     * One per turn: whether the film has anything to draw for it.
+     *
+     * A turn nobody has decided still has one — the seat draws a card nobody knows, which is a
+     * picture. What has none is a turn that cannot be drawn at all: one naming a card that has
+     * gone. The runner that parks the head has to know which turn's cards are the last to land.
      */
     val watchable: List<Boolean> = emptyList(),
 ) {
@@ -264,8 +274,22 @@ internal class Composing(
     val turns: Int = coalition.size
     val pages: Int = turns + 1
 
-    // The page, clamped to pages that exist: one per turn, and the last where the plan lands.
-    val at: Int = focus.at.coerceIn(1, pages)
+    /**
+     * One per turn: whether it is settled. Throw-ins are not a decision.
+     *
+     * A turn already played is settled by having happened — the table it leaves is the table as
+     * it is — so it never closes the pages after it, whatever the plan did or did not say about
+     * it before it was taken.
+     */
+    val decided: List<Boolean> =
+        coalition.mapIndexed { index, seat -> index < playing || plan?.laneOf(seat)?.step != null }
+
+    /** How far the plan reads — see `Transport.reach`. */
+    val reach: Int = (0 until turns).firstOrNull { !decided[it] }?.plus(1) ?: pages
+
+    // The page, clamped to the pages the plan reaches: one per decided turn, the first
+    // undecided one, and — once none is left open — where the plan lands.
+    val at: Int = focus.at.coerceIn(1, reach)
     val lands: Boolean = at == pages
 
     /** The turn being read, zero-based; -1 on the last page. */
@@ -307,6 +331,9 @@ internal class Composing(
     fun board(): Board {
         val lanes = lanes()
         val position = feltPosition()
+        val table = film?.tables?.getOrNull(position) ?: view
+        // The card the page's turn draws, where it has not been drawn for real already.
+        val blind = seat?.takeIf { position == turn && table.pendingAction == null }
         val composer = lanes.firstOrNull { it.composer != null }?.composer
         val transport = transport()
         val pages = coalition.indices.map { index -> sentenceFor(index, lanes, transport) }
@@ -320,7 +347,8 @@ internal class Composing(
             },
             editedBy = plan?.editedBy?.let { speakerFor(view, it) },
             outcome = plan?.let { planOutcome(view, it) },
-            felt = film?.tables?.getOrNull(position) ?: view,
+            felt = blind?.let { table.drawing(it) } ?: table,
+            drawing = (turn + 1).takeIf { blind != null },
             picked = focus.picked,
             marks = if (lands) emptySet() else lane?.let { cardsNamedBy(there, it) }.orEmpty(),
             fresh = film?.fresh?.getOrNull(position).orEmpty(),
@@ -362,6 +390,7 @@ internal class Composing(
         seats = coalition.map { speakerFor(view, it) },
         drawable = drawable,
         names = coalition.map { id -> view.players.firstOrNull { it.id == id }?.nickname },
+        decided = decided,
     )
 
     /**
@@ -642,8 +671,14 @@ private fun feltTaps(board: Board, focus: Question.ThePlan): Map<CardRef, Move> 
 /**
  * What should this seat do with the card their turn takes? — the outcome word, asked.
  *
- * The answers: **put a card down**, **let it go**, or **we'll see** — and **play it**, only
- * once the card is face up and has an action, because before that there is nothing to play.
+ * The answers: **put a card down** or **let it go** — and **play it**, only once the card is
+ * face up and has an action, because before that there is nothing to play.
+ *
+ * **"We'll see" is not among them.** It was, and it cleared the lane — which is how a turn
+ * gets back to undecided. Since the plan is read front to back (`Transport.reach`), undeciding
+ * a turn closes every page after it, so the one deliberate "I don't know yet" answer was also
+ * the only one that could throw away the rest of the board, including the reader's own turn.
+ * A decision can still be changed: touch the word and answer it again.
  */
 internal fun doingTable(
     view: PlayerView,
@@ -663,8 +698,6 @@ internal fun doingTable(
         }
         add(Choice(Label.PutACardDown, Move.Ask(Question.PuttingDown(seat, question.at)), Tone.KEEP))
         add(Choice(Label.LetTheCardGo, Move.Plan(PlanEdit.SetLane(seat, Step.Bin))))
-        val decided = composing.lane?.step != null
-        add(Choice(Label.WellSee, if (decided) Move.Plan(PlanEdit.ClearLane(seat)) else Move.Ask(focus)))
     }
     return Table(
         prompt = Ask.WhatShouldTheyDo(speakerFor(view, seat)),

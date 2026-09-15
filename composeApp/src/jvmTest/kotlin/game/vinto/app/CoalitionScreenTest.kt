@@ -347,7 +347,14 @@ class CoalitionScreenTest {
         // last position counts the *coalition's* turns, not the lanes anybody has filled in.
         val turns = assertNotNull(tableFor(view, question = Question.ThePlan(), plan = plan).board).lanes.size
         val landed = Question.ThePlan(at = turns + 1)
-        val words = textsOn(view, plan = plan, question = landed)
+        // Every turn settled, because the pager does not reach past a turn nobody has decided
+        // (`Transport.reach`) and where the plan lands is the page after the last of them.
+        val whole = plan.copy(
+            lanes = plan.lanes + view.players
+                .filter { it.id != view.vintoCallerId && plan.lanes.none { lane -> lane.seat == it.id } }
+                .map { Lane(it.id, Step.Bin) },
+        )
+        val words = textsOn(view, plan = whole, question = landed)
         assertTrue(
             words.any { it.equals("After every turn", ignoreCase = true) },
             "the plan does not say where it leaves the round: $words",

@@ -141,7 +141,11 @@ class PlanDragTest {
         val at = turns.lanes.indexOfFirst { it.who == Speaker.You } + 1
         assertTrue(at >= 0 && mine >= 0, "the viewer has no turn in this final round")
 
-        val parked = assertNotNull(tableFor(view, question = Question.ThePlan(at = at), plan = CoalitionPlan()).board)
+        // The turns before mine settled, or the pager never reaches mine: a page after a turn
+        // nobody has decided is closed (`Transport.reach`).
+        val order = coalitionInTurnOrder(view.players.map { it.id }, view.vintoCallerId.orEmpty())
+        val before = CoalitionPlan(lanes = order.take(at - 1).map { Lane(it, Step.Bin) })
+        val parked = assertNotNull(tableFor(view, question = Question.ThePlan(at = at), plan = before).board)
         // `building` rather than an index: which lane that is has moved once already, and the
         // board is the one place that knows.
         val composer = assertNotNull(parked.building?.composer, "the viewer's own turn offers no composer")

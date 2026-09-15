@@ -762,7 +762,6 @@
     <string name="label_plan_play_all">Tüm turları oynat</string>
     <string name="label_plan_changed_by">Plan — %1$s turunu değiştirdi</string>
     <string name="label_put_a_card_down">Bir kart bırak</string>
-    <string name="label_well_see">Göreceğiz</string>
     <string name="label_rank_said_by">%1$s — %2$s öyle dedi</string>
     <string name="label_another_rank">Başka bir değer…</string>
     <string name="detail_touch_a_word">Değiştirmek için kutulu bir kelimeye dokun.</string>

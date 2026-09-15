@@ -730,7 +730,6 @@
     <string name="label_plan_play_all">播放全部回合</string>
     <string name="label_plan_changed_by">计划——%1$s修改了您的回合</string>
     <string name="label_put_a_card_down">放下一张牌</string>
-    <string name="label_well_see">到时候再说</string>
     <string name="label_rank_said_by">%1$s——%2$s这么说的</string>
     <string name="label_another_rank">换个点数…</string>
     <string name="detail_touch_a_word">点按方框中的词即可更改。</string>

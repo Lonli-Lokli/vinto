@@ -126,22 +126,20 @@ sealed interface Label {
     /** Yes to the board as it stands. */
     data object Agree : Label
 
-    /** The three things a turn can do with the card it takes — see `Question.Doing`. */
+    /** The things a turn can do with the card it takes — see `Question.Doing`. */
     data object PlayTheCard : Label
 
     /** Put one of your own cards on the pile for the drawn one, chosen on the felt. */
     data object PutACardDown : Label
 
-    /** Decide nothing about what becomes of the card: it is the draw's to say. */
-    data object WellSee : Label
+    /** Let the drawn card go without taking it: the hand stays exactly as it is. */
+    data object LetTheCardGo : Label
 
     /** The rank somebody said the pointed-at card is, offered as the King's answer. */
     data class RankSaidBy(val rank: Rank, val who: Speaker) : Label
 
     /** A rank nobody said: the whole set, one touch further. */
     data object AnotherRank : Label
-
-    data object LetTheCardGo : Label
 
     /** Take one throw-in off the turn it was said on. */
     data object RemoveThrow : Label

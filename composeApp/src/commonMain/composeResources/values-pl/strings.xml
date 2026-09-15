@@ -729,7 +729,6 @@
     <string name="label_plan_play_all">Zagraj wszystkie tury</string>
     <string name="label_plan_changed_by">Plan — %1$s zmienia twoją turę</string>
     <string name="label_put_a_card_down">Odłóż kartę</string>
-    <string name="label_well_see">Zobaczymy</string>
     <string name="label_rank_said_by">%1$s — tak twierdzi %2$s</string>
     <string name="label_another_rank">Inna ranga…</string>
     <string name="detail_touch_a_word">Dotknij oznaczonego słowa, aby je zmienić.</string>

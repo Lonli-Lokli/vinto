@@ -732,7 +732,6 @@
     <string name="label_plan_play_all">Alle Züge abspielen</string>
     <string name="label_plan_changed_by">Plan — %1$s hat Ihren Zug geändert</string>
     <string name="label_put_a_card_down">Eine Karte ablegen</string>
-    <string name="label_well_see">Mal sehen</string>
     <string name="label_rank_said_by">%1$s — laut %2$s</string>
     <string name="label_another_rank">Ein anderer Rang…</string>
     <string name="detail_touch_a_word">Ein umrahmtes Wort berühren, um es zu ändern.</string>

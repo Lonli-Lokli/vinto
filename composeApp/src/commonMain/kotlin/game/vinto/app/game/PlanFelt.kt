@@ -47,6 +47,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
@@ -224,7 +225,10 @@ internal fun PlanRail(
 @Composable
 private fun Pages(board: Board, table: Table, onMove: (Move) -> Unit, modifier: Modifier) {
     val transport = board.transport
-    val pages = transport.stops.size.coerceAtLeast(1)
+    // Only as far as the plan reads: a swipe cannot reach a page that is closed, any more than
+    // its stop can be touched (`Transport.reach`). The stops row still draws them all, so the
+    // turns are visible as turns rather than missing.
+    val pages = transport.reach.coerceAtLeast(1)
     val state = rememberPagerState(initialPage = (transport.at - 1).coerceIn(0, pages - 1)) { pages }
     val stage = LocalStage.current
     val latest = rememberUpdatedState(transport)
@@ -255,7 +259,7 @@ private fun Pages(board: Board, table: Table, onMove: (Move) -> Unit, modifier: 
     ) { page ->
         val sentence = board.pages.getOrNull(page)
         when {
-            page == transport.stops.lastIndex && transport.stops.size > 1 -> LandsPage(board)
+            page == transport.turns && transport.turns > 0 -> LandsPage(board)
             sentence != null -> TurnPage(sentence, table, page + 1 == transport.at, onMove)
             else -> Spacer(Modifier.fillMaxSize())
         }
@@ -532,7 +536,13 @@ private fun StopChip(stop: Stop, transport: Transport, onMove: (Move) -> Unit) {
     val stage = LocalStage.current
     val words = stopWords(stop, transport)
     val go = stop.go
-    val ink = if (stop.here) Rail.fill else Rail.ink
+    // A closed page is drawn dim rather than dropped: the turn is still somebody's turn, and a
+    // row that lost it would say the plan is shorter than it is (`Transport.reach`).
+    val ink = when {
+        stop.here -> Rail.fill
+        stop.locked -> Rail.inkDim
+        else -> Rail.ink
+    }
     Row(
         modifier = Modifier
             .sizeIn(minWidth = TapTarget, minHeight = TapTarget)
@@ -543,6 +553,7 @@ private fun StopChip(stop: Stop, transport: Transport, onMove: (Move) -> Unit) {
             .semantics(mergeDescendants = true) {
                 contentDescription = words.spoken
                 selected = stop.here
+                if (stop.locked) disabled()
                 role = Role.Tab
             },
         horizontalArrangement = Arrangement.spacedBy(Half),

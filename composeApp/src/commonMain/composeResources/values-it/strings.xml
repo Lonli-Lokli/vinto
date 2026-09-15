@@ -762,7 +762,6 @@
     <string name="label_plan_play_all">Riproduci tutti i turni</string>
     <string name="label_plan_changed_by">Piano — %1$s ha cambiato il tuo turno</string>
     <string name="label_put_a_card_down">Mettila giù</string>
-    <string name="label_well_see">Si vedrà</string>
     <string name="label_rank_said_by">%1$s — lo ha detto %2$s</string>
     <string name="label_another_rank">Un altro valore…</string>
     <string name="detail_touch_a_word">Tocchi una parola riquadrata per cambiarla.</string>

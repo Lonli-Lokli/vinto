@@ -730,7 +730,6 @@
     <string name="label_plan_play_all">সব পালা খেলুন</string>
     <string name="label_plan_changed_by">পরিকল্পনা — %1$s আপনার পালা পরিবর্তন করেছেন</string>
     <string name="label_put_a_card_down">তাস রাখুন</string>
-    <string name="label_well_see">দেখা যাবে</string>
     <string name="label_rank_said_by">%1$s — %2$s তাই বলেছেন</string>
     <string name="label_another_rank">অন্য একটি র‌্যাংক…</string>
     <string name="detail_touch_a_word">এটি বদলাতে বাক্সে থাকা কোনো শব্দ স্পর্শ করুন।</string>

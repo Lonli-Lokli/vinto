@@ -354,6 +354,49 @@ The alternative — the engine carrying reveals by card identity in `PlayerView`
 it would put a card id into a view whose whole point is to redact card ids, and it would be a
 wire change for a defect that lies entirely on the client's side.
 
+### D21 — The plan is read front to back, and an undecided turn still draws
+
+A page shows the table its turn starts from, and that table is the one the turn before it
+leaves. So a turn nobody has decided is the end of what can honestly be drawn: every page after
+it would be a picture of a table whose making nobody has agreed. Reported from a phone, where
+the first turn was empty, the second was planned, and stepping between them changed nothing on
+the felt — because with no film for turn ①, positions 0, 1, 2 and 3 were all the same table.
+
+Two halves, and the second is what makes the first bearable.
+
+**A turn nobody has decided is not a hole.** The seat draws, and something goes on the pile; what
+the plan cannot say is what either card is. So the honest picture is every hand exactly as it
+was, with a card nobody can name on the pile — which is `Step.Bin`'s own effect, so no new
+transform was needed, only the decision to play it (`Ghost.blindly`). The turn therefore has a
+film, its ▶ is live, and its `pileUnknown` tells the turn after it there is nothing there to
+take. And the card it draws is *on the felt*: rose in the slot under the deck, tagged with the
+turn, like every other card the plan deals rather than finds (`Board.drawing`). "Draws, and
+we'll see" is a card waiting to be aimed, not an absence — which is the whole of why an
+undecided turn is still plannable. Any of the seat's own cards may be carried to the pile, known
+or not, and the drawn card takes its place; no rank is claimed and none is assumed.
+
+**And the pages after it are closed until it is decided.** `Transport.reach` is the first
+undecided turn, or where the plan lands once none is left open; a stop past it is drawn dim
+rather than dropped — the turn exists, it is simply not readable yet — the pager will not swipe
+to it, and `Composing.at` clamps, so a lane a teammate opens under a reader brings them back
+rather than leaving them on a page the plan no longer reaches. A turn already **played** counts
+as settled by having happened, whatever the plan said about it, because the table it leaves is
+the table as it is.
+
+This is what closed **"we'll see"** as an answer. It cleared the lane, which is how a turn got
+back to undecided — so the one deliberate "I don't know yet" was also the only control that could
+throw away the rest of the board, the reader's own turn included. A decision is changed by
+answering it again, which was always true; there is no longer a way to un-answer one. The
+sentence still *says* "and we'll see" for a turn nobody has decided, because that is what is
+true of it.
+
+*Alternative considered:* every page reachable, on the grounds that a blind draw makes an
+undecided turn well-defined and the chain is therefore never short. Rejected by the product
+owner: reading the plan front to back is the point, and a page whose turn depends on a turn
+nobody has agreed is a page about nothing. The cost is named — you cannot look ahead, and you
+cannot plan your own turn before the turns before it — and accepted. It puts weight on the
+bots seeding turn ①, which `BoardProposals` skips for the seat on play.
+
 ## Risks / Trade-offs
 
 - **Drag on a small phone is fiddly**, and a mis-drop that silently edits the plan is worse than

@@ -687,3 +687,39 @@ final table is on screen once turn three has played.
       play). It measures them off the stage now, where every one of them is marked whatever its
       state.
 
+
+## 16. Read front to back (D21)
+
+Reported from a phone, four things at once: *"I thought when I click on turn in bottom in plan
+mode table will change to represent state of the game in the start of this turn"*, *"why first
+planned turn is empty for dune?"*, *"why there is an error in plan for my turn?"*, *"play and
+play all buttons stays disabled"*. All four turned out to be one shape — a turn nobody had
+decided was a hole in the plan, and every page after it drew the table as though that turn had
+never happened.
+
+- [x] 16.1 **An undecided turn draws a card nobody knows.** `Ghost.blindly`: the seat draws, and
+      the card goes on the pile unnamed — every hand exactly as it was, `pileUnknown` set from
+      that turn on, which is `Step.Bin`'s own effect and so no new transform. The turn has a film,
+      so its ▶ is live where before nothing in an unfinished plan could be watched at all.
+      `TransportTest.aTurnNobodyHasDecidedStillDrawsACardNobodyKnows` and
+      `aTurnNobodyHasDecidedLeavesEveryHandWhereItWas`; the genuine no-film case — a step naming a
+      card that has gone — keeps its null frame in `aTurnWithNothingToDrawStillKeepsItsPosition`.
+- [x] 16.2 **The card it draws is on the felt.** `Board.drawing`, rose in the slot under the deck
+      and tagged with the turn. Without it "draws, and we'll see" read as an empty turn rather
+      than as a card waiting to be aimed, which is why the report asked why a bot's turn was
+      "empty" — it was already plannable, and nothing on screen said so.
+      `TransportTest.theCardAnUndecidedTurnDrawsIsOnTheFeltAndIsNobodys`,
+      `PlanAsTalkScreenTest.aCardThePlanDealsIsRoseOnTheFeltWithTheTurnItArrivesOn`, and the two
+      plan goldens.
+- [x] 16.3 **The pages after an undecided turn are closed.** `Transport.reach`, `Stop.locked`, the
+      pager capped to it and `Composing.at` clamped, so a lane a teammate opens under a reader
+      brings them back rather than leaving them on a page the plan no longer reaches. A turn
+      already played counts as settled by having happened. Drawn dim rather than dropped: the turn
+      exists, it is simply not readable yet. `TransportTest.aTurnIsClosedUntilTheOneBeforeItHasBeenDecided`,
+      `theWholePlanIsReachableOnceEveryTurnIsDecided`, `theHeadComesBackWhenTheTurnBeforeItIsOpened`.
+- [x] 16.4 **"We'll see" is no longer an answer.** It cleared the lane, so the one deliberate "I
+      don't know yet" was also the only control that could close every page after it — the
+      reader's own turn included. `Label.WellSee` and `label_well_see` are retired from twenty
+      locales; `Says.WellSee` stays, because it is still what a turn nobody has decided *says*.
+      `TurnBuilderTest.touchingAWordOfTheSentenceReopensItsOwnQuestion`,
+      `PlanBuilderTest.theSentenceOffersTheNextPartOfTheTurnWhereItsAnswerGoes`.

@@ -759,7 +759,6 @@
     <string name="label_plan_play_all">हर बारी खेलें</string>
     <string name="label_plan_changed_by">योजना — %1$s ने आपकी बारी बदली</string>
     <string name="label_put_a_card_down">एक पत्ता नीचे रखें</string>
-    <string name="label_well_see">देखेंगे</string>
     <string name="label_rank_said_by">%1$s — %2$s ने ऐसा कहा</string>
     <string name="label_another_rank">कोई और रैंक…</string>
     <string name="detail_touch_a_word">बदलने के लिए किसी बॉक्स वाले शब्द को छुएं।</string>

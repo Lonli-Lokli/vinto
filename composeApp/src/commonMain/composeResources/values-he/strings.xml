@@ -729,7 +729,6 @@
     <string name="label_plan_play_all">לשחק את כל התורות</string>
     <string name="label_plan_changed_by">תוכנית — התור שלכם שונה בידי %1$s</string>
     <string name="label_put_a_card_down">להניח קלף</string>
-    <string name="label_well_see">נראה</string>
     <string name="label_rank_said_by">%1$s — כך נטען בידי %2$s</string>
     <string name="label_another_rank">דרגה אחרת…</string>
     <string name="detail_touch_a_word">געו במילה הממוסגרת כדי לשנות אותה.</string>

@@ -751,7 +751,6 @@
     <string name="label_plan_play_all">Сыграть все ходы</string>
     <string name="label_plan_changed_by">План — ваш ход изменён: %1$s</string>
     <string name="label_put_a_card_down">Положить карту</string>
-    <string name="label_well_see">Посмотрим</string>
     <string name="label_rank_said_by">%1$s — %2$s так считает</string>
     <string name="label_another_rank">Другое достоинство…</string>
     <string name="detail_touch_a_word">Коснитесь слова в рамке, чтобы изменить его.</string>

@@ -109,11 +109,17 @@ class PlanAsTalkScreenTest {
         val first = turnOrder(view)[0]
         val plan = CoalitionPlan(lanes = listOf(Lane(first, Step.PutDown(CardAt(first, 0)))))
 
+        // On turn 1's own page the only card arriving on turn 1 is the one the turn is about to
+        // draw, in the slot under the deck — the card it will *put in the hand* has not been put
+        // there yet. One node, not none: every turn opens with a card nobody has seen.
         show(view, plan, Question.ThePlan(at = 1))
-        assertTrue(described("arriving on turn 1", substring = true).isEmpty(), "the card arrived before its turn")
+        assertEquals(1, described("arriving on turn 1", substring = true).size, "the card arrived before its turn")
 
+        // From the page after it, the drawn card has taken its place in the hand and is marked
+        // there — and the slot under the deck now holds turn 2's own draw instead.
         show(view, plan, Question.ThePlan(at = 2))
         assertTrue(described("arriving on turn 1", substring = true).isNotEmpty(), "the dealt card is not marked")
+        assertEquals(1, described("arriving on turn 2", substring = true).size, "turn 2 has no card to draw")
 
         // A put-down of a card nobody has named leaves a card nobody knows on the pile, and the
         // pile says so the same way rather than reading as empty.
@@ -182,6 +188,9 @@ class PlanAsTalkScreenTest {
         val who = if (second == view.viewerId) "You" else view.players.first { it.id == second }.nickname
         val asked = mutableListOf<Question>()
         var question by mutableStateOf<Question>(Question.ThePlan(at = 3))
+        // Every turn settled, so all four pages are open and the jump under test can happen at
+        // all — a page after an undecided turn is closed and has nothing to touch.
+        val whole = reaching(view, turnOrder(view).size + 1)
 
         setContent {
             VintoTheme {
@@ -190,7 +199,7 @@ class PlanAsTalkScreenTest {
                         TableScreen(
                             state = TableState(
                                 view,
-                                tableFor(view, question = question, plan = CoalitionPlan()),
+                                tableFor(view, question = question, plan = whole),
                                 null,
                                 emptyList(),
                                 1,
@@ -241,7 +250,8 @@ class PlanAsTalkScreenTest {
         val moves = mutableListOf<Move>()
 
         val stage = Stage()
-        show(view, plan, Question.ThePlan(at = turnOrder(view).indexOf(me) + 1), stage, onMove = { moves += it })
+        val page = turnOrder(view).indexOf(me) + 1
+        show(view, reaching(view, page, plan), Question.ThePlan(at = page), stage, onMove = { moves += it })
         // Found by where it is rather than by what it is: the header wears a switch too, and
         // the one being tested is the mark between the two cards on the felt.
         val where = assertNotNull(stage.boundsOf("plan:arrow"), "the Queen's arrow is not on the felt")
@@ -287,6 +297,22 @@ class PlanAsTalkScreenTest {
 
     private fun turnOrder(view: PlayerView): List<String> =
         coalitionInTurnOrder(view.players.map { it.id }, view.vintoCallerId.orEmpty())
+
+    /**
+     * [plan] with every turn before [page] settled, so the pager reaches [page] at all.
+     *
+     * The plan is read front to back and the page after a turn nobody has decided is closed
+     * (`Transport.reach`), so a fixture that sets one seat's turn and opens it would be clamped
+     * back to the first page. Let-go is the emptiest decision there is.
+     */
+    private fun reaching(view: PlayerView, page: Int, plan: CoalitionPlan = CoalitionPlan()): CoalitionPlan =
+        turnOrder(view).take(page - 1).fold(plan) { standing, seat ->
+            if (standing.lanes.any { it.seat == seat && it.step != null }) {
+                standing
+            } else {
+                standing.copy(lanes = standing.lanes.filterNot { it.seat == seat } + Lane(seat, Step.Bin))
+            }
+        }
 
     /** A node's whole description, and whether a finger can do anything with it. */
     private data class Described(val words: String, val touchable: Boolean)

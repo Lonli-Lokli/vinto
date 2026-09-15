@@ -197,7 +197,13 @@ private fun Ghost.playTurn(lane: Lane, turn: Int, start: Start): Played? {
     val scenes = mutableListOf<Scene>()
     var action: GameAction? = null
 
-    lane.step?.let { step ->
+    val step = lane.step
+    if (step == null) {
+        val blind = table.blindly(lane.seat, turn, start.drawn)
+        scenes += blind.scenes
+        table = blind.after
+        action = blind.action
+    } else {
         val played = table.play(lane.seat, step, turn, start.drawn, lane.rankAt(Part.Own, start))
             ?: return null
         scenes += played.scenes
@@ -211,6 +217,34 @@ private fun Ghost.playTurn(lane: Lane, turn: Int, start: Start): Played? {
         if (action == null) action = thrown.action
     }
     return Played(table, scenes, action ?: return null)
+}
+
+/**
+ * A turn nobody has decided: the seat draws, and the card goes on the pile without ever being
+ * named.
+ *
+ * **Not a guess about what they will do — a statement of what the plan knows.** Whether the
+ * card is kept or let go, the hand is the same length either way and no card the table can
+ * name has moved, so the honest picture is every hand exactly as it was. What it *does* say is
+ * that the pile's top is now a card nobody can name, which is the one thing an undecided turn
+ * tells the turn after it: there is nothing there to take.
+ *
+ * Where the seat has already drawn for real — the turn on play, its card face up — that card
+ * is what lands, because the table has seen it and pretending otherwise would draw a worse
+ * picture than the truth.
+ */
+private fun Ghost.blindly(seat: String, turn: Int, drawn: Rank?): Played {
+    val held = view.pendingAction?.playerId == seat
+    val staged = if (held) view else view.drawing(seat)
+    val after = if (drawn != null) landing(drawn, played = false) else unknownLanding(turn)
+    val binned = GameAction.DiscardCard(PlayerIdPayload(seat))
+    // The draw itself is only drawn where the card is not already in front of them.
+    val drawing = if (held) {
+        emptyList()
+    } else {
+        choreograph(GameAction.DrawCard(PlayerIdPayload(seat)), view, staged)
+    }
+    return Played(after, drawing + choreograph(binned, staged, after.view), binned)
 }
 
 /**
@@ -696,8 +730,11 @@ private fun PlayerView.pending(
     ),
 )
 
-/** The seat with a draw in front of it, which is where a put-down starts. */
-private fun PlayerView.drawing(seat: String): PlayerView = copy(
+/**
+ * The seat with a draw in front of it: where a put-down starts, and what a turn nobody has
+ * decided has on the table. Hidden, because nobody has seen it — including the seat holding it.
+ */
+internal fun PlayerView.drawing(seat: String): PlayerView = copy(
     pendingAction = PendingActionView(
         playerId = seat,
         actionPhase = ActionPhase.CHOOSING_ACTION,
