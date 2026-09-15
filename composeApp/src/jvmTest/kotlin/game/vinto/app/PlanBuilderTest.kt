@@ -329,6 +329,27 @@ class PlanBuilderTest {
     }
 
     @Test
+    fun theLastStopIsAMarkRatherThanAWordNobodyAskedFor() = runComposeUiTest {
+        // "Lands" is the codebase's own metaphor and not a word a player reaches for, reported
+        // from a phone as unclear. Every other stop on the row is a mark now — a numeral in a
+        // circle, a face, an arrow — so a word there was the odd one out as well as the opaque
+        // one. It is the finish mark instead, and the whole of what it means goes to the screen
+        // reader, where there is no width to buy and no picture to read.
+        val view = finalRound()
+        show(view, plan = CoalitionPlan(), question = Question.ThePlan())
+
+        val lands = onAllNodesWithContentDescription("After every turn")
+            .fetchSemanticsNodes()
+            .filter { it.config.getOrNull(SemanticsProperties.Selected) != null }
+        assertTrue(lands.isNotEmpty(), "the last stop does not say what it is")
+        assertTrue(
+            lands.first().config.getOrNull(SemanticsProperties.Text).orEmpty().isEmpty(),
+            "the last stop still spells a word: " +
+                lands.first().config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text },
+        )
+    }
+
+    @Test
     fun touchingATeammatesPlateOpensTheirTurn() = runComposeUiTest {
         // "How to design moves for them": their seat is on the felt, so it is the way to their
         // turn — the same stop the header offers, reached from the person it belongs to.

@@ -742,7 +742,7 @@
     <string name="says_you_throw_blind">depois atiras a carta %1$d às cegas</string>
     <string name="says_which_to_throw">qual carta?</string>
     <string name="board_then">depois</string>
-    <string name="board_lands">Chegada</string>
+    <string name="board_arrival">Depois de cada jogada</string>
     <string name="board_named">%1$d nomeados</string>
     <string name="board_unnamed">%1$d por nomear</string>
     <string name="board_ours">nossas</string>

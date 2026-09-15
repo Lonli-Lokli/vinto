@@ -752,7 +752,7 @@
     <string name="says_you_throw_blind">poi tu butti dentro la carta %1$d alla cieca</string>
     <string name="says_which_to_throw">quale carta?</string>
     <string name="board_then">poi</string>
-    <string name="board_lands">Esito</string>
+    <string name="board_arrival">Dopo ogni turno</string>
     <string name="board_named">%1$d dichiarati</string>
     <string name="board_unnamed">%1$d non dichiarati</string>
     <string name="board_ours">nostre</string>

@@ -800,7 +800,7 @@
          the caller's hand as the coalition believes it, and every coalition hand the same way.
          %1$d is a total of the cards somebody has named, or a count of cards nobody has. -->
     <string name="board_then">then</string>
-    <string name="board_lands">Lands</string>
+    <string name="board_arrival">After every turn</string>
     <string name="board_named">%1$d named</string>
     <string name="board_unnamed">%1$d unnamed</string>
     <string name="board_ours">ours</string>

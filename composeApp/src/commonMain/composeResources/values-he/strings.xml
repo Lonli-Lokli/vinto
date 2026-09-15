@@ -719,7 +719,7 @@
     <string name="says_you_throw_blind">ואז אתם זורקים פנימה את קלף מספר %1$d בעיוורון</string>
     <string name="says_which_to_throw">איזה קלף?</string>
     <string name="board_then">אז</string>
-    <string name="board_lands">הנחיתה</string>
+    <string name="board_arrival">אחרי כל תור</string>
     <string name="board_named">%1$d מוכרזים</string>
     <string name="board_unnamed">%1$d לא מוכרזים</string>
     <string name="board_ours">שלנו</string>

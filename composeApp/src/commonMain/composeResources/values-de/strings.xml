@@ -722,7 +722,7 @@
     <string name="says_you_throw_blind">dann werfen Sie Karte %1$d blind ein</string>
     <string name="says_which_to_throw">welche Karte?</string>
     <string name="board_then">dann</string>
-    <string name="board_lands">Ankunft</string>
+    <string name="board_arrival">Nach jedem Zug</string>
     <string name="board_named">%1$d benannt</string>
     <string name="board_unnamed">%1$d unbenannt</string>
     <string name="board_ours">von uns</string>

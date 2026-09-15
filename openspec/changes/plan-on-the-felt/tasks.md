@@ -664,4 +664,26 @@ final table is on screen once turn three has played.
       `git rev-list --count HEAD`, so it gained a digit with every commit — the same defect fixed
       for `HomeScreen` and missed here. `SettingsScreen` takes `build` as a parameter now and
       `ScreenshotTest` pins it, as the home screen’s already was.
+- [x] 15.5 **The last stop is a mark, not a word.** *"Instead of word land which is unclear use
+      finish image"*. "Lands" was this repository's own metaphor rather than a word a player
+      reaches for, and with every other stop drawn as marks it was the odd one out as well as the
+      opaque one. It wears a chequered flag on a staff, drawn in Canvas like ▶ ▶▶ ■ — deliberately
+      not a media mark, since those sit inches away and a third triangle among the stops would
+      read as a third button rather than as a place. It says nothing about who won, which the app
+      says nowhere (D12).
+      The word went from the page's heading too, and from the screen reader, which was getting
+      the same unclear word the screen was: `board_lands` is retired and `board_arrival`
+      ("After every turn") replaces it in nineteen locales.
+- [x] 15.6 **The scroll comes back, for names rather than for words.** Reported from a phone:
+      *"we should still might have scroll there as we might have long names of players in network
+      play"*. Right, and it is provable rather than a guess — only the lit stop spells its seat's
+      name, and online a name is minted from two fixed lists, so the longest a seat can ever be
+      called is "Patient Harbour", fifteen characters against a fixture's four. ▶ measured **24dp**
+      under it with the stops sharing the row. The stops take what the buttons leave and scroll
+      inside it; the buttons never give any of it back.
+      The test that should have caught this was **vacuous twice over**, and the fix is worth more
+      than the case: a sweep of clickable nodes measures neither the lit stop (you are already on
+      it, so it is not touchable) nor ▶ and ▶▶ (not touchable until a plan gives them something to
+      play). It measures them off the stage now, where every one of them is marked whatever its
+      state.
 

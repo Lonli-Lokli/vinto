@@ -720,7 +720,7 @@
     <string name="says_you_throw_blind">그리고 당신이 %1$d번 카드를 무작정 던져 넣기</string>
     <string name="says_which_to_throw">어느 카드를 던질까요?</string>
     <string name="board_then">그다음</string>
-    <string name="board_lands">도착</string>
+    <string name="board_arrival">매 턴 이후</string>
     <string name="board_named">%1$d점 확인</string>
     <string name="board_unnamed">%1$d장 미확인</string>
     <string name="board_ours">우리</string>

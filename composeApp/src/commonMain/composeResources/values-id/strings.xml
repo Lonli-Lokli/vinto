@@ -745,7 +745,7 @@
     <string name="says_you_throw_blind">lalu Anda melempar masuk kartu %1$d secara buta</string>
     <string name="says_which_to_throw">kartu mana?</string>
     <string name="board_then">Lalu</string>
-    <string name="board_lands">Hasil</string>
+    <string name="board_arrival">Setelah setiap giliran</string>
     <string name="board_named">%1$d disebutkan</string>
     <string name="board_unnamed">%1$d belum disebutkan</string>
     <string name="board_ours">milik kita</string>

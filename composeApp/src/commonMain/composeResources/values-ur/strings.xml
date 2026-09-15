@@ -736,7 +736,7 @@
     <string name="says_you_throw_blind">پھر آپ پتہ %1$d اندھا پھینکتے ہیں</string>
     <string name="says_which_to_throw">کون سا پتہ؟</string>
     <string name="board_then">پھر</string>
-    <string name="board_lands">انجام</string>
+    <string name="board_arrival">ہر باری کے بعد</string>
     <string name="board_named">%1$d نام شدہ</string>
     <string name="board_unnamed">%1$d غیر نامزد</string>
     <string name="board_ours">ہمارے</string>

@@ -58,9 +58,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
+import game.vinto.app.art.board_arrival
 import game.vinto.app.art.board_broken
 import game.vinto.app.art.board_hand_unknown
-import game.vinto.app.art.board_lands
 import game.vinto.app.art.board_named
 import game.vinto.app.art.board_ours
 import game.vinto.app.art.board_then
@@ -162,6 +162,13 @@ private const val THEN_TAIL = 0.15f
 private const val THEN_TIP = 0.75f
 private const val THEN_BARB = 0.55f
 private const val THEN_HEAD = 0.2f
+
+/** The finish flag: a staff, and two rows of two squares hung off it. */
+private const val FLAG_STAFF = 0.26f
+private const val FLAG_TOP = 0.2f
+private const val FLAG_FOOT = 0.82f
+private const val FLAG_CELL = 0.24f
+private const val FLAG_STROKE = 0.07f
 
 /** The dashed edge of a word on offer. */
 private const val DashOn = 6f
@@ -343,7 +350,7 @@ private fun LandsPage(board: Board) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(Res.string.board_lands),
+                text = stringResource(Res.string.board_arrival),
                 fontSize = WordSize,
                 fontWeight = FontWeight.Bold,
                 color = Rail.gold,
@@ -481,17 +488,26 @@ internal fun PlanStops(transport: Transport, onMove: (Move) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(Half),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Joined by arrows rather than each carrying the word "Turn": the row reads as the
-        // order the seats play in, which is what the word was for, and the width it gives back
-        // is what the two buttons need. A plain row shared the width instead, and a row out of
-        // width takes it out of its last child — ▶▶ measured 19dp across on a 411dp phone the
-        // moment a plan gave it something to play, which is the only state it can be pressed in
-        // and the reason an empty board never showed it (`TouchTargetTest`).
-        transport.stops.forEachIndexed { index, stop ->
-            if (index > 0) ThenArrow()
-            StopChip(stop, transport, onMove)
+        // Joined by arrows rather than each carrying the word "Turn": the row reads as the order
+        // the seats play in, which is what the word was for, and the width it gives back is what
+        // the two buttons need.
+        //
+        // **And it still scrolls**, because that width is not enough on its own. Only the lit
+        // stop spells its seat's name, and online a name is minted rather than typed — the
+        // longest is "Patient Harbour", fifteen characters against a fixture's four. A row out
+        // of width takes it out of its last child, so ▶ measured 24dp under that name with the
+        // stops sharing the row. The stops take what the buttons leave and scroll inside it; the
+        // buttons are thumbs and never give any of it back (`TouchTargetTest`).
+        Row(
+            modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(Half),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            transport.stops.forEachIndexed { index, stop ->
+                if (index > 0) ThenArrow()
+                StopChip(stop, transport, onMove)
+            }
         }
-        Spacer(Modifier.weight(1f))
         val here = transport.stops.firstOrNull { it.here }
         val replay = stringResource(Res.string.label_plan_replay)
         TransportButton(replay, here?.replay, "plan:replay", onMove) { ink -> drawPlay(ink) }
@@ -533,13 +549,7 @@ private fun StopChip(stop: Stop, transport: Transport, onMove: (Move) -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (stop.seat == null) {
-            Text(
-                text = words.label,
-                fontSize = WordSize,
-                fontWeight = FontWeight.Bold,
-                color = ink,
-                maxLines = 1,
-            )
+            Canvas(modifier = Modifier.size(MarkSize)) { drawFinish(ink) }
         } else {
             TurnMark(words.label, stop.here)
         }
@@ -609,8 +619,10 @@ private fun ThenArrow() {
 private fun stopWords(stop: Stop, transport: Transport): StopWords {
     val seat = stop.seat
     if (seat == null && stop.at == transport.stops.size) {
-        val lands = stringResource(Res.string.board_lands)
-        return StopWords(label = lands, name = null, spoken = lands)
+        // Nothing to draw: the chip wears the finish mark. "Lands" was this repository's own
+        // metaphor rather than a word a player reaches for, and a screen reader was getting the
+        // same unclear word the screen was — so what it says now is what the page actually is.
+        return StopWords(label = "", name = null, spoken = stringResource(Res.string.board_arrival))
     }
     val who = seat?.let { speakerName(it) }.orEmpty()
     return StopWords(
@@ -663,6 +675,42 @@ private fun TransportButton(
 }
 
 private const val DISABLED = 0.45f
+
+/**
+ * The finish: a chequered flag on a staff, for the page the plan arrives at.
+ *
+ * Not a media mark, deliberately — ▶ and ▶▶ sit inches away and a third triangle among the
+ * stops would read as a third button rather than as a place. A flag reads as somewhere the film
+ * gets to. It says nothing about who won, which the app does not say anywhere (design D12).
+ */
+private fun DrawScope.drawFinish(ink: Color) {
+    val w = size.minDimension
+    val staff = w * FLAG_STAFF
+    drawLine(
+        ink,
+        Offset(staff, w * FLAG_TOP),
+        Offset(staff, w * FLAG_FOOT),
+        strokeWidth = w * FLAG_STROKE,
+    )
+    // Two rows of two, the diagonal pair filled: the fewest squares that still read as chequered.
+    val cell = w * FLAG_CELL
+    for (row in 0..1) {
+        for (column in 0..1) {
+            if ((row + column) % 2 != 0) continue
+            drawRect(
+                ink,
+                topLeft = Offset(staff + column * cell, w * FLAG_TOP + row * cell),
+                size = Size(cell, cell),
+            )
+        }
+    }
+    drawRect(
+        ink,
+        topLeft = Offset(staff, w * FLAG_TOP),
+        size = Size(cell * 2, cell * 2),
+        style = Stroke(w * FLAG_STROKE),
+    )
+}
 
 /** A play mark: a triangle pointing the way the film runs. */
 private fun DrawScope.drawPlay(ink: Color) {

@@ -761,7 +761,7 @@
     <string name="says_you_throw_blind">luego lanzas la carta %1$d a ciegas</string>
     <string name="says_which_to_throw">¿qué carta?</string>
     <string name="board_then">Luego</string>
-    <string name="board_lands">Resultado</string>
+    <string name="board_arrival">Después de cada turno</string>
     <string name="board_named">%1$d nombradas</string>
     <string name="board_unnamed">%1$d sin nombrar</string>
     <string name="board_ours">nuestras</string>

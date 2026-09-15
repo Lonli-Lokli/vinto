@@ -349,7 +349,7 @@ class CoalitionScreenTest {
         val landed = Question.ThePlan(at = turns + 1)
         val words = textsOn(view, plan = plan, question = landed)
         assertTrue(
-            words.any { it.equals("Lands", ignoreCase = true) },
+            words.any { it.equals("After every turn", ignoreCase = true) },
             "the plan does not say where it leaves the round: $words",
         )
         assertTrue(
@@ -427,9 +427,10 @@ class CoalitionScreenTest {
 
         show(view, plan = plan, question = Question.ThePlan())
 
-        // One named stop per coalition turn, under the felt, and where the plan lands after them.
+        // One named stop per coalition turn, under the felt, and the arrival after them — which
+        // wears the finish mark rather than a word now, so it is named to a screen reader only.
         assertTrue(
-            onAllNodesWithContentDescription("Lands").fetchSemanticsNodes().isNotEmpty(),
+            onAllNodesWithContentDescription("After every turn").fetchSemanticsNodes().isNotEmpty(),
             "the transport does not name where the plan lands",
         )
         assertTrue(

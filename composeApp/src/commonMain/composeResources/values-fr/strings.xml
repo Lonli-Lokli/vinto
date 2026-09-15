@@ -758,7 +758,7 @@
     <string name="says_you_throw_blind">puis vous ripostez avec la carte %1$d à l’aveugle</string>
     <string name="says_which_to_throw">quelle carte ?</string>
     <string name="board_then">puis</string>
-    <string name="board_lands">Arrivée</string>
+    <string name="board_arrival">Après chaque tour</string>
     <string name="board_named">%1$d nommées</string>
     <string name="board_unnamed">%1$d non nommées</string>
     <string name="board_ours">les nôtres</string>

@@ -720,7 +720,7 @@
     <string name="says_you_throw_blind">তারপর আপনি তাস %1$d আন্দাজে ফেলে দেন</string>
     <string name="says_which_to_throw">কোন তাস?</string>
     <string name="board_then">তারপর</string>
-    <string name="board_lands">ফলাফল</string>
+    <string name="board_arrival">প্রতিটি পালার পর</string>
     <string name="board_named">%1$d ঘোষিত</string>
     <string name="board_unnamed">%1$d অঘোষিত</string>
     <string name="board_ours">আমাদের</string>

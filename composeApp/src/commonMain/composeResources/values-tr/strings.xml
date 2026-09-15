@@ -752,7 +752,7 @@
     <string name="says_you_throw_blind">sonra sen %1$d numaralı kartını körlemesine atıyorsun</string>
     <string name="says_which_to_throw">hangi kart?</string>
     <string name="board_then">sonra</string>
-    <string name="board_lands">Varış</string>
+    <string name="board_arrival">Her turdan sonra</string>
     <string name="board_named">%1$d bilinen</string>
     <string name="board_unnamed">%1$d bilinmeyen</string>
     <string name="board_ours">bizim</string>

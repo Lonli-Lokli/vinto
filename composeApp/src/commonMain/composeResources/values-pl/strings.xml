@@ -719,7 +719,7 @@
     <string name="says_you_throw_blind">a potem dorzucasz kartę %1$d na ślepo</string>
     <string name="says_which_to_throw">która karta?</string>
     <string name="board_then">potem</string>
-    <string name="board_lands">Wynik</string>
+    <string name="board_arrival">Po każdej turze</string>
     <string name="board_named">%1$d nazwane</string>
     <string name="board_unnamed">%1$d nienazwane</string>
     <string name="board_ours">nasze</string>

@@ -20,6 +20,8 @@ import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import game.vinto.app.game.LocalStage
+import game.vinto.app.game.Stage
 import game.vinto.app.game.TableLayout
 import game.vinto.app.game.TableScreen
 import game.vinto.app.game.TableState
@@ -40,6 +42,7 @@ import game.vinto.shapes.Step
 import game.vinto.shapes.coalitionInTurnOrder
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -117,6 +120,62 @@ class TouchTargetTest {
         val mine = Question.ThePlan(at = order.indexOf(me) + 1)
         eachTapTarget(question = mine, plan = said, on = view) { what, tap ->
             assertTrue(tap.bigEnough, tooSmall(what, tap))
+        }
+    }
+
+    /**
+     * The transport, measured with the longest name a seat can have.
+     *
+     * Only the lit stop spells its seat's name, and online that name is minted rather than typed
+     * — two words off two fixed lists (`NICKNAME_ADJECTIVES`, `NICKNAME_NOUNS`) — so the worst
+     * case is knowable rather than guessable: "Patient Harbour", fifteen characters against the
+     * four of a fixture's "Tide". Reported from a phone, against a row that had just been made
+     * to fit by dropping a word: it fits this desk's names, not a real game's.
+     *
+     * **Measured off the stage rather than off the tap targets**, which is the trap this file
+     * fell into twice. The lit stop is not touchable — you are already on it — and ▶ and ▶▶ are
+     * not touchable until a plan gives them something to play, so a sweep of clickable nodes
+     * measures neither the long name nor the buttons it would crush, and passes saying nothing.
+     * Every one of them is marked on the stage whatever its state.
+     */
+    @Test
+    fun theTransportKeepsItsThumbsUnderTheLongestNameASeatCanHave() = runComposeUiTest {
+        val whole = conferring()
+        val view = whole.copy(
+            players = whole.players.mapIndexed { index, seat ->
+                seat.copy(nickname = if (index % 2 == 0) "Patient Harbour" else "Velvet Compass")
+            },
+        )
+        val stage = Stage()
+        setContent {
+            VintoTheme {
+                Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
+                    CompositionLocalProvider(LocalStage provides stage) {
+                        TableScreen(
+                            state = TableState(
+                                view,
+                                tableFor(view, Question.ThePlan(at = 1), plan = CoalitionPlan()),
+                                null,
+                                emptyList(),
+                                1,
+                            ),
+                            layout = TableLayout.forScreen(PHONE_H),
+                            onMove = {},
+                            onHelp = {},
+                            onSettings = {},
+                        )
+                    }
+                }
+            }
+        }
+        waitForIdle()
+
+        listOf("plan:replay", "plan:play-all").forEach { mark ->
+            val where = assertNotNull(stage.boundsOf(mark), "$mark is not on the rail at all")
+            assertTrue(
+                where.width >= TAP && where.height >= TAP,
+                "$mark is ${where.width}x${where.height}dp under the longest name, below a ${TAP}dp thumb",
+            )
         }
     }
 

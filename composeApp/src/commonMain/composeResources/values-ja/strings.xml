@@ -756,7 +756,7 @@
     <string name="says_you_throw_blind">そしてあなたがカード%1$dを山勘で投げ込む</string>
     <string name="says_which_to_throw">どのカードを？</string>
     <string name="board_then">そして</string>
-    <string name="board_lands">着地点</string>
+    <string name="board_arrival">毎ターンの後</string>
     <string name="board_named">判明%1$d</string>
     <string name="board_unnamed">不明%1$d</string>
     <string name="board_ours">味方</string>

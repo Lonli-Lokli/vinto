@@ -749,7 +749,7 @@
     <string name="says_you_throw_blind">फिर आप पत्ता %1$d अंदाज़न फेंकते हैं</string>
     <string name="says_which_to_throw">कौन-सा पत्ता?</string>
     <string name="board_then">फिर</string>
-    <string name="board_lands">नतीजा</string>
+    <string name="board_arrival">हर बारी के बाद</string>
     <string name="board_named">%1$d नामित</string>
     <string name="board_unnamed">%1$d अनामित</string>
     <string name="board_ours">हमारे</string>

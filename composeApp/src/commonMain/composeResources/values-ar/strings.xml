@@ -746,7 +746,7 @@
     <string name="says_you_throw_blind">ثم رميتك للبطاقة رقم %1$d دون رؤية</string>
     <string name="says_which_to_throw">أي بطاقة؟</string>
     <string name="board_then">ثم</string>
-    <string name="board_lands">المحصلة</string>
+    <string name="board_arrival">بعد كل دور</string>
     <string name="board_named">%1$d مُسمّاة</string>
     <string name="board_unnamed">%1$d غير مُسمّاة</string>
     <string name="board_ours">أيدينا</string>

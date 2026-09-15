@@ -720,7 +720,7 @@
     <string name="says_you_throw_blind">然后您盲跟出第%1$d张牌</string>
     <string name="says_which_to_throw">哪张牌？</string>
     <string name="board_then">然后</string>
-    <string name="board_lands">落定</string>
+    <string name="board_arrival">每轮之后</string>
     <string name="board_named">已知 %1$d</string>
     <string name="board_unnamed">未知 %1$d</string>
     <string name="board_ours">我们的</string>

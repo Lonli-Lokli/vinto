@@ -741,7 +741,7 @@
     <string name="says_you_throw_blind">затем вы подкидываете карту %1$d вслепую</string>
     <string name="says_which_to_throw">какую карту?</string>
     <string name="board_then">затем</string>
-    <string name="board_lands">Итог</string>
+    <string name="board_arrival">После каждого хода</string>
     <string name="board_named">%1$d названо</string>
     <string name="board_unnamed">%1$d не названо</string>
     <string name="board_ours">наши</string>
