@@ -4,11 +4,16 @@
 # Kotlin bump most affects and the three this container cannot build (codeload.github.com
 # answers 403, and there is no Mac).
 #
-# Kotlin 2.4 warns that Gradle 8.14 is deprecated and that 2.5 will require 8.14.4. That is
-# the next thing to move, and it is small.
+# Gradle is 9.7 in the wrapper now, which AGP 9 requires; the note that used to sit here about
+# 8.14 being deprecated was about the version before that move.
 kotlin = "2.4.10"
-kotlinxSerialization = "1.10.0"
+kotlinxSerialization = "1.11.0"
 kotlinxCoroutines = "1.11.0"
+# 5.x, up from 4.12.0. Android's only HTTP client here — one POST for a crash envelope and one
+# for a count — and the 4 line is what Play's SDK report flags next once the old fragment goes.
+# The 4→5 jump is a major in name: it needs Java 8 and API 21, both of which minSdk 24 clears,
+# and the call sites use `OkHttpClient`, `Request`, `Call` and `Callback`, none of which moved.
+okhttp = "5.5.0"
 # 1.12.0, and the version it forced everything else to. Its Android artifacts require
 # **compileSdk 37** and **AGP 9.1+**, AGP 9 requires **Gradle 9**, and AGP 9 refuses to let
 # `com.android.application` share a module with the KMP plugin — which is why `androidApp`
@@ -20,23 +25,21 @@ composeMultiplatform = "1.12.0"
 # Re-check this pairing when composeMultiplatform moves; the accessor used to hide it, and
 # naming it here at least means Dependabot can see it.
 composeMaterial3 = "1.9.0"
-# 8.13.2 is the head of the 8.x line. **Not 9.x**, and that is a decision rather than a lag:
-# AGP 9 wants Gradle 9, and the thing most likely to break on Gradle 9 is detekt, which is
-# this build's `maxIssues: 0` release gate and whose 1.x line ends at 1.23.8 — its successor
-# is `dev.detekt:...:2.0.0-alpha.6`. Putting a release gate on an alpha, on an unmerged
-# migration branch, would make every future red check ambiguous between "the migration broke"
-# and "the toolchain moved". See docs/kotlin/README.md §7.
+# AGP 9, which Compose Multiplatform 1.12's Android artifacts require — and which is why
+# `androidApp` exists at all, since 9 refuses to let `com.android.application` share a module
+# with the KMP plugin. It wants Gradle 9, and the argument that used to sit here for staying on
+# 8.x — that detekt's 1.x line would break — was settled by moving detekt to its 2.x line below
+# rather than by holding the toolchain still.
 agp = "9.3.2"
-androidxActivityCompose = "1.10.1"
+androidxActivityCompose = "1.13.0"
 # Play Billing, for the one thing this app sells: a fixed-price way to say thanks. `-ktx` for
 # the suspend wrappers — the callback API would otherwise need a hand-rolled continuation per
 # call, which is three chances to leak a coroutine in code nobody can test without a store.
 playBilling = "9.1.0"
-# 1.23.8 is the last 1.x line, and it is **not** the thing holding the toolchain back —
-# measured under Kotlin 2.4.10, 129 files analysed, zero findings. This build runs detekt
-# without type resolution, so it parses rather than resolves and does not care which compiler
-# produced the source. Its successor is `dev.detekt:...:2.0.0-alpha.6`, and there is no reason
-# to put a `maxIssues: 0` gate on an alpha yet.
+# The 2.x line, under its new `dev.detekt` coordinates. It is the release gate, so an alpha
+# here was a deliberate trade: the alternative was holding AGP and Gradle back for it. This
+# build runs detekt without type resolution, so it parses rather than resolves and does not
+# care which compiler produced the source — which is what makes the trade survivable.
 detekt = "2.0.0-alpha.6"
 kover = "0.9.9"
 
@@ -44,7 +47,7 @@ kover = "0.9.9"
 # `games.core.share.QrChip` uses in gulnya, one minor ahead of it: gulnya is pinned at 1.1.2 and
 # has no wasmJs target, which this app does — so the version that gets exercised on the web is
 # this one. Worth bumping gulnya to match rather than leaving two in the portfolio.
-qrose = "1.2.0"
+qrose = "1.2.1"
 
 # Android API levels. minSdk 24 matches Compose Multiplatform's floor and covers ~97% of
 # devices; there is nothing in this app that would justify dropping older phones further.
@@ -57,7 +60,7 @@ androidTargetSdk = "37"
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
-okhttp = { module = "com.squareup.okhttp3:okhttp", version = "4.12.0" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 qrose = { module = "io.github.alexzhirkevich:qrose", version.ref = "qrose" }
 detekt-formatting = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version.ref = "detekt" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }

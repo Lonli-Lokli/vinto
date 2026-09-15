@@ -68,6 +68,23 @@ dependencies {
     // engine and the bots; this module adds an Activity and nothing else.
     implementation(project(":composeApp"))
     implementation(libs.androidx.activity.compose)
+
+    // Play's SDK report flagged `androidx.fragment:fragment` on build 526: it resolves to 1.1.0,
+    // which is six years old. Nothing here uses a Fragment — this is one Activity and Compose —
+    // and it arrives transitively from `play-services-base`, which Play Billing brings, and
+    // which asks for 1.0.0. So it cannot be fixed by moving what we depend on: Billing is
+    // already on the newest there is (9.1.0), and it is the chain below it that is old.
+    //
+    // A constraint rather than a forced resolution strategy, so it raises a floor and does not
+    // pin a ceiling: whenever that chain does start asking for something newer, it wins.
+    constraints {
+        implementation("androidx.fragment:fragment:1.9.0") {
+            because("Play flags fragment 1.1.0; nothing here uses Fragments, it rides in under Billing")
+        }
+        implementation("com.google.android.gms:play-services-base:18.10.1") {
+            because("the same chain, one level up — 18.5.0 is what asks for the old fragment")
+        }
+    }
 }
 
 /**
