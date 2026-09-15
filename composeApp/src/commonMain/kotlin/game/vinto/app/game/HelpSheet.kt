@@ -43,6 +43,8 @@ import game.vinto.app.art.help_group_movers
 import game.vinto.app.art.help_group_numbers
 import game.vinto.app.art.help_group_odd
 import game.vinto.app.art.help_no_action
+import game.vinto.app.art.help_plan_body
+import game.vinto.app.art.help_plan_title
 import game.vinto.app.art.help_right_now
 import game.vinto.app.art.help_rules_action
 import game.vinto.app.art.help_rules_body
@@ -232,7 +234,14 @@ private fun LazyListScope.theBadges() {
     items(CLAIM_MARKS) { mark -> ClaimMarkRow(mark) }
 }
 
-/** Everything that is neither a card nor a mark: the round, the count, the deck, the rules. */
+/**
+ * Everything that is neither a card nor a mark: the round, the plan, the deck, the count, the
+ * rules — **in that order**, because the first three are things a player looks up mid-turn and
+ * the last two are reference. The plan's rail appears in the final round and nowhere else, so a
+ * player meets it once, in the middle of a round, with no way to ask what it is but this sheet;
+ * and it went in under the analytics paragraph first, which pushed the deck count off the end of
+ * a phone (`HelpTabsTest`).
+ */
 private fun LazyListScope.theRest(left: Int) {
     item {
         Text(
@@ -242,6 +251,9 @@ private fun LazyListScope.theRest(left: Int) {
             modifier = Modifier.padding(vertical = Pad),
         )
     }
+
+    item { ThePlan() }
+    item { TheDeck(left) }
 
     // Task 4.5. Present because the one place a player will look for the answer is the sheet
     // they already open to ask what a card does. Said in the app's own words rather than linked
@@ -263,13 +275,20 @@ private fun LazyListScope.theRest(left: Int) {
         )
     }
 
-    item { TheDeck(left) }
-
     // The rulebook, and deliberately not in here. This sheet answers the question a player has
     // mid-turn — what does this card do — with a card waiting and one hand free.
     // `VINTO_RULES.md` runs to four pages, and the answer to "what are the rules" belongs with
     // the people whose game it is: one authoritative copy, theirs.
     item { RulesLink() }
+}
+
+/** The coalition's plan, which a player only ever meets in a final round. */
+@Composable
+private fun ThePlan() {
+    Column(modifier = Modifier.padding(top = Gap, bottom = Pad)) {
+        Text(stringResource(Res.string.help_plan_title), fontWeight = FontWeight.Bold, fontSize = TitleSize)
+        Text(stringResource(Res.string.help_plan_body), fontSize = BodySize, color = Rail.inkDim)
+    }
 }
 
 /**

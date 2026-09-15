@@ -654,6 +654,9 @@
     <string name="help_rules_body">Esta ficha diz o que uma carta faz aqui. As regras completas estão no site do jogo, feitas por quem o criou.</string>
     <string name="help_rules_action">Abrir as regras</string>
 
+    <string name="help_plan_title">O plano, na última ronda</string>
+    <string name="help_plan_body">Quando alguém chama Vinto, todos os outros jogam mais uma ronda juntos e só a melhor mão é comparada — por isso a faixa sob a mesa torna-se um plano que escrevem em conjunto, uma jogada de cada vez. Um plano é conversa, não uma jogada: nada nele carrega num botão por ti, e quando chegar a tua vez, jogas como quiseres. Só pode nomear cartas que a mesa já viu ou sobre as quais já foi informada, e nunca pode tocar na mão de quem chamou.</string>
+
     <string name="help_counts_title">O que esta aplicação contabiliza</string>
     <string name="help_counts_body">Só contagens anónimas: quantas rondas são jogadas, até onde as pessoas chegam, se uma mesa ficou parada, e quanto custa manter uma sala. Nunca o teu nome, o código da tua sala, o que tens na mão, ou algo que te possa identificar a ti ou ao teu dispositivo — não há onde os colocar no que é enviado. Pode ser desativado nas Definições, e um navegador que pede para não ser rastreado desativa-o automaticamente.</string>
 

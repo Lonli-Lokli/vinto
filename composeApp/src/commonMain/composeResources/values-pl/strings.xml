@@ -634,6 +634,8 @@
     <string name="help_rules_body">Ta karta wyjaśnia, co robi każda karta w tej wersji. Pełne zasady są na stronie samej gry, u jej twórców.</string>
     <string name="help_rules_action">Otwórz zasady</string>
 
+    <string name="help_plan_title">Plan w ostatniej rundzie</string>
+    <string name="help_plan_body">Gdy ktoś zawoła Vinto, wszyscy pozostali rozgrywają razem jeszcze jedną turę, a pod uwagę bierze się tylko ich najlepszą rękę — pasek pod stołem staje się wtedy wspólnie pisanym planem, tura po turze. Plan to tylko podpowiedź, nie ruch: nic w nim nie naciska za ciebie żadnego przycisku, a gdy przychodzi twoja tura, grasz tak, jak chcesz. Może wskazywać wyłącznie karty, które stół widział lub o których ktoś powiedział, i nigdy nie dotyczy ręki wołającego.</string>
     <string name="help_counts_title">Co liczy ta aplikacja</string>
     <string name="help_counts_body">Tylko anonimowe statystyki: ile rund jest rozgrywanych, jak daleko dochodzą gracze, czy stół się zatrzymał, i ile kosztuje utrzymanie pokoju. Nigdy imię, kod pokoju, zawartość ręki ani nic, co mogłoby wskazać na ciebie lub twoje urządzenie — nie ma na to miejsca w tym, co wysyłane. Można to wyłączyć w Ustawieniach, a przeglądarka z prośbą o brak śledzenia wyłącza to automatycznie.</string>
 

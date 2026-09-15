@@ -946,6 +946,8 @@
     <string name="help_rules_body">This sheet says what a card does here. The complete rules are on the game’s own site, from the people who made it.</string>
     <string name="help_rules_action">Open the rules</string>
 
+    <string name="help_plan_title">The plan, in the last round</string>
+    <string name="help_plan_body">Once somebody calls Vinto, everybody else plays one more turn together and only their best hand is compared — so the rail under the table becomes a plan you write with them, one turn a page. A plan is talk, not a move: nothing in it presses a button for you, and when your turn comes you play it however you like. It can only name cards the table has seen or been told about, and it can never touch the caller’s hand.</string>
     <string name="help_counts_title">What this app counts</string>
     <string name="help_counts_body">Anonymous counts only: how many rounds are played, how far people get, whether a table stalled, and what a room costs to run. Never your name, your room code, what is in your hand, or anything that could be traced back to you or your device — there is nowhere in what is sent to put those. It can be switched off in Settings, and a browser that asks not to be tracked switches it off for you.</string>
 

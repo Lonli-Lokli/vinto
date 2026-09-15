@@ -664,6 +664,9 @@
     <string name="help_rules_body">Questa scheda spiega cosa fa una carta qui. Le regole complete sono sul sito del gioco, fatte da chi lo ha creato.</string>
     <string name="help_rules_action">Apri le regole</string>
 
+    <string name="help_plan_title">Il piano, nell'ultimo round</string>
+    <string name="help_plan_body">Quando qualcuno chiama Vinto, tutti gli altri giocano insieme un turno finale, e viene confrontata solo la loro mano migliore — così la fascia sotto il tavolo diventa un piano scritto insieme, un turno alla volta. Il piano è solo un suggerimento, non una mossa: niente al suo interno preme un pulsante al posto tuo, e quando arriva il tuo turno lo giochi come preferisci. Può nominare solo carte che il tavolo ha visto o di cui è stato informato, e non può mai toccare la mano di chi ha chiamato Vinto.</string>
+
     <string name="help_counts_title">Cosa conta quest'app</string>
     <string name="help_counts_body">Solo conteggi anonimi: quanti round vengono giocati, quanto lontano arrivano le persone, se un tavolo si è bloccato, e quanto costa gestire una stanza. Mai il tuo nome, il codice della tua stanza, cosa hai in mano, o qualsiasi cosa possa essere ricondotta a te o al tuo dispositivo — non c'è spazio in quello che viene inviato per metterli. Si può disattivare nelle Impostazioni, e un browser che chiede di non essere tracciato lo disattiva per te.</string>
 

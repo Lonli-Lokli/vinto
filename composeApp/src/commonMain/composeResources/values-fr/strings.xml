@@ -670,6 +670,8 @@
     <string name="help_rules_body">Cette fiche explique ce que fait une carte ici. Les règles complètes sont sur le site du jeu, chez les personnes qui l’ont créé.</string>
     <string name="help_rules_action">Ouvrir les règles</string>
 
+    <string name="help_plan_title">Le plan, dans la dernière manche</string>
+    <string name="help_plan_body">Dès qu’un joueur appelle Vinto, tous les autres joueurs jouent un tour de plus ensemble, et seule leur meilleure main est comparée — le bandeau sous la table devient alors un plan que vous écrivez ensemble, un tour à la fois. Un plan, c’est une indication, pas une action : rien n’y appuie sur un bouton à votre place, et le moment venu, vous jouez comme vous l’entendez. Il ne peut nommer que des cartes que la table a vues ou dont elle a été informée, et il ne peut jamais toucher la main de la personne qui a appelé Vinto.</string>
     <string name="help_counts_title">Ce que cette application compte</string>
     <string name="help_counts_body">Uniquement des statistiques anonymes : combien de manches sont jouées, jusqu’où les gens vont, si une table s’est bloquée, et ce que coûte une salle à faire tourner. Jamais votre nom, votre code de salle, le contenu de votre main, ni rien qui pourrait remonter jusqu’à vous ou votre appareil — il n’y a nulle part où les placer dans ce qui est envoyé. Ça peut être désactivé dans les Paramètres, et un navigateur qui demande à ne pas être suivi le désactive pour vous.</string>
 

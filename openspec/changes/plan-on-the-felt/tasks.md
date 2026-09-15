@@ -471,8 +471,15 @@ costs and three decisions came back, each of which reshaped a layer.
 
 - The builder does not yet offer a Queen's look-only (`Peek` of two cards with no trade): two
   touches on a Queen make a trade. The wire and the film say it; the sentence only reads it.
-- The `?` sheet says nothing about the plan's rail. With the words in the sentence there is no
-  legend to give, but "a plan is talk, not a move" is worth a line there.
+- ~~The `?` sheet says nothing about the plan's rail. With the words in the sentence there is no
+  legend to give, but "a plan is talk, not a move" is worth a line there.~~ **Done**, as one
+  paragraph under More: what the last round is, that the rail becomes a plan written together one
+  turn a page, and the line the whole design turns on (D17) — *a plan is talk, not a move: nothing
+  in it presses a button for you*. Two strings, in nineteen locales.
+  It also **moved the deck count off the end of the phone** the first time, because More is a lazy
+  column and the paragraph went in above it. The tab is ordered by what it is for now — the round,
+  the plan, the deck, then the two reference items, the count and the rules — so the three things a
+  player looks up mid-turn are the three at the top. `HelpTabsTest` caught it and holds both.
 - 9.1 stands: the sentence, the throw-in clause and the plan stepping aside for a live window are
   held by tests and have not been touched on a phone.
 
@@ -579,8 +586,9 @@ a rank picker that fits.
   `ReduceResult` — and checks the session's standing reveals against the engine's own answer by
   card identity. The helper was never the question: both sessions call `following`, and what
   differs is the wiring, which is what this holds.
-- The design page's legend still names the rose edge as `#B8607F`; it shipped as `#A04C6A` to
-  clear 3:1 on the card.
+- ~~The design page's legend still names the rose edge as `#B8607F`; it shipped as `#A04C6A` to
+  clear 3:1 on the card.~~ **Corrected on the page** ("Plan as Table Talk", revision 5): the token
+  is `#a04c6a` and the rose bullet now says why it is deeper than the one the page first drew.
 
 ## 14. Five reports from the phone
 

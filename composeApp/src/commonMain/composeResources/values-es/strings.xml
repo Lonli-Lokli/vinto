@@ -674,6 +674,8 @@
     <string name="help_rules_body">Esta hoja dice qué hace una carta aquí. Las reglas completas están en la web del propio juego, de quienes lo crearon.</string>
     <string name="help_rules_action">Abrir las reglas</string>
 
+    <string name="help_plan_title">El plan, en la última ronda</string>
+    <string name="help_plan_body">En cuanto alguien canta Vinto, todos los demás juegan un turno más en equipo y solo se compara su mejor mano — así que el panel bajo la mesa se convierte en un plan que se escribe entre todos, un turno por página. Un plan es solo palabras, no una jugada: nada en él pulsa un botón por ti, y cuando llega tu turno lo juegas como prefieras. Solo puede nombrar cartas que la mesa haya visto o de las que se haya informado, y nunca puede tocar la mano de quien cantó Vinto.</string>
     <string name="help_counts_title">Qué cuenta esta app</string>
     <string name="help_counts_body">Solo recuentos anónimos: cuántas rondas se juegan, hasta dónde llega la gente, si una mesa se atascó, y cuánto cuesta mantener una sala. Nunca tu nombre, el código de tu sala, lo que hay en tu mano, ni nada que pueda rastrearse hasta ti o tu dispositivo — no hay dónde ponerlo en lo que se envía. Se puede desactivar en Ajustes, y un navegador que pida no ser rastreado lo desactiva por ti.</string>
 

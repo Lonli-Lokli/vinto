@@ -66,6 +66,18 @@ class HelpTabsTest {
             words().any { it.contains("The deck", ignoreCase = true) },
             "the more tab has lost the deck: ${words()}",
         )
+
+        // The plan's rail appears in the final round and nowhere else, so a player meets it once,
+        // mid-round, with no way to ask what it is but this sheet. The line that has to be there
+        // is the one the whole design turns on (D17): it says, it never acts.
+        assertTrue(
+            words().any { it.contains("plan", ignoreCase = true) },
+            "the more tab says nothing about the plan: ${words()}",
+        )
+        assertTrue(
+            words().any { it.contains("talk, not a move", ignoreCase = true) },
+            "the sheet does not say a plan cannot act for you: ${words()}",
+        )
     }
 
     @Test

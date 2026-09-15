@@ -634,6 +634,8 @@
     <string name="help_rules_body">这份说明讲的是卡牌在这里的用法。完整规则在游戏官方网站上，由制作者提供。</string>
     <string name="help_rules_action">查看规则</string>
 
+    <string name="help_plan_title">最后一回合的计划</string>
+    <string name="help_plan_body">一旦有人喊出 Vinto，其余所有人就要一起再打一回合，最终只比较他们之中最好的一手——于是牌桌下方的计划栏，就成了您与他们共同书写的计划，一回合一页。计划只是商议，不是操作：其中的任何内容都不会替您按下按钮，轮到您时，您仍可按自己的意愿出牌。计划只能提到牌桌已经见过或被告知过的牌，绝不会触及喊牌者的手牌。</string>
     <string name="help_counts_title">这个应用统计了什么</string>
     <string name="help_counts_body">仅统计匿名数据：有多少局游戏被玩、玩家进行到了哪一步、牌桌是否卡住，以及运营一个房间要花多少成本。绝不包含你的名字、房间代码、你手上的牌，或任何能追溯到你或你的设备的信息——发送的数据里根本没有存放这些的地方。可以在设置里关闭，浏览器如果要求不被追踪，也会自动为你关闭它。</string>
 

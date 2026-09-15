@@ -657,6 +657,9 @@
     <string name="help_rules_body">Lembar ini menjelaskan apa yang dilakukan sebuah kartu di sini. Aturan lengkapnya ada di situs resmi permainan ini, dari orang-orang yang membuatnya.</string>
     <string name="help_rules_action">Buka aturan</string>
 
+    <string name="help_plan_title">Rencana, di ronde terakhir</string>
+    <string name="help_plan_body">Begitu seseorang memanggil Vinto, semua pemain lain bermain satu giliran terakhir bersama-sama dan hanya tangan terbaik mereka yang dibandingkan — jadi rel di bawah meja menjadi rencana yang ditulis bersama, satu giliran satu halaman. Rencana ini hanya sekadar saran, bukan langkah: tidak ada yang di dalamnya menekan tombol untuk Anda, dan saat giliran Anda tiba, Anda tetap bebas bermain sesuka hati. Rencana hanya bisa menyebut kartu yang pernah terlihat atau diberitahukan di meja, dan tidak pernah bisa menyentuh tangan pemanggil.</string>
+
     <string name="help_counts_title">Apa yang dihitung aplikasi ini</string>
     <string name="help_counts_body">Hanya hitungan anonim: berapa banyak ronde yang dimainkan, sejauh mana orang bermain, apakah sebuah meja terhenti, dan berapa biaya menjalankan sebuah ruangan. Tidak pernah nama Anda, kode ruangan Anda, apa yang ada di tangan Anda, atau apa pun yang bisa dilacak kembali ke Anda atau perangkat Anda — tidak ada tempat dalam yang dikirim untuk menaruhnya. Bisa dimatikan di Pengaturan, dan peramban yang meminta untuk tidak dilacak akan mematikannya untuk Anda.</string>
 
