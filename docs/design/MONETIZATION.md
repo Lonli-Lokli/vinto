@@ -56,6 +56,26 @@ a thing that does not exist. Consuming it immediately is what makes it repeatabl
 only honest *because* nothing is unlocked. A repeatable purchase that did grant something would
 be a currency, and this document is the reason there is no currency.
 
+**And consuming it is not a step in the flow — that is what went wrong once.** Play refuses to
+sell a product the account still owns, in its own dialog: *"You already own this item"*. So a
+single purchase left unconsumed locks the button for the life of the install, and consuming only
+what a running `buySupport()` was handed is what leaves one — Play reports a purchase whenever it
+hears of one, which is often long after the call that started it. A slow payment method lands it
+`PENDING` and completes it minutes later; the process can die between the payment and the consume;
+a flow can time out and be answered afterwards.
+
+`AndroidBilling` therefore consumes in two places that outlive any flow: the purchases listener
+takes whatever Play reports, waiting caller or not, and a **sweep** asks Play what the account
+still owns and consumes that — on connection, so an install already stuck repairs itself before
+anybody opens Settings, and again before every flow, so the tap that hits the refusal is the tap
+that clears it. `SupportRepeatsTest` holds all three, and the iOS counterpart: StoreKit is stuck
+by an *unfinished transaction* rather than an unconsumed purchase, and `IosBilling` was already
+right — the observer is added once and finishes whatever arrives, whenever it arrives.
+
+None of this is a console setting. Play has no consumable flag on a one-time product: consumption
+is a call the client makes, so a product that looks perfect in the console still only sells once
+if nobody makes it.
+
 ### It is a tip, and it must never be called a donation
 
 The wording is a store rule, not a preference. **Apple's Guideline 3.2.2 reserves the word for

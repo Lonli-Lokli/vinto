@@ -11,8 +11,10 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.consumePurchase
 import com.android.billingclient.api.queryProductDetails
+import com.android.billingclient.api.queryPurchasesAsync
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +33,27 @@ import kotlinx.coroutines.withTimeoutOrNull
  * There is no receipt verification and no vault entry, for the same reason: a tampered client
  * showing itself a thank-you it did not pay for costs nobody anything and confers no advantage.
  * There is nothing here a server would be protecting.
+ *
+ * ### Consuming is not a step in the flow, and that distinction is the whole bug
+ *
+ * Play refuses to sell a one-time product that the account still owns, and it refuses it in its
+ * own dialog — *"You already own this item"* — so a single purchase left unconsumed locks the
+ * button for the life of the install. Consuming only what a running [buy] was handed is what
+ * leaves one: Play reports a purchase whenever it hears of one, and that is very often not
+ * during the call that started it. A slow payment method lands `PENDING` and turns `PURCHASED`
+ * minutes later; the process can die between the payment and the consume; a flow can time out
+ * and be answered afterwards.
+ *
+ * So consumption happens in two places that are both outside a flow's lifetime:
+ *
+ * * **[updates]** consumes whatever Play reports, whether or not anybody is waiting for it.
+ * * **[sweep]** *asks* Play what the account still owns and consumes that — on connection, so an
+ *   install that is already stuck is working again before anybody opens Settings, and again
+ *   before every flow, so the tap that found the problem is the tap that fixes it.
+ *
+ * The two can race onto the same token. That is harmless and deliberately not guarded: Play
+ * answers the loser `ITEM_NOT_OWNED`, which is already swallowed, and a set of spent tokens
+ * would be state kept against an error that costs nothing.
  *
  * ### Why the price is cached rather than fetched when asked
  *
@@ -54,26 +77,32 @@ object AndroidBilling {
     private var details: ProductDetails? = null
     private var activity: Activity? = null
 
+    /** Long enough for a real payment method, short enough not to wait forever on silence. */
+    private const val FLOW_TIMEOUT_MS = 10 * 60 * 1000L
+
     /**
-     * Whatever purchase Play last reported, waiting to be collected by [buy].
+     * Whether Play last reported a completed purchase, waiting to be collected by [buy].
      *
      * A field rather than a parameter because Play answers through a listener registered on the
      * client, not through the call that started the flow — so the coroutine that launched it has
      * to be handed the result from outside itself.
      */
-
-    /** Long enough for a real payment method, short enough not to wait forever on silence. */
-    private const val FLOW_TIMEOUT_MS = 10 * 60 * 1000L
-
-    private var pending: CompletableDeferred<List<Purchase>?>? = null
+    private var pending: CompletableDeferred<Boolean>? = null
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private val updates = PurchasesUpdatedListener { result, purchases ->
-        // Every non-OK result completes with null, including cancellation. The caller turns all
-        // of them into the same `false`: a player cannot act on the difference between refused,
-        // cancelled and unreachable.
-        pending?.complete(purchases.takeIf { result.responseCode == BillingClient.BillingResponseCode.OK })
+        val paid = purchases.orEmpty().filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+
+        // Consumed here rather than inside `buy`, and unconditionally: this listener is the only
+        // place a late purchase is ever mentioned. One that arrives after its flow gave up — or
+        // on a process rebuilt since — has nobody waiting on it, and dropping it owns the
+        // product from then on.
+        if (paid.isNotEmpty()) scope.launch { consume(paid) }
+
+        // Every other outcome is the same `false`, including cancellation. The caller cannot act
+        // on the difference between refused, cancelled and unreachable, and neither can a player.
+        pending?.complete(result.responseCode == BillingClient.BillingResponseCode.OK && paid.isNotEmpty())
     }
 
     /** Called from `MainActivity`. Idempotent: a configuration change replaces, never stacks. */
@@ -91,7 +120,14 @@ object AndroidBilling {
         built.startConnection(
             object : BillingClientStateListener {
                 override fun onBillingSetupFinished(result: BillingResult) {
-                    if (result.responseCode == BillingClient.BillingResponseCode.OK) warm(built)
+                    if (result.responseCode != BillingClient.BillingResponseCode.OK) return
+                    scope.launch {
+                        warm(built)
+                        // And clear anything an earlier run left owned, so an install that is
+                        // already stuck on "You already own this item" is free again by the time
+                        // anybody reaches Settings, with nothing for the player to do about it.
+                        sweep(built)
+                    }
                 }
 
                 // No retry. A store that was not there when the app opened is a store the player
@@ -107,21 +143,52 @@ object AndroidBilling {
     }
 
     /** Asks Play what the product costs, once, and keeps the answer. */
-    private fun warm(client: BillingClient) {
-        scope.launch {
-            val query = QueryProductDetailsParams.newBuilder()
-                .setProductList(
-                    listOf(
-                        QueryProductDetailsParams.Product.newBuilder()
-                            .setProductId(SUPPORT_PRODUCT)
-                            .setProductType(BillingClient.ProductType.INAPP)
-                            .build(),
-                    ),
-                )
-                .build()
+    private suspend fun warm(client: BillingClient) {
+        val query = QueryProductDetailsParams.newBuilder()
+            .setProductList(
+                listOf(
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId(SUPPORT_PRODUCT)
+                        .setProductType(BillingClient.ProductType.INAPP)
+                        .build(),
+                ),
+            )
+            .build()
 
-            val answer = runCatching { client.queryProductDetails(query) }.getOrNull()
-            details = answer?.productDetailsList?.firstOrNull()
+        val answer = runCatching { client.queryProductDetails(query) }.getOrNull()
+        details = answer?.productDetailsList?.firstOrNull()
+    }
+
+    /**
+     * Consumes whatever the account still owns.
+     *
+     * The repair half of the arrangement above. [updates] is the side that should mean this never
+     * finds anything; this is the side that does not depend on the app having been running at the
+     * moment Play made up its mind.
+     */
+    private suspend fun sweep(client: BillingClient) {
+        val query = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.INAPP)
+            .build()
+
+        val owned = runCatching { client.queryPurchasesAsync(query) }.getOrNull() ?: return
+        consume(owned.purchasesList.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED })
+    }
+
+    /**
+     * Consumed rather than acknowledged-and-kept: Play cancels an unacknowledged purchase after
+     * three days, and consuming is what both acknowledges it and makes the next one possible.
+     *
+     * A failure is swallowed and not retried in place. The purchase simply stays owned, and the
+     * next [sweep] — the next launch, or the next tap on the button — finds it again; looping
+     * here would be a loop against whatever made it fail, inside a coroutine nobody is watching.
+     */
+    private suspend fun consume(purchases: List<Purchase>) {
+        val client = client ?: return
+        purchases.forEach {
+            runCatching {
+                client.consumePurchase(ConsumeParams.newBuilder().setPurchaseToken(it.purchaseToken).build())
+            }
         }
     }
 
@@ -143,16 +210,16 @@ object AndroidBilling {
     internal fun price(): String? =
         details?.oneTimePurchaseOfferDetails?.formattedPrice
 
-    /**
-     * Runs the flow and consumes what it produces.
-     *
-     * Consumed rather than acknowledged-and-kept: Play cancels an unacknowledged purchase after
-     * three days, and consuming is what both acknowledges it and makes the next one possible.
-     */
+    /** Runs the flow, having first made sure there is nothing owned for Play to refuse it over. */
     internal suspend fun buy(): Boolean {
         val client = client ?: return false
         val activity = activity ?: return false
         val product = details ?: return false
+
+        // Before the sheet, not only on connection. Somebody who has just been told they already
+        // own this taps it again; a repair that only ran at startup would ask them to close the
+        // app first, for a fix already sitting on their phone.
+        sweep(client)
 
         val flow = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(
@@ -164,22 +231,20 @@ object AndroidBilling {
             )
             .build()
 
-        val waiting = CompletableDeferred<List<Purchase>?>()
+        val waiting = CompletableDeferred<Boolean>()
         pending = waiting
-        client.launchBillingFlow(activity, flow)
+        val opened = client.launchBillingFlow(activity, flow)
+        if (opened.responseCode != BillingClient.BillingResponseCode.OK) {
+            // The sheet never opened, so [updates] will never fire for it. Without this the
+            // caller waits out the whole timeout below for an answer that is not coming.
+            pending = null
+            return false
+        }
 
         // Bounded, because a listener that never fires would otherwise hang the coroutine for
         // the life of the process — Play's sheet can be dismissed in ways that report nothing.
-        val purchases = withTimeoutOrNull(FLOW_TIMEOUT_MS) { waiting.await() }
+        val paid = withTimeoutOrNull(FLOW_TIMEOUT_MS) { waiting.await() }
         pending = null
-        val bought = purchases.orEmpty().filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
-        if (bought.isEmpty()) return false
-
-        bought.forEach {
-            runCatching {
-                client.consumePurchase(ConsumeParams.newBuilder().setPurchaseToken(it.purchaseToken).build())
-            }
-        }
-        return true
+        return paid == true
     }
 }
