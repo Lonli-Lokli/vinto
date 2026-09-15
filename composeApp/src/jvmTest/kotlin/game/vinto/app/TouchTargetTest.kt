@@ -28,11 +28,16 @@ import game.vinto.client.Question
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
+import game.vinto.shapes.CardAt
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
+import game.vinto.shapes.Lane
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
+import game.vinto.shapes.Rank
+import game.vinto.shapes.Step
+import game.vinto.shapes.coalitionInTurnOrder
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -83,6 +88,36 @@ class TouchTargetTest {
         on = conferring(),
     ) { what, tap ->
         assertTrue(tap.bigEnough, tooSmall(what, tap))
+    }
+
+    /**
+     * A turn already said, which is where the rail draws the marks an empty one never reaches —
+     * the Queen's arrow above all, the smallest control this app asks a finger to hit and the
+     * only one whose whole meaning is which way it is pointing.
+     */
+    @Test
+    fun theArrowBetweenTwoPlannedCardsCanBeHit() {
+        val view = conferring()
+        val me = view.viewerId
+        val order = coalitionInTurnOrder(view.players.map { it.id }, view.vintoCallerId.orEmpty())
+        val others = order.filter { it != me }
+        val said = CoalitionPlan(
+            lanes = listOf(
+                Lane(
+                    me,
+                    Step.PutDown(
+                        CardAt(me, 0),
+                        guess = Rank.QUEEN,
+                        then = Step.Swap(CardAt(others[0], 0), CardAt(others[1], 0)),
+                    ),
+                ),
+            ),
+        )
+        // The page this seat's own turn is on, since that is the turn the plan above says.
+        val mine = Question.ThePlan(at = order.indexOf(me) + 1)
+        eachTapTarget(question = mine, plan = said, on = view) { what, tap ->
+            assertTrue(tap.bigEnough, tooSmall(what, tap))
+        }
     }
 
     /** A final round somebody else called, with this seat in the coalition and free to plan. */

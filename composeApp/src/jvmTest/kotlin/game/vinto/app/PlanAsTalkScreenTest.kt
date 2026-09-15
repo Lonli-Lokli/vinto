@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -37,11 +38,13 @@ import game.vinto.shapes.Claim
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.Lane
+import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
 import game.vinto.shapes.coalitionInTurnOrder
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -217,6 +220,48 @@ class PlanAsTalkScreenTest {
             asked,
             "something asked for a page nobody touched",
         )
+    }
+
+    /**
+     * The Queen's arrow, on the felt: lit she trades, dim she only looks, and a touch flips the
+     * two. It is the smallest control the rail draws and the only one whose whole meaning is its
+     * state, so what a finger does with it is worth holding — the model's half is
+     * `PlanAsTalkTest.aQueensArrowFlipsBetweenTradingAndOnlyLookingAndAJackHasNone`, and until
+     * now neither half had a test.
+     */
+    @Test
+    fun touchingAQueensArrowTurnsHerTradeIntoALook() = runComposeUiTest {
+        val view = finalRound()
+        val me = view.viewerId
+        val others = turnOrder(view).filter { it != me }
+        val trading = Step.Swap(CardAt(others[0], 0), CardAt(others[1], 0))
+        val plan = CoalitionPlan(
+            lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 0), guess = Rank.QUEEN, then = trading))),
+        )
+        val moves = mutableListOf<Move>()
+
+        val stage = Stage()
+        show(view, plan, Question.ThePlan(at = turnOrder(view).indexOf(me) + 1), stage, onMove = { moves += it })
+        // Found by where it is rather than by what it is: the header wears a switch too, and
+        // the one being tested is the mark between the two cards on the felt.
+        val where = assertNotNull(stage.boundsOf("plan:arrow"), "the Queen's arrow is not on the felt")
+        val switches = onAllNodes(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch))
+        val arrow = switches.fetchSemanticsNodes().indexOfFirst { it.boundsInRoot == where }
+        assertTrue(arrow >= 0, "the arrow on the felt answers no touch")
+        // Named as well as stated: a switch announced as "on" and nothing else is a control a
+        // screen reader cannot use, and this one is the whole difference between a look and a
+        // trade. It says the clause it controls, which is what the eye reads off the same row.
+        val named = switches.fetchSemanticsNodes()[arrow].config
+        val spoken = named.getOrNull(SemanticsProperties.ContentDescription).orEmpty()
+        assertTrue(spoken.isNotEmpty(), "the arrow is a switch a screen reader cannot name")
+        switches[arrow].performClick()
+        waitForIdle()
+
+        val edit = assertIs<PlanEdit.SetLane>(moves.filterIsInstance<Move.Plan>().single().edit)
+        val put = assertIs<Step.PutDown>(edit.step)
+        val look = assertIs<Step.Peek>(put.then, "the arrow did not turn the trade into a look")
+        assertEquals(others[0], look.card.seat)
+        assertEquals(others[1], assertNotNull(look.also, "a Queen looks at two cards").seat)
     }
 
     // ------------------------------------------------------------------ fixtures

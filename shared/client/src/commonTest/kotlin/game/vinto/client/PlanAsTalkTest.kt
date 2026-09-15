@@ -132,6 +132,13 @@ class PlanAsTalkTest {
             "no word $says in ${own() + throws()}",
         )
 
+    /** The two cards and the arrow between them, wherever in the sentence they are. */
+    private fun Table.arrow(): Slot =
+        assertNotNull(
+            sentence().clauses.flatMap { it.slots }.firstOrNull { it.says is Says.Trade },
+            "no two cards in " + own(),
+        )
+
     private fun Table.answers(): List<Label> = assertNotNull(board).answers.map { it.label }
 
     private fun Move?.edit(): PlanEdit = assertIs<Move.Plan>(this).edit
@@ -247,6 +254,62 @@ class PlanAsTalkTest {
             said.own(),
         )
         assertEquals(Move.Ask(Question.Aiming(me, myPage, Part.Called)), said.slot(trade).open)
+    }
+
+    /**
+     * A Queen looks at two cards and then *may* trade them, and the arrow between the two cards
+     * is where the plan says which. Lit, she trades; dim, she only looks — and touching it flips
+     * the two, so a look-only costs a touch rather than a question of its own. The builder asks
+     * "which two cards?" once, for both readings, because a coalition naming two cards under a
+     * Queen means the trade far more often than not (design open question, settled by the rail).
+     *
+     * A Jack has no arrow to touch. Its action *is* the trade — the plan's door will not let a
+     * Jack say anything else — so a control that could only be refused is not offered.
+     */
+    @Test
+    fun aQueensArrowFlipsBetweenTradingAndOnlyLookingAndAJackHasNone() {
+        val holding = finalRound().let { round ->
+            round.copy(
+                players = round.players.map { seat ->
+                    if (seat.id != me) {
+                        seat
+                    } else {
+                        seat(me, listOf(Rank.QUEEN, Rank.TWO, Rank.KING), said = mapOf(0 to Rank.QUEEN, 2 to Rank.KING))
+                    }
+                },
+            )
+        }
+        val looking = Step.Peek(CardAt(nina, 0), CardAt(don, 0))
+        val trading = Step.Swap(CardAt(nina, 0), CardAt(don, 0))
+        fun queenSaying(then: Step) =
+            CoalitionPlan(lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 0), guess = Rank.QUEEN, then = then))))
+
+        // Said as a trade: the arrow is lit, and touching it leaves the two cards where they are.
+        val trades = tableFor(view(holding), Question.ThePlan(at = myPage), plan = queenSaying(trading)).arrow()
+        assertTrue(assertIs<Says.Trade>(trades.says).swap, "a Queen said to trade read as only looking")
+        assertEquals(
+            Step.PutDown(CardAt(me, 0), guess = Rank.QUEEN, then = looking),
+            assertIs<PlanEdit.SetLane>(trades.toggle.edit()).step.bare(),
+            "the lit arrow does not turn the trade into a look",
+        )
+
+        // Said as a look: the arrow is dim, and touching it trades the two cards it looked at.
+        val looks = tableFor(view(holding), Question.ThePlan(at = myPage), plan = queenSaying(looking)).arrow()
+        assertFalse(assertIs<Says.Trade>(looks.says).swap, "a Queen said to look read as trading")
+        assertEquals(
+            Step.PutDown(CardAt(me, 0), guess = Rank.QUEEN, then = trading),
+            assertIs<PlanEdit.SetLane>(looks.toggle.edit()).step.bare(),
+            "the dim arrow does not turn the look into a trade",
+        )
+
+        // A Jack trades or says nothing; there is no second reading to offer.
+        val jack = CoalitionPlan(
+            lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 0), guess = Rank.JACK, then = trading))),
+        )
+        assertNull(
+            tableFor(view(), Question.ThePlan(at = myPage), plan = jack).arrow().toggle,
+            "a Jack was offered a look it may not take",
+        )
     }
 
     @Test

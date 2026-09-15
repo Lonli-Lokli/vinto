@@ -560,6 +560,25 @@ a rank picker that fits.
   down unplayed and swapping or discarding one it drew. What changed is that the rule is now
   keyed on the round (`hasNoVictimForAnAce`) rather than on a coalition plan happening to have
   been built, and `SelfPlayGateTest` fails on an aimed ace, so it cannot drift back.
+- ~~The builder has no Queen look-only: two touches on a Queen make a trade.~~ **It has one, and
+  it had no test.** The arrow between the two cards is the word: lit she trades, dim she only
+  looks, and touching it flips the two (`Slot.toggle` → `TradeArrow`). The design's open question
+  is settled there. Three things were wrong around it, each found by writing the test:
+  the arrow was a switch with a **state and no name**, so a screen reader landing on it heard
+  "on" and nothing about what was on — it says the clause it controls now, from the words the
+  sentence already had, so no string was added; `TouchTargetTest` measured a planned turn with an
+  **empty** board, where ▶▶ is disabled and therefore not a tap target at all, so the one state
+  the button can be pressed in was never measured; and in that state it was **19dp across** on a
+  411dp phone, because a row out of width takes it out of its last child. The stops take what the
+  two buttons leave and scroll sideways inside it now, the way a long sentence does a row above.
+  The plan goldens moved with it and were regenerated.
+- ~~Reveals following their cards is proven for the local session; the remote session uses the
+  same helper and has no test through the wire.~~ **Done.**
+  `RemoteRevealsFollowTheCardTest` plays whole games through a real engine, sends each step over
+  `ScriptedWire` as the room sends one — the watching seat's projected view and the reveals off
+  `ReduceResult` — and checks the session's standing reveals against the engine's own answer by
+  card identity. The helper was never the question: both sessions call `following`, and what
+  differs is the wiring, which is what this holds.
 - The design page's legend still names the rose edge as `#B8607F`; it shipped as `#A04C6A` to
   clear 3:1 on the card.
 

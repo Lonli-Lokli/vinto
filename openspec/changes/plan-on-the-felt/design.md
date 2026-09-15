@@ -401,5 +401,13 @@ produce a divergence nobody notices.
 - ~~Whether "play it through" is worth a control of its own beside stepping.~~ Settled: the
   band's Play runs the whole plan from wherever the head is parked, and each turn carries its
   own replay at the head of its sentence (D16).
-- Whether a Queen's look-only — two cards looked at and not traded — needs a word in the builder,
-  or whether two touches making a trade is what every coalition means by a Queen.
+- ~~Whether a Queen's look-only — two cards looked at and not traded — needs a word in the builder,
+  or whether two touches making a trade is what every coalition means by a Queen.~~ Settled as
+  built: the builder asks "which two cards?" once and the answer is a trade, and the **arrow**
+  between the two cards is where the plan says which — lit she trades, dim she only looks, and a
+  touch flips the two. A look-only costs a touch rather than a question of its own, which is the
+  right price for the rarer reading; a Jack has no arrow, because its action *is* the trade and a
+  control that could only be refused is not offered. Held by
+  `PlanAsTalkTest.aQueensArrowFlipsBetweenTradingAndOnlyLookingAndAJackHasNone` (both flips, and
+  the Jack) and `PlanAsTalkScreenTest.touchingAQueensArrowTurnsHerTradeIntoALook` (the felt).
+  Neither half had a test before, which is why this read as unbuilt.

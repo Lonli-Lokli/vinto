@@ -476,8 +476,18 @@ internal fun PlanStops(transport: Transport, onMove: (Move) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(Half),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        transport.stops.forEach { stop -> StopChip(stop, transport, onMove) }
-        Spacer(Modifier.weight(1f))
+        // The stops take what the two buttons leave and scroll sideways inside it, the way a
+        // long sentence does a row above. A plain row shared the width instead, and a row out
+        // of width takes it out of its last child: ▶▶ measured 19dp across on a 411dp phone the
+        // moment a plan gave it something to play — which is the only state it can be pressed
+        // in, and the reason an empty board never showed it (`TouchTargetTest`).
+        Row(
+            modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(Half),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            transport.stops.forEach { stop -> StopChip(stop, transport, onMove) }
+        }
         val here = transport.stops.firstOrNull { it.here }
         val replay = stringResource(Res.string.label_plan_replay)
         TransportButton(replay, here?.replay, "plan:replay", onMove) { ink -> drawPlay(ink) }
@@ -742,7 +752,7 @@ private fun WordContent(slot: Slot, ink: Color, plain: Boolean, onMove: (Move) -
 
         is Says.Trade -> {
             MiniCard(says.from)
-            TradeArrow(says.swap, slot.toggle, onMove)
+            TradeArrow(says, slot.toggle, onMove)
             MiniCard(says.to)
         }
 
@@ -926,8 +936,9 @@ private fun RoseBack(modifier: Modifier, tag: Int) {
  * them if mine is lower".
  */
 @Composable
-private fun TradeArrow(swap: Boolean, toggle: Move.Quiet?, onMove: (Move) -> Unit) {
+private fun TradeArrow(says: Says.Trade, toggle: Move.Quiet?, onMove: (Move) -> Unit) {
     val stage = LocalStage.current
+    val swap = says.swap
     val ink = if (swap) Rail.onAsked else Rail.inkDim
     val ground = if (swap) Rail.asked else Color.Transparent
     val rim = if (swap) Color.Transparent else Rail.edge
@@ -936,6 +947,11 @@ private fun TradeArrow(swap: Boolean, toggle: Move.Quiet?, onMove: (Move) -> Uni
         swap -> stringResource(Res.string.says_asked)
         else -> ""
     }
+    // A switch is announced by its name and its state, and this one had only a state — the word
+    // it sits in is merged into the chip around it, so a screen reader landing on the switch
+    // itself heard "on" and nothing about what was on. It says the clause it controls, which is
+    // the sentence the eye reads off the same two cards and the arrow between them.
+    val named = saysWords(says).takeIf { toggle != null }
     // A thumb's box to hit, a mark's box to see: the arrow is the smallest control on the rail
     // and is sized like every other one this app offers a finger (`TouchTargetTest`).
     Box(
@@ -943,7 +959,10 @@ private fun TradeArrow(swap: Boolean, toggle: Move.Quiet?, onMove: (Move) -> Uni
             .sizeIn(minWidth = TapTarget, minHeight = TapTarget)
             .then(if (toggle == null) Modifier else Modifier.clickable(role = Role.Switch) { onMove(toggle) })
             .markedAs(stage, "plan:arrow")
-            .semantics { state?.let { stateDescription = it } },
+            .semantics {
+                named?.let { contentDescription = it }
+                state?.let { stateDescription = it }
+            },
         contentAlignment = Alignment.Center,
     ) {
         Box(
