@@ -25,7 +25,7 @@ sealed interface Validation {
  *
  * Ported from `legacy-web/packages/engine/src/lib/action-validator.ts`. The corpus cannot check it: every
  * recorded action was legal when it was written, so a validator that returned `Valid`
- * unconditionally would replay all 13,900 of them identically. It is covered by its own tests
+ * unconditionally would replay all 13,991 of them identically. It is covered by its own tests
  * instead.
  */
 object ActionValidator {

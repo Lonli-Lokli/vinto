@@ -20,7 +20,7 @@ Three layers, weakest to strongest:
 2. `RecordingParityTest` (JVM only, it reads the 4.5 MB corpus from disk) — decodes each of
    the 50 recordings' `finalState` into the Kotlin model with `ignoreUnknownKeys = false`,
    so an unmodelled field is an error rather than a silent drop. It also round-trips all
-   **13,900** recorded actions through `GameActionSerializer`, comparing canonical forms.
+   **13,991** recorded actions through `GameActionSerializer`, comparing canonical forms.
 3. The same test re-encodes that state, canonicalises and hashes it, and compares against the
    `finalStateHash` **TypeScript wrote**. One number covers lossless decode, correct
    optional-versus-nullable handling, a byte-identical canonical form, and SHA-256 agreeing
@@ -52,7 +52,7 @@ handler is localised to one action rather than showing up as "the final state di
 
 While the port was in progress this ran as a ratchet that named the frontier on every run,
 so the next handler to write was never a guess. It is now a **hard gate**: all 50 recordings,
-all 13,900 actions, plus final-state verification.
+all 13,991 actions, plus final-state verification.
 
 Confirmed non-vacuous — deleting one line of knowledge tracking from the Jack swap (the owner
 must _lose_ knowledge of a blind-swapped position) fails it.
@@ -60,7 +60,7 @@ must _lose_ knowledge of a blind-swapped position) fails it.
 ### The validator needed a different kind of test
 
 The corpus cannot check `ActionValidator` at all: every action in it was legal when recorded,
-so a validator that returned `Valid` unconditionally replays all 13,900 identically. Replaying
+so a validator that returned `Valid` unconditionally replays all 13,991 identically. Replaying
 with the real validator live therefore proves one direction only — that nothing legal is
 rejected.
 
@@ -68,7 +68,7 @@ The other direction is the one that matters, since this is the anti-cheat bounda
 `ValidatorImpersonationTest` gets it from the corpus anyway: replay every recording and, at
 each step, re-attribute the action that genuinely happened to **every other player at the
 table**. Each is an attempt to act out of turn in a position that actually arose.
-**18,066 attempts, none accepted.**
+**18,099 attempts, none accepted.**
 
 Rule-specific cases the sweep cannot reach — the coalition may not target the Vinto caller, a
 failed toss-in ends participation for the round, setup peek limits — are posed against corpus

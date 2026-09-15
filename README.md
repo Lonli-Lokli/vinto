@@ -167,9 +167,10 @@ sequenceDiagram
 The Gradle build is the repository root. The rules live **once**, in Kotlin. They used to live
 twice — a Next.js client came first, and the two were held identical by a replay corpus — and
 what survives that arrangement is `fixtures/`: 50 games whose state hashes the TypeScript
-engine computed, now frozen, and still replayed on every run. One channel of them — what each
-seat has been shown — was regenerated on 2026-09-07, because both engines shared a defect in
-it; `fixtures/recordings/README.md` says what moved and what provably did not.
+engine computed, now frozen, and still replayed on every run. Twice a part of them has been
+remade, because both engines shared a defect the corpus then recorded as the rule: what each
+seat has been shown, on 2026-09-07, and the tails of six games, on 2026-09-15.
+`fixtures/recordings/README.md` says what moved each time and what provably did not.
 
 ```
 shared/
@@ -193,9 +194,9 @@ docs/kotlin/       # ARCHITECTURE.md (the shape), README.md (the state), protoco
   game from an online one.
 - **worker**: the authoritative room. It deals from a seed, validates every action, and sends
   each socket its own redacted view.
-- **fixtures**: 50 recordings and 13,900 actions, each carrying a state hash a *second
-  implementation* computed — bar one channel, regenerated once and written up in
-  `fixtures/recordings/README.md`. Frozen, and deliberately not extensible.
+- **fixtures**: 50 recordings and 13,991 actions, each carrying a state hash a *second
+  implementation* computed — bar one channel and the tails of six games, each remade once and
+  written up in `fixtures/recordings/README.md`. Frozen, and deliberately not extensible.
 
 ## Getting Started
 

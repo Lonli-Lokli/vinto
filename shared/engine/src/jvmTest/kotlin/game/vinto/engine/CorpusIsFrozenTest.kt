@@ -9,16 +9,17 @@ import kotlin.test.assertTrue
 /**
  * The corpus is frozen, and this is what makes that a rule rather than a preference.
  *
- * `fixtures/recordings` holds 50 games and 13,900 actions. Every field but one carries what
+ * `fixtures/recordings` holds 50 games and 13,991 actions. Almost all of them carry what
  * **TypeScript computed**, and that is the whole value of it: an independent implementation,
  * written from the rules rather than from this code, agreed on every one of those numbers. The
  * TypeScript engine is gone, so what is lost cannot be recovered.
  *
- * The one exception is on the record: on 2026-09-07 the hashes were regenerated, because both
- * engines shared a defect in what each seat has been *shown* and no fix could leave those
- * numbers standing. `fixtures/recordings/README.md` says what moved, what provably did not,
- * and what covers that channel instead. It happened once, deliberately, and it is written down
- * — which is the difference between a decision and the failure below.
+ * Two exceptions are on the record, and both happened because the corpus recorded a defect the
+ * two engines *shared*: on 2026-09-07 the hashes of what each seat has been **shown** were
+ * regenerated, and on 2026-09-15 the tails of six games were, from the `CALL_VINTO` that used
+ * to drop a queued toss-in. `fixtures/recordings/README.md` says what moved each time, what
+ * provably did not, and what covers those rules instead. Both were deliberate and both are
+ * written down — which is the difference between a decision and the failure below.
  *
  * The failure this guards against is not malice. It is somebody in a year's time, facing a red
  * `CorpusReplayTest` after a deliberate rules change, reaching for the obvious fix: write the

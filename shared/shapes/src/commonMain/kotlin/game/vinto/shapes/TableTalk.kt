@@ -44,7 +44,7 @@ sealed interface TableTalk {
      *
      * That is what lets a human and a bot be addressed identically, and it is why no control
      * anywhere acts for another seat. Letting one would be exactly the impersonation
-     * `ValidatorImpersonationTest` refuses 18,066 times, and a local-only exception would
+     * `ValidatorImpersonationTest` refuses 18,099 times, and a local-only exception would
      * teach the UI a habit that breaks the first time somebody plays a real opponent.
      */
     @Serializable

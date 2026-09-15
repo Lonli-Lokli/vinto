@@ -252,8 +252,6 @@
     <string name="talk_wait_they">%1$s请您稍等一下。</string>
     <string name="talk_worse">您说这会让您更吃亏。</string>
     <string name="talk_worse_they">%1$s说这会让自己更吃亏。</string>
-    <string name="table_final_turns_left">还有 %1$d 回合揭晓</string>
-    <string name="table_final_last_turn">最后一回合</string>
     <string name="table_see_score">查看得分</string>
 
     <string name="header_support">请我喝杯咖啡</string>

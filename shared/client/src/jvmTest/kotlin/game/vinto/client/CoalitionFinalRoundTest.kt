@@ -46,6 +46,17 @@ class CoalitionFinalRoundTest {
      */
     private val enoughSeeds = 10
 
+    /**
+     * How many of those rounds must leave the caller a board with something on it.
+     *
+     * Not all of them, and that is the design rather than a shortfall: the bots seed only what
+     * the table could actually *say*, so a coalition holding no named Jack, Queen or King
+     * proposes nothing, and a caller shown an empty board would be shown nothing. Sixteen of
+     * the forty seeds carry a proposal; the floor is measured, with room for the search to
+     * drift, for the same reason [enoughSeeds] is one. It was **zero** before the fix.
+     */
+    private val enoughPlans = 12
+
     /** A session where the human has called Vinto and the three bots owe one turn each. */
     private suspend fun humanCallsVinto(seed: Long): LocalGameSession? {
         val session = LocalGameSession(seed = seed, difficulty = Difficulty.EASY)
@@ -126,5 +137,39 @@ class CoalitionFinalRoundTest {
         }
 
         assertTrue(checked > 0, "no seed produced a scored final round")
+    }
+
+    /**
+     * The caller can read what the coalition means to do to them.
+     *
+     * Reported from a phone: *"I wasn't able to see the plan as vinto caller and could not see
+     * the plan switcher in the header."* The board is the table's and the caller reads it
+     * (design D12) — but they were never given one to read, and the header's switch is drawn
+     * from [PlanSummary], which is null for the caller while the plan is empty.
+     *
+     * Not a rule about the caller: the board is **seeded at the wrong moment for them**. A
+     * member's confer window stops the bots, so the board was seeded from a position with the
+     * round still to play. Nothing stops the bots for the caller — all three opponents take
+     * their turns in the batch that carries the call — so seeding ran against a state that had
+     * already reached `scoring`, where there is no final round left to propose anything for.
+     * The guard asked about the round the *session* was in and the seeding asked the state the
+     * batch had reached, and the two are not the same state.
+     */
+    @Test
+    fun theCallerIsGivenThePlanToRead() = runTest(timeout = WHOLE_GAME) {
+        var called = 0
+        var read = 0
+
+        for (seed in 1L..40L) {
+            val session = humanCallsVinto(seed) ?: continue
+            called++
+            if (session.plan.value?.isEmpty == false) read++
+        }
+
+        assertTrue(called >= enoughSeeds, "only $called of 40 seeds produced a human Vinto call")
+        assertTrue(
+            read >= enoughPlans,
+            "the caller was left with nothing to read in ${called - read} of $called rounds",
+        )
     }
 }

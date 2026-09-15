@@ -252,8 +252,6 @@
     <string name="talk_wait_they">בקשה מצד %1$s להמתין רגע.</string>
     <string name="talk_worse">טענה שזה יחליש את המצב שלכם.</string>
     <string name="talk_worse_they">טענה שזה יחליש את המצב של %1$s.</string>
-    <string name="table_final_turns_left">%1$d תורות עד לחשיפה</string>
-    <string name="table_final_last_turn">התור האחרון</string>
     <string name="table_see_score">צפייה בניקוד</string>
 
     <string name="header_support">קניית קפה בשבילי</string>

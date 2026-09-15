@@ -186,11 +186,12 @@
   4. Dispatch it from the UI
 
   If the change moves any recorded state, `CorpusReplayTest` goes red. The corpus is almost
-  certainly the thing that was right: for every field but one it carries hashes a second
-  implementation computed, and it is **frozen** — `CorpusIsFrozenTest` fails if a recording
-  changes, and `fixtures/recordings/README.md` says what to do instead of rewriting it. The one
-  exception is on the record there: the seen-cards channel was regenerated on 2026-09-07,
-  because both engines shared a defect in it. Once.
+  certainly the thing that was right: it carries hashes a second implementation computed, and it
+  is **frozen** — `CorpusIsFrozenTest` fails if a recording changes, and
+  `fixtures/recordings/README.md` says what to do instead of rewriting it. Twice it has not
+  been right, both on the record there and both because the two engines shared the defect the
+  corpus records: the seen-cards channel (2026-09-07) and the tails of six games whose Vinto
+  call ate a queued toss-in (2026-09-15).
 
   Dependencies of Note
 

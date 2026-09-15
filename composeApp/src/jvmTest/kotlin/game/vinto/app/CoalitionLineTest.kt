@@ -22,7 +22,6 @@ import game.vinto.app.game.TableState
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.Move
 import game.vinto.client.Question
-import game.vinto.client.finalRoundTurnsLeft
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
@@ -37,33 +36,38 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * The final round's header: what changes, and the way into the plan.
+ * The final round's header: the way into the plan, and nothing else.
  *
- * It used to carry four rows and two of them were decoration — a "Together … vs … Called it"
- * roster repeating what the seat plates already show, and a one-time sentence explaining the
- * round. Both said the same thing on the fortieth second as on the first, above a felt with
- * four hands to fit on a phone. What is left is the countdown, which moves, and the plan, which
- * is the only thing anybody does in this round.
+ * There used to be a band under the header, and it has been emptied one row at a time by the
+ * same complaint each time — a "Together … vs … Called it" roster repeating what the seat
+ * plates already show, a one-time sentence explaining the round, the words "FINAL ROUND" over a
+ * felt that says so in four other ways. The last row in it was a countdown to the reveal, and
+ * that is gone too: it appeared when the round turned final and vanished when the round scored,
+ * and a strip that comes and goes moves the whole felt under the player's thumb twice. Asked for
+ * from a phone, which is where a felt with four hands on it has the least room to spare.
  *
- * The plan is a **control** and not a status line that happens to be tappable. That distinction
- * is the whole of the report this change answers: *"it's not clear what I should do to start
- * planning"*.
+ * So the header is the switch, and the plan is a **control** rather than a status line that
+ * happens to be tappable. That distinction is the whole of the report the switch answers:
+ * *"it's not clear what I should do to start planning"*.
  */
 @OptIn(ExperimentalTestApi::class)
 class CoalitionLineTest {
 
     @Test
-    fun theHeaderCarriesTheCountdownAndTheWayIntoThePlan() = runComposeUiTest {
+    fun theHeaderCarriesTheWayIntoThePlanAndNoBandBeneathIt() = runComposeUiTest {
         val words = textsOn(finalRound())
 
         // **And not the words "FINAL ROUND".** They said the same thing on the fortieth second
         // as on the first, over a felt that says it four other ways — the caller's crown, the
-        // coalition marks on the plates, the panel that announced the call. What is left in the
-        // band is the one thing in it that moves.
+        // coalition marks on the plates, the panel that announced the call.
         assertFalse(words.any { it == "FINAL ROUND" }, "the band is a label again: $words")
-        assertTrue(
-            words.any { it.contains("turn", ignoreCase = true) },
-            "the countdown is gone, and it is the one thing up here that moves: $words",
+
+        // Nor the countdown that was the last thing left in the band. It was drawn only while
+        // the round was final, so it arrived and left mid-game and took a row of the felt's
+        // height with it each way.
+        assertFalse(
+            words.any { it.contains("to the reveal", ignoreCase = true) },
+            "the band is back under the header: $words",
         )
         assertTrue(words.any { it.equals("Plan", ignoreCase = true) }, "no way into the plan: $words")
     }
@@ -171,9 +175,10 @@ class CoalitionLineTest {
     }
 
     @Test
-    fun theCallerGetsTheCountdownAndNoPlanToOpenUntilThereIsOne() = runComposeUiTest {
+    fun theCallerGetsNoPlanToOpenUntilThereIsOne() = runComposeUiTest {
         // The caller may *read* a standing plan (design D11) and there is nothing to read until
-        // the coalition has put something on it. What they always get is the countdown.
+        // the coalition has put something on it — which, since `LocalGameSession` learned to
+        // seed the board from the position the round is planned in, is most rounds.
         val whole = teachingSession().view.value
         val theirs = finalRound().copy(viewerId = whole.viewerId).let { view ->
             view.copy(vintoCallerId = view.viewerId)
@@ -184,32 +189,6 @@ class CoalitionLineTest {
         assertFalse(
             words.any { it.equals("Plan", ignoreCase = true) },
             "the caller was offered a plan that does not exist: $words",
-        )
-    }
-
-    /**
-     * A band with nothing to put in it is not drawn at all.
-     *
-     * The countdown has nothing to say while play is still parked on the caller — which is
-     * exactly the confer window, the longest the band is ever on screen — so what a member saw
-     * for the whole of it was one word between two rules. Reported from a phone as wasted space.
-     */
-    @Test
-    fun theBandIsAbsentWhileThereIsNothingForItToSay() = runComposeUiTest {
-        val whole = teachingSession().view.value
-        val quiet = finalRound().copy(
-            viewerId = whole.viewerId,
-            currentPlayerIndex = finalRound().players.indexOfFirst { it.id == finalRound().vintoCallerId },
-            activeTossIn = null,
-        )
-        assertEquals(null, finalRoundTurnsLeft(quiet), "the fixture has a countdown after all")
-
-        val words = textsOn(quiet, plan = null)
-
-        assertFalse(words.any { it == "FINAL ROUND" }, "the empty band is still drawn: $words")
-        assertFalse(
-            words.any { it.contains("to the reveal", ignoreCase = true) },
-            "a countdown appeared out of nothing: $words",
         )
     }
 

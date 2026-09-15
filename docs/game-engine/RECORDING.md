@@ -7,7 +7,7 @@ Kotlin/Wasm and iOS — has to reproduce all of it byte for byte, and
 
 **It used to be a contract between two engines, and that is now history rather than policy.**
 It was written against a TypeScript implementation that acted as the reference; that engine was
-deleted with `legacy-web/`. What survives it is `fixtures/recordings` — 50 games and 13,900
+deleted with `legacy-web/`. What survives it is `fixtures/recordings` — 50 games and 13,991
 actions carrying the hashes TypeScript computed, replayed by `CorpusReplayTest` on every run.
 
 So the old instruction here ("update both implementations and regenerate the corpus") no longer

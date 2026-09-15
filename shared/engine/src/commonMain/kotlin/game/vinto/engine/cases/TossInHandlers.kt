@@ -1,20 +1,12 @@
 package game.vinto.engine.cases
 
-import game.vinto.engine.MutableCard
 import game.vinto.engine.MutableGameState
-import game.vinto.engine.MutablePendingAction
 import game.vinto.engine.areAllPlayersReady
 import game.vinto.engine.carrySeenCardsAcrossSwap
 import game.vinto.engine.clearTossInAfterActionableCard
-import game.vinto.engine.getTargetTypeFromRank
-import game.vinto.engine.queuedTossInCardId
+import game.vinto.engine.startFirstQueuedTossInAction
 import game.vinto.engine.swapDeclarationsBetween
-import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.GameAction
-import game.vinto.shapes.GameSubPhase
-import game.vinto.shapes.PendingCardOrigin
-import game.vinto.shapes.getCardShortDescription
-import game.vinto.shapes.getCardValue
 
 /**
  * PLAYER_TOSS_IN_FINISHED — one player says they are done tossing in.
@@ -38,42 +30,8 @@ fun handlePlayerTossInFinished(
 
     if (!areAllPlayersReady(state)) return true
 
-    val firstAction = tossIn.queuedActions.firstOrNull()
-    if (firstAction == null) {
-        // Nothing queued: clearing this lets reduce's post-action step advance the turn.
-        state.pendingAction = null
-        return true
-    }
-
-    // Every queued toss-in action starts at target selection; the UI still offers a skip,
-    // King included.
-    state.pendingAction = MutablePendingAction(
-        card = MutableCard(
-            id = queuedTossInCardId(
-                state.turnNumber,
-                firstAction.playerId,
-                firstAction.rank,
-                tossIn.queuedActions.size,
-            ),
-            rank = firstAction.rank,
-            value = getCardValue(firstAction.rank),
-            actionText = getCardShortDescription(firstAction.rank),
-            played = false,
-        ),
-        playerId = firstAction.playerId,
-        actionPhase = ActionPhase.SELECTING_TARGET,
-        from = PendingCardOrigin.HAND,
-        targetType = getTargetTypeFromRank(firstAction.rank),
-        targets = mutableListOf(),
-    )
-
-    val actionPlayerIndex = state.players.indexOfFirst { it.id == firstAction.playerId }
-    if (actionPlayerIndex != -1) state.currentPlayerIndex = actionPlayerIndex
-
-    // A human needs the UI to offer use-or-skip; a bot decides for itself.
-    val isHumanPlayer = state.playerById(firstAction.playerId)?.isHuman ?: false
-    state.subPhase = if (isHumanPlayer) GameSubPhase.AWAITING_ACTION else GameSubPhase.SELECTING
-    tossIn.waitingForInput = false
+    // Nothing queued: clearing this lets reduce's post-action step advance the turn.
+    if (!startFirstQueuedTossInAction(state)) state.pendingAction = null
 
     return true
 }

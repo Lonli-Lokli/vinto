@@ -24,7 +24,7 @@ does not cover this" and "nobody remembered this" is the whole point of writing 
 | Covers | Where it is |
 | --- | --- |
 | Static analysis, every module and source set | `detekt`, `maxIssues: 0`, baseline at `config/detekt/baseline.xml` |
-| The rules, on the JVM | `:shared:*:jvmTest` — the 50-recording corpus replay, the validator's 18,066 impersonation attempts, the self-play legality gate |
+| The rules, on the JVM | `:shared:*:jvmTest` — the 50-recording corpus replay, the validator's 18,099 impersonation attempts, the self-play legality gate |
 | The rules, where a `Long` is two `Int`s | `:shared:*:jsNodeTest`, `:shared:*:wasmJsNodeTest` — including the whole-game round trip from GATES.md §6l |
 | The screens | `:composeApp:jvmTest`, headless. Goldens excluded — see the note on the test task |
 | The Worker compiles | `:worker:jsProductionExecutableCompileSync` |

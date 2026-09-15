@@ -270,8 +270,6 @@
     <string name="talk_wait_they">%1$s te pide un momento de espera.</string>
     <string name="talk_worse">Dices que te dejaría peor.</string>
     <string name="talk_worse_they">%1$s dice que le dejaría peor.</string>
-    <string name="table_final_turns_left">%1$d turnos hasta el desenlace</string>
-    <string name="table_final_last_turn">último turno</string>
     <string name="table_see_score">Ver el marcador</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->

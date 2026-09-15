@@ -252,8 +252,6 @@
     <string name="talk_wait_they">%1$s가 잠시 기다려 달라고 해요.</string>
     <string name="talk_worse">그러면 자신에게 불리해진다고 말해요.</string>
     <string name="talk_worse_they">%1$s가 그러면 자신에게 불리해진다고 말해요.</string>
-    <string name="table_final_turns_left">공개까지 %1$d턴</string>
-    <string name="table_final_last_turn">마지막 턴</string>
     <string name="table_see_score">점수 보기</string>
 
     <string name="header_support">커피 한 잔 사주기</string>

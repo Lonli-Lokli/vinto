@@ -1,14 +1,14 @@
-# The parity corpus — frozen, and regenerated once
+# The parity corpus — frozen, and twice repaired
 
-50 games. 13,900 actions. Every action carries a canonical state hash, and the Kotlin engine
-reproduces every one of them, per action, in `CorpusReplayTest`.
+50 games. Every action carries a canonical state hash, and the Kotlin engine reproduces every
+one of them, per action, in `CorpusReplayTest`.
 
 **These files are frozen.** `CorpusIsFrozenTest` fails if any of them changes, and
 `MANIFEST.sha256` beside this file is what it checks against.
 
-They have been regenerated **once**, on 2026-09-07, and that is recorded below rather than in
-a commit message, because a reader needs to know which of these hashes TypeScript computed and
-which this engine did.
+They have been changed **twice** — on 2026-09-07 and on 2026-09-15 — and both are recorded
+below rather than in a commit message, because a reader needs to know which of these numbers
+TypeScript computed and which this engine did.
 
 ---
 
@@ -17,7 +17,7 @@ which this engine did.
 These recordings were produced by `legacy-web/tools/generate-recordings.ts`, running the
 **TypeScript** engine — a second implementation, written from the rules rather than from the
 Kotlin. That is the entire source of their value. Two implementations, written independently,
-agreeing on 13,900 canonical hashes is evidence that the *rules* were understood correctly.
+agreeing on 13,785 canonical hashes is evidence that the *rules* were understood correctly.
 
 The TypeScript engine has been deleted. So the obvious move — port the generator to Kotlin, so
 the corpus stays extensible — was considered and **rejected**:
@@ -30,6 +30,55 @@ JVM, JS and Wasm; the tournament baseline pins the bot's strength against commit
 `CorpusReplayTest` holds these fifty. What none of those can catch is a handler that was ported
 *wrong from the start*, in a way that is self-consistent. Only an implementation written from
 the rules can catch that, and there is no longer one.
+
+## The 2026-09-15 tail regeneration
+
+A player reported that a bot's toss-in was never played: they called Vinto, the seat after them
+had thrown a Jack into that same window, and the Jack's action simply did not happen — the next
+turn began and the log said nothing at all.
+
+`handleCallVinto` cleared `activeTossIn`, and a thrown action card lives **nowhere else** until
+it is played. `handleParticipateInTossIn` takes the card out of the hand and leaves a seat, a
+rank and a position in `queuedActions`; the card is rebuilt at the moment it is played. So the
+call took the action a coalition member had earned by guessing right, and took the card with
+it — fifty-four cards quietly became fifty-three.
+
+TypeScript did exactly the same. Six of the fifty games reach a `CALL_VINTO` with a throw still
+queued, and their hashes record the loss, so this is the 2026-09-07 case again: **the corpus is
+not the thing that was right here.**
+
+**It is worse than that case in one way, which is why the repair is different.** On 2026-09-07
+only *hashes* moved and every recorded action stayed legal. Here the fix changes which actions
+are legal: once the queued Jack is played, the engine owes target selections the recording does
+not contain, and the next recorded action — another seat's `DRAW_CARD` — is refused. No rewrite
+of the hashes can repair a stream the new rules will not accept. The choice was therefore
+between teaching the harness to replay under the old rule and regenerating those six tails, and
+regenerating was the product owner's call.
+
+**What moved, exactly.** In each of the six files, everything up to and including the
+`CALL_VINTO` is byte-for-byte what it was — the same actions, the same hashes — except that
+call's own `stateHash`, which is the first state the new rule changes. Everything after it is
+new: the 115 recorded actions that followed those calls were dropped, and 206 actions this
+engine's bots played in their place were written, along with `finalState` and `finalStateHash`.
+The other 44 files are untouched.
+
+| Recording | TypeScript's, up to and including | Replaced | Written |
+| --- | --- | --- | --- |
+| `selfplay-moderate-1.json` | action 178 | 28 | 41 |
+| `selfplay-moderate-3.json` | action 250 | 27 | 39 |
+| `selfplay-moderate-10.json` | action 246 | 20 | 38 |
+| `selfplay-moderate-29.json` | action 282 | 1 | 18 |
+| `selfplay-moderate-43.json` | action 246 | 20 | 35 |
+| `selfplay-moderate-45.json` | action 252 | 19 | 35 |
+
+So the corpus is **13,991 actions, of which 13,785 are TypeScript's and 206 are this engine's**,
+and the 206 are named above rather than scattered. Read a tail in one of those six files as you
+would read anything in `fixtures/kotlin-recordings/`: a regression gate, not evidence. The
+pre-regeneration files are in git history, and the diff in each is a single contiguous block
+starting at that call's hash.
+
+The rule the six tails now follow is held by a test that says which rule it is, which is the
+first answer under "what to do instead" below: `FinalRoundRulesTest.aCardThrownInBeforeTheCallIsStillPlayed`.
 
 ## The 2026-09-07 regeneration
 

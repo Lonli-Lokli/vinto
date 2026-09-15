@@ -61,42 +61,6 @@ class FinalRoundTest {
     }
 
     /**
-     * The final round counts itself down: three coalition turns with four seats, read from
-     * the frames the round plays out through — the same views the table draws — so the
-     * count a player sees is the one asserted here. 3, 2, 1, and then the hands go over.
-     */
-    @Test
-    fun theFinalRoundCountsItsTurnsDown() = runTest(timeout = WHOLE_GAME) {
-        var checked = 0
-
-        for (seed in 1L..20L) {
-            val session = callVintoAt(seed)
-            if (session.view.value.vintoCallerId == null) continue
-
-            // One emission per dispatch, carrying every frame the call played out through.
-            val frames = session.frames.replayCache.lastOrNull().orEmpty()
-            val counts = frames.mapNotNull { finalRoundTurnsLeft(it.view) }
-
-            assertTrue(counts.isNotEmpty(), "seed $seed: a final round with no counted frame")
-            assertEquals(
-                listOf(3, 2, 1),
-                counts.distinct(),
-                "seed $seed: the countdown was $counts",
-            )
-            counts.zipWithNext { a, b ->
-                assertTrue(a >= b, "seed $seed: the countdown went back up in $counts")
-            }
-            assertTrue(
-                finalRoundTurnsLeft(session.view.value) == null,
-                "seed $seed: the round is over; there is nothing left to count",
-            )
-            checked++
-        }
-
-        assertTrue(checked >= 5, "only $checked of 20 seeds produced a callable window")
-    }
-
-    /**
      * The scoring screen says why the hands went face-up. A round that reaches scoring with
      * no caller can only have ended on the deck — the mapping is checked against a real
      * ended round, and the no-caller reading against the same view with the call erased,

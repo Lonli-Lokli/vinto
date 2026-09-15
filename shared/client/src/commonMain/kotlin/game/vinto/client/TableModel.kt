@@ -1618,46 +1618,6 @@ private fun scoringTable(view: PlayerView): Table {
 }
 
 /**
- * How many turns of the final round are still to be played, counting the one in progress.
- *
- * The rules give every non-caller exactly one more turn, and the round ends when play comes
- * back to the caller — so the answer is the number of seats between the current player
- * (inclusive: their turn is being played, not spent) and the caller, walking in turn order.
- * `null` when there is nothing to say: outside the final round, and in the closing frames
- * where play has already returned to the caller — the reveal itself is the message there.
- *
- * This exists because three of those turns can pass in under a second when the coalition is
- * all bots, and a player who looked away for one of them has no way to know how close the
- * reveal is. A count is the whole answer.
- */
-fun finalRoundTurnsLeft(view: PlayerView): Int? {
-    if (view.phase != GamePhase.FINAL) return null
-    val caller = view.players.indexOfFirst { it.id == view.vintoCallerId }
-    if (caller < 0) return null
-
-    val seats = view.players.size
-
-    // Where to count from. During a toss-in window the turn that opened it is already
-    // spent, so the count starts after the window's owner — which also disambiguates the
-    // two moments the current player alone cannot: at the call the open window is still
-    // the *caller's* (a full lap remains), and at the end the engine has already advanced
-    // past the caller to a seat that will never play (nothing remains).
-    val from = view.activeTossIn?.originalPlayerIndex?.let { (it + 1) % seats }
-        ?: view.currentPlayerIndex
-
-    var index = from
-    var left = 0
-    while (index != caller && left < seats) {
-        left++
-        index = (index + 1) % seats
-    }
-
-    // Zero means play has come back round to the caller: the hands are about to go over,
-    // and a count of nothing is not worth saying — the reveal itself is the message.
-    return left.takeIf { it > 0 }
-}
-
-/**
  * Why the hands went face-up.
  *
  * Two things end a round and they mean opposite advice: a Vinto call is somebody's judgement

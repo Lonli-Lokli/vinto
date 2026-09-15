@@ -262,8 +262,6 @@
     <string name="talk_wait_they">%1$s vous demande un instant de patience.</string>
     <string name="talk_worse">Vous dites que cela vous désavantagerait.</string>
     <string name="talk_worse_they">%1$s dit que cela desservirait sa position.</string>
-    <string name="table_final_turns_left">%1$d tours avant la révélation</string>
-    <string name="table_final_last_turn">dernier tour</string>
     <string name="table_see_score">Voir le score</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->

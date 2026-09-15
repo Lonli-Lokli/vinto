@@ -229,20 +229,29 @@ class LocalGameSession(
     }
 
     /**
-     * The board, kept in step with the table: the lanes of the turns already played lock, the
-     * turn on play stays open for the coalition to rewrite round its drawn card, and a scored
-     * round has no plan — the room throws its away at scoring, and so does this.
+     * The board, kept in step with the table: the lanes of the turns already played lock, and
+     * the turn on play stays open for the coalition to rewrite round its drawn card.
+     *
+     * **A scored round does not throw its plan away here, and the room is not being disagreed
+     * with.** `RoomCore.settleRound` clears it because a room *spans* rounds and the next hand
+     * is a new conversation; a `LocalGameSession` is one deal, so the next hand is a new
+     * session with a plan of its own and there is nothing here to carry over.
+     *
+     * Clearing it cost the caller the whole feature. The one round where every other seat is a
+     * bot is played out inside a single dispatch, so the plan was seeded and thrown away
+     * between two statements, before a single frame of it reached the screen — and `_plan` is a
+     * `StateFlow`, which conflates, so the screen never saw the value at all. The caller watched
+     * the coalition's final round with no switch in the header and no board behind it, which is
+     * the other half of the report [playBots] answers. Everything that draws a plan is
+     * phase-guarded (`summaryFor`, `compose` and `planLineFor` all answer null outside `FINAL`),
+     * so keeping it puts nothing on the scoring screen.
      */
     private fun settlePlan() {
-        val caller = state.vintoCallerId
-        _plan.value = when {
-            state.phase == GamePhase.SCORING -> null
-            caller == null -> _plan.value
-            else -> _plan.value?.lockingLaneOf(
-                state.players.getOrNull(state.currentPlayerIndex)?.id,
-                coalitionInTurnOrder(state.players.map { it.id }, caller),
-            )
-        }
+        val caller = state.vintoCallerId ?: return
+        _plan.value = _plan.value?.lockingLaneOf(
+            state.players.getOrNull(state.currentPlayerIndex)?.id,
+            coalitionInTurnOrder(state.players.map { it.id }, caller),
+        )
     }
 
     /**
@@ -524,6 +533,11 @@ class LocalGameSession(
         val told = mutableListOf<BotMove>()
         val overheard = mutableListOf<TableTalk>()
 
+        // Where the board is worked out from, which is not always where the batch stops. See
+        // the seeding below; set on the dispatcher and read after it, which `onBotDispatcher`
+        // makes safe by awaiting.
+        var planningFrom: GameState? = null
+
         val next = onBotDispatcher {
             var working = start
             while (moves < MAX_BOT_STEPS && working.phase != GamePhase.SCORING) {
@@ -548,6 +562,17 @@ class LocalGameSession(
                 runner.nextTalk(working)?.let { overheard += it }
 
                 val action = nextBotAction(working) ?: break
+
+                // The one position the board describes: the declarations are in and the turns
+                // are not. Remembered rather than seeded here, because the loop runs on the bot
+                // dispatcher and the plan is read by the seat's own thread.
+                if (planningFrom == null &&
+                    action !is GameAction.DeclareCards &&
+                    working.hasACoalition()
+                ) {
+                    planningFrom = working
+                }
+
                 val result = GameEngine.reduce(working, action) as? ReduceResult.Success
                     ?: break
 
@@ -567,24 +592,7 @@ class LocalGameSession(
 
         overheard.forEach(::overhear)
 
-        // The bots' proposals on the board, for the person to read, agree to or change — built
-        // after the bots have declared, so the picture they are built on is the one the person
-        // sees. Fills empty lanes and stops once the person has edited anything, so it is cheap
-        // to repeat on every pass.
-        //
-        // **Whether or not the viewer is in the coalition.** This asked the question the confer
-        // *window* asks, which excludes the caller — so the one round the person called, where
-        // all three opponents are bots, seeded nothing and the caller watched three turns go by
-        // without ever seeing what they were for. The window is a member's; the board is the
-        // table's, and the caller reads it (design D12).
-        if (aCoalitionFinalRound()) {
-            val standing = _plan.value ?: CoalitionPlan()
-            val seeded = seedTheBoard(next, _plan.value)
-            if (seeded.plan != standing) {
-                _plan.value = seeded.plan
-                seeded.said.forEach(::overhear)
-            }
-        }
+        seedTheBoardFrom(planningFrom ?: next)
         if (moves == 0) return emptyList()
 
         // Choreographed from the *views*, not the states, so this is the same computation a
@@ -617,6 +625,35 @@ class LocalGameSession(
         _events.tryEmit(SessionEvent.BotsPlayed(moves))
         publish()
         return seen
+    }
+
+    /**
+     * The bots' proposals on the board, for the person to read, agree to or change — built after
+     * the bots have declared, so the picture they are built on is the one the person sees. Fills
+     * empty lanes and stops once the person has edited anything, so it is cheap to repeat on
+     * every pass.
+     *
+     * **Whether or not the viewer is in the coalition.** This used to ask the question the confer
+     * *window* asks, which excludes the caller — so the one round the person called, where all
+     * three opponents are bots, seeded nothing and the caller watched three turns go by without
+     * ever seeing what they were for. The window is a member's; the board is the table's, and the
+     * caller reads it (design D12).
+     *
+     * **And [from] is the position the round is planned in, not wherever the batch stopped.**
+     * Fixing the guard alone was not enough, and the same report's second half says so: *"I
+     * wasn't able to see the plan as vinto caller."* A member's window stops the bots, so the end
+     * of the batch *is* the start of the final round and seeding it works. Nothing stops them for
+     * the caller — all three turns ride in the batch that carries the call — so the end of the
+     * batch had already reached `scoring`, where there is no round left to propose anything for,
+     * and the board stayed empty for all forty seeds a test tried it on.
+     */
+    private fun seedTheBoardFrom(from: GameState) {
+        if (!aCoalitionFinalRound()) return
+        val standing = _plan.value ?: CoalitionPlan()
+        val seeded = seedTheBoard(from, _plan.value)
+        if (seeded.plan == standing) return
+        _plan.value = seeded.plan
+        seeded.said.forEach(::overhear)
     }
 
     /**

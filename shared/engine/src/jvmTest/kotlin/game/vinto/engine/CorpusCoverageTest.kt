@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
  * Is the corpus worth trusting? Ported from the `corpus coverage` block of
  * `legacy-web/packages/engine/src/lib/__tests__/replay-fixtures.test.ts`.
  *
- * [CorpusReplayTest] asks whether the engine agrees with TypeScript on all 13,900 recorded
+ * [CorpusReplayTest] asks whether the engine agrees with TypeScript on all 13,991 recorded
  * actions. That is only meaningful if the recordings actually go anywhere — fifty games that
  * all ended on turn three would pass it while proving nothing. So this file asks the other
  * question: does the corpus reach scoring, form a coalition, exhaust and reshuffle the deck,

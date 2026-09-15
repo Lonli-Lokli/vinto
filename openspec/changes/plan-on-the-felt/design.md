@@ -118,12 +118,18 @@ disambiguating against scrolling, and there is nothing here to disambiguate agai
 keeps that rule and shows the turn as unplayable rather than inventing a picture — which is also
 what a `Lane` whose `step` is null gets, one empty numbered turn.
 
-### D7 — Sheds and nods go to the seat plates; the header keeps only the countdown
+### D7 — Sheds and nods go to the seat plates; the header keeps only the plan control
 
 Neither is a turn. A shed belongs to a seat ("Tide will throw in a 3 if one lands"), and a nod is
 about a member, not about a step — the plates already carry per-seat badges. The header line the
-retired rows free is not refilled: it holds the countdown and the plan control, and nothing else
-(D12).
+retired rows free is not refilled (D12).
+
+**Amended 2026-09-15: the countdown goes with them.** This decision kept it as "the one thing up
+here that moves", and moving is exactly what made it a problem: it exists only while the round is
+final, so the band under the header appeared when somebody called Vinto and disappeared when the
+hands went over, shifting the felt under the player's thumb both times. Reported from a phone, and
+the product owner's call is that the count is not worth a row that comes and goes. The header is
+the plan control and the three glyphs; there is no band at all.
 
 ### D8 — `Lane.suggestion` shows only on the selected turn
 

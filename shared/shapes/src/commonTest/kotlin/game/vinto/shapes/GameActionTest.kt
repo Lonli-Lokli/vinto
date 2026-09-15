@@ -7,7 +7,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
- * `RecordingParityTest` round-trips all 13,900 actions in the corpus and is the real gate,
+ * `RecordingParityTest` round-trips all 13,991 actions in the corpus and is the real gate,
  * but a corpus only covers what those games happened to do. These pin the wire shape itself,
  * and the cases the corpus never produced — most importantly the `rank: 'A'` variant of
  * `SELECT_ACTION_TARGET`, which appears nowhere in the 50 recordings.

@@ -31,7 +31,7 @@ import kotlin.test.assertTrue
  * Three reasons this is a rule and not a preference, and none of them is squeamishness:
  *
  *  - it is exactly what the anti-cheat boundary refuses. `ValidatorImpersonationTest`
- *    re-attributes 18,066 corpus actions and accepts none of them; a control that acted for
+ *    re-attributes 18,099 corpus actions and accepts none of them; a control that acted for
  *    another seat would be that, with a friendlier name;
  *  - it would be a different game per configuration. Drive two bots and you play three hands;
  *    online against three people you play one. Same screen, incomparable skill;

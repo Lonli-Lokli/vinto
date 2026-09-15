@@ -266,8 +266,6 @@
     <string name="talk_wait_they">%1$sが少し待つよう求めています。</string>
     <string name="talk_worse">それでは自分が不利になると伝えています。</string>
     <string name="talk_worse_they">%1$sは、それでは自分が不利になると言っています。</string>
-    <string name="table_final_turns_left">公開まであと%1$d手番</string>
-    <string name="table_final_last_turn">最後の手番</string>
     <string name="table_see_score">スコアを見る</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->

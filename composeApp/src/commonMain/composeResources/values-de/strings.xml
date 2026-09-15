@@ -252,8 +252,6 @@
     <string name="talk_wait_they">%1$s bittet Sie um einen Moment Geduld.</string>
     <string name="talk_worse">Sie sagen, das würde Sie schlechter dastehen lassen.</string>
     <string name="talk_worse_they">%1$s sagt, das würde einen schlechter dastehen lassen.</string>
-    <string name="table_final_turns_left">%1$d Züge bis zur Aufdeckung</string>
-    <string name="table_final_last_turn">letzter Zug</string>
     <string name="table_see_score">Punktestand ansehen</string>
 
     <string name="header_support">Einen Kaffee spendieren</string>

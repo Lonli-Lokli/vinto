@@ -265,8 +265,6 @@
     <string name="talk_wait_they">%1$s Le chiede un momento di attesa.</string>
     <string name="talk_worse">Lei dice che questo peggiorerebbe la Sua posizione.</string>
     <string name="talk_worse_they">%1$s dice che questo peggiorerebbe la propria posizione.</string>
-    <string name="table_final_turns_left">%1$d turni alla rivelazione</string>
-    <string name="table_final_last_turn">ultimo turno</string>
     <string name="table_see_score">Vedi il punteggio</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->

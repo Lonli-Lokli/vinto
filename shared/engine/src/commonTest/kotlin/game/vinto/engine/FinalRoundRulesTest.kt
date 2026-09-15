@@ -8,6 +8,7 @@ import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.Rank
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -269,5 +270,62 @@ class FinalRoundRulesTest {
         assertEquals(3, points["p2"])
         assertEquals(3, points["p3"])
         assertEquals(3, points["p4"])
+    }
+
+    /**
+     * A card thrown in before the call is still owed its action.
+     *
+     * Reported from a phone: the caller declared Vinto, the seat after them had thrown a Jack
+     * into that same window, and the Jack was never played — their turn simply began, with
+     * nothing in the log for it. The call cleared `activeTossIn`, and a thrown action card
+     * lives nowhere else until it is played: [handleParticipateInTossIn] takes it out of the
+     * hand and leaves a `TossInAction` in the queue, so the action and the **card** went
+     * together. Fifty-three cards, and a coalition member robbed of the action they had
+     * already earned by guessing right.
+     *
+     * The rules put the throw first: a matching card is tossed in and its action performed at
+     * once, and Vinto is declared at the *end* of a turn — which is after the throws that turn
+     * set off have resolved.
+     */
+    @Test
+    fun aCardThrownInBeforeTheCallIsStillPlayed() {
+        val players = listOf(
+            testPlayer("p1", "Player 1", isHuman = true, cards = listOf(testCard(Rank.TWO, "p1c1"))),
+            testPlayer(
+                "p2",
+                "Player 2",
+                isHuman = false,
+                cards = listOf(testCard(Rank.JACK, "p2c1"), testCard(Rank.THREE, "p2c2")),
+            ),
+            testPlayer("p3", "Player 3", isHuman = false, cards = listOf(testCard(Rank.SIX, "p3c1"))),
+            testPlayer("p4", "Player 4", isHuman = false, cards = listOf(testCard(Rank.NINE, "p4c1"))),
+        )
+        var state = testState(
+            players = players,
+            drawPile = pileOf(testCard(Rank.JACK, "d1"), testCard(Rank.FOUR, "d2")),
+        )
+
+        // The caller's own turn puts a Jack face up, and the seat after them throws theirs in.
+        state = unsafeReduce(state, drawCard("p1"))
+        state = unsafeReduce(state, discardCard("p1"))
+        state = unsafeReduce(state, participateInTossIn("p2", listOf(0)))
+        assertEquals(1, state.activeTossIn?.queuedActions?.size, "the throw was not queued")
+
+        // The bots wave the window through, exactly as they do in a solo round, and only then
+        // does the person call — which is the order the report came from.
+        state = markPlayersReady(state, listOf("p2", "p3", "p4"))
+        state = unsafeReduce(state, callVinto("p1"))
+
+        assertEquals(GamePhase.FINAL, state.phase, "the call did not land")
+        assertEquals("p1", state.vintoCallerId)
+
+        val owed = state.pendingAction
+        assertNotNull(owed, "the Jack thrown in before the call was never played")
+        assertEquals(Rank.JACK, owed.card.rank)
+        assertEquals("p2", owed.playerId, "somebody else was handed p2's action")
+
+        // And the card itself is still in the game. It left p2's hand at the throw and exists
+        // only as the action being played; a call that dropped the queue dropped the card too.
+        assertEquals(listOf(Rank.THREE), state.players[1].cards.map { it.rank })
     }
 }

@@ -55,8 +55,8 @@ named here so that the claim can be checked rather than believed.
 | Invariant | Held by |
 | --- | --- |
 | `reduce` is pure, total and deterministic — no clock, no ambient randomness, no I/O | `CorpusReplayTest`, and the seeded `Prng` in `GameState.rngState` |
-| The same actions produce the same state, byte for byte, on every target | `CorpusReplayTest` (50 recordings, 13,900 actions, hashed per action) |
-| A seat can only act for itself | `ValidatorImpersonationTest` — 18,066 re-attributed actions, none accepted |
+| The same actions produce the same state, byte for byte, on every target | `CorpusReplayTest` (50 recordings, 13,991 actions, hashed per action) |
+| A seat can only act for itself | `ValidatorImpersonationTest` — 18,099 re-attributed actions, none accepted |
 | A client is never sent another seat's hidden cards | `projectView`, `PeekPrivacyTest`, and the per-socket envelopes in `shared/room` |
 | A solo game touches no network | `NoNetworkGuardTest`, which installs a `SecurityManager` and proves it bites first |
 | A bot follows the rules, and games end | `SelfPlayGateTest` — every proposed action through `ActionValidator`, every game to `scoring` |
@@ -169,20 +169,28 @@ whole UI.
 
 ## 7. The cross-implementation contract, and what it is now
 
-`fixtures/recordings` holds 50 games and 13,900 actions, each carrying a canonical state hash
+`fixtures/recordings` holds 50 games and 13,991 actions, each carrying a canonical state hash
 the Kotlin engine reproduces, per action. `legacy-web/` generated them and is gone, so the
 corpus is a **frozen artefact**: a real gate against the engine drifting, no longer evidence
 that two implementations agree *today*, and impossible to extend.
 
 **Whose numbers they are is not one answer any more, and the distinction is load-bearing.**
-For every field but one they are TypeScript's — an independent implementation, written from
-the rules, agreeing byte for byte. The exception is the engine's record of what each seat has
-been *shown*: those hashes were regenerated on 2026-09-07, because both engines shared a
-defect there and no fix could leave them standing. It was measured before it was done — with
-that one channel excluded, the fixed engine reproduces the old stream byte-for-byte across all
-13,900 actions — so nothing else in the corpus lost its provenance.
-`fixtures/recordings/README.md` carries the argument and the numbers; regenerating is not a
-reflex to reach for a second time.
+Mostly they are TypeScript's — an independent implementation, written from the rules, agreeing
+byte for byte. There are two exceptions, both recorded in `fixtures/recordings/README.md`
+with the argument and the numbers, and both taken because the corpus turned out to record a
+defect *both* engines had rather than the rule:
+
+- the engine's record of what each seat has been **shown**: those hashes were regenerated on
+  2026-09-07. It was measured before it was done — with that one channel excluded, the fixed
+  engine reproduces the old stream byte-for-byte across all 13,900 actions — so nothing else
+  in the corpus lost its provenance;
+- the **tails of six games**, from the `CALL_VINTO` that used to drop a queued toss-in
+  onward, regenerated on 2026-09-15. 206 of the 13,991 actions are this engine's, named file
+  by file in that README; the other 13,785 are TypeScript's. That one could not be repaired
+  by rewriting hashes, because playing the throw the call had eaten makes the recorded action
+  stream itself illegal.
+
+Regenerating is not a reflex to reach for: the first answer is a test that says which rule.
 
 What replaces the corpus as coverage grows is already in place: the same `commonTest` suites
 run on JVM, JS and Wasm, which is the property that still matters once one engine ships — a

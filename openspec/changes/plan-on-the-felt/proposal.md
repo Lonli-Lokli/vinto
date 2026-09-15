@@ -79,8 +79,8 @@ among the static rows.
   select-then-select — the same edit, another way, not a lesser one.
 - **A lane with no step ("your call") keeps its place** in the sequence as an empty numbered
   slot, so ② means the same turn to everyone reading it.
-- **Sheds and nods move to the seat plates**; the header keeps the countdown and the plan
-  control and nothing else.
+- **Sheds and nods move to the seat plates**; the header keeps the plan control and nothing else.
+  (The countdown was kept at first and retired on 2026-09-15 — see design D7.)
 - **A disproved claim stays visible.** `PlanHealth` already separates a card *moving* (repaired
   in silence) from a belief being *wrong* (never repaired, and news) — but the broken marker
   currently rides on the rail rows this change retires, so the felt takes it over.

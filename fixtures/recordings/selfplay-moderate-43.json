@@ -2795,34 +2795,349 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "397410c8062d79f442bbeff473535e91cc4b625050a0263589178d2d4c8d611e"
+      "stateHash": "4b9f2c0217d8191c5191d64135100e2a798407bac3fe5db7efae297b5bf5b59f"
     },
     {
       "action": {
-        "type": "SET_COALITION_LEADER",
+        "type": "DECLARE_CARDS",
         "payload": {
-          "leaderId": "human-1"
+          "playerId": "human-1",
+          "about": "human-1",
+          "claims": [
+            {
+              "by": "human-1",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "2"
+              ]
+            }
+          ]
         }
       },
-      "stateHash": "7a789477e47e2743ac6c7752c229d73374164c4d56ce7eae396a9a7a7f1050df"
+      "stateHash": "9a467b562e0de4cf738769a0feea2c45fdb6163866cbb2b850e4045f933bf6fc"
     },
     {
       "action": {
-        "type": "DRAW_CARD",
+        "type": "DECLARE_CARDS",
+        "payload": {
+          "playerId": "bot-1",
+          "about": "bot-1",
+          "claims": [
+            {
+              "by": "bot-1",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "2"
+              ]
+            }
+          ]
+        }
+      },
+      "stateHash": "f5632a28184bcc61ed97f643322a9ab1ebf3b6cd21aa34a41fb54014b23cfad3"
+    },
+    {
+      "action": {
+        "type": "DECLARE_CARDS",
+        "payload": {
+          "playerId": "bot-2",
+          "about": "bot-2",
+          "claims": [
+            {
+              "by": "bot-2",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "Joker"
+              ]
+            },
+            {
+              "by": "bot-2",
+              "positions": [
+                1
+              ],
+              "ranks": [
+                "Joker"
+              ]
+            },
+            {
+              "by": "bot-2",
+              "positions": [
+                2
+              ],
+              "ranks": [
+                "3"
+              ]
+            }
+          ]
+        }
+      },
+      "stateHash": "3a5df9d83c8acbc5c02036277168a9301be9e900a72f36b6ea1dc2d38618df22"
+    },
+    {
+      "action": {
+        "type": "DECLARE_CARDS",
+        "payload": {
+          "playerId": "human-1",
+          "about": "bot-1",
+          "claims": [
+            {
+              "by": "human-1",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "2"
+              ]
+            },
+            {
+              "by": "human-1",
+              "positions": [
+                1
+              ],
+              "ranks": [
+                "4"
+              ]
+            }
+          ]
+        }
+      },
+      "stateHash": "2f7adb780d598630da1061e4ac1a870fcfcfe69a3992e87d01c0ab5caec95cc0"
+    },
+    {
+      "action": {
+        "type": "DECLARE_CARDS",
+        "payload": {
+          "playerId": "human-1",
+          "about": "bot-2",
+          "claims": [
+            {
+              "by": "human-1",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "Joker"
+              ]
+            },
+            {
+              "by": "human-1",
+              "positions": [
+                1
+              ],
+              "ranks": [
+                "Joker"
+              ]
+            },
+            {
+              "by": "human-1",
+              "positions": [
+                2
+              ],
+              "ranks": [
+                "3"
+              ]
+            }
+          ]
+        }
+      },
+      "stateHash": "6364a33ef74d183a46b3a52e9b11b5c89e1f3854b24a07faa2a3a6e2a3ab66e4"
+    },
+    {
+      "action": {
+        "type": "DECLARE_CARDS",
+        "payload": {
+          "playerId": "human-1",
+          "about": "bot-3",
+          "claims": [
+            {
+              "by": "human-1",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "K"
+              ]
+            }
+          ]
+        }
+      },
+      "stateHash": "c80e740cb835b676118aeb2dcde0140ff2b66bae0df73ccaf62af4356b9e430a"
+    },
+    {
+      "action": {
+        "type": "DECLARE_CARDS",
+        "payload": {
+          "playerId": "bot-1",
+          "about": "human-1",
+          "claims": [
+            {
+              "by": "bot-1",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "2"
+              ]
+            }
+          ]
+        }
+      },
+      "stateHash": "66f5ad2eb3922c6a5c22a56ec07cb321f3045a5cb816ad2e80da65d04c996a4b"
+    },
+    {
+      "action": {
+        "type": "DECLARE_CARDS",
+        "payload": {
+          "playerId": "bot-1",
+          "about": "bot-2",
+          "claims": [
+            {
+              "by": "bot-1",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "Joker"
+              ]
+            },
+            {
+              "by": "bot-1",
+              "positions": [
+                1
+              ],
+              "ranks": [
+                "Joker"
+              ]
+            },
+            {
+              "by": "bot-1",
+              "positions": [
+                2
+              ],
+              "ranks": [
+                "3"
+              ]
+            }
+          ]
+        }
+      },
+      "stateHash": "725c05cfa600a6b776e7217e03760c91b0e6b641d6c47c6fdaaabaf66eb3ad26"
+    },
+    {
+      "action": {
+        "type": "DECLARE_CARDS",
+        "payload": {
+          "playerId": "bot-1",
+          "about": "bot-3",
+          "claims": [
+            {
+              "by": "bot-1",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "K"
+              ]
+            }
+          ]
+        }
+      },
+      "stateHash": "c412a11822c81c986cc8f06e72bedef1ec3f96d2713bba98c231a62d384fd566"
+    },
+    {
+      "action": {
+        "type": "DECLARE_CARDS",
+        "payload": {
+          "playerId": "bot-2",
+          "about": "human-1",
+          "claims": [
+            {
+              "by": "bot-2",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "2"
+              ]
+            }
+          ]
+        }
+      },
+      "stateHash": "d8e92a704e10d34fac3ee9aba34a59d6b56e36751bac96790e7b577634b7e73c"
+    },
+    {
+      "action": {
+        "type": "DECLARE_CARDS",
+        "payload": {
+          "playerId": "bot-2",
+          "about": "bot-1",
+          "claims": [
+            {
+              "by": "bot-2",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "2"
+              ]
+            },
+            {
+              "by": "bot-2",
+              "positions": [
+                1
+              ],
+              "ranks": [
+                "4"
+              ]
+            }
+          ]
+        }
+      },
+      "stateHash": "b04d4a2e58301bf94281c0b824c45a6f1aa859d9488a4733207d0727baa9986e"
+    },
+    {
+      "action": {
+        "type": "DECLARE_CARDS",
+        "payload": {
+          "playerId": "bot-2",
+          "about": "bot-3",
+          "claims": [
+            {
+              "by": "bot-2",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "K"
+              ]
+            }
+          ]
+        }
+      },
+      "stateHash": "02ac4de84825eed1af531e2819495b169464170b40d06a871fc6d1ebffd32f37"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
         "payload": {
           "playerId": "human-1"
         }
       },
-      "stateHash": "8aaed01f16f3e7b88dbc7cf85c1f89de936642990360c1a645da19edc1189c2b"
+      "stateHash": "1ce6ff12db02c6c391907057e1c6e8b41dce8f58e69e73cddccd05b6b149ccf5"
     },
     {
       "action": {
-        "type": "DISCARD_CARD",
+        "type": "CONFIRM_PEEK",
         "payload": {
           "playerId": "human-1"
         }
       },
-      "stateHash": "752762d5bb6af855e8729da0ed0a116fd5465585378e2d85a298ee342e1e7d2d"
+      "stateHash": "3b998520f95753fa5c4db6c33c36dc1850dae6a2a5b9e54f12e7940dea8870e4"
     },
     {
       "action": {
@@ -2831,7 +3146,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "bc289eed416953b22aa81964260a8e3f09484a165c07c5cb14768c12fc186b18"
+      "stateHash": "b8a7ebec44cfc0c130869731c265b6114d839d69ab5acbea12befed6752941f1"
     },
     {
       "action": {
@@ -2840,7 +3155,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "ed4ba3e2eca36a21f20e50c2c696becc5a69ab92c876e7892546dfc4e47398ac"
+      "stateHash": "e87dcd92d9a96c06d2b40195be43caa7f43a9e07f81df0e8a3892f856f64b3b4"
     },
     {
       "action": {
@@ -2849,60 +3164,103 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "32fdab29b4407353403fbce39dbafdd6de35e57530ca81bf34bccab994fc82ed"
+      "stateHash": "9fc5d08b1f11ede4f6a375be2a388aac7cee566c4e536cdccc73d685c5bb7d1b"
     },
     {
       "action": {
         "type": "DRAW_CARD",
         "payload": {
-          "playerId": "bot-1"
+          "playerId": "human-1"
         }
       },
-      "stateHash": "7f13ea5c7f89fda341f13b04e986e0deb3a264a5dcb0fe7ec0667cd2260bffb9"
+      "stateHash": "cdd22e1f2935383fd20ca890c2b38d90f6d044a285308add774bf73f821c2cf0"
     },
     {
       "action": {
         "type": "SWAP_CARD",
         "payload": {
-          "playerId": "bot-1",
-          "position": 2,
-          "declaredRank": "Q"
-        }
-      },
-      "stateHash": "09d68a72f4545a55ef2a2441ef326a767a8b055b86d4c2149d8ad45bbec211d7"
-    },
-    {
-      "action": {
-        "type": "SELECT_ACTION_TARGET",
-        "payload": {
-          "rank": "Any",
-          "playerId": "bot-1",
-          "targetPlayerId": "human-1",
+          "playerId": "human-1",
           "position": 0
         }
       },
-      "stateHash": "332defb7fe7c6b5db57eca4e91502f67d5f669a7b790e247c60d7042b1b21ca5"
+      "stateHash": "fd39207fb2c99f15699936dc859613cb0cb1d21868677cf1b9e1311482d53408"
     },
     {
       "action": {
-        "type": "SELECT_ACTION_TARGET",
+        "type": "DECLARE_CARDS",
         "payload": {
-          "rank": "Any",
+          "playerId": "human-1",
+          "about": "human-1",
+          "claims": [
+            {
+              "by": "human-1",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "10",
+                "J",
+                "Q",
+                "K",
+                "A",
+                "Joker"
+              ],
+              "covering": false
+            }
+          ]
+        }
+      },
+      "stateHash": "a44ace4ee24b0edda0854f414f33723f7732edc95e4990a3dfe1ffc4468c9005"
+    },
+    {
+      "action": {
+        "type": "DECLARE_CARDS",
+        "payload": {
           "playerId": "bot-1",
-          "targetPlayerId": "bot-2",
-          "position": 0
+          "about": "human-1",
+          "claims": [
+            {
+              "by": "bot-1",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "A"
+              ]
+            }
+          ]
         }
       },
-      "stateHash": "9b08e33b182cd4ffd592795dfe63bf99592f70f0dd104aa27591619991b09375"
+      "stateHash": "8e8bd40e887c72c348848251eefaf9073ebf5fcc31141f4a83f22a2fd02a6faf"
     },
     {
       "action": {
-        "type": "EXECUTE_QUEEN_SWAP",
+        "type": "DECLARE_CARDS",
         "payload": {
-          "playerId": "bot-1"
+          "playerId": "bot-2",
+          "about": "human-1",
+          "claims": [
+            {
+              "by": "bot-2",
+              "positions": [
+                0
+              ],
+              "ranks": [
+                "A"
+              ]
+            }
+          ]
         }
       },
-      "stateHash": "5676dba0753287f5a09105a7dc6f1d9d6168408adce824b4f96172ca1b6aeac8"
+      "stateHash": "e3b3874cd041b84108c938c083f7754b1c6e426a7d0db632ac081a7704f8fe41"
     },
     {
       "action": {
@@ -2911,7 +3269,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "3618f27a0bd99da5c49d877719dcceeca4c9bf0a2aef2229e1975f580630e6d0"
+      "stateHash": "44b1a42263ae21e890ad545a41e0f1828d9f6dd217c0e4bdc5d43bf0353e7494"
     },
     {
       "action": {
@@ -2920,7 +3278,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "11b468a8846d90db1649e1916dc4152e1cd1bc2c8a9ef2ef0217ecdde104c542"
+      "stateHash": "1dbc79cf2c8ea1eb6a92432220520294102ccd98070e317e5b41fa254ddd831c"
     },
     {
       "action": {
@@ -2929,7 +3287,52 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "ac3e86bb5376b49b411c5a8a212caced9a383375fad1d5c126521fc89189dfd2"
+      "stateHash": "db3c390db4d8fa0552637105f24aef8ab42b5433058cdf767bb53b507f147cb8"
+    },
+    {
+      "action": {
+        "type": "DRAW_CARD",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "6882b0a05d79af1dbe83eeefd2587a8c2bcd8126827afb4a7f48db0462de1434"
+    },
+    {
+      "action": {
+        "type": "DISCARD_CARD",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "9ef633542274d067378b2693d4f118a4177678f0608258622832fd66755cfd74"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "65d97a73de7be873c5bafdad15ad07203553e2cfa8a8308aef7e4fa363275b48"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "3f81eb5553a27f0cd535faf31236a02ccf3c981057c72bf81f5cf082ce869475"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "21cd7108e1365baba86475955b27f4d7d4838757d161cbaeb1cb0ccbd3680932"
     },
     {
       "action": {
@@ -2938,7 +3341,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "014b26d0cdfaddff2114107f83ef8367ecbff15bc87807e50df25480663fa94a"
+      "stateHash": "45825ede968eff615760ddbed51872cb8319e4b983e6f8ebc8099ada4e633d5e"
     },
     {
       "action": {
@@ -2947,7 +3350,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "467a506f5fa67a7fd975342dfa75e6cfe4a07047bdddf6d9fc6448e3116e2dba"
+      "stateHash": "bdd5c07728c34779e1756dd001d993401ddb6fb6dfb435481abacf82ea622c08"
     },
     {
       "action": {
@@ -2956,7 +3359,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "e61b4391107e6eb5073a1712227b5468de23e358a19be29c28733b19a3bcf16e"
+      "stateHash": "e5367790d3a72fe9b202fcebd3cd7a16c10abb5e1b8cb77b7ee55eaf31b41495"
     },
     {
       "action": {
@@ -2965,19 +3368,7 @@
           "playerId": "bot-1"
         }
       },
-      "stateHash": "cced473133d9c858ea240e35be8cef12c25ca4b132d7a6ff9254a15d27d33b87"
-    },
-    {
-      "action": {
-        "type": "PARTICIPATE_IN_TOSS_IN",
-        "payload": {
-          "playerId": "bot-2",
-          "positions": [
-            0
-          ]
-        }
-      },
-      "stateHash": "c099113d92bddb9a42c02ad0734185394b12cc2739476ea0b454b99a27c52fed"
+      "stateHash": "ebd7b5fbc7bbaf8b7275922c768593ebbc2e501ebe1b109fbd1d2cfa20b6ba49"
     },
     {
       "action": {
@@ -2986,12 +3377,12 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "a2aeab4c4362616d50ab225f78ceefdfd778e9e4d81031ae4c3e21267a949c96"
+      "stateHash": "e53f82f6d50a762e11f65b722d06b52139e3063cb1f25b7bde21dc4476333f9f"
     }
   ],
   "finalState": {
     "gameId": "vinto-43",
-    "roundNumber": 7,
+    "roundNumber": 8,
     "turnNumber": 31,
     "phase": "scoring",
     "subPhase": "idle",
@@ -3005,9 +3396,10 @@
         "isBot": true,
         "cards": [
           {
-            "id": "Joker2",
-            "rank": "Joker",
-            "value": -1,
+            "id": "A_1",
+            "rank": "A",
+            "value": 1,
+            "actionText": "Force opponent to draw",
             "played": false
           }
         ],
@@ -3035,12 +3427,18 @@
           "bot-2": {
             "knownCards": {
               "0": {
-                "id": "Joker1",
+                "id": "Joker2",
                 "rank": "Joker",
                 "value": -1,
                 "played": false
               },
               "1": {
+                "id": "Joker1",
+                "rank": "Joker",
+                "value": -1,
+                "played": false
+              },
+              "2": {
                 "id": "3_1",
                 "rank": "3",
                 "value": 3,
@@ -3061,16 +3459,53 @@
                 "rank": "4",
                 "value": 4,
                 "played": false
-              },
-              "2": {
-                "id": "5_3",
-                "rank": "5",
-                "value": 5,
-                "played": false
               }
             }
           }
-        }
+        },
+        "claims": [
+          {
+            "by": "human-1",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              "10",
+              "J",
+              "Q",
+              "K",
+              "A",
+              "Joker"
+            ],
+            "covering": false
+          },
+          {
+            "by": "bot-1",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "A"
+            ]
+          },
+          {
+            "by": "bot-2",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "A"
+            ]
+          }
+        ]
       },
       {
         "id": "bot-1",
@@ -3092,15 +3527,15 @@
             "played": false
           },
           {
-            "id": "5_3",
-            "rank": "5",
-            "value": 5,
+            "id": "Q_1",
+            "rank": "Q",
+            "value": 10,
+            "actionText": "Peek 2 cards from 2 players, swap optional",
             "played": false
           }
         ],
         "knownCardPositions": [
-          0,
-          2
+          0
         ],
         "isVintoCaller": false,
         "coalitionWith": [
@@ -3112,9 +3547,10 @@
           "human-1": {
             "knownCards": {
               "0": {
-                "id": "Joker2",
-                "rank": "Joker",
-                "value": -1,
+                "id": "A_1",
+                "rank": "A",
+                "value": 1,
+                "actionText": "Force opponent to draw",
                 "played": false
               }
             }
@@ -3122,12 +3558,18 @@
           "bot-2": {
             "knownCards": {
               "0": {
-                "id": "Joker1",
+                "id": "Joker2",
                 "rank": "Joker",
                 "value": -1,
                 "played": false
               },
               "1": {
+                "id": "Joker1",
+                "rank": "Joker",
+                "value": -1,
+                "played": false
+              },
+              "2": {
                 "id": "3_1",
                 "rank": "3",
                 "value": 3,
@@ -3146,7 +3588,54 @@
               }
             }
           }
-        }
+        },
+        "claims": [
+          {
+            "by": "bot-1",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "2"
+            ]
+          },
+          {
+            "by": "human-1",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "2"
+            ]
+          },
+          {
+            "by": "human-1",
+            "positions": [
+              1
+            ],
+            "ranks": [
+              "4"
+            ]
+          },
+          {
+            "by": "bot-2",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "2"
+            ]
+          },
+          {
+            "by": "bot-2",
+            "positions": [
+              1
+            ],
+            "ranks": [
+              "4"
+            ]
+          }
+        ]
       },
       {
         "id": "bot-2",
@@ -3155,6 +3644,12 @@
         "isHuman": false,
         "isBot": true,
         "cards": [
+          {
+            "id": "Joker2",
+            "rank": "Joker",
+            "value": -1,
+            "played": false
+          },
           {
             "id": "Joker1",
             "rank": "Joker",
@@ -3177,7 +3672,8 @@
         ],
         "knownCardPositions": [
           0,
-          1
+          1,
+          2
         ],
         "isVintoCaller": false,
         "coalitionWith": [
@@ -3189,9 +3685,10 @@
           "human-1": {
             "knownCards": {
               "0": {
-                "id": "Joker2",
-                "rank": "Joker",
-                "value": -1,
+                "id": "A_1",
+                "rank": "A",
+                "value": 1,
+                "actionText": "Force opponent to draw",
                 "played": false
               }
             }
@@ -3209,12 +3706,6 @@
                 "rank": "4",
                 "value": 4,
                 "played": false
-              },
-              "2": {
-                "id": "5_3",
-                "rank": "5",
-                "value": 5,
-                "played": false
               }
             }
           },
@@ -3229,7 +3720,90 @@
               }
             }
           }
-        }
+        },
+        "claims": [
+          {
+            "by": "bot-2",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "Joker"
+            ]
+          },
+          {
+            "by": "bot-2",
+            "positions": [
+              1
+            ],
+            "ranks": [
+              "Joker"
+            ]
+          },
+          {
+            "by": "bot-2",
+            "positions": [
+              2
+            ],
+            "ranks": [
+              "3"
+            ]
+          },
+          {
+            "by": "human-1",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "Joker"
+            ]
+          },
+          {
+            "by": "human-1",
+            "positions": [
+              1
+            ],
+            "ranks": [
+              "Joker"
+            ]
+          },
+          {
+            "by": "human-1",
+            "positions": [
+              2
+            ],
+            "ranks": [
+              "3"
+            ]
+          },
+          {
+            "by": "bot-1",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "Joker"
+            ]
+          },
+          {
+            "by": "bot-1",
+            "positions": [
+              1
+            ],
+            "ranks": [
+              "Joker"
+            ]
+          },
+          {
+            "by": "bot-1",
+            "positions": [
+              2
+            ],
+            "ranks": [
+              "3"
+            ]
+          }
+        ]
       },
       {
         "id": "bot-3",
@@ -3255,9 +3829,10 @@
           "human-1": {
             "knownCards": {
               "0": {
-                "id": "Joker2",
-                "rank": "Joker",
-                "value": -1,
+                "id": "A_1",
+                "rank": "A",
+                "value": 1,
+                "actionText": "Force opponent to draw",
                 "played": false
               }
             }
@@ -3265,12 +3840,18 @@
           "bot-2": {
             "knownCards": {
               "0": {
-                "id": "Joker1",
+                "id": "Joker2",
                 "rank": "Joker",
                 "value": -1,
                 "played": false
               },
               "1": {
+                "id": "Joker1",
+                "rank": "Joker",
+                "value": -1,
+                "played": false
+              },
+              "2": {
                 "id": "3_1",
                 "rank": "3",
                 "value": 3,
@@ -3291,21 +3872,44 @@
                 "rank": "4",
                 "value": 4,
                 "played": false
-              },
-              "2": {
-                "id": "5_3",
-                "rank": "5",
-                "value": 5,
-                "played": false
               }
             }
           }
-        }
+        },
+        "claims": [
+          {
+            "by": "human-1",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "K"
+            ]
+          },
+          {
+            "by": "bot-1",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "K"
+            ]
+          },
+          {
+            "by": "bot-2",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "K"
+            ]
+          }
+        ]
       }
     ],
     "currentPlayerIndex": 2,
     "vintoCallerId": "bot-3",
-    "coalitionLeaderId": "human-1",
+    "coalitionLeaderId": null,
     "drawPile": [
       {
         "id": "10_1",
@@ -3348,27 +3952,33 @@
         "played": false
       },
       {
+        "id": "5_3",
+        "rank": "5",
+        "value": 5,
+        "played": false
+      },
+      {
         "id": "2_2",
         "rank": "2",
         "value": 2,
         "played": false
       },
       {
-        "id": "Q_1",
-        "rank": "Q",
-        "value": 10,
-        "actionText": "Peek 2 cards from 2 players, swap optional",
-        "played": true
-      },
-      {
-        "id": "A_1",
+        "id": "A_3",
         "rank": "A",
         "value": 1,
         "actionText": "Force opponent to draw",
-        "played": false
+        "played": true
       },
       {
-        "id": "A_3",
+        "id": "tossin_queued_28_human-1_A_1",
+        "rank": "A",
+        "value": 1,
+        "actionText": "Force opponent to draw",
+        "played": true
+      },
+      {
+        "id": "tossin_queued_28_human-1_A_2",
         "rank": "A",
         "value": 1,
         "actionText": "Force opponent to draw",
@@ -3381,11 +3991,11 @@
         "played": false
       },
       {
-        "rank": "K",
-        "played": true,
         "id": "tossin_queued_27_bot-3_K_1",
+        "rank": "K",
         "value": 0,
-        "actionText": "Declare any card's action"
+        "actionText": "Declare any card's action",
+        "played": true
       },
       {
         "id": "4_1",
@@ -3394,11 +4004,11 @@
         "played": false
       },
       {
-        "rank": "K",
-        "played": true,
         "id": "tossin_queued_27_bot-1_K_2",
+        "rank": "K",
         "value": 0,
-        "actionText": "Declare any card's action"
+        "actionText": "Declare any card's action",
+        "played": true
       },
       {
         "id": "K_0",
@@ -3532,11 +4142,11 @@
         "played": true
       },
       {
-        "rank": "8",
-        "played": true,
         "id": "tossin_queued_10_bot-1_8_1",
+        "rank": "8",
         "value": 8,
-        "actionText": "Peek 1 of your cards"
+        "actionText": "Peek 1 of your cards",
+        "played": true
       },
       {
         "id": "J_3",
@@ -3574,11 +4184,11 @@
         "played": false
       },
       {
-        "rank": "9",
-        "played": true,
         "id": "tossin_queued_4_bot-3_9_1",
+        "rank": "9",
         "value": 9,
-        "actionText": "Peek 1 opponent card"
+        "actionText": "Peek 1 opponent card",
+        "played": true
       },
       {
         "id": "J_2",
@@ -3595,268 +4205,17 @@
         "played": true
       },
       {
-        "rank": "7",
-        "played": true,
         "id": "tossin_queued_1_human-1_7_1",
+        "rank": "7",
         "value": 7,
-        "actionText": "Peek 1 of your cards"
+        "actionText": "Peek 1 of your cards",
+        "played": true
       }
     ],
     "pendingAction": null,
     "activeTossIn": null,
-    "turnActions": [
-      {
-        "playerId": "bot-2",
-        "playerName": "Mikey",
-        "description": "drew 2",
-        "timestamp": 261,
-        "turnNumber": 31,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-2",
-        "playerName": "Mikey",
-        "description": "discarded 2",
-        "timestamp": 262,
-        "turnNumber": 31,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-2",
-        "playerName": "Mikey",
-        "description": "tossed in 2",
-        "timestamp": 265,
-        "turnNumber": 31,
-        "roundNumber": 7
-      }
-    ],
-    "roundActions": [
-      {
-        "playerId": "human-1",
-        "playerName": "You",
-        "description": "drew A",
-        "timestamp": 201,
-        "turnNumber": 25,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "human-1",
-        "playerName": "You",
-        "description": "swapped card at position 1",
-        "timestamp": 202,
-        "turnNumber": 25,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-3",
-        "playerName": "Don",
-        "description": "tossed in 5",
-        "timestamp": 206,
-        "turnNumber": 25,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-1",
-        "playerName": "Raph",
-        "description": "drew 7",
-        "timestamp": 208,
-        "turnNumber": 26,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-1",
-        "playerName": "Raph",
-        "description": "played 7",
-        "timestamp": 209,
-        "turnNumber": 26,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-1",
-        "playerName": "Raph",
-        "description": "peeked at own card (pos 1)",
-        "timestamp": 210,
-        "turnNumber": 26,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-2",
-        "playerName": "Mikey",
-        "description": "drew K",
-        "timestamp": 216,
-        "turnNumber": 27,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-2",
-        "playerName": "Mikey",
-        "description": "played K",
-        "timestamp": 217,
-        "turnNumber": 27,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-2",
-        "playerName": "Mikey",
-        "description": "declared 4",
-        "timestamp": 219,
-        "turnNumber": 27,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-1",
-        "playerName": "Raph",
-        "description": "tossed in 4",
-        "timestamp": 221,
-        "turnNumber": 27,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-1",
-        "playerName": "Raph",
-        "description": "tossed in 4",
-        "timestamp": 222,
-        "turnNumber": 27,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-3",
-        "playerName": "Don",
-        "description": "tossed in 4",
-        "timestamp": 225,
-        "turnNumber": 27,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-1",
-        "playerName": "Raph",
-        "description": "played K",
-        "timestamp": 227,
-        "turnNumber": 27,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-1",
-        "playerName": "Raph",
-        "description": "declared 4",
-        "timestamp": 229,
-        "turnNumber": 27,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-3",
-        "playerName": "Don",
-        "description": "drew K",
-        "timestamp": 239,
-        "turnNumber": 28,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-3",
-        "playerName": "Don",
-        "description": "swapped for A (correct)",
-        "timestamp": 240,
-        "turnNumber": 28,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-3",
-        "playerName": "Don",
-        "description": "forcing Mikey to draw",
-        "timestamp": 241,
-        "turnNumber": 28,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "human-1",
-        "playerName": "You",
-        "description": "tossed in A",
-        "timestamp": 242,
-        "turnNumber": 28,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-3",
-        "playerName": "Don",
-        "description": "called Vinto!",
-        "timestamp": 246,
-        "turnNumber": 29,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "human-1",
-        "playerName": "You",
-        "description": "drew A",
-        "timestamp": 248,
-        "turnNumber": 29,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "human-1",
-        "playerName": "You",
-        "description": "discarded A",
-        "timestamp": 249,
-        "turnNumber": 29,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-1",
-        "playerName": "Raph",
-        "description": "drew 5",
-        "timestamp": 253,
-        "turnNumber": 30,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-1",
-        "playerName": "Raph",
-        "description": "swapped for Q (correct)",
-        "timestamp": 254,
-        "turnNumber": 30,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-1",
-        "playerName": "Raph",
-        "description": "peeking at You (pos 1) and Mikey (pos 1)",
-        "timestamp": 256,
-        "turnNumber": 30,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-1",
-        "playerName": "Raph",
-        "description": "swapped cards",
-        "timestamp": 257,
-        "turnNumber": 30,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-2",
-        "playerName": "Mikey",
-        "description": "drew 2",
-        "timestamp": 261,
-        "turnNumber": 31,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-2",
-        "playerName": "Mikey",
-        "description": "discarded 2",
-        "timestamp": 262,
-        "turnNumber": 31,
-        "roundNumber": 7
-      },
-      {
-        "playerId": "bot-2",
-        "playerName": "Mikey",
-        "description": "tossed in 2",
-        "timestamp": 265,
-        "turnNumber": 31,
-        "roundNumber": 7
-      }
-    ],
-    "difficulty": "moderate",
+    "turnActions": [],
+    "roundActions": [],
     "roundFailedAttempts": [
       {
         "playerId": "bot-1",
@@ -3868,7 +4227,8 @@
         ]
       }
     ],
+    "difficulty": "moderate",
     "rngState": 2583707620
   },
-  "finalStateHash": "a2aeab4c4362616d50ab225f78ceefdfd778e9e4d81031ae4c3e21267a949c96"
+  "finalStateHash": "e53f82f6d50a762e11f65b722d06b52139e3063cb1f25b7bde21dc4476333f9f"
 }

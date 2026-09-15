@@ -129,15 +129,24 @@ class PlanAsTalkScreenTest {
     }
 
     @Test
-    fun nothingAboveTheFeltIsSpentOnABandWhileThePlanIsOpen() = runComposeUiTest {
-        // The stops live under the felt now, beside the two film buttons; the countdown that
-        // shared the band with them is read on the live table, where the round is.
+    fun nothingAboveTheFeltIsSpentOnABandAtAll() = runComposeUiTest {
+        // The stops live under the felt, beside the two film buttons. The countdown that used to
+        // share the band with them was the last row in it and is gone as well: it was drawn only
+        // while the round was final, so it arrived when somebody called and left when the hands
+        // went over, moving the whole felt under the player's thumb both times.
         val view = finalRound().copy(currentPlayerIndex = 0)
-        val closed = textsOn(view, plan = null, question = Question.None)
-        assertTrue(closed.any { it.contains("reveal") || it == "last turn" }, "the fixture has no countdown: $closed")
 
-        val open = textsOn(view, plan = CoalitionPlan(), question = Question.ThePlan())
-        assertTrue(open.none { it.contains("reveal") || it == "last turn" }, "the band is still drawn: $open")
+        for (open in listOf(false, true)) {
+            val words = textsOn(
+                view,
+                plan = if (open) CoalitionPlan() else null,
+                question = if (open) Question.ThePlan() else Question.None,
+            )
+            assertTrue(
+                words.none { it.contains("reveal") || it == "last turn" },
+                "a band above the felt with the plan ${if (open) "open" else "closed"}: $words",
+            )
+        }
     }
 
     @Test

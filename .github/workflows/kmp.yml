@@ -150,7 +150,7 @@ jobs:
           cache-cleanup: on-success
           validate-wrappers: true
 
-      # The parity gate: all 50 recordings and all 13,900 actions replayed against the
+      # The parity gate: all 50 recordings and all 13,991 actions replayed against the
       # hashes TypeScript wrote, plus the validator, deal, redaction and bot suites. The
       # corpus is found through the `vinto.fixtures` system property the root build injects,
       # not by counting `..` from the module directory.

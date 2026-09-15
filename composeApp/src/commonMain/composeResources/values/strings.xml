@@ -324,8 +324,6 @@
     <string name="talk_wait_they">%1$s asks you to wait.</string>
     <string name="talk_worse">You say it would leave you worse off.</string>
     <string name="talk_worse_they">%1$s says it would leave them worse off.</string>
-    <string name="table_final_turns_left">%1$d turns to the reveal</string>
-    <string name="table_final_last_turn">last turn</string>
     <string name="table_see_score">See the score</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->

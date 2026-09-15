@@ -261,8 +261,6 @@
     <string name="talk_wait_they">%1$s meminta Anda menunggu sebentar.</string>
     <string name="talk_worse">Anda mengatakan itu akan merugikan Anda.</string>
     <string name="talk_worse_they">%1$s mengatakan itu akan merugikan dirinya.</string>
-    <string name="table_final_turns_left">%1$d giliran lagi sampai dibuka</string>
-    <string name="table_final_last_turn">giliran terakhir</string>
     <string name="table_see_score">Lihat skor</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->

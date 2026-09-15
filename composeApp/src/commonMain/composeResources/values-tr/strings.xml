@@ -264,8 +264,6 @@
     <string name="talk_wait_they">%1$s sizden biraz beklemenizi istiyor.</string>
     <string name="talk_worse">Bunun sizi daha kötü bir duruma sokacağını söylüyorsunuz.</string>
     <string name="talk_worse_they">%1$s, bunun kendisini daha kötü bir duruma sokacağını söylüyor.</string>
-    <string name="table_final_turns_left">Açılışa %1$d el kaldı</string>
-    <string name="table_final_last_turn">son el</string>
     <string name="table_see_score">Skoru gör</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->

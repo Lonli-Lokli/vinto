@@ -183,6 +183,17 @@ class SharedPlanTest {
         }
 
         assertTrue(session.isOver, "the round never scored")
-        assertNull(session.plan.value, "a scored round still had a plan")
+
+        // **Asserted on the screen rather than on the field**, because the field deliberately
+        // outlives the round now. `settlePlan` used to null it here, and that threw the Vinto
+        // caller's board away between two statements of the dispatch that played their whole
+        // final round — before a frame of it had been drawn, and `plan` is a conflating
+        // `StateFlow`, so the screen never saw it at all. What must not outlive the round is
+        // anything a player can be shown, and a later round cannot inherit a stale agreement
+        // either: it is a new session with a plan of its own (`LocalGame.deal`).
+        val scored = tableFor(session.view.value, plan = session.plan.value)
+        assertNull(scored.planSummary, "a scored round still offered a plan to open")
+        assertNull(scored.board, "a scored round still drew a board")
+        assertNull(scored.planLine, "a scored round still drew the plan's row")
     }
 }

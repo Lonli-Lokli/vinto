@@ -169,6 +169,13 @@ flowchart TD
 ## Declaring Vinto (Final Round)
 
 - At the **end of a player’s turn**, they may declare **“Vinto”**.
+- **A card already tossed in is still played.** The throws a turn set off resolve before the
+  final round begins, whoever threw them — the caller included. The PDF says nothing about the
+  order because at a table there is no order to state: a tossed-in card's action happens at once,
+  and “Vinto” comes after it. Both engines dropped them, and the card with them: a thrown action
+  card is taken out of the hand and rebuilt at the moment it is played, so clearing the window
+  took a coalition member's earned action *and* turned a 54-card deck into a 53-card one.
+  Reported from a phone, held by `FinalRoundRulesTest.aCardThrownInBeforeTheCallIsStillPlayed`.
 - This triggers the **Final Round**:
   - Each other player (the **Coalition**) takes exactly one more turn.
   - The Coalition **may work together and share information** to help one of them beat the
@@ -229,8 +236,13 @@ the engines has been either fixed or decided:
 | Does a wrong toss-in bar you, and for how long? | **For that window — except in the final round, where it is the rest of the round.** The rule is not in the PDF at all. This reverses the previous decision recorded here, which was the whole round in every phase; see the note under "Reaction: Toss In" for why |
 | May an Ace be taken from the discard under Option B? | **Yes** — it is an action card like any other. The PDF's "7–K" is loose |
 | Does the discard start with a face-up card? | **No.** The PDF and the engines agree; this file was the thing that was wrong |
+| Is a card tossed in before a Vinto call still played? | **Yes** — the throw resolves, then the final round starts. Not in the PDF, and both engines dropped it; see “Declaring Vinto” |
 | §8.2 ranks "from lowest total score to highest" | Read as most points first, the only reading consistent with §8.1's +3 / −1 |
 
-A rules change lands in **both** engines and, if it moves any recorded state, regenerates the
-parity corpus. The one change above moved nothing: `CorpusReplayTest` and TypeScript's
-`replay-fixtures.test.ts` both stayed green without regenerating a fixture.
+A rules change lands in the engine and, if it moves any recorded state, has to answer to the
+parity corpus. The toss-in **bar** moved nothing — `CorpusReplayTest` stayed green without a
+fixture being regenerated, because it is a rule in the validator rather than in state. The
+toss-in **queue** surviving the call is the other case: it changes which actions are legal, so
+the recorded streams of six games could not be satisfied at all and their tails were regenerated
+on 2026-09-15. `fixtures/recordings/README.md` carries the argument, the six files and the
+numbers.

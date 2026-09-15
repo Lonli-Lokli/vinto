@@ -120,9 +120,18 @@ gestures a meaning there. Build the guard before building anything that relies o
       lands back on a live table
 - [x] 7.3 Retire the "Together … vs … Called it" row and the one-time explanation sentence; the
       header keeps the countdown and the plan control and nothing else, and verify a golden shows
-      one line and a test asserts no verdict string is rendered outside the plan
+      one line and a test asserts no verdict string is rendered outside the plan.
+      **The countdown has since gone too** (2026-09-15, product owner) — it was drawn only while
+      the round was final, so the band arrived when somebody called and left when the hands went
+      over, moving the whole felt twice. The header is the plan control and the three glyphs;
+      `table_final_turns_left`, `table_final_last_turn` and `finalRoundTurnsLeft` are deleted,
+      and `CoalitionLineTest.theHeaderCarriesTheWayIntoThePlanAndNoBandBeneathIt` holds it
 - [x] 7.4 Verify the caller (who has no plan) still gets the countdown and no plan control — a
-      test from the caller's seat
+      test from the caller's seat. **Both halves changed afterwards**: there is no countdown for
+      anybody (7.3), and the caller *does* get a plan control now, because the board is seeded
+      from the position the round is planned in rather than from wherever the bots' batch stopped
+      — the caller's batch had already reached scoring, so the board they were meant to read was
+      empty in every round (`CoalitionFinalRoundTest.theCallerIsGivenThePlanToRead`)
 
 ## 8. Words, locales and the gates
 

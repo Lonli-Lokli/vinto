@@ -264,8 +264,6 @@
     <string name="talk_wait_they">%1$s ने आपसे थोड़ा इंतज़ार करने को कहा।</string>
     <string name="talk_worse">आप कहते हैं कि इससे आपकी स्थिति ख़राब हो जाएगी।</string>
     <string name="talk_worse_they">%1$s ने कहा कि इससे उनकी स्थिति ख़राब हो जाएगी।</string>
-    <string name="table_final_turns_left">खुलासे तक %1$d बारी</string>
-    <string name="table_final_last_turn">आखिरी बारी</string>
     <string name="table_see_score">स्कोर देखें</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->

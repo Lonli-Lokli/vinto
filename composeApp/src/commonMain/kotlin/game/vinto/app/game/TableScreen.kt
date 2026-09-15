@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -64,7 +63,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -104,8 +102,6 @@ import game.vinto.app.art.table_called_vinto
 import game.vinto.app.art.table_called_vinto_go
 import game.vinto.app.art.table_discard
 import game.vinto.app.art.table_draw
-import game.vinto.app.art.table_final_last_turn
-import game.vinto.app.art.table_final_turns_left
 import game.vinto.app.art.table_round_turn
 import game.vinto.app.art.table_toss_in
 import game.vinto.app.art.table_toss_in_summary
@@ -144,7 +140,6 @@ import game.vinto.client.Speaker
 import game.vinto.client.Table
 import game.vinto.client.Target
 import game.vinto.client.Verdict
-import game.vinto.client.finalRoundTurnsLeft
 import game.vinto.client.isPlayedByAMachine
 import game.vinto.client.seatName
 import game.vinto.engine.CardView
@@ -361,11 +356,8 @@ fun TableScreen(
                         )
                     }
 
-                    // The rail, standing at the side. The final-round line sits at its head — in
-                    // landscape the felt has no height to spare for a banner, and "who plays for
-                    // whom" is read next to the controls that ask what to do about it anyway.
+                    // The rail, standing at the side.
                     Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
-                        FinalRoundLine(state.view, state.table.board)
                         ControlPanel(
                             state = state,
                             onMove = onMove,
@@ -387,8 +379,6 @@ fun TableScreen(
                     onMove = onMove,
                     landscape = false,
                 )
-
-                FinalRoundLine(state.view, state.table.board)
 
                 FeltTable(
                     state = state,
@@ -1111,72 +1101,6 @@ internal fun TableHeader(
             }
         }
     }
-}
-
-/**
- * The final round's band: how close the reveal is, and the switch that opens the plan.
- *
- * **Only what changes.** There used to be four rows here and two of them were decoration — a
- * "Together … vs … Called it" row repeating what the seat plates already show (the caller wears
- * a crown), and a one-time sentence explaining the round. They said the same thing on the
- * fortieth second as on the first, above a felt that has four hands to fit on a phone. What is
- * left is the countdown, which moves, and the plan, which is the only thing anybody does in
- * this round.
- *
- * **With the plan open there is no band at all.** It used to carry the transport's stops,
- * ruled top and bottom in the coalition's colour, above a felt that on a phone has four hands
- * to fit; the stops live under the felt now, on the plan's own rail beside the two buttons that
- * play the film (`PlanStops`), and a band that only repeated them was a strip of the felt's
- * height spent on nothing. Asked for from a phone. What marks the mode is the switch lit in
- * the header, and the rail below being the plan's rather than the round's.
- */
-@Composable
-private fun FinalRoundLine(view: PlayerView, board: Board?) {
-    if (view.phase == GamePhase.SCORING) return
-    if (view.players.none { it.id == view.vintoCallerId }) return
-    if (board != null) return
-
-    // **A band with nothing in it is not drawn.** It used to carry the words "FINAL ROUND" over
-    // a felt that says so in four other ways — the caller's crown, the coalition marks, the
-    // overlay that announced the call — and during the confer window that was the *whole* of
-    // it, because the countdown has nothing to say until the first turn of the round is under
-    // way (`finalRoundTurnsLeft` is null while play is still parked on the caller). One word,
-    // a rule above and below it, and a strip of the felt's height spent. Reported from a phone
-    // as wasted space, and it was.
-    val left = finalRoundTurnsLeft(view) ?: return
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Rail.fill)
-            .padding(horizontal = 14.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(Gap),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Countdown(left)
-    }
-}
-
-/**
- * The final round, and how close the reveal is.
- *
- * Three coalition turns can pass in under a second when the bots hold them all, and a player who
- * looked away for one has no other way to know how much of the round is left. Its own function
- * so the band above stays inside the complexity a reviewer can hold at once.
- */
-@Composable
-private fun RowScope.Countdown(left: Int) {
-    Text(
-        if (left == 1) {
-            stringResource(Res.string.table_final_last_turn)
-        } else {
-            stringResource(Res.string.table_final_turns_left, left)
-        },
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.Bold,
-        color = Rail.gold,
-        modifier = Modifier.semantics { heading() },
-    )
 }
 
 /**

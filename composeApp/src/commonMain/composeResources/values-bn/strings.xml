@@ -252,8 +252,6 @@
     <string name="talk_wait_they">%1$s আপনাকে একটু অপেক্ষা করতে বলছেন।</string>
     <string name="talk_worse">আপনি বলছেন এতে আপনার অবস্থা খারাপ হবে।</string>
     <string name="talk_worse_they">%1$s বলছেন এতে তাঁর অবস্থা খারাপ হবে।</string>
-    <string name="table_final_turns_left">উন্মোচন হতে %1$d পালা বাকি</string>
-    <string name="table_final_last_turn">শেষ পালা</string>
     <string name="table_see_score">স্কোর দেখুন</string>
 
     <string name="header_support">আমাকে এক কাপ কফি খাওয়ান</string>

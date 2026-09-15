@@ -264,8 +264,6 @@
     <string name="talk_wait_they">طلب من %1$s بالانتظار قليلاً.</string>
     <string name="talk_worse">تصريح بأن ذلك سيجعل وضعك أسوأ.</string>
     <string name="talk_worse_they">تصريح من %1$s بأن ذلك سيؤدي إلى نتيجة أسوأ.</string>
-    <string name="table_final_turns_left">%1$d أدوار حتى الكشف</string>
-    <string name="table_final_last_turn">الدور الأخير</string>
     <string name="table_see_score">شاهد النتيجة</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->

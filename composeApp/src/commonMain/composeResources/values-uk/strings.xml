@@ -270,8 +270,6 @@
     <string name="talk_wait_they">%1$s просить вас трохи зачекати.</string>
     <string name="talk_worse">Ви кажете, що це погіршить ваше становище.</string>
     <string name="talk_worse_they">%1$s каже, що це погіршить становище.</string>
-    <string name="table_final_turns_left">Ходів до розкриття: %1$d</string>
-    <string name="table_final_last_turn">останній хід</string>
     <string name="table_see_score">Переглянути рахунок</string>
 
     <string name="header_support">Пригостити кавою</string>
