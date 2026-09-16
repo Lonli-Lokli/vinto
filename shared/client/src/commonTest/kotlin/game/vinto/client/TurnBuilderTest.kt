@@ -266,7 +266,7 @@ class TurnBuilderTest {
             plan = CoalitionPlan(lanes = before() + Lane(me, whole)),
         )
         assertEquals(
-            listOf(Label.PutACardDown, Label.LetTheCardGo),
+            listOf(Label.SwapCards, Label.Discard),
             assertNotNull(doing.board).answers.map { it.label },
         )
         assertTrue(

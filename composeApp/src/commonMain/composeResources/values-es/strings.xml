@@ -521,8 +521,6 @@
     <string name="label_ready">Adelante</string>
     <string name="label_say_it">Listo</string>
     <string name="label_agree">De acuerdo</string>
-    <string name="label_play_the_card">Jugarla</string>
-    <string name="label_let_the_card_go">Dejarla ir</string>
     <string name="label_remove_throw">No lanzar</string>
     <string name="label_plan_replay">Ver este turno</string>
     <string name="ask_which_rank_throw_in">¿Qué rango lanzarás si cae uno?</string>
@@ -771,7 +769,6 @@
     <string name="card_arrives">Una carta que nadie ha visto, que llega en el turno %1$d</string>
     <string name="label_plan_play_all">Reproducir todo</string>
     <string name="label_plan_changed_by">Plan — %1$s cambió tu turno</string>
-    <string name="label_put_a_card_down">Soltar una carta</string>
     <string name="label_rank_said_by">%1$s — lo dijo %2$s</string>
     <string name="label_another_rank">Otro rango…</string>
     <string name="detail_touch_a_word">Toca una palabra recuadrada para cambiarla.</string>

@@ -483,8 +483,6 @@
     <string name="label_ready">Gotowe</string>
     <string name="label_say_it">Zatwierdź</string>
     <string name="label_agree">Zgadzam się</string>
-    <string name="label_play_the_card">Zagraj</string>
-    <string name="label_let_the_card_go">Puść</string>
     <string name="label_remove_throw">Usuń dorzut</string>
     <string name="label_plan_replay">Odtwórz tę turę</string>
     <string name="ask_which_rank_throw_in">Jaką rangę dorzucisz, jeśli się pojawi?</string>
@@ -729,7 +727,6 @@
     <string name="card_arrives">Karta, której nikt nie widział, przychodzi w turze %1$d</string>
     <string name="label_plan_play_all">Zagraj wszystkie tury</string>
     <string name="label_plan_changed_by">Plan — %1$s zmienia twoją turę</string>
-    <string name="label_put_a_card_down">Odłóż kartę</string>
     <string name="label_rank_said_by">%1$s — tak twierdzi %2$s</string>
     <string name="label_another_rank">Inna ranga…</string>
     <string name="detail_touch_a_word">Dotknij oznaczonego słowa, aby je zmienić.</string>

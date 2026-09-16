@@ -510,8 +510,6 @@
     <string name="label_ready">Hazırım</string>
     <string name="label_say_it">Tamam</string>
     <string name="label_agree">Katılıyorum</string>
-    <string name="label_play_the_card">Oyna</string>
-    <string name="label_let_the_card_go">Bırak</string>
     <string name="label_remove_throw">Atılmıyor</string>
     <string name="label_plan_replay">Bu turu izle</string>
     <string name="ask_which_rank_throw_in">Düşerse, hangi değeri atacaksın?</string>
@@ -762,7 +760,6 @@
     <string name="card_arrives">Kimsenin görmediği bir kart, %1$d. turda geliyor</string>
     <string name="label_plan_play_all">Tüm turları oynat</string>
     <string name="label_plan_changed_by">Plan — %1$s turunu değiştirdi</string>
-    <string name="label_put_a_card_down">Bir kart bırak</string>
     <string name="label_rank_said_by">%1$s — %2$s öyle dedi</string>
     <string name="label_another_rank">Başka bir değer…</string>
     <string name="detail_touch_a_word">Değiştirmek için kutulu bir kelimeye dokun.</string>

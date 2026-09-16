@@ -483,8 +483,6 @@
     <string name="label_ready">আমি প্রস্তুত</string>
     <string name="label_say_it">সম্পন্ন</string>
     <string name="label_agree">সম্মত</string>
-    <string name="label_play_the_card">খেলুন</string>
-    <string name="label_let_the_card_go">ছেড়ে দিন</string>
     <string name="label_remove_throw">ফেলবেন না</string>
     <string name="label_plan_replay">এই পালাটি দেখুন</string>
     <string name="ask_which_rank_throw_in">একটি এলে আপনি কোন র‌্যাংক ফেলে দেবেন?</string>
@@ -730,7 +728,6 @@
     <string name="card_arrives">এমন একটি তাস যা কেউ দেখেনি, পালা %1$d-এ আসছে</string>
     <string name="label_plan_play_all">সব পালা খেলুন</string>
     <string name="label_plan_changed_by">পরিকল্পনা — %1$s আপনার পালা পরিবর্তন করেছেন</string>
-    <string name="label_put_a_card_down">তাস রাখুন</string>
     <string name="label_rank_said_by">%1$s — %2$s তাই বলেছেন</string>
     <string name="label_another_rank">অন্য একটি র‌্যাংক…</string>
     <string name="detail_touch_a_word">এটি বদলাতে বাক্সে থাকা কোনো শব্দ স্পর্শ করুন।</string>

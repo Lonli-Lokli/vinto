@@ -503,8 +503,6 @@
     <string name="label_ready">Готово</string>
     <string name="label_say_it">Заявить</string>
     <string name="label_agree">Согласиться</string>
-    <string name="label_play_the_card">Сыграть</string>
-    <string name="label_let_the_card_go">Отправить в сброс</string>
     <string name="label_remove_throw">Не подкидывать</string>
     <string name="label_plan_replay">Просмотреть этот ход</string>
     <string name="ask_which_rank_throw_in">Какое достоинство вы подкинете, если оно ляжет в сброс?</string>
@@ -751,7 +749,6 @@
     <string name="card_arrives">Карта, которую никто не видел, — придёт на ходу %1$d</string>
     <string name="label_plan_play_all">Сыграть все ходы</string>
     <string name="label_plan_changed_by">План — ваш ход изменён: %1$s</string>
-    <string name="label_put_a_card_down">Положить карту</string>
     <string name="label_rank_said_by">%1$s — %2$s так считает</string>
     <string name="label_another_rank">Другое достоинство…</string>
     <string name="detail_touch_a_word">Коснитесь слова в рамке, чтобы изменить его.</string>

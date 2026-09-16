@@ -280,9 +280,21 @@ internal class Composing(
      * A turn already played is settled by having happened — the table it leaves is the table as
      * it is — so it never closes the pages after it, whatever the plan did or did not say about
      * it before it was taken.
+     *
+     * **Which includes the turn on play, once its card is down.** `index < playing` is every turn
+     * the table has moved *past*, and a seat keeps `playing` for the whole of its turn — so a seat
+     * that had drawn, swapped and opened a toss-in window still counted as undecided, and an
+     * undecided turn is where the reading stops. Every stop clamped back to it and drew the same
+     * table, and the reader could reach neither the next turn nor their own. Reported from a phone
+     * twice over, as "tide started his turn without me" and as the same nine on the next turn.
+     *
+     * [Lane.locked] is the answer to "has this turn happened", set by `CoalitionPlan.lockingLaneOf`
+     * from the engine's own `turnIsSpent`, so this reads it rather than deciding it a second time.
      */
-    val decided: List<Boolean> =
-        coalition.mapIndexed { index, seat -> index < playing || plan?.laneOf(seat)?.step != null }
+    val decided: List<Boolean> = coalition.mapIndexed { index, seat ->
+        val lane = plan?.laneOf(seat)
+        index < playing || lane?.locked == true || lane?.step != null
+    }
 
     /** How far the plan reads — see `Transport.reach`. */
     val reach: Int = (0 until turns).firstOrNull { !decided[it] }?.plus(1) ?: pages
@@ -693,11 +705,17 @@ internal fun doingTable(
     val seat = composing.seat ?: return Table(Ask.Watching)
     val drawn = composing.start.drawn
     val answers = buildList {
+        // **The rail's own words, not a second set.** These three answers are the three a player
+        // is offered on their own turn — use the action, swap it into the hand, put it down — and
+        // the plan had its own names for them: "Play it", "Put a card down", "Let it go". One
+        // move with two names is one move a player has to recognise twice, and the plan is where
+        // somebody is learning what the turn will look like when it happens. Asked for from a
+        // phone: "I prefer to have same names as we have during game".
         if (drawn != null && hasAction(drawn)) {
-            add(Choice(Label.PlayTheCard, Move.Plan(PlanEdit.SetLane(seat, Step.UseIt)), Tone.PLAY))
+            add(Choice(Label.UseAction, Move.Plan(PlanEdit.SetLane(seat, Step.UseIt)), Tone.PLAY))
         }
-        add(Choice(Label.PutACardDown, Move.Ask(Question.PuttingDown(seat, question.at)), Tone.KEEP))
-        add(Choice(Label.LetTheCardGo, Move.Plan(PlanEdit.SetLane(seat, Step.Bin))))
+        add(Choice(Label.SwapCards, Move.Ask(Question.PuttingDown(seat, question.at)), Tone.KEEP))
+        add(Choice(Label.Discard, Move.Plan(PlanEdit.SetLane(seat, Step.Bin))))
     }
     return Table(
         prompt = Ask.WhatShouldTheyDo(speakerFor(view, seat)),

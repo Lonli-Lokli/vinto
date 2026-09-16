@@ -126,14 +126,9 @@ sealed interface Label {
     /** Yes to the board as it stands. */
     data object Agree : Label
 
-    /** The things a turn can do with the card it takes — see `Question.Doing`. */
-    data object PlayTheCard : Label
-
-    /** Put one of your own cards on the pile for the drawn one, chosen on the felt. */
-    data object PutACardDown : Label
-
-    /** Let the drawn card go without taking it: the hand stays exactly as it is. */
-    data object LetTheCardGo : Label
+    // What a turn can do with the card it takes — `Question.Doing` — is asked with the rail's
+    // own [UseAction], [SwapCards] and [Discard]. It had three labels of its own here, and one
+    // move with two names is one move a player has to learn twice.
 
     /** The rank somebody said the pointed-at card is, offered as the King's answer. */
     data class RankSaidBy(val rank: Rank, val who: Speaker) : Label

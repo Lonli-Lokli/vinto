@@ -506,8 +506,6 @@
     <string name="label_ready">استعددت</string>
     <string name="label_say_it">تم</string>
     <string name="label_agree">أوافق</string>
-    <string name="label_play_the_card">لعبها</string>
-    <string name="label_let_the_card_go">تركها</string>
     <string name="label_remove_throw">عدم الرمي</string>
     <string name="label_plan_replay">مشاهدة هذا الدور</string>
     <string name="ask_which_rank_throw_in">ما الرتبة التي سترميها إن نزلت؟</string>
@@ -756,7 +754,6 @@
     <string name="card_arrives">بطاقة لم يرها أحد، تصل في الدور %1$d</string>
     <string name="label_plan_play_all">تشغيل كل الأدوار</string>
     <string name="label_plan_changed_by">الخطة — عُدِّل دورك من %1$s</string>
-    <string name="label_put_a_card_down">ضع بطاقة</string>
     <string name="label_rank_said_by">%1$s — كما قال %2$s</string>
     <string name="label_another_rank">رتبة أخرى…</string>
     <string name="detail_touch_a_word">المس كلمة محاطة بمربع لتغييرها.</string>

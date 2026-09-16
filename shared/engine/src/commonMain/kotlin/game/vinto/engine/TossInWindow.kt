@@ -46,3 +46,36 @@ val PlayerView.tossInIsOpen: Boolean
  */
 val GameState.resolvingATossIn: Boolean
     get() = activeTossIn?.queuedActions.orEmpty().isNotEmpty()
+
+/**
+ * Whether the seat on play has already put its card down — its turn is spent.
+ *
+ * A turn runs from the seat taking a card to the window opening on what they put down, and it
+ * is only *over* at the far end of that. The plan reads this to decide whether a turn is still
+ * somebody's to write (`CoalitionPlan.lockingLaneOf`): a card in the hand keeps the turn open,
+ * because saying what to do with a face-up drawn card is the whole point of the plan, and a card
+ * on the pile closes it, because there is nothing left to decide.
+ *
+ * Read from the sub-phase, which is the engine's own statement about where a turn is: `idle` and
+ * `ai_thinking` are a seat about to take a card, `choosing` is one holding it, and everything
+ * else is after.
+ *
+ * The one exclusion is the moment a **thrown** card's action is being played, which moves
+ * `currentPlayerIndex` to whoever threw it — so the sub-phase is then about a seat that has not
+ * taken its turn at all. That is a queued action *in flight*, which is a pending one alongside a
+ * queue, and not merely a queue: throws sit in it from the moment they are made, which is well
+ * before the window closes and was long enough to make this answer always false.
+ */
+val GameState.turnIsSpent: Boolean
+    get() = !(resolvingATossIn && pendingAction != null) && when (subPhase) {
+        GameSubPhase.IDLE, GameSubPhase.AI_THINKING, GameSubPhase.CHOOSING -> false
+        else -> true
+    }
+
+/** The same question, of the only shape a screen ever gets. See [turnIsSpent]. */
+val PlayerView.turnIsSpent: Boolean
+    get() = !(activeTossIn?.queuedActions.orEmpty().isNotEmpty() && pendingAction != null) &&
+        when (subPhase) {
+            GameSubPhase.IDLE, GameSubPhase.AI_THINKING, GameSubPhase.CHOOSING -> false
+            else -> true
+        }

@@ -483,8 +483,6 @@
     <string name="label_ready">준비됐어요</string>
     <string name="label_say_it">완료</string>
     <string name="label_agree">동의해요</string>
-    <string name="label_play_the_card">사용하기</string>
-    <string name="label_let_the_card_go">버리기</string>
     <string name="label_remove_throw">던지지 않기</string>
     <string name="label_plan_replay">이 턴 다시 보기</string>
     <string name="ask_which_rank_throw_in">한 장이 나오면 어떤 숫자를 던져 넣을까요?</string>
@@ -730,7 +728,6 @@
     <string name="card_arrives">아직 아무도 보지 못한 카드, %1$d턴에 도착</string>
     <string name="label_plan_play_all">모든 턴 재생하기</string>
     <string name="label_plan_changed_by">계획 — %1$s가 당신의 차례를 바꿨어요</string>
-    <string name="label_put_a_card_down">카드 내려놓기</string>
     <string name="label_rank_said_by">%1$s — %2$s가 그렇게 말했어요</string>
     <string name="label_another_rank">다른 등급…</string>
     <string name="detail_touch_a_word">상자로 표시된 단어를 눌러 바꾸세요.</string>

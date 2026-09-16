@@ -211,7 +211,7 @@ class PlanAsTalkTest {
         assertEquals(listOf(Says.Draws, Says.WhatWith), table.own())
         assertTrue(table.slot(Says.WhatWith).asked)
         // Puts down or lets it go. Never "plays it": nobody knows what will be drawn.
-        assertEquals(listOf(Label.PutACardDown, Label.LetTheCardGo), table.answers())
+        assertEquals(listOf(Label.SwapCards, Label.Discard), table.answers())
         assertEquals(Move.Plan(PlanEdit.SetLane(nina, Step.Bin)), table.board?.answers?.get(1)?.move)
     }
 
@@ -507,7 +507,7 @@ class PlanAsTalkTest {
         assertNotNull(open.board?.building?.composer, "the turn on play was not open for changing")
 
         val doing = tableFor(view(drawn), Question.Doing(me, myPage))
-        assertEquals(listOf(Label.PlayTheCard, Label.PutACardDown, Label.LetTheCardGo), doing.answers())
+        assertEquals(listOf(Label.UseAction, Label.SwapCards, Label.Discard), doing.answers())
 
         val plays = CoalitionPlan(lanes = listOf(Lane(me, Step.UseIt)))
         val aiming = tableFor(view(drawn), Question.ThePlan(at = myPage), plan = reaching(myPage, plays))

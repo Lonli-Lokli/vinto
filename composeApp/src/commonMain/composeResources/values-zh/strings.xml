@@ -483,8 +483,6 @@
     <string name="label_ready">我准备好了</string>
     <string name="label_say_it">完成</string>
     <string name="label_agree">同意</string>
-    <string name="label_play_the_card">使用它</string>
-    <string name="label_let_the_card_go">弃掉它</string>
     <string name="label_remove_throw">不跟打</string>
     <string name="label_plan_replay">重看这一轮</string>
     <string name="ask_which_rank_throw_in">只要出现哪个点数，您就会跟打？</string>
@@ -730,7 +728,6 @@
     <string name="card_arrives">无人看过的牌，将在第 %1$d 轮到来</string>
     <string name="label_plan_play_all">播放全部回合</string>
     <string name="label_plan_changed_by">计划——%1$s修改了您的回合</string>
-    <string name="label_put_a_card_down">放下一张牌</string>
     <string name="label_rank_said_by">%1$s——%2$s这么说的</string>
     <string name="label_another_rank">换个点数…</string>
     <string name="detail_touch_a_word">点按方框中的词即可更改。</string>

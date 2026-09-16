@@ -156,12 +156,17 @@ class PlanBuilderTest {
             "touching \"draws\" with a Jack on the pile did not offer to take it: $moves",
         )
 
+        // The rail’s own words, because they are the rail’s own moves: one move, one name,
+        // whether it is being planned or played.
         val answers = textsOn(view, plan = CoalitionPlan(), question = Question.Doing(first, at = 1))
-        for (answer in listOf("Put a card down", "Let it go")) {
+        for (answer in listOf("Swap Cards", "Discard")) {
             assertTrue(answers.any { it.equals(answer, ignoreCase = true) }, "no answer $answer: $answers")
         }
         // And nothing plays a card nobody has drawn yet: the sentence no table can say.
-        assertTrue(answers.none { it.equals("Play it", ignoreCase = true) }, "an action on a blind draw was offered")
+        assertTrue(
+            answers.none { it.equals("Use Action", ignoreCase = true) },
+            "an action on a blind draw was offered",
+        )
         // Nor "we'll see": putting a turn back to undecided closes every page after it, so the
         // one answer that could throw the rest of the board away is not offered (`doingTable`).
         assertTrue(answers.none { it.equals("We’ll see", ignoreCase = true) }, "a turn could be undecided again")

@@ -499,8 +499,6 @@
     <string name="label_ready">Гатова</string>
     <string name="label_say_it">Заявіць</string>
     <string name="label_agree">Пагадзіцца</string>
-    <string name="label_play_the_card">Сыграць</string>
-    <string name="label_let_the_card_go">Скінуць</string>
     <string name="label_remove_throw">Не падкідаць</string>
     <string name="label_plan_replay">Паглядзець ход зноў</string>
     <string name="ask_which_rank_throw_in">Які ранг вы падкінеце, калі ён выпадзе?</string>
@@ -747,7 +745,6 @@
     <string name="card_arrives">Картка, якую ніхто не бачыў: прыйдзе на хадзе %1$d</string>
     <string name="label_plan_play_all">Сыграць увесь план</string>
     <string name="label_plan_changed_by">План — %1$s змяняе ваш ход</string>
-    <string name="label_put_a_card_down">Пакласці картку</string>
     <string name="label_rank_said_by">%1$s — так кажа %2$s</string>
     <string name="label_another_rank">Іншы ранг…</string>
     <string name="detail_touch_a_word">Краніце слова ў рамцы, каб яго змяніць.</string>

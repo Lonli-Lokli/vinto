@@ -706,17 +706,30 @@ fun CoalitionPlan.agreedBy(everyone: Collection<String>): Boolean = everyone.all
 fun CoalitionPlan.laneOf(seat: String): Lane? = lanes.firstOrNull { it.seat == seat }
 
 /**
- * Locks the lanes of the turns that have been **played** — every coalition seat before
- * [onPlay] in turn order — and leaves the turn on play and the ones after it open.
+ * Locks the lanes of the turns that have been **played** — every coalition seat before [onPlay]
+ * in turn order, and [onPlay]'s own once [spent] says their card is down.
  *
- * The turn on play is deliberately not among them: it is the one turn the coalition most needs
- * to rewrite, because its drawn card is face up and public and the plan turns on what it is.
+ * The turn on play is not closed while its card is still in the hand that drew it: that is the
+ * one turn the coalition most needs to rewrite, because the card is face up and public and the
+ * plan turns on what it is. It IS closed once the card is on the pile, because there is then
+ * nothing left to decide — which is the rule [Lane.locked] has always stated.
+ *
+ * **Reported from a phone as one stuck screen.** A seat that had drawn, swapped and opened a
+ * toss-in window still owned an undecided lane, and an undecided turn is where the plan's reach
+ * stops — so every stop past it clamped back to turn one and drew the same table, and the reader
+ * could get to neither the next turn nor their own without first deciding a turn that had already
+ * happened.
+ *
  * Once locked, a lane stays locked: a turn does not un-play itself.
  */
-fun CoalitionPlan.lockingLaneOf(onPlay: String?, coalition: List<String>): CoalitionPlan {
+fun CoalitionPlan.lockingLaneOf(
+    onPlay: String?,
+    coalition: List<String>,
+    spent: Boolean = false,
+): CoalitionPlan {
     val playing = coalition.indexOf(onPlay)
     if (playing < 0) return this
-    val over = coalition.take(playing).toSet()
+    val over = coalition.take(if (spent) playing + 1 else playing).toSet()
     if (lanes.all { it.seat !in over || it.locked }) return this
     return copy(lanes = lanes.map { lane -> if (lane.seat in over) lane.copy(locked = true) else lane })
 }

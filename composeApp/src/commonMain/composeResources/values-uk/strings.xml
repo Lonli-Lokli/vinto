@@ -501,8 +501,6 @@
     <string name="label_ready">Готово</string>
     <string name="label_say_it">Заявити</string>
     <string name="label_agree">Погодитися</string>
-    <string name="label_play_the_card">Зіграти</string>
-    <string name="label_let_the_card_go">Скинути</string>
     <string name="label_remove_throw">Не підкидати</string>
     <string name="label_plan_replay">Переглянути цей хід</string>
     <string name="ask_which_rank_throw_in">Яке достоїнство підкинете, якщо воно випаде?</string>
@@ -747,7 +745,6 @@
     <string name="card_arrives">Карта, яку ще ніхто не бачив, з'явиться на ходу %1$d</string>
     <string name="label_plan_play_all">Зіграти всі ходи</string>
     <string name="label_plan_changed_by">План — зміна ходу від %1$s</string>
-    <string name="label_put_a_card_down">Покласти карту</string>
     <string name="label_rank_said_by">%1$s — так каже %2$s</string>
     <string name="label_another_rank">Інше достоїнство…</string>
     <string name="detail_touch_a_word">Торкніться виділеного слова, щоб змінити його.</string>

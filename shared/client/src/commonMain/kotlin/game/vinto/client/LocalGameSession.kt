@@ -13,6 +13,7 @@ import game.vinto.engine.calculateFinalScores
 import game.vinto.engine.calculateRoundPoints
 import game.vinto.engine.initializeGame
 import game.vinto.engine.projectView
+import game.vinto.engine.turnIsSpent
 import game.vinto.shapes.Card
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.Difficulty
@@ -251,6 +252,7 @@ class LocalGameSession(
         _plan.value = _plan.value?.lockingLaneOf(
             state.players.getOrNull(state.currentPlayerIndex)?.id,
             coalitionInTurnOrder(state.players.map { it.id }, caller),
+            spent = state.turnIsSpent,
         )
     }
 

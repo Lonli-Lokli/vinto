@@ -516,8 +516,6 @@
     <string name="label_ready">準備できました</string>
     <string name="label_say_it">完了</string>
     <string name="label_agree">同意</string>
-    <string name="label_play_the_card">プレイする</string>
-    <string name="label_let_the_card_go">手放す</string>
     <string name="label_remove_throw">投げ込まない</string>
     <string name="label_plan_replay">この手番を見る</string>
     <string name="ask_which_rank_throw_in">どのランクが出たら投げ込みますか？</string>
@@ -767,7 +765,6 @@
     <string name="card_arrives">まだ誰も見ていないカード。ターン%1$dに現れます。</string>
     <string name="label_plan_play_all">すべて再生</string>
     <string name="label_plan_changed_by">計画 — %1$sがあなたの手番を変更</string>
-    <string name="label_put_a_card_down">カードを出す</string>
     <string name="label_rank_said_by">%1$s — %2$sの申告</string>
     <string name="label_another_rank">別のランク…</string>
     <string name="detail_touch_a_word">枠で囲まれた言葉に触れると変更できます。</string>

@@ -6,6 +6,7 @@ import game.vinto.engine.ActionValidator
 import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
 import game.vinto.engine.Validation
+import game.vinto.engine.turnIsSpent
 import game.vinto.protocol.LoggedAction
 import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GamePhase
@@ -160,6 +161,7 @@ internal fun RoomState.withLanesLocked(plan: CoalitionPlan): CoalitionPlan {
     return plan.lockingLaneOf(
         game.players.getOrNull(game.currentPlayerIndex)?.id,
         coalitionInTurnOrder(game.players.map { it.id }, caller),
+        spent = game.turnIsSpent,
     )
 }
 

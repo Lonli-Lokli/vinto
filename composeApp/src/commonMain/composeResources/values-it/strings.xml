@@ -509,8 +509,6 @@
     <string name="label_ready">Avanti</string>
     <string name="label_say_it">Fatto</string>
     <string name="label_agree">D’accordo</string>
-    <string name="label_play_the_card">Giocala</string>
-    <string name="label_let_the_card_go">Lasciala andare</string>
     <string name="label_remove_throw">Non buttare</string>
     <string name="label_plan_replay">Rivedi questo turno</string>
     <string name="ask_which_rank_throw_in">Quale valore butterai dentro se capita?</string>
@@ -762,7 +760,6 @@
     <string name="card_arrives">Una carta che nessuno ha visto, in arrivo al turno %1$d</string>
     <string name="label_plan_play_all">Riproduci tutti i turni</string>
     <string name="label_plan_changed_by">Piano — %1$s ha cambiato il tuo turno</string>
-    <string name="label_put_a_card_down">Mettila giù</string>
     <string name="label_rank_said_by">%1$s — lo ha detto %2$s</string>
     <string name="label_another_rank">Un altro valore…</string>
     <string name="detail_touch_a_word">Tocchi una parola riquadrata per cambiarla.</string>

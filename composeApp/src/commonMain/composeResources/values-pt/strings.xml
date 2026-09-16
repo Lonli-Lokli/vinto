@@ -500,8 +500,6 @@
     <string name="label_ready">Terminei</string>
     <string name="label_say_it">Feito</string>
     <string name="label_agree">Concordar</string>
-    <string name="label_play_the_card">Jogá-la</string>
-    <string name="label_let_the_card_go">Descartá-la</string>
     <string name="label_remove_throw">Não atirar</string>
     <string name="label_plan_replay">Ver esta jogada</string>
     <string name="ask_which_rank_throw_in">Que valor vais descartar se sair um?</string>
@@ -752,7 +750,6 @@
     <string name="card_arrives">Uma carta que ainda ninguém viu, a chegar na jogada %1$d</string>
     <string name="label_plan_play_all">Ver tudo</string>
     <string name="label_plan_changed_by">Plano — %1$s alterou a tua jogada</string>
-    <string name="label_put_a_card_down">Colocar uma carta</string>
     <string name="label_rank_said_by">%1$s — foi %2$s quem disse</string>
     <string name="label_another_rank">Outro valor…</string>
     <string name="detail_touch_a_word">Toca numa palavra emoldurada para a alterar.</string>

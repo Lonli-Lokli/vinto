@@ -201,10 +201,7 @@ import game.vinto.app.art.label_agree
 import game.vinto.app.art.label_another_rank
 import game.vinto.app.art.label_decline_suggestion
 import game.vinto.app.art.label_do_as_suggested
-import game.vinto.app.art.label_let_the_card_go
 import game.vinto.app.art.label_not_sure_which_way
-import game.vinto.app.art.label_play_the_card
-import game.vinto.app.art.label_put_a_card_down
 import game.vinto.app.art.label_rank_said_by
 import game.vinto.app.art.label_ready
 import game.vinto.app.art.label_remove_throw
@@ -509,9 +506,6 @@ fun labelled(label: Label): String = when (label) {
     Label.CallVinto -> stringResource(Res.string.choice_call_vinto)
     Label.Done -> stringResource(Res.string.choice_done)
     Label.Agree -> stringResource(Res.string.label_agree)
-    Label.PlayTheCard -> stringResource(Res.string.label_play_the_card)
-    Label.PutACardDown -> stringResource(Res.string.label_put_a_card_down)
-    Label.LetTheCardGo -> stringResource(Res.string.label_let_the_card_go)
     is Label.RankSaidBy ->
         stringResource(Res.string.label_rank_said_by, label.rank.serialName, speakerName(label.who))
     Label.AnotherRank -> stringResource(Res.string.label_another_rank)

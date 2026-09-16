@@ -508,8 +508,6 @@
     <string name="label_ready">तैयार</string>
     <string name="label_say_it">हो गया</string>
     <string name="label_agree">सहमत</string>
-    <string name="label_play_the_card">इसे खेलें</string>
-    <string name="label_let_the_card_go">इसे जाने दें</string>
     <string name="label_remove_throw">फेंकना हटाएं</string>
     <string name="label_plan_replay">यह बारी देखें</string>
     <string name="ask_which_rank_throw_in">मौका मिलने पर आप कौन-सी रैंक फेंकेंगे?</string>
@@ -760,7 +758,6 @@
     <string name="card_arrives">एक पत्ता जिसे अभी तक किसी ने नहीं देखा, बारी %1$d पर आ रहा है</string>
     <string name="label_plan_play_all">हर बारी खेलें</string>
     <string name="label_plan_changed_by">योजना — %1$s ने आपकी बारी बदली</string>
-    <string name="label_put_a_card_down">एक पत्ता नीचे रखें</string>
     <string name="label_rank_said_by">%1$s — %2$s ने ऐसा कहा</string>
     <string name="label_another_rank">कोई और रैंक…</string>
     <string name="detail_touch_a_word">बदलने के लिए किसी बॉक्स वाले शब्द को छुएं।</string>

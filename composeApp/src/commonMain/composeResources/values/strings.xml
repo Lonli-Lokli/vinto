@@ -642,12 +642,10 @@
     <!-- The coalition's shared plan (design D7a): a board of parts agreed as a whole. -->
     <string name="label_agree">Agree</string>
     <!-- The three answers to "what should this seat do with the card their turn takes?" -->
-    <string name="label_play_the_card">Play it</string>
     <!-- The middle answer of a planned turn: the drawn card goes into the hand and one of the
          seat's own goes out. In the live turn's own words — its rail says "Swap Cards" for
          the same move — and the reporter's: "swap with my jack". It said "Keep it", which
          named the half nobody plans around. -->
-    <string name="label_let_the_card_go">Let it go</string>
     <!-- The two answers to "where does the card come from?": the deck, or the unplayed action
          card lying on the discard — named, because it is the one card a plan knows in
          advance. %1$s is the card's name. -->
@@ -825,7 +823,6 @@
     <!-- The switch in the header while the plan is closed and a teammate has changed your turn. -->
     <string name="label_plan_changed_by">Plan — %1$s changed your turn</string>
     <!-- What becomes of the card a turn takes, offered under the sentence. -->
-    <string name="label_put_a_card_down">Put a card down</string>
     <!-- A King's rank, offered from what the table said the pointed card is: %1$s the rank, %2$s who said it. -->
     <string name="label_rank_said_by">%1$s — %2$s said so</string>
     <string name="label_another_rank">Another rank…</string>
