@@ -398,6 +398,26 @@ class Stage {
     internal val blooming = mutableStateMapOf<Anchor, CardView>()
 
     /**
+     * Places a card is about to **leave**, from the moment the table steps to the move.
+     *
+     * The third and last corner of the same fault. [expecting] holds the place a card is
+     * arriving at and `fly` hands that over as the flight starts — "one drawing owns the card at
+     * every moment" — and nothing held the place it is leaving. For a hand that does not show:
+     * the slot keeps a gap (`leaving`) and the card is in the air a frame later. For the drawn
+     * slot it shows badly, because the stepped view has already taken the card out of
+     * `pendingAction` — a card drawn and then swapped into a hand vanished from the slot the
+     * moment the table stepped and came back only once it was flying.
+     *
+     * Reported from a phone after [blooming] fixed the flourish half of it: "there is still
+     * blink when swapping the card".
+     *
+     * Spent as each flight starts, whether or not the flight survives measurement — a beat whose
+     * berth cannot be found draws nothing anyway, and a promise nobody releases would hold the
+     * card in a slot it has left.
+     */
+    internal val departing = mutableStateMapOf<Anchor, CardView>()
+
+    /**
      * Whether a card is being shown off anywhere, or is about to be.
      *
      * The piles ask, because a card being shown off has not landed: one that drew "the card in
@@ -624,8 +644,14 @@ class Stage {
     /** Whether the card being shown off is lying at [anchor], and so is drawn by the flourish. */
     fun isFlourishing(anchor: Anchor): Boolean = flourish?.second == anchor
 
-    /** The card about to be shown off at [anchor], which the place it lies in keeps drawing. */
-    fun aboutToBloom(anchor: Anchor): CardView? = blooming[anchor]
+    /**
+     * The card [anchor] must keep drawing until the scene about to start takes it over.
+     *
+     * One question, because a place asking it does not care which scene is coming: a card shown
+     * off where it lies and a card flying out of a slot both leave the view before the beat that
+     * owns them begins, and both want the same answer in between. See [blooming] and [departing].
+     */
+    fun heldAt(anchor: Anchor): CardView? = blooming[anchor] ?: departing[anchor]
 
     /** Whether a card is on its way *out* of [anchor], and so must not be drawn there. */
     fun isLeaving(anchor: Anchor): Boolean = flying.any { it.leftFrom == anchor }
@@ -1414,6 +1440,7 @@ private suspend fun Stage.playOpening(opening: List<Scene>, firstId: Long): Long
 
     opening.flatten().filterIsInstance<Beat.Move>().forEach { move ->
         expecting[move.to] = move.card.faceOrBack()
+        departing[move.from] = move.card.faceOrBack()
     }
     var next = firstId
     for (scene in opening) {
@@ -1455,11 +1482,16 @@ private suspend fun Stage.playScenes(frame: Frame, firstId: Long): Long {
 internal fun Stage.prepareFor(frame: Frame) {
     arrived.clear()
     expecting.clear()
+    departing.clear()
     frame.scenes.flatten().filterIsInstance<Beat.Move>().forEach { move ->
         // The card as well as the place: a pile deciding what to draw underneath an
         // arrival has to know *which* card is arriving, or it cannot tell the card on its
         // way from the card already lying there.
         expecting[move.to] = move.card.faceOrBack()
+
+        // And the place it is leaving, which has to go on drawing it until the flight picks
+        // it up. See [Stage.departing].
+        departing[move.from] = move.card.faceOrBack()
     }
 
     // And the places a card is about to be shown off at, for the same frame or two. See
@@ -1547,7 +1579,12 @@ private suspend fun Stage.holdUp(view: PlayerView) {
  * simultaneous without any of them knowing about the rest.
  */
 private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
-    is Beat.Move -> fly(beat, nextId)
+    is Beat.Move -> {
+        // The hand-over: from here the flight owns the card, and a beat whose berths cannot be
+        // measured owns nothing — either way the slot must let go. See [Stage.departing].
+        departing.remove(beat.from)
+        fly(beat, nextId)
+    }
 
     // Two kinds of reveal, told apart by whether the table's own view already shows the
     // face. A transient one — a King's named card, a throw that missed — lifts the card for

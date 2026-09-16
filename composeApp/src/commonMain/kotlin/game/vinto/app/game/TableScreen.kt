@@ -2010,12 +2010,13 @@ private fun DrawnCard(
         stage.isLeaving(Anchor.Pending) ||
         stage.isFlourishing(Anchor.Pending)
 
-    // **And held, for the frame or two before a bloom starts here.** [drawn] lets go the
+    // **And held, for the frame or two before a scene starts here.** [drawn] lets go the
     // instant the action engages — that is `cardInPlay`’s rule read from the other end — but
     // the flourish that takes the card over does not begin until the scene plays. Between the
     // two the card was drawn nowhere, which is the blink reported from a phone. See
-    // `Stage.blooming`, which is `expecting` for the same fault on flights.
-    val held = stage.aboutToBloom(Anchor.Pending)?.takeIf { drawn == null && !elsewhere }
+    // `Stage.blooming` and `Stage.departing`, which are `expecting` for the two scenes that
+    // start here rather than end here: a card shown off where it lies, and one flying out.
+    val held = stage.heldAt(Anchor.Pending)?.takeIf { drawn == null && !elsewhere }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         if (held != null) {
