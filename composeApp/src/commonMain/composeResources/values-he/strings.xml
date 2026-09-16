@@ -480,6 +480,8 @@
     <string name="ask_which_way_round">באיזה סדר הם?</string>
     <string name="ask_say_what_you_know">לשתף את הקבוצה במה שידוע.</string>
     <string name="label_ready">מוכנים</string>
+    <string name="label_start_the_turns">להתחיל את התורות</string>
+    <string name="label_thats_all_i_know">זה כל המידע שיש לי</string>
     <string name="label_say_it">בוצע</string>
     <string name="label_agree">להסכים</string>
     <string name="label_remove_throw">לא לזרוק פנימה</string>

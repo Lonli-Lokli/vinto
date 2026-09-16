@@ -206,6 +206,8 @@ import game.vinto.app.art.label_rank_said_by
 import game.vinto.app.art.label_ready
 import game.vinto.app.art.label_remove_throw
 import game.vinto.app.art.label_say_it
+import game.vinto.app.art.label_start_the_turns
+import game.vinto.app.art.label_thats_all_i_know
 import game.vinto.app.art.label_this_way_round
 import game.vinto.app.art.label_withdraw
 import game.vinto.app.art.list_join_and
@@ -484,6 +486,8 @@ fun labelled(label: Label): String = when (label) {
     Label.Withdraw -> stringResource(Res.string.label_withdraw)
     Label.DoAsSuggested -> stringResource(Res.string.label_do_as_suggested)
     Label.Ready -> stringResource(Res.string.label_ready)
+    Label.StartTheTurns -> stringResource(Res.string.label_start_the_turns)
+    Label.ThatsAllIKnow -> stringResource(Res.string.label_thats_all_i_know)
     Label.SayIt -> stringResource(Res.string.label_say_it)
     Label.DeclineSuggestion -> stringResource(Res.string.label_decline_suggestion)
     is Label.ThisWayRound -> stringResource(

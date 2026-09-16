@@ -504,6 +504,8 @@
     <string name="ask_which_way_round">ما ترتيبهما؟</string>
     <string name="ask_say_what_you_know">شاركوا رفاقكم بما تعرفونه.</string>
     <string name="label_ready">استعددت</string>
+    <string name="label_start_the_turns">بدء الأدوار</string>
+    <string name="label_thats_all_i_know">هذا كل ما أعرفه</string>
     <string name="label_say_it">تم</string>
     <string name="label_agree">أوافق</string>
     <string name="label_remove_throw">عدم الرمي</string>

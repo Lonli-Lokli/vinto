@@ -1603,9 +1603,10 @@ private const val MIN_SHOWING = 0.55f
  * Whether the table is being held up by this seat.
  *
  * The rail says "waiting for 1" and never said *which one* — so a round could sit there with
- * nothing on the table pointing at the seat holding it up. It covers the three ways a seat holds
+ * nothing on the table pointing at the seat holding it up. It covers the four ways a seat holds
  * a round: somebody yet to take their setup peeks, a seat that has not answered an open toss-in
- * window, and whoever's turn it is — which is a bot thinking as much as a person deciding.
+ * window, a coalition member who has not yet started the turns, and whoever's turn it is — which
+ * is a bot thinking as much as a person deciding.
  *
  * Asked separately from [badgesFor], and drawn separately: this is the one thing about a seat
  * that changes **every turn**, and a mark that comes and goes in a row sized to hold it is a
@@ -1623,6 +1624,12 @@ private fun isWaitingOn(
         // `tossInIsOpen` and not the window record's own flag: it reads false for a window the
         // engine has just reopened, so the seats a table was genuinely waiting on wore no mark.
         view.tossInIsOpen && toss != null -> seat.id !in toss.playersReadyForNextTurn
+        // The coalition's window, which holds the whole round and used to point at nobody: the
+        // seats it waits on are the people in the coalition, and a bot is never one of them —
+        // it has nothing to declare and nothing to press. A seat whose person has gone is not
+        // waited for either, which is the same rule the toss-in and the room both apply.
+        view.conferMsRemaining != null ->
+            seat.id != view.vintoCallerId && seat.isHuman && !seat.isBot
         else -> active
     }
 }

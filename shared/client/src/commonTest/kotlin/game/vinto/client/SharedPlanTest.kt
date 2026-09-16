@@ -124,8 +124,16 @@ class SharedPlanTest {
         assertNotNull(caller.agreePlan(agree = true))
     }
 
+    /**
+     * Agreeing is an opinion about the plan, and nothing else.
+     *
+     * It used to finish the talking too, so the last member to agree started the round. That put
+     * the press meaning "I like this plan" in charge of three final turns — and a person who
+     * pressed it to say so watched the round go. The window is ended by the button that says it
+     * ends it now (`Label.StartTheTurns`), and this one only ever records a yes.
+     */
     @Test
-    fun agreeingIsHowThePersonFinishesTalking() = runTest {
+    fun agreeingSaysYesAndStartsNothing() = runTest {
         val session = inTheWindow()
         // Before the window opens nothing is on the board, and nothing is nothing to agree to.
         assertNotNull(session.agreePlan(agree = true), "an empty board was agreed to")
@@ -137,8 +145,15 @@ class SharedPlanTest {
         assertNotNull(session.view.value.conferMsRemaining, "the window closed on an edit")
 
         assertNull(session.agreePlan(agree = true))
-        assertNull(session.view.value.conferMsRemaining, "agreeing did not end the window")
-        assertTrue(session.plan.value?.agreed.orEmpty().contains("human-1"))
+        assertTrue(session.plan.value?.agreed.orEmpty().contains("human-1"), "the yes was not recorded")
+        assertNotNull(
+            session.view.value.conferMsRemaining,
+            "agreeing started the round, which is the press it was split away from",
+        )
+
+        // And the button that does end it still does.
+        assertNull(session.doneConferring())
+        assertNull(session.view.value.conferMsRemaining, "the window would not close")
     }
 
     @Test

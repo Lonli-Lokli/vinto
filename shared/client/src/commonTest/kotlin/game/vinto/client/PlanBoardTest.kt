@@ -328,7 +328,12 @@ class PlanBoardTest {
         // and no button stands on the rail but the way to agree.
         val bare = tableFor(view(), question = Question.ThePlan(), plan = plan)
         assertNull(assertNotNull(bare.board?.sentence).own.slots.first().open, "a question with one answer was asked")
-        assertEquals(listOf(Label.Agree), bare.choices.map { it.label })
+        // Agree, and the press the turns are waiting on beside it — the window is open in this
+        // fixture, which is what puts the second one there (`startingTurns`).
+        assertEquals(
+            listOf(Label.Agree, Label.StartTheTurns),
+            bare.choices.map { it.label },
+        )
     }
 
     // ------------------------------------------------------------------ the readout and the decay

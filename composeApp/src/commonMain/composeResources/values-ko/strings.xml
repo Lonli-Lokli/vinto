@@ -481,6 +481,8 @@
     <string name="ask_which_way_round">순서가 어떻게 되나요?</string>
     <string name="ask_say_what_you_know">알고 있는 걸 동료들에게 말해 주세요.</string>
     <string name="label_ready">준비됐어요</string>
+    <string name="label_start_the_turns">차례를 시작할게요</string>
+    <string name="label_thats_all_i_know">여기까지 알아요</string>
     <string name="label_say_it">완료</string>
     <string name="label_agree">동의해요</string>
     <string name="label_remove_throw">던지지 않기</string>

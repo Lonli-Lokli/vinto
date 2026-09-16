@@ -154,10 +154,17 @@ class PlanDoorTest {
         assertTrue(ann in checkNotNull(changed.plan).agreed)
     }
 
+    /**
+     * Agreeing is an opinion about the plan, and never the press the round is waiting on.
+     *
+     * A yes used to finish the talking too, so the last connected member to agree closed the
+     * window and started the round. That is gone: the window is ended by the button that says it
+     * ends it (`Label.StartTheTurns`), and a press meaning "I like this plan" does not set three
+     * final turns going under the people still reading it.
+     */
     @Test
-    fun agreeingIsHowYouFinishTalking() {
-        // Two people in the coalition, the window open. The first yes marks that seat done;
-        // the second closes the window, exactly as two `done-conferring`s would.
+    fun agreeingIsOnlyAnOpinion() {
+        // Two people in the coalition, the window open.
         val state = finalRoundCalledByABot()
         val room = decodeRoom(state)
         assertTrue(conferring(room), "the fixture's window is not open")
@@ -166,12 +173,17 @@ class PlanDoorTest {
         val set = editPlan(room, TOKEN_A, PlanEdit.SetLane(ann, take()), START).state
         val one = agreePlan(set, TOKEN_A, agree = true)
         assertNull(one.error)
-        assertTrue(conferring(one.state), "one yes closed a window two people were in")
-        assertEquals(listOf(0), one.state.conferReady)
+        assertTrue(ann in checkNotNull(one.state.plan).agreed, "the yes was not recorded")
+        assertEquals(emptyList(), one.state.conferReady, "a yes marked the seat done conferring")
 
         val both = agreePlan(one.state, TOKEN_B, agree = true)
         assertNull(both.error)
-        assertFalse(conferring(both.state), "the last yes did not close the window")
+        assertTrue(conferring(both.state), "everybody agreeing started the round")
+
+        // The door that does end it still does, and it takes both of them.
+        val first = doneConferring(both.state, TOKEN_A).state
+        assertTrue(conferring(first), "one seat's press closed a window two people were in")
+        assertFalse(conferring(doneConferring(first, TOKEN_B).state), "the last press did not close it")
     }
 
     @Test

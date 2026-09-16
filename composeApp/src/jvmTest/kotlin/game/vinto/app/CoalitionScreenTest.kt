@@ -75,8 +75,8 @@ class CoalitionScreenTest {
             "the window does not say what it is for: $words",
         )
         assertTrue(
-            words.any { it.contains("ready", ignoreCase = true) },
-            "a window with no way out: $words",
+            words.any { it.contains("all I know", ignoreCase = true) },
+            "a window with no way on: $words",
         )
         // And nothing else. The three standings that used to sit beside it were sentences
         // nothing reads — no planner, no bot decision, no view — so three of the four controls
@@ -96,7 +96,9 @@ class CoalitionScreenTest {
 
         val seats = table.taps.keys.map { it.playerId }.toSet()
         assertTrue(seats.size > 1, "only one hand could be spoken about: $seats")
-        assertTrue(table.choices.any { it.move is Move.Done }, "no way to finish talking")
+        // A question, not `Move.Done`: finishing the declaring goes to the plan, and the round
+        // is started from there by a button of its own (`Label.StartTheTurns`).
+        assertTrue(table.choices.any { it.move is Move.Ask }, "no way to finish talking")
     }
 
     @Test

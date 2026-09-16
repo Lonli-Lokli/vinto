@@ -629,7 +629,7 @@ private fun tableBody(
     // The coalition's window: talk only, and a way out of it. Before the round's first turn,
     // so it comes above every table below — a window a player cannot see or end is a stall.
     if (view.conferMsRemaining != null && mayDeclare(view)) {
-        return conferringTable(view).showing(view)
+        return conferringTable(view, plan).showing(view)
     }
 
     val pending = view.pendingAction
@@ -722,11 +722,18 @@ private fun mayDeclare(view: PlayerView): Boolean =
  * The moment before the final round runs, which belongs to the coalition.
  *
  * Everything the round's talk needs is here: every card is tappable, so a claim about anybody
- * can be made, and one button ends this seat's share of the window. It is a *table*, not a
- * modal — the felt stays readable underneath, because what a coalition is deciding is written
- * on it.
+ * can be made, and one button ends the declaring. It is a *table*, not a modal — the felt stays
+ * readable underneath, because what a coalition is deciding is written on it.
+ *
+ * **The button goes to the plan and starts nothing.** It used to be `Move.Done`, which ended
+ * this seat's share of the window and set three final turns going — so a player who meant only
+ * "that is everything I can remember" watched the round run, and was then put back on the plan
+ * board, where the felt draws the plan's table rather than the live one and a card the plan has
+ * yet to draw is rose. A real move, then a pink ghost, out of one press; reported from a phone
+ * and held by `HumanCoalitionMemberTest.sayingThatIsAllYouKnowOpensThePlanAndStartsNothing`.
+ * Starting the turns is the plan's own button now, and this one is a question.
  */
-private fun conferringTable(view: PlayerView): Table {
+private fun conferringTable(view: PlayerView, plan: CoalitionPlan?): Table {
     val claimable = declareTaps(view)
     return Table(
         prompt = Ask.SayWhatYouKnow,
@@ -742,7 +749,13 @@ private fun conferringTable(view: PlayerView): Table {
         // Green, like every other move that gets on with the game: both controls in this window
         // are ones a player presses to make something happen, and the tones are muscle memory
         // (`Tone`). Slate said "decline", which is what neither of them is.
-        choices = listOf(Choice(Label.Ready, Move.Done, Tone.PLAY)),
+        choices = listOf(
+            Choice(
+                Label.ThatsAllIKnow,
+                Move.Ask(Question.ThePlan(at = openingStop(view, plan))),
+                Tone.PLAY,
+            ),
+        ),
         taps = claimable,
         waiting = false,
     )

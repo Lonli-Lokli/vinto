@@ -481,6 +481,8 @@
     <string name="ask_which_way_round">এদের ক্রম কী?</string>
     <string name="ask_say_what_you_know">আপনি যা জানেন তা অন্যদের বলুন।</string>
     <string name="label_ready">আমি প্রস্তুত</string>
+    <string name="label_start_the_turns">পালা শুরু করুন</string>
+    <string name="label_thats_all_i_know">এটুকুই জানি</string>
     <string name="label_say_it">সম্পন্ন</string>
     <string name="label_agree">সম্মত</string>
     <string name="label_remove_throw">ফেলবেন না</string>

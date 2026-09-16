@@ -481,6 +481,8 @@
     <string name="ask_which_way_round">W jakiej są kolejności?</string>
     <string name="ask_say_what_you_know">Powiedz innym, co wiesz.</string>
     <string name="label_ready">Gotowe</string>
+    <string name="label_start_the_turns">Rozpocznij tury</string>
+    <string name="label_thats_all_i_know">To wszystko, co wiem</string>
     <string name="label_say_it">Zatwierdź</string>
     <string name="label_agree">Zgadzam się</string>
     <string name="label_remove_throw">Usuń dorzut</string>

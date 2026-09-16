@@ -190,10 +190,12 @@ class RailFitsTest {
         eachChoiceWhole(
             view,
             emptyList(),
-            // One button, because everything else that used to be down here acts on the turn
-            // and the turn is a row of its own parts now. No "Back" either: the switch in the
-            // header is the plan's one way in and out.
-            setOf("Agree"),
+            // Two, and only these two: everything else that used to be down here acts on the
+            // turn and the turn is a row of its own parts now, and there is no "Back" — the
+            // switch in the header is the plan's one way in and out. The second is the press
+            // the round is waiting on, which this fixture's open window puts there, and it is
+            // the longest word in the rail — exactly what this measurement is for.
+            setOf("Agree", "Start the turns"),
             PHONE_W,
             PHONE_H,
             fontScale = 2f,
@@ -312,7 +314,7 @@ class RailFitsTest {
          * no view. The measurement is worth more on one button than it was on four, because a
          * window whose only button is under the edge of the screen is a window nobody can leave.
          */
-        val CONFER_CHOICES = setOf("I’m ready")
+        val CONFER_CHOICES = setOf("That’s all I know")
         val PHONE_W = 411.dp
         val PHONE_H = 740.dp
 

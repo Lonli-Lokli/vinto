@@ -20,6 +20,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -441,11 +442,13 @@ class HumanCoalitionMemberTest {
         val table = tableFor(session.view.value)
 
         assertEquals(
-            listOf(Label.Ready),
+            listOf(Label.ThatsAllIKnow),
             table.choices.map { it.label },
-            "the confer window offers something other than the way out",
+            "the confer window offers something other than the way on",
         )
-        assertTrue(table.choices.all { it.move is Move.Done }, "the way out stopped being one")
+        // A question, not `Move.Done`. Ending the declaring and starting the round were one
+        // press until 2026-09-16; the second half is the plan's own button now.
+        assertTrue(table.choices.all { it.move is Move.Ask }, "the way on stopped being one")
     }
 
     /**
@@ -518,7 +521,7 @@ class HumanCoalitionMemberTest {
         // And the table offers the way out, with every card still tappable to claim.
         val table = tableFor(view)
         assertEquals(Ask.SayWhatYouKnow, table.prompt)
-        assertTrue(table.choices.any { it.label == Label.Ready }, "a window with no button")
+        assertTrue(table.choices.any { it.label == Label.ThatsAllIKnow }, "a window with no button")
         assertTrue(table.taps.isNotEmpty(), "nothing to say during the talking window")
     }
 
@@ -553,5 +556,93 @@ class HumanCoalitionMemberTest {
             session.view.value.conferMsRemaining,
             "the caller was held by their opponents' conversation",
         )
+    }
+
+    // ---------------------------------------------------------------- declaring, then starting
+
+    /**
+     * Declaring and starting are two different things, and one button did both.
+     *
+     * Reported 2026-09-16: *"When vinto called I declared my cards, said I'm ready and
+     * immediately saw how drawn card was drawn visible by tide and after that pink card
+     * shown."* The rule was never wrong — the window held, and the report's own recording has
+     * nine `DECLARE_CARDS` and no bot turn between the call and the person's declaration. What
+     * was wrong is that the one button in that window ended the talking **and** set three final
+     * turns going, and the screen then put the player back on the plan, where the felt draws the
+     * plan's table rather than the live one and a card the plan has yet to draw is rose. A real
+     * move, then a pink ghost, out of one press.
+     *
+     * So the window has two steps. This is the first: it goes to the plan and releases nothing.
+     */
+    @Test
+    fun sayingThatIsAllYouKnowOpensThePlanAndStartsNothing() = runTest {
+        val session = conferringSession()
+
+        val out = tableFor(session.view.value).choices.single()
+        assertEquals(Label.ThatsAllIKnow, out.label, "the declaring window's button is not the new one")
+
+        // A question, never `Move.Done`: what this press does is *go to the plan*, and a press
+        // that also released the turns is the whole of what was reported.
+        val move = assertIs<Move.Ask>(out.move, "the way out of declaring is still a move")
+        assertIs<Question.ThePlan>(move.question, "it goes somewhere other than the plan")
+
+        assertNotNull(
+            session.view.value.conferMsRemaining,
+            "saying what you know closed the window, so the turns ran without being started",
+        )
+    }
+
+    /**
+     * Ten turns after setup a person may genuinely remember nothing, and saying so is an answer.
+     * The way on is never taken away for having said little.
+     */
+    @Test
+    fun theWayOnIsThereWithNothingClaimed() = runTest {
+        val session = conferringSession()
+
+        assertTrue(
+            tableFor(session.view.value).choices.any { it.label == Label.ThatsAllIKnow },
+            "a window with nothing claimed had no way on",
+        )
+    }
+
+    /**
+     * The second step, and the one the round actually waits for. Its name is the truth about
+     * what the press does: nobody else has to press at this table, so it starts the turns.
+     */
+    @Test
+    fun thePlanStartsTheTurnsWhileThereAreTurnsToStart() = runTest {
+        val session = conferringSession()
+        val onThePlan = tableFor(session.view.value, question = Question.ThePlan())
+
+        val start = onThePlan.choices.singleOrNull { it.move is Move.Done }
+        assertNotNull(start, "the plan offers no way to start the turns")
+        assertEquals(Label.StartTheTurns, start.label, "the button does not say what it does")
+    }
+
+    /** Starting a round makes sense only while it has not started. */
+    @Test
+    fun thePlanStopsOfferingTheStartOnceTheTurnsAreRunning() = runTest {
+        val session = conferringSession()
+        assertNull(session.doneConferring())
+        assertNull(session.view.value.conferMsRemaining, "the window would not close")
+
+        val onThePlan = tableFor(session.view.value, question = Question.ThePlan())
+        assertTrue(
+            onThePlan.choices.none { it.move is Move.Done },
+            "the plan still offered to start a round that is already running",
+        )
+    }
+
+    /** The window this seat confers in, open and waiting on nobody but the person. */
+    private suspend fun conferringSession(): LocalGameSession {
+        val session = LocalGameSession(
+            seed = 5L,
+            difficulty = Difficulty.MODERATE,
+            resuming = finalRound(callerId = "bot-2", leaderId = null, currentPlayerIndex = 2),
+        )
+        session.dispatch(GameAction.Empty(JsonNull))
+        assertNotNull(session.view.value.conferMsRemaining, "the fixture's window is not open")
+        return session
     }
 }

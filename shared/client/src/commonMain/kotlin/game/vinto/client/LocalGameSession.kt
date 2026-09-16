@@ -226,9 +226,12 @@ class LocalGameSession(
         val standing = _plan.value?.takeUnless { it.isEmpty }
             ?: return refuse("there is nothing on the board to agree to")
 
+        // **Agreeing is agreeing, and nothing else.** A yes used to finish the talking too, so
+        // the last member to agree started the round — which is the surprise the window's own
+        // button was split to remove (`Label.StartTheTurns`). A press that says "I like this
+        // plan" must not also be the press three final turns are waiting on.
         _plan.value = standing.agreeing(playerId, agree)
-        // Agreeing is how you finish talking. A no is only a no.
-        return if (agree && conferring) doneConferring() else null
+        return null
     }
 
     /**

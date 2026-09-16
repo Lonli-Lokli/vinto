@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -201,13 +202,20 @@ internal fun PlanRail(
         // rather than sitting empty under a grid that needs it.
         if (!naming) Answers(board, table, onMove)
         PlanStops(board.transport, onMove)
-        Row(modifier = Modifier.fillMaxWidth().height(RowHigh)) {
-            table.choices.firstOrNull()?.let { choice ->
+        // Agree was the one standing button (design D17) and drew as `firstOrNull`. It has a
+        // neighbour now — the press the coalition's turns are waiting on — and only ever one,
+        // so they share the row evenly: an opinion on the left, the thing that gets on with the
+        // game on the right, which is where a thumb already looks for it everywhere else.
+        Row(
+            modifier = Modifier.fillMaxWidth().height(RowHigh),
+            horizontalArrangement = Arrangement.spacedBy(Half),
+        ) {
+            table.choices.forEach { choice ->
                 GameButton(
                     label = labelled(choice.label),
                     tone = choice.tone.paint(),
                     onClick = { onMove(choice.move) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     compact = true,
                 )
             }

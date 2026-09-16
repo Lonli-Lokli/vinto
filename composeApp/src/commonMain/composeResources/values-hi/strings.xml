@@ -506,6 +506,8 @@
     <string name="ask_which_way_round">इनका क्रम क्या है?</string>
     <string name="ask_say_what_you_know">आपको जो पता है, वह दूसरों को बताएं।</string>
     <string name="label_ready">तैयार</string>
+    <string name="label_start_the_turns">बारियां शुरू करें</string>
+    <string name="label_thats_all_i_know">बस, इतना ही पता है</string>
     <string name="label_say_it">हो गया</string>
     <string name="label_agree">सहमत</string>
     <string name="label_remove_throw">फेंकना हटाएं</string>

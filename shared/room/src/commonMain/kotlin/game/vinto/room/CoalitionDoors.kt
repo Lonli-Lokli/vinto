@@ -212,10 +212,11 @@ internal fun editPlan(state: RoomState, token: String, edit: PlanEdit, nowMs: Do
 /**
  * Yes or no to the plan as a whole.
  *
- * A yes is also "I have said what I wanted to say": agreeing is how you finish talking, so the
- * last connected member to agree is what closes the window and starts the round. A no is only a
- * no — the member may still be talking. Either is refused when there is nothing on the board
- * to have an opinion about.
+ * **An opinion, and only that.** A yes used to mean "I have said what I wanted to say" as well,
+ * so the last connected member to agree closed the window and started the round. That is gone:
+ * the window is ended by the button that says it ends it, and a press meaning "I like this plan"
+ * is not the press three final turns are waiting on. Either answer is refused when there is
+ * nothing on the board to have an opinion about.
  */
 @Suppress("ReturnCount")
 internal fun agreePlan(state: RoomState, token: String, agree: Boolean): Spoken {
@@ -233,9 +234,10 @@ internal fun agreePlan(state: RoomState, token: String, agree: Boolean): Spoken 
     val plan = state.plan?.takeUnless { it.isEmpty }
         ?: return Spoken(state, error = "there is nothing on the board to agree to")
 
-    val agreed = state.copy(plan = plan.agreeing(me, agree))
-    val stillTalking = !agree || !conferring(agreed) || seatEntry.index !in conferringHumans(agreed)
-    return if (stillTalking) Spoken(agreed) else doneConferring(agreed, token)
+    // Agreeing is agreeing, and nothing else: the window is closed by the button that says so
+    // (`Label.StartTheTurns` / `Label.Ready`), never by a yes to the plan. A press meaning "I
+    // like this" must not also be the one the coalition's turns are waiting on.
+    return Spoken(state.copy(plan = plan.agreeing(me, agree)))
 }
 
 /**

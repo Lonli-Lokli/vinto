@@ -565,8 +565,12 @@ internal fun boardTable(
     return Table(
         prompt = promptFor(composing),
         detail = hintFor(composing, board),
-        // Agree is the one standing button (design D17); everything else is a word.
-        choices = if (agreeable) listOf(Choice(Label.Agree, Move.Agree(true), Tone.PLAY)) else emptyList(),
+        // Agree was the one standing button (design D17); everything else is a word. It has a
+        // neighbour now, and only ever one: the press the round is waiting on.
+        choices = buildList {
+            if (agreeable) add(Choice(Label.Agree, Move.Agree(true), Tone.PLAY))
+            startingTurns(view, away)?.let { add(it) }
+        },
         taps = feltTaps(board, focus),
         // Every coalition seat is a way to its own turn — or, when an Ace is asking who draws,
         // the answer. Nothing is a control while the film runs (design D14), or for the caller.
@@ -577,6 +581,34 @@ internal fun boardTable(
         },
         board = board.copy(answers = if (composing.editable) kingsRankAnswers(composing) else emptyList()),
     )
+}
+
+/**
+ * The button that sets the coalition's turns going, or null where there are none left to set.
+ *
+ * **Only while the window is open**, which `conferMsRemaining` is exactly: it is what opens the
+ * declaring table in the first place, and it goes the moment the turns begin. Starting a round
+ * makes sense only while it has not started, and a button offering to begin one already running
+ * would be a lie with nothing behind it.
+ *
+ * **And its name is the truth about the press.** Where nobody else has to press — a solo table,
+ * or an online one whose other coalition seats are bots — this really does start the turns, so
+ * it says so. Where other people share the window it can only declare that this seat is done,
+ * because the room holds until every connected human coalition member is ready
+ * (`CoalitionDoors.conferringHumans`), so there it says that instead. One move, two true names.
+ */
+private fun startingTurns(view: PlayerView, away: Set<String>): Choice? {
+    if (view.conferMsRemaining == null) return null
+    val caller = view.vintoCallerId ?: return null
+    if (view.viewerId == caller) return null
+
+    // Who else the window could be holding for: the other coalition seats a person is sitting
+    // in. A bot never has to press, and neither does a seat whose person has gone — the same
+    // rule the room applies, for the same reason a table is never held by an empty chair.
+    val others = view.players.any { seat ->
+        seat.id != view.viewerId && seat.id != caller && seat.isHuman && !seat.isBot && seat.id !in away
+    }
+    return Choice(if (others) Label.Ready else Label.StartTheTurns, Move.Done, Tone.PLAY)
 }
 
 /** What the rail asks over the sentence, for whoever hears the screen rather than sees it. */

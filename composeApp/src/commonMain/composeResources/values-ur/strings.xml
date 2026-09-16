@@ -497,6 +497,8 @@
     <string name="ask_which_way_round">ان کی ترتیب کیا ہے؟</string>
     <string name="ask_say_what_you_know">دوسروں کو بتائیں کہ آپ کیا جانتے ہیں۔</string>
     <string name="label_ready">تیار</string>
+    <string name="label_start_the_turns">باری شروع کریں</string>
+    <string name="label_thats_all_i_know">بس اتنا ہی یاد ہے</string>
     <string name="label_say_it">مکمل</string>
     <string name="label_agree">متفق</string>
     <string name="label_remove_throw">نہیں پھینک رہے</string>

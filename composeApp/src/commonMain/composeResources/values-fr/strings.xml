@@ -509,6 +509,8 @@
     <string name="ask_which_way_round">Dans quel ordre sont-elles ?</string>
     <string name="ask_say_what_you_know">Dites aux autres ce que vous savez.</string>
     <string name="label_ready">C’est bon</string>
+    <string name="label_start_the_turns">Lancer les tours</string>
+    <string name="label_thats_all_i_know">C’est tout ce que je sais</string>
     <string name="label_say_it">Terminé</string>
     <string name="label_agree">D’accord</string>
     <!-- One throw-in, taken off the turn it was said on. -->

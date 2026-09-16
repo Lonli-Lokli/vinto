@@ -507,6 +507,8 @@
     <string name="ask_which_way_round">In che ordine sono?</string>
     <string name="ask_say_what_you_know">Di' agli altri quello che sai.</string>
     <string name="label_ready">Avanti</string>
+    <string name="label_start_the_turns">Avvia i turni</string>
+    <string name="label_thats_all_i_know">Ho detto tutto</string>
     <string name="label_say_it">Fatto</string>
     <string name="label_agree">D’accordo</string>
     <string name="label_remove_throw">Non buttare</string>

@@ -170,8 +170,10 @@ interface GameSession {
     /**
      * Yes or no to the plan as a whole.
      *
-     * A yes also counts as [doneConferring]: agreeing is how you finish talking, so the last
-     * member to agree is what starts the round. Refused when there is nothing on the board.
+     * An opinion, and only that. A yes used to count as [doneConferring] — so the last member to
+     * agree started the round — which put the press that says "I like this plan" in charge of
+     * three final turns. The window is ended by the button that says so instead. Refused when
+     * there is nothing on the board.
      */
     suspend fun agreePlan(agree: Boolean): String?
 }

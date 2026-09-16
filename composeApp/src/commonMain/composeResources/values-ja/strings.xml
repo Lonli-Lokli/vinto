@@ -514,6 +514,8 @@
     <string name="ask_which_way_round">順番はどちらですか？</string>
     <string name="ask_say_what_you_know">知っていることを仲間に伝えましょう。</string>
     <string name="label_ready">準備できました</string>
+    <string name="label_start_the_turns">手番を開始</string>
+    <string name="label_thats_all_i_know">以上です</string>
     <string name="label_say_it">完了</string>
     <string name="label_agree">同意</string>
     <string name="label_remove_throw">投げ込まない</string>

@@ -481,6 +481,8 @@
     <string name="ask_which_way_round">它们的顺序是什么？</string>
     <string name="ask_say_what_you_know">把您知道的告诉大家。</string>
     <string name="label_ready">我准备好了</string>
+    <string name="label_start_the_turns">开始回合</string>
+    <string name="label_thats_all_i_know">我知道的就这些</string>
     <string name="label_say_it">完成</string>
     <string name="label_agree">同意</string>
     <string name="label_remove_throw">不跟打</string>

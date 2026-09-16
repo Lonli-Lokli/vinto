@@ -630,10 +630,23 @@
     <string name="ask_name_what_you_put_down">Name the card you are putting down?</string>
     <string name="ask_which_way_round">Which way round are they?</string>
     <string name="ask_say_what_you_know">Tell the others what you know.</string>
-    <!-- The way out of the confer window, and the only button on it. It said "Done talking",
-         which named the half that costs nothing — talk is free, and may be resumed on any later
-         turn — and hid the half that does not: pressing it sets three final turns going. -->
+    <!-- The way out of the confer window where OTHER PEOPLE share it: all a press can declare
+         at a table still waiting on somebody else is that this seat is done. It said "Done
+         talking", which named the half that costs nothing — talk is free, and may be resumed on
+         any later turn — and hid the half that does not. Where nobody else has to press, the
+         same button says label_start_the_turns instead, because there it really does start them. -->
     <string name="label_ready">I’m ready</string>
+    <!-- The press the final round is actually waiting on, worn where this seat is the last one
+         holding it — a solo table, or an online one whose other coalition seats are bots.
+         "Play" is taken: it is what a card does on a turn, and a Play button beside a plan of
+         turns reads as playing one of them. -->
+    <string name="label_start_the_turns">Start the turns</string>
+    <!-- The confer window’s first step. One button used to end the talking AND set three turns
+         going, so a player who meant "that is everything I can remember" watched the round run.
+         This one goes to the plan and starts nothing. Always offered, claim or no claim: ten
+         turns after setup a person may remember none of their cards, and saying so is an
+         answer. -->
+    <string name="label_thats_all_i_know">That’s all I know</string>
     <!-- Send the claim the rail has been building. A confirm rather than a send-on-tap,
          because a rank is a toggle now and "a 7 or an 8" cannot be told from "a 7" until the
          player says they are finished. It said "Say it", which reads as an instruction rather

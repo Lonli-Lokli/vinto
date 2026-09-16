@@ -508,6 +508,8 @@
     <string name="ask_which_way_round">Hangi sırayla?</string>
     <string name="ask_say_what_you_know">Bildiklerinizi diğerleriyle paylaşın.</string>
     <string name="label_ready">Hazırım</string>
+    <string name="label_start_the_turns">Turları başlatın</string>
+    <string name="label_thats_all_i_know">Bildiğim bu kadar</string>
     <string name="label_say_it">Tamam</string>
     <string name="label_agree">Katılıyorum</string>
     <string name="label_remove_throw">Atılmıyor</string>

@@ -501,6 +501,8 @@
     <string name="ask_which_way_round">В каком они порядке?</string>
     <string name="ask_say_what_you_know">Расскажите остальным, что вы знаете.</string>
     <string name="label_ready">Готово</string>
+    <string name="label_start_the_turns">Начать ходы</string>
+    <string name="label_thats_all_i_know">Это всё, что я помню</string>
     <string name="label_say_it">Заявить</string>
     <string name="label_agree">Согласиться</string>
     <string name="label_remove_throw">Не подкидывать</string>

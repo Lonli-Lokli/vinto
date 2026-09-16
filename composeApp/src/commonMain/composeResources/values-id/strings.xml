@@ -502,6 +502,8 @@
     <string name="ask_which_way_round">Bagaimana urutannya?</string>
     <string name="ask_say_what_you_know">Beri tahu yang lain apa yang Anda ketahui.</string>
     <string name="label_ready">Saya siap</string>
+    <string name="label_start_the_turns">Mulai giliran</string>
+    <string name="label_thats_all_i_know">Itu saja yang saya tahu</string>
     <string name="label_say_it">Selesai</string>
     <string name="label_agree">Setuju</string>
     <string name="label_remove_throw">Tidak jadi lempar</string>

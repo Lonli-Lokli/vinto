@@ -138,13 +138,22 @@ class PlanModeTest {
         val standing = CoalitionPlan(lanes = listOf(Lane(nina, swap(me, 0, nina, 0))))
         val table = tableFor(view(), question = Question.ThePlan(), plan = standing)
 
-        val offered: List<Move> = table.choices.map { it.move } +
-            table.taps.values +
-            table.ranks.map { it.move } +
-            table.seats.map { it.move }
+        // **Nothing a finger lands on the felt is ever loud**, which is the whole guard: plan
+        // mode gives a tap on a card a meaning it never had, and the thing that must not happen
+        // is one of those taps turning into a move on the real round (design D2).
+        val touches: List<Move> = table.taps.values + table.ranks.map { it.move } + table.seats.map { it.move }
+        val loudTouches = touches.filterNot { it is Move.Quiet }
+        assertTrue(loudTouches.isEmpty(), "a touch on the plan acts on the round: $loudTouches")
 
-        val loud = offered.filterNot { it is Move.Quiet }
-        assertTrue(loud.isEmpty(), "the open plan offers moves that act on the round: $loud")
+        // The rail is the one place that is allowed something louder, and it is allowed exactly
+        // one: the press the coalition's turns are waiting on (`startingTurns`). It is not a
+        // `Move.Send` and never becomes one — no `GameAction` leaves this screen — but it does
+        // set the round going, so it is named here rather than quietly let through.
+        val loudButtons = table.choices.map { it.move }.filterNot { it is Move.Quiet }
+        assertTrue(
+            loudButtons.all { it is Move.Done },
+            "the open plan offers something louder than starting the turns: $loudButtons",
+        )
     }
 
     @Test
@@ -153,6 +162,9 @@ class PlanModeTest {
         // card of every seat, both paths — the drag's drop map and the felt's own taps — and
         // every button on the rail. If any of it could produce a `Move.Send`, a member reading
         // the plan could move the round by touching a ghost.
+        //
+        // The rail's own start button is the one exception and is excluded by name below: it is
+        // a button, never a card, so no amount of touching a ghost reaches it.
         val standing = CoalitionPlan(
             lanes = listOf(
                 Lane(nina, swap(nina, 0, don, 0)),
@@ -183,7 +195,7 @@ class PlanModeTest {
                         table.board?.transport?.stops.orEmpty().flatMap { listOfNotNull(it.go, it.replay) }
 
                     touched += offered.size
-                    val loud = offered.filterNot { it is Move.Quiet }
+                    val loud = offered.filterNot { it is Move.Quiet || it is Move.Done }
                     assertTrue(
                         loud.isEmpty(),
                         "with the plan open at $at, picked=$picked, on play $onPlay: $loud",

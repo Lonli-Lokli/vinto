@@ -39,14 +39,43 @@ sealed interface Label {
     data object DeclineSuggestion : Label
 
     /**
-     * End this seat's share of the coalition's confer window and let the round run.
+     * End this seat's share of the coalition's confer window, when other people share it.
      *
      * It said "Done talking", which named the half of it that costs nothing — talk is free and
-     * can be resumed on any later turn — and hid the half that does not: pressing it is what
-     * sets three final turns going. Readiness is the thing being declared, and online it is
-     * literally that: the window ends when everybody is ready.
+     * can be resumed on any later turn — and hid the half that does not. Now it names exactly
+     * what it does and no more: **readiness**, which is all a press can declare at a table
+     * where somebody else has still to press. Where nobody else has, the same move wears
+     * [StartTheTurns] instead, because there it really does start them.
      */
     data object Ready : Label
+
+    /**
+     * Start the coalition's turns: the one press the final round is actually waiting on.
+     *
+     * Worn where this seat is the last the window is holding for — a solo table, or an online
+     * one whose other coalition seats are bots — because there the press is not a declaration of
+     * anything, it is the round beginning. "Play" was the obvious word and is taken: it is what
+     * a card does on a turn, and a button that says Play beside a plan of turns reads as playing
+     * one of them.
+     *
+     * Offered only while there are turns left to start. A round already running has nothing to
+     * begin, and a button that begins it would be a lie with nothing behind it.
+     */
+    data object StartTheTurns : Label
+
+    /**
+     * Finish saying what you know, and go to the plan.
+     *
+     * The window's first step, and the reason there are two. One button used to end the talking
+     * *and* set three turns going, so a player who had only meant "that is everything I can
+     * remember" watched the round run — and was then put back on the plan board, which draws the
+     * plan's table rather than the live one. A real move, then a card in the plan's rose,
+     * reported from a phone. This press goes to the plan and releases nothing.
+     *
+     * Always offered, with or without a claim: ten turns after setup a person may genuinely
+     * remember none of their cards, and saying so is an answer rather than a failure to give one.
+     */
+    data object ThatsAllIKnow : Label
 
     /**
      * Send the claim the rail has been building.

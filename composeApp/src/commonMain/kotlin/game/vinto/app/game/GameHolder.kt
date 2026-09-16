@@ -288,9 +288,22 @@ class GameHolder(
             // it. It used to land them on the live table with the switch one tap away, and the
             // tap was the one nobody found (product owner). Opened where there is something
             // to do — their own turn while it can still be built, else the first that can.
+            // **The press the round waits on, and the one that gets out of the way for it.**
+            //
+            // It used to open the plan afterwards, and that is what was reported from a phone on
+            // 2026-09-16: the turns ran, and the player was then put on the board — where the
+            // felt draws the plan's table rather than the live one, so a card the plan has yet
+            // to draw came up rose a beat after a real one had been dealt. Whoever pressed this
+            // wants to watch what they started.
+            //
+            // Only when it actually started something. Online the window holds until every
+            // human coalition member has pressed, so a press that leaves it open leaves the
+            // player on the plan — there is still something to build, and nothing yet to watch.
             is Move.Done -> {
                 refusal = session.doneConferring()
-                if (refusal == null) ask(table.planSummary?.opens ?: Question.None)
+                if (refusal == null && session.view.value.conferMsRemaining == null) {
+                    question = Question.None
+                }
             }
 
             is Move.Say -> {

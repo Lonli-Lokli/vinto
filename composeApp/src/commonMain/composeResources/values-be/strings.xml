@@ -497,6 +497,8 @@
     <string name="ask_which_way_round">У якім яны парадку?</string>
     <string name="ask_say_what_you_know">Раскажыце астатнім, што вы ведаеце.</string>
     <string name="label_ready">Гатова</string>
+    <string name="label_start_the_turns">Пачаць хады</string>
+    <string name="label_thats_all_i_know">Гэта ўсё, што я ведаю</string>
     <string name="label_say_it">Заявіць</string>
     <string name="label_agree">Пагадзіцца</string>
     <string name="label_remove_throw">Не падкідаць</string>

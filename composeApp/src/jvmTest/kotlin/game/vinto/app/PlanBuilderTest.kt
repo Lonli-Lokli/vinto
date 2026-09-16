@@ -58,6 +58,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -173,9 +174,12 @@ class PlanBuilderTest {
     }
 
     @Test
-    fun readyOpensThePlanOnYourOwnTurn() = runTest {
-        // "I'm ready" ends the talking, and the plan is what the talking was for: it opens where
-        // there is something to do — your own turn, while it can still be built.
+    fun sayingThatIsAllYouKnowOpensThePlanOnYourOwnTurn() = runTest {
+        // "That's all I know" ends the declaring, and the plan is what the declaring was for: it
+        // opens where there is something to do — your own turn, while it can still be built.
+        // Pressed through the window's own button rather than by naming the move, because which
+        // move that button carries is half of what changed: it used to be `Move.Done`, which
+        // started the round as well (`Label.ThatsAllIKnow`).
         val session = LocalGameSession(seed = 5L, difficulty = Difficulty.MODERATE, resuming = justCalled())
         session.dispatch(GameAction.Empty(JsonNull))
         val holder = GameHolder(
@@ -184,11 +188,12 @@ class PlanBuilderTest {
             plan = mutableStateOf(session.plan.value),
         )
 
-        holder.act(Move.Done)
+        holder.act(holder.table.choices.single().move)
 
         assertNull(holder.refusal)
         // The coalition in turn order from the caller is bot-3, bot-4, then this seat: page 3.
-        assertEquals(Question.ThePlan(at = 3), holder.question, "being ready did not open the plan on my turn")
+        assertEquals(Question.ThePlan(at = 3), holder.question, "saying so did not open the plan on my turn")
+        assertNotNull(session.view.value.conferMsRemaining, "saying so started the round")
     }
 
     @Test
@@ -216,7 +221,7 @@ class PlanBuilderTest {
 
     @Test
     fun aWindowAlreadyOpenWhenThePlanOpensLeavesItOpen() = runTest {
-        // The call's own card opened a toss-in window, and "I'm ready" opened the plan over it.
+        // The call's own card opened a toss-in window, and the plan opened over it.
         // The window's view, delivered a beat later, must not shut the plan the member asked
         // for — which is what a phone showed: Ready, and the live table (product owner). A
         // card landing *while* the plan is open still steps it aside.
@@ -240,9 +245,12 @@ class PlanBuilderTest {
             plan = mutableStateOf(session.plan.value),
         )
 
-        holder.act(Move.Done)
+        // Opened by the move the declaring button carries, rather than off the rail: this
+        // fixture's throw window takes the rail first (`tableBody` puts it above the confer
+        // window, because a throw is priced and timed and talking is neither).
+        holder.act(Move.Ask(Question.ThePlan()))
         assertNull(holder.refusal)
-        assertTrue(holder.question is Question.ThePlan, "being ready did not open the plan: ${holder.question}")
+        assertTrue(holder.question is Question.ThePlan, "the plan would not open: ${holder.question}")
 
         val open = session.view.value
         assertTrue(open.tossInIsOpen, "the fixture's window is not open")
