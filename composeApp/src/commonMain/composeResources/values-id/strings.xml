@@ -275,6 +275,9 @@
     <string name="header_deck_badge">%1$d di dek — apa artinya itu</string>
 
     <!-- What the deck count means, when it is asked. -->
+    <string name="pile_take_live">Belum ada yang menggunakan kartu ini. Pada giliran Anda, Anda bisa mengambilnya alih-alih mengambil dari dek — tetapi Anda harus langsung memainkannya, dan kartu ini tidak bisa masuk ke tangan Anda.</string>
+    <string name="pile_take_spent">Aksinya sudah digunakan, jadi kartu ini tidak bisa diambil. Anda masih bisa melempar masuk kartu yang cocok di atasnya.</string>
+    <string name="pile_take_none">Kartu ini tidak punya aksi, jadi tidak bisa diambil. Anda masih bisa melempar masuk kartu yang cocok di atasnya.</string>
     <string name="deck_title">Dek kartu</string>
     <string name="deck_body">%1$d kartu tersisa untuk diambil.\n\nSaat habis, tumpukan buangan dikocok kembali ke dalamnya dan semua yang dipelajari siapa pun dari mengamati tumpukan itu tidak lagi berguna — termasuk yang Anda pelajari. Ronde yang dek-nya hampir habis adalah ronde yang tepat untuk memanggil Vinto.</string>
 

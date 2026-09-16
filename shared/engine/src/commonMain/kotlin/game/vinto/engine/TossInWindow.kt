@@ -28,3 +28,21 @@ val GameState.tossInIsOpen: Boolean
 /** The same question, of the only shape a screen ever gets. See [tossInIsOpen]. */
 val PlayerView.tossInIsOpen: Boolean
     get() = activeTossIn != null && subPhase == GameSubPhase.TOSS_QUEUE_ACTIVE
+
+/**
+ * Whether a card already thrown in is being played right now — one definition, for everybody
+ * who asks.
+ *
+ * Not the same question as [tossInIsOpen], and the difference matters to two callers who both
+ * used to answer it for themselves. `ActionValidator` asks it to decide **who may act**: while a
+ * throw resolves, the actor is whoever owns the pending action rather than whoever's turn it is,
+ * which is the whole point of the mechanic. `BotRunner` asks it to tell a queued throw from a
+ * card stranded by a window that opened over it — the two arrive at `choosing-action` looking
+ * identical, and the bot put every throw after the first one down unplayed for want of this line.
+ *
+ * The queue is the discriminator because it is the engine's own record of the fact: a queued
+ * action stays at the head of `queuedActions` for exactly as long as it is the one being played
+ * (`clearTossInAfterActionableCard` removes it on the way out).
+ */
+val GameState.resolvingATossIn: Boolean
+    get() = activeTossIn?.queuedActions.orEmpty().isNotEmpty()

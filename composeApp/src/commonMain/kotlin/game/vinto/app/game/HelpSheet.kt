@@ -53,6 +53,9 @@ import game.vinto.app.art.help_tab_badges
 import game.vinto.app.art.help_tab_cards
 import game.vinto.app.art.help_tab_more
 import game.vinto.app.art.help_tab_rings
+import game.vinto.app.art.pile_take_live
+import game.vinto.app.art.pile_take_none
+import game.vinto.app.art.pile_take_spent
 import game.vinto.app.art.signal_live
 import game.vinto.app.art.signal_live_meaning
 import game.vinto.app.art.signal_peek
@@ -115,6 +118,11 @@ fun HelpSheet(open: Boolean, now: Explains?, left: Int, onDismiss: () -> Unit, f
     when (focus) {
         is HelpTopic.Card -> {
             FocusedHelp(open, focus.rank, onDismiss)
+            return
+        }
+
+        is HelpTopic.Discard -> {
+            FocusedHelp(open, focus.rank, onDismiss, onThePile = focus.live)
             return
         }
 
@@ -346,6 +354,23 @@ sealed interface HelpTopic {
     /** One rank, from tapping the card that carries it. */
     data class Card(val rank: Rank) : HelpTopic
 
+    /**
+     * The card lying on the discard, which is a rank *and* a fact about what can be done with
+     * it — the one card on the table whose answer is not the same as its rank's.
+     *
+     * Asked for from a phone: *"discard pile should have additional info saying that card can
+     * or cannot play."* Whether a card can be taken is invisible once it has landed — a played
+     * King and a discarded one are the same picture — and it decides the whole of a turn's
+     * first choice. The seat that reported it had watched a bot leave an unused eight on the
+     * pile, thrown its own eight in, and then had no way to tell whether the eight still lying
+     * there was theirs to take.
+     *
+     * [live] is `Card.actionIsLive()`: an action card nobody has spent. Not "and it is your
+     * turn" — the rail already offers the button when it is, and a sheet that said *cannot* on
+     * somebody else's turn would be answering a different question from the one being asked.
+     */
+    data class Discard(val rank: Rank, val live: Boolean) : HelpTopic
+
     /** The draw pile, whose answer is a live count and what happens when it runs out. */
     data object Deck : HelpTopic
 }
@@ -394,9 +419,15 @@ private fun DeckHelp(open: Boolean, left: Int, onDismiss: () -> Unit) {
     }
 }
 
-/** The four kinds of card there are, in the order a player meets them. */
+/**
+ * The four kinds of card there are, in the order a player meets them.
+ *
+ * @param onThePile whether this card is the one lying on the discard and still carries its
+ *   action, which adds the line that says so. Null for a card anywhere else, where "can it be
+ *   taken" is not a question anybody is asking. See [HelpTopic.Discard].
+ */
 @Composable
-private fun FocusedHelp(open: Boolean, rank: Rank, onDismiss: () -> Unit) {
+private fun FocusedHelp(open: Boolean, rank: Rank, onDismiss: () -> Unit, onThePile: Boolean? = null) {
     VintoSheet(open = open, onDismiss = onDismiss) {
         Column(
             modifier = Modifier.padding(horizontal = Pad).fillMaxWidth(),
@@ -415,6 +446,24 @@ private fun FocusedHelp(open: Boolean, rank: Rank, onDismiss: () -> Unit) {
                         fontSize = TitleSize,
                     )
                     Text(explained(Explains.TheCardInPlay(rank)), fontSize = BodySize, color = Rail.inkDim)
+
+                    // Under the rank's own words, because it answers a question about *this*
+                    // card rather than about its rank: the same Queen reads differently
+                    // depending on whether somebody has already spent it.
+                    onThePile?.let { live ->
+                        Text(
+                            text = stringResource(
+                                when {
+                                    live -> Res.string.pile_take_live
+                                    getCardConfig(rank).action == null -> Res.string.pile_take_none
+                                    else -> Res.string.pile_take_spent
+                                },
+                            ),
+                            fontSize = BodySize,
+                            color = if (live) Rail.gold else Rail.inkDim,
+                            modifier = Modifier.padding(top = RowGap),
+                        )
+                    }
                 }
             }
             RankRow(getCardConfig(rank))

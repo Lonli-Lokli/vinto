@@ -380,6 +380,33 @@ class Stage {
     internal val arrived = mutableStateListOf<Anchor>()
 
     /**
+     * Places a card is about to be **shown off** at, from the moment the table steps to the move.
+     *
+     * [expecting] for flourishes, and for the same reason and the same frame or two: the table
+     * steps to the move before the scene plays, and a played card leaves its slot the instant
+     * the action engages — `DrawnCard` drops it when `actionPhase` leaves `choosing-action`,
+     * which is exactly when `cardInPlay` starts saying the card is on the pile. The bloom that
+     * takes over does not begin until [play] starts the beat. In between, the slot drew nothing
+     * and the card was at neither place: one card, three appearances, and the middle one a hole.
+     *
+     * Reported from a phone as the card "blinking" in the slot left of the toss-in area before
+     * it animated away.
+     *
+     * Emptied as each flourish takes over, so the answer comes from [flourish] itself the moment
+     * there is one to give.
+     */
+    internal val blooming = mutableStateMapOf<Anchor, CardView>()
+
+    /**
+     * Whether a card is being shown off anywhere, or is about to be.
+     *
+     * The piles ask, because a card being shown off has not landed: one that drew "the card in
+     * play" on the strength of the view alone would put the played card down a beat before the
+     * bloom picked it up.
+     */
+    val flourishing: Boolean get() = flourish != null || blooming.isNotEmpty()
+
+    /**
      * The player's chosen speed, as a multiplier on every duration here.
      *
      * One number for the lot, so a card, a peek and the pause between turns keep their
@@ -596,6 +623,9 @@ class Stage {
 
     /** Whether the card being shown off is lying at [anchor], and so is drawn by the flourish. */
     fun isFlourishing(anchor: Anchor): Boolean = flourish?.second == anchor
+
+    /** The card about to be shown off at [anchor], which the place it lies in keeps drawing. */
+    fun aboutToBloom(anchor: Anchor): CardView? = blooming[anchor]
 
     /** Whether a card is on its way *out* of [anchor], and so must not be drawn there. */
     fun isLeaving(anchor: Anchor): Boolean = flying.any { it.leftFrom == anchor }
@@ -1422,7 +1452,7 @@ private suspend fun Stage.playScenes(frame: Frame, firstId: Long): Long {
  * stays concealed until its scene turns it. Only reveals the view itself makes visible: a
  * King's named card is transient and never in `revealedTo`, so it lifts as it always has.
  */
-private fun Stage.prepareFor(frame: Frame) {
+internal fun Stage.prepareFor(frame: Frame) {
     arrived.clear()
     expecting.clear()
     frame.scenes.flatten().filterIsInstance<Beat.Move>().forEach { move ->
@@ -1430,6 +1460,13 @@ private fun Stage.prepareFor(frame: Frame) {
         // arrival has to know *which* card is arriving, or it cannot tell the card on its
         // way from the card already lying there.
         expecting[move.to] = move.card.faceOrBack()
+    }
+
+    // And the places a card is about to be shown off at, for the same frame or two. See
+    // [Stage.blooming].
+    blooming.clear()
+    frame.scenes.flatten().filterIsInstance<Beat.Flourish>().forEach { bloom ->
+        bloom.card?.let { blooming[bloom.at] = CardView.Visible(it) }
     }
 
     concealing.clear()
@@ -1526,6 +1563,8 @@ private fun Stage.start(beat: Beat, nextId: () -> Long): Int = when (beat) {
     is Beat.Peek -> lift(beat.at, beat.card.faceOrBack(), ms(PEEK_MS))
 
     is Beat.Flourish -> {
+        // The hand-over: from here the bloom itself is the answer, so the promise is spent.
+        blooming.remove(beat.at)
         flourish = beat.card.faceOrBack() to beat.at
         ms(FLOURISH_MS)
     }

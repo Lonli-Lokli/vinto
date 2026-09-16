@@ -274,6 +274,9 @@
     <string name="header_deck_left">%1$d cartas restantes no baralho</string>
     <string name="header_deck_badge">%1$d no baralho — o que significa</string>
 
+    <string name="pile_take_live">Ainda ninguém usou esta carta. No teu turno podes apanhá-la em vez de tirar do baralho — mas tens de a jogar de imediato, e ela não pode ir para a tua mão.</string>
+    <string name="pile_take_spent">A ação já foi usada, por isso não pode ser apanhada. Ainda podes atirar uma carta igual por cima dela.</string>
+    <string name="pile_take_none">Esta carta não tem ação, por isso não pode ser apanhada. Ainda podes atirar uma carta igual por cima dela.</string>
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">O baralho</string>
     <string name="deck_body">%1$d cartas por comprar.\n\nQuando se esgotar, a pilha de descarte é baralhada de volta para dentro dele e tudo o que alguém tinha aprendido a observar essa pilha deixa de valer alguma coisa — incluindo o que tu aprendeste. Uma ronda quase sem baralho é uma ronda para chamar Vinto.</string>

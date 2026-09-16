@@ -380,7 +380,7 @@ object ActionValidator {
         // caller's protection must not wait for it.
         if (state.phase == GamePhase.FINAL && state.vintoCallerId != null) {
             val actor =
-                if (state.isProcessingTossInAction()) {
+                if (state.resolvingATossIn) {
                     state.playerById(pending.playerId)
                 } else {
                     state.players.getOrNull(state.currentPlayerIndex)
@@ -463,7 +463,7 @@ object ActionValidator {
         }?.let { return it }
 
         val pending = state.pendingAction ?: return Validation.Invalid("No pending King card")
-        pendingIsADeclarableKing(pending)?.let { return it }
+        pendingIsADeclarableKing(state, pending)?.let { return it }
 
         val target = pending.targets.firstOrNull()
             ?: return Validation.Invalid("Target player not found")
@@ -477,12 +477,33 @@ object ActionValidator {
         return Validation.Valid
     }
 
-    /** The pending card must be a King that has already chosen its target. */
-    private fun pendingIsADeclarableKing(pending: PendingAction): Validation? = when {
+    /**
+     * The pending card must be a King that has already chosen its target.
+     *
+     * **`choosing-action` counts too while a throw is being resolved**, and refusing it cost a
+     * tossed-in King its action. The engine builds the first queued card at `selecting-target`
+     * and every one after it at `choosing-action` (`clearTossInAfterActionableCard`); nothing
+     * else reads that difference — `SELECT_ACTION_TARGET` aims from either — so this line was
+     * the only thing standing between a second thrown King and the rank it wanted to name.
+     *
+     * It is [resolvingATossIn] rather than the phase alone because the other card that sits at
+     * `choosing-action` here must stay refused: one drawn *before* a window opened, which
+     * `advanceTurnAfterTossIn` leaves stranded in `awaiting_action` after its turn has ended.
+     *
+     * The sub-phase guard above already keeps a freshly drawn King out, since deciding what to
+     * do with one happens in `choosing`.
+     *
+     * **Hash-neutral over the parity corpus**, which is why it is safe to widen here rather than
+     * to move the phase the engine writes: this is a rule in the validator, and one that refuses
+     * *less* can never reject a recorded action. Moving the phase instead diverges 25 of the 50
+     * recordings.
+     */
+    private fun pendingIsADeclarableKing(state: GameState, pending: PendingAction): Validation? = when {
         pending.card.rank != Rank.KING -> Validation.Invalid("Pending card is not a King")
-        pending.actionPhase != ActionPhase.SELECTING_TARGET -> Validation.Invalid(
-            "Cannot declare rank in action phase ${pending.actionPhase.serialName}",
-        )
+        pending.actionPhase != ActionPhase.SELECTING_TARGET && !state.resolvingATossIn ->
+            Validation.Invalid(
+                "Cannot declare rank in action phase ${pending.actionPhase.serialName}",
+            )
 
         else -> null
     }
@@ -529,8 +550,6 @@ object ActionValidator {
     private fun GameState.playerById(id: String): PlayerState? = players.firstOrNull { it.id == id }
 
     /** True while queued toss-in actions are being worked through. */
-    private fun GameState.isProcessingTossInAction(): Boolean =
-        activeTossIn?.queuedActions?.isNotEmpty() == true
 
     /** Null when the condition holds, so callers can chain with `?:`. */
     private fun GameState.requireTurn(playerId: String, actionType: String): Validation? =
@@ -548,7 +567,7 @@ object ActionValidator {
      * turn, which is the whole point of the mechanic.
      */
     private fun GameState.requireActor(playerId: String, actionType: String): Validation? =
-        if (isProcessingTossInAction()) {
+        if (resolvingATossIn) {
             if (pendingAction?.playerId == playerId) {
                 null
             } else {

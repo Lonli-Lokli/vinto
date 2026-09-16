@@ -2010,8 +2010,17 @@ private fun DrawnCard(
         stage.isLeaving(Anchor.Pending) ||
         stage.isFlourishing(Anchor.Pending)
 
+    // **And held, for the frame or two before a bloom starts here.** [drawn] lets go the
+    // instant the action engages — that is `cardInPlay`’s rule read from the other end — but
+    // the flourish that takes the card over does not begin until the scene plays. Between the
+    // two the card was drawn nowhere, which is the blink reported from a phone. See
+    // `Stage.blooming`, which is `expecting` for the same fault on flights.
+    val held = stage.aboutToBloom(Anchor.Pending)?.takeIf { drawn == null && !elsewhere }
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        if (drawn == null || elsewhere) {
+        if (held != null) {
+            CardFace(held, sizes.theirs, modifier = slot)
+        } else if (drawn == null || elsewhere) {
             EmptySlot(sizes.theirs, "", slot)
         } else if (arriving != null) {
             // The card the page's turn draws, on a page whose turn has not happened yet: rose
@@ -2325,7 +2334,7 @@ private fun Discard(
     // as what it is: rose, tagged with the turn it landed, and never on offer. The ghost table
     // holds no card there at all, so without this the pile would read as empty.
     val unknownSince = if (stage.rehearsing) stage.ghostPileUnknown else board?.pileUnknown
-    if (unknownSince != null && stage.landingOn(Anchor.Discard) == null && stage.flourish == null) {
+    if (unknownSince != null && stage.landingOn(Anchor.Discard) == null && !stage.flourishing) {
         CardFace(
             card = CardView.Hidden,
             scale = sizes.theirs,
@@ -2341,7 +2350,10 @@ private fun Discard(
     // Two things can be somewhere else: a card in the air on its way here, and a card being
     // shown off before it travels. Both draw themselves, so the pile must not.
     val arriving = stage.landingOn(Anchor.Discard)
-    val flourishing = stage.flourish != null
+    // `stage.flourishing` rather than `flourish != null`: a card about to be shown off has
+    // not landed either, and a pile that read only the live beat put the played card down for
+    // the frame or two before the bloom picked it up.
+    val flourishing = stage.flourishing
 
     // What the pile was showing before all this. Kept as the *previous* top rather than the
     // current one, because the table steps to the new position before the cards fly: for one
@@ -2391,8 +2403,9 @@ private fun Discard(
             if (onOffer) Res.string.card_discarded_live else Res.string.card_discarded,
             face.rank.serialName,
         ),
-        // What does this one do — asked of the card itself, answered about the card itself.
-        onClick = { onHelp(HelpTopic.Card(face.rank)) },
+        // What does this one do, and can I take it — asked of the card on the pile, which is
+        // the one card on the table whose answer is not the same as its rank's.
+        onClick = { onHelp(HelpTopic.Discard(face.rank, live = onOffer)) },
     )
 }
 

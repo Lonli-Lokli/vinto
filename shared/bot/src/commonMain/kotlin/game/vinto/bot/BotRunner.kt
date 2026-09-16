@@ -5,6 +5,7 @@ import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
 import game.vinto.engine.Validation
 import game.vinto.engine.isBarredFromTossIn
+import game.vinto.engine.resolvingATossIn
 import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.ActiveTossIn
@@ -561,7 +562,17 @@ class BotRunner(
             // from there — use, swap and discard all need `choosing`, and declaring needs
             // `selecting-target` — so the card is put down rather than played. Aiming it
             // instead is how a bot ends up declaring a King the engine will not accept.
-            pending.actionPhase == ActionPhase.CHOOSING_ACTION -> abandonAction(player)
+            //
+            // **Unless it is a throw waiting its turn in the queue**, which arrives looking
+            // exactly the same and is the opposite thing. The engine builds the FIRST queued
+            // card at `selecting-target` and every one after it at `choosing-action`
+            // (`clearTossInAfterActionableCard`), and nothing in `ActionValidator` reads that
+            // field — a target is legal from either, which is why a person throwing in second
+            // has always been able to aim. Only this line read it, and it put every throw after
+            // the first one down unplayed: reported from a phone as three bots tossing nines in
+            // and one nine being played.
+            pending.actionPhase == ActionPhase.CHOOSING_ACTION && !state.resolvingATossIn ->
+                abandonAction(player)
 
             else -> actionTargetAction(state, player, pending)
         }

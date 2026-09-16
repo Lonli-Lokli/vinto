@@ -1515,6 +1515,44 @@ private fun playing(current: PlayerSeatView?, view: PlayerView): Speaker = when 
     else -> Speaker.Named(current.nickname)
 }
 
+/**
+ * What a toss-in window is asking this seat, or null when it is asking nothing.
+ *
+ * The window **reopens after every card thrown into it is played** — the engine puts the
+ * sub-phase back to `toss_queue_active` and clears the ready list, so a table that has just
+ * watched three nines resolve is asked about nines again. Reported from a phone: *"I already
+ * responded that no tossin from me… rank list did not change, why?"*
+ *
+ * The engine is not what has to change. `playersReadyForNextTurn` is inside the canonical hash
+ * and not re-asking diverges **48 of the 50** parity recordings, so what the engine says stays
+ * what it says and the app stops making a person say it twice: the screen remembers the answer
+ * it gave and gives it again, unasked, when the same question comes back.
+ *
+ * Same means **same to this seat**: the ranks it is about, and this seat's own hand as this seat
+ * can see it. A thrown King widens the ranks and a Jack moves cards, and either is a genuinely
+ * new question. So is a card this seat has *learned* since — a seven thrown in to peek at your
+ * own row can turn up the second nine you are being asked about — which is why the hand is
+ * compared as the viewer sees it rather than by its size.
+ *
+ * **Never for the window this seat owns.** There the Continue button is also the last "I am not
+ * calling Vinto" before the turn passes, and a call spent silently is worse than one more press
+ * (product owner).
+ */
+fun tossInAsk(view: PlayerView): TossInAsk? {
+    val toss = view.activeTossIn ?: return null
+    if (!view.tossInIsOpen) return null
+
+    val me = view.viewerId
+    if (me in toss.playersReadyForNextTurn) return null
+    if (view.players.getOrNull(toss.originalPlayerIndex)?.id == me) return null
+
+    val hand = view.players.firstOrNull { it.id == me }?.cards ?: return null
+    return TossInAsk(ranks = toss.ranks.toList(), hand = hand)
+}
+
+/** One toss-in window as a question, so the same one asked twice can be recognised. See [tossInAsk]. */
+data class TossInAsk(val ranks: List<Rank>, val hand: List<CardView>)
+
 private fun tossInTable(view: PlayerView): Table? {
     val toss = view.activeTossIn ?: return null
     if (!view.tossInIsOpen) return null

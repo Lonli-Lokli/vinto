@@ -264,6 +264,9 @@
     <string name="header_deck_left">牌堆还剩 %1$d 张</string>
     <string name="header_deck_badge">牌堆还剩 %1$d 张——这是什么意思</string>
 
+    <string name="pile_take_live">还没人用过这张牌。轮到你时，可以拿走它来代替摸牌——但必须立刻使用它，它不能进入你的手牌。</string>
+    <string name="pile_take_spent">它的动作已经用过，不能被拿走。你仍然可以甩一张相同点数的牌跟打在它上面。</string>
+    <string name="pile_take_none">这张牌没有动作，不能被拿走。你仍然可以甩一张相同点数的牌跟打在它上面。</string>
     <string name="deck_title">关于牌堆</string>
     <string name="deck_body">还有 %1$d 张牌可以摸。\n\n牌堆摸完后，弃牌堆会重新洗回牌堆，之前所有人从弃牌堆看到的信息都将失效——包括你知道的那些。牌堆快摸完时，正是喊 Vinto 的好时机。</string>
 

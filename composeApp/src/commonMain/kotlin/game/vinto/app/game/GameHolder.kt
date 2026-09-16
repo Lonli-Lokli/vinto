@@ -17,13 +17,17 @@ import game.vinto.client.GameSession
 import game.vinto.client.Move
 import game.vinto.client.Question
 import game.vinto.client.Table
+import game.vinto.client.TossInAsk
 import game.vinto.client.rehearsal
 import game.vinto.client.tableFor
+import game.vinto.client.tossInAsk
 import game.vinto.engine.PlayerView
 import game.vinto.engine.PublicReveal
 import game.vinto.engine.tossInIsOpen
 import game.vinto.shapes.CoalitionPlan
+import game.vinto.shapes.GameAction
 import game.vinto.shapes.Lane
+import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.laneOf
 import kotlinx.coroutines.delay
@@ -120,6 +124,12 @@ class GameHolder(
      */
     private var openedOn: String? = null
 
+    /**
+     * The toss-in window this seat has already answered, so the same one asked again can be
+     * answered for them (see [tossInAsk]).
+     */
+    private var answered: TossInAsk? = null
+
     val playerId: String get() = session.playerId
     val current: PlayerView get() = view.value
     val table: Table
@@ -192,6 +202,27 @@ class GameHolder(
         val myThrow = view.tossInIsOpen && view.vintoCallerId != me && me !in view.barredFromTossIn
         val landedSince = view.discardTop?.id != openedOn
         if (myThrow && landedSince) question = Question.None
+    }
+
+    /**
+     * Gives this seat's answer again when the window comes back unchanged.
+     *
+     * Reported from a phone: *"I again see continue button I need to press, why? Rank list did
+     * not change and I already responded that no tossin from me."* The window really does
+     * reopen — each card thrown into it is played, and each one landing puts the sub-phase back
+     * and clears the ready list — and the engine cannot stop doing that: the ready list is
+     * inside the canonical hash and leaving a seat marked diverges 48 of the 50 parity
+     * recordings. So the answer is given again from here, which is a press saved rather than a
+     * rule moved: the same `PLAYER_TOSS_IN_FINISHED` reaches the engine either way.
+     *
+     * Only when [tossInAsk] says the question is the one that was answered — same ranks, same
+     * hand as this seat can see it — and never in the window this seat owns, which [tossInAsk]
+     * refuses for the Vinto call's sake.
+     */
+    suspend fun answerAgain(view: PlayerView) {
+        val asking = tossInAsk(view)
+        if (asking == null || asking != answered) return
+        act(Move.Send(GameAction.PlayerTossInFinished(PlayerIdPayload(view.viewerId))))
     }
 
     /** Puts the screen at [next], remembering the pile's top if this is the plan opening. */
@@ -291,20 +322,35 @@ class GameHolder(
             }
 
             is Move.Send -> {
-                if (sending) return
-                sending = true
-                try {
-                    refusal = session.dispatch(move.action)
-                    if (refusal == null) {
-                        question = Question.None
-                        offered = null
-                    }
-                } finally {
-                    sending = false
-                }
+                send(move.action)
             }
         }
         sawPlan(plan.value)
+    }
+
+    /**
+     * One move to the engine, with the in-flight guard around it.
+     *
+     * @see answerAgain for why a toss-in answer is remembered here rather than read back
+     *   afterwards.
+     */
+    private suspend fun send(action: GameAction) {
+        if (sending) return
+        sending = true
+        try {
+            // **Read before the dispatch.** The window this seat is answering is the one
+            // standing now, and the dispatch is what marks them ready in it — so asking
+            // afterwards answers null every time, and nothing would ever be remembered.
+            val answering = (action as? GameAction.PlayerTossInFinished)?.let { tossInAsk(view.value) }
+            refusal = session.dispatch(action)
+            if (refusal == null) {
+                if (action is GameAction.PlayerTossInFinished) answered = answering
+                question = Question.None
+                offered = null
+            }
+        } finally {
+            sending = false
+        }
     }
 }
 
@@ -360,7 +406,10 @@ fun rememberHolder(session: GameSession, opening: Question = Question.None): Gam
         session.talk.collect { holder.heard(it) }
     }
     LaunchedEffect(session) {
-        session.view.collect { holder.noticed(it) }
+        session.view.collect {
+            holder.noticed(it)
+            holder.answerAgain(it)
+        }
     }
     LaunchedEffect(session) {
         session.plan.collect { holder.sawPlan(it) }

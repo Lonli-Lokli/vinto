@@ -279,6 +279,9 @@
     <string name="header_deck_badge">%1$d nel mazzo — cosa significa</string>
 
     <!-- What the deck count means, when it is asked. -->
+    <string name="pile_take_live">Nessuno ha ancora usato questa carta. Nel tuo turno puoi prenderla al posto di pescare — ma devi giocarla subito, e non può entrare nella tua mano.</string>
+    <string name="pile_take_spent">La sua azione è già stata usata, quindi non può essere presa. Puoi comunque buttare dentro una carta corrispondente.</string>
+    <string name="pile_take_none">Questa carta non ha azione, quindi non può essere presa. Puoi comunque buttare dentro una carta corrispondente.</string>
     <string name="deck_title">Il mazzo</string>
     <string name="deck_body">%1$d carte ancora da pescare.\n\nQuando finiscono, la pila degli scarti viene rimescolata nel mazzo e tutto ciò che chiunque aveva imparato osservando quella pila smette di valere qualcosa — incluso ciò che hai imparato tu. Un round quasi senza mazzo è un round in cui chiamare Vinto.</string>
 

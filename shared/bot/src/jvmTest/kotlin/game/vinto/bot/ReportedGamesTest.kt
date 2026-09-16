@@ -1,7 +1,9 @@
 package game.vinto.bot
 
+import game.vinto.engine.ActionValidator
 import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
+import game.vinto.engine.Validation
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameRecording
 import game.vinto.shapes.GameState
@@ -9,6 +11,7 @@ import game.vinto.shapes.Rank
 import game.vinto.shapes.VintoJson
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -94,5 +97,75 @@ class ReportedGamesTest {
 
         // Before the fix this reported 898 of them, the first at the Queen swap on move 159.
         assertTrue(untrue.isEmpty(), "seats were told untrue things:\n" + untrue.take(10).joinToString("\n"))
+    }
+
+    /**
+     * Every card thrown into one window plays its action, not just the first.
+     *
+     * Reported 2026-09-16: *"there was 3 tossin 9 by 3 bots but only 1 has been played."* The
+     * recording is exactly that — Ember, Tide and Dune each throw a nine at bot-1's discard,
+     * and the pile ends with four nines on it. Only Ember's peeked at anything; the other two
+     * went down without a target.
+     *
+     * The engine is not what refuses them. It materialises the first queued card at
+     * `selecting-target` and every one after it at `choosing-action`
+     * (`clearTossInAfterActionableCard`), and `ActionValidator` does not read that field at all
+     * — a target is legal from either, which is why a *person* throwing in second has always
+     * been able to aim. It is [BotRunner.turnAction] that reads it, to catch a different case:
+     * a card drawn before a window opened comes back at `choosing-action` with nothing that can
+     * be done to it, and is put down rather than played. A queued throw looks identical and is
+     * the opposite thing.
+     *
+     * So the two are told apart by the queue itself, which is the engine's own definition of
+     * the difference (`ActionValidator.isProcessingTossInAction`, now shared as
+     * `resolvingATossIn`). Fixing it in the bot rather than in the engine is not a dodge: the
+     * phase is inside the canonical hash and moving it diverges **25 of the 50** parity
+     * recordings, half of them in the first fifty actions — which would cost most of the
+     * corpus's cross-implementation evidence to change a field nothing reads.
+     */
+    @Test
+    fun everyNineThrownIntoTheWindowPlaysItsAction() {
+        val report = recording("three-nines-tossed-in-one-played")
+
+        // The moment the report is about: the three nines are in, and the person saying they
+        // are done is what closes the window and starts the queue.
+        val lastThrow = report.actions.indexOfLast { it.action is GameAction.ParticipateInTossIn }
+        val opens = report.actions.drop(lastThrow).indexOfFirst { entry ->
+            val action = entry.action
+            action is GameAction.PlayerTossInFinished && action.payload.playerId == "human-1"
+        } + lastThrow
+        val runner = BotRunner(random = Random(1))
+        var state = replayed(report, upTo = opens + 1, runner = runner)
+
+        val throwers = checkNotNull(state.activeTossIn).queuedActions.map { it.playerId }
+        assertEquals(3, throwers.size, "the report's window does not hold three throws")
+
+        // Drive the queue to the end, exactly as a session does: one action at a time, each
+        // through the validator, each observed.
+        val aimed = mutableListOf<String>()
+        var steps = 0
+        while (state.activeTossIn?.queuedActions.orEmpty().isNotEmpty() && steps++ < STEP_LIMIT) {
+            val action = runner.nextAction(state) ?: break
+            check(ActionValidator.validate(state, action) !is Validation.Invalid) {
+                "the bot proposed ${action.type}, which the validator refuses"
+            }
+            val after = (GameEngine.reduce(state, action) as ReduceResult.Success).state
+            if (action is GameAction.SelectActionTarget) aimed += action.payload.playerId
+            runner.observe(action, state, after)
+            state = after
+        }
+
+        // Before the fix this was ["bot-1"]: the first throw aimed, and the two behind it were
+        // put down unplayed with a bare CONFIRM_PEEK.
+        assertEquals(
+            throwers,
+            aimed,
+            "a nine was thrown in and never played — the window's throws, in order, were $throwers",
+        )
+    }
+
+    private companion object {
+        /** Three peeks is six actions; the bound is only there so a defect cannot hang the suite. */
+        const val STEP_LIMIT = 40
     }
 }

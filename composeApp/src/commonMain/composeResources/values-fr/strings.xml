@@ -275,6 +275,15 @@
     <string name="header_deck_left">%1$d cartes restantes dans la pioche</string>
     <string name="header_deck_badge">%1$d dans la pioche — ce que ça signifie</string>
 
+    <!--
+      The discard pile's own line, under the rank's words: whether this card can still be taken
+      and played instead of drawing. Invisible once a card has landed — a played King and a
+      discarded one are the same picture — and it decides a turn's first choice.
+    -->
+    <string name="pile_take_live">Personne n’a encore utilisé cette carte. À votre tour, vous pouvez la prendre au lieu de piocher — mais vous devez la jouer aussitôt, et elle ne peut pas rejoindre votre main.</string>
+    <string name="pile_take_spent">Son action a déjà été utilisée, elle ne peut donc pas être prise. Vous pouvez toujours riposter par-dessus avec une carte identique.</string>
+    <string name="pile_take_none">Cette carte n’a pas d’action, elle ne peut donc pas être prise. Vous pouvez toujours riposter par-dessus avec une carte identique.</string>
+
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">La pioche</string>
     <string name="deck_body">%1$d cartes restantes à piocher.\n\nQuand elle est épuisée, la défausse est remélangée dedans, et tout ce que chacun avait appris en observant cette pile ne vaut plus rien — y compris ce que vous aviez appris. Une manche où la pioche s’épuise est une manche où il faut appeler Vinto.</string>

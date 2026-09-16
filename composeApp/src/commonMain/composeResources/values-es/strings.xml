@@ -283,6 +283,9 @@
     <string name="header_deck_left">%1$d cartas quedan en el mazo</string>
     <string name="header_deck_badge">%1$d en el mazo — qué significa</string>
 
+    <string name="pile_take_live">Nadie ha usado esta carta todavía. En tu turno puedes tomarla en vez de robar — pero debes jugarla de inmediato, y no puede pasar a tu mano.</string>
+    <string name="pile_take_spent">Su acción ya se ha usado, así que no se puede tomar. Aun así puedes lanzar una carta igual encima.</string>
+    <string name="pile_take_none">Esta carta no tiene acción, así que no se puede tomar. Aun así puedes lanzar una carta igual encima.</string>
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">El mazo</string>
     <string name="deck_body">%1$d cartas por robar.\n\nCuando se agota, la pila de descarte se mezcla de nuevo en él y todo lo que alguien había aprendido observando esa pila deja de valer nada — incluido lo que aprendiste tú. Una ronda con el mazo casi agotado es una ronda para cantar Vinto.</string>

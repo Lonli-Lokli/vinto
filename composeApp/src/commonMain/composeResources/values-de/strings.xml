@@ -264,6 +264,9 @@
     <string name="header_deck_left">%1$d Karten übrig im Stapel</string>
     <string name="header_deck_badge">%1$d im Stapel — was das bedeutet</string>
 
+    <string name="pile_take_live">Diese Karte hat noch niemand benutzt. Sie können sie an Ihrem Zug statt zu ziehen nehmen — müssen sie dann aber sofort spielen, und sie kann nicht in Ihre Hand.</string>
+    <string name="pile_take_spent">Ihre Aktion wurde bereits genutzt, daher kann sie nicht genommen werden. Eine passende Karte können Sie trotzdem darauf einwerfen.</string>
+    <string name="pile_take_none">Diese Karte hat keine Aktion, daher kann sie nicht genommen werden. Eine passende Karte können Sie trotzdem darauf einwerfen.</string>
     <string name="deck_title">Der Stapel</string>
     <string name="deck_body">%1$d Karten stehen noch zum Ziehen bereit.\n\nGeht der Stapel aus, wird der Ablagestapel wieder hineingemischt, und alles, was durch Beobachten dieses Stapels gelernt wurde, ist plötzlich wertlos — auch das eigene Wissen. Eine Runde, in der der Stapel fast leer ist, ist eine Runde, um Vinto zu rufen.</string>
 

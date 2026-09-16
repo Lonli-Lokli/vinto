@@ -348,6 +348,14 @@
     <string name="header_deck_badge">%1$d in the deck — what that means</string>
 
     <!-- What the deck count means, when it is asked. -->
+    <!--
+      The discard pile's own line, under the rank's words: whether this card can still be taken
+      and played instead of drawing. Invisible once a card has landed — a played King and a
+      discarded one are the same picture — and it decides a turn's first choice.
+    -->
+    <string name="pile_take_live">Nobody has used this card yet. On your turn you can take it instead of drawing — but you must play it at once, and it cannot go into your hand.</string>
+    <string name="pile_take_spent">Its action has been used, so it cannot be taken. You can still throw a matching card in on top of it.</string>
+    <string name="pile_take_none">This card has no action, so it cannot be taken. You can still throw a matching card in on top of it.</string>
     <string name="deck_title">The deck</string>
     <string name="deck_body">%1$d cards left to draw from.\n\nWhen it runs out, the discard pile is shuffled back into it and everything anybody had learned from watching that pile stops being worth anything — including what you learned. A round that is nearly out of deck is a round to call Vinto in.</string>
 

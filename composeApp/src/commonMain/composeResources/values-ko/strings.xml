@@ -264,6 +264,9 @@
     <string name="header_deck_left">덱에 %1$d장 남음</string>
     <string name="header_deck_badge">덱에 %1$d장 — 무슨 뜻인가요</string>
 
+    <string name="pile_take_live">이 카드는 아직 아무도 쓰지 않았어요. 자기 차례에 뽑는 대신 이 카드를 가져올 수 있어요 — 단, 바로 사용해야 하고 손에 넣을 수는 없어요.</string>
+    <string name="pile_take_spent">이미 능력을 사용했기 때문에 가져올 수 없어요. 그래도 같은 숫자의 카드는 그 위에 던질 수 있어요.</string>
+    <string name="pile_take_none">이 카드는 능력이 없어서 가져올 수 없어요. 그래도 같은 숫자의 카드는 그 위에 던질 수 있어요.</string>
     <string name="deck_title">덱</string>
     <string name="deck_body">뽑을 수 있는 카드가 %1$d장 남았어요.\n\n다 떨어지면 버림 더미가 다시 덱으로 섞여 들어가고, 그 더미를 지켜보며 알게 된 건 — 당신이 알아낸 것까지 포함해서 — 더 이상 쓸모가 없어져요. 덱이 거의 바닥나는 라운드는 Vinto를 외치기 좋은 라운드예요.</string>
 

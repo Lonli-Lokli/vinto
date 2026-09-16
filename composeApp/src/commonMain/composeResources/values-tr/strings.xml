@@ -277,6 +277,9 @@
     <string name="header_deck_left">Destede %1$d kart kaldı</string>
     <string name="header_deck_badge">Destede %1$d — bunun anlamı</string>
 
+    <string name="pile_take_live">Bu kartı henüz kimse kullanmadı. Sıra sendeyken çekmek yerine onu alabilirsin — ama hemen oynamak zorundasın, eline gidemez.</string>
+    <string name="pile_take_spent">Eylemi kullanıldı, bu yüzden alınamaz. Yine de üzerine eşleşen bir kart atabilirsin.</string>
+    <string name="pile_take_none">Bu kartın eylemi yok, bu yüzden alınamaz. Yine de üzerine eşleşen bir kart atabilirsin.</string>
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">Deste</string>
     <string name="deck_body">Çekilecek %1$d kart kaldı.\n\nBittiğinde, atım destesi tekrar karılır ve o desteyi izleyerek öğrenilen her şey — senin öğrendiğin dahil — değerini kaybeder. Destesi neredeyse tükenen bir tur, Vinto demek için bir turdur.</string>

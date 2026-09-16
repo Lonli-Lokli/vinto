@@ -279,6 +279,10 @@
     <string name="header_deck_left">山札に残り%1$d枚</string>
     <string name="header_deck_badge">山札に%1$d枚 — その意味</string>
 
+    <string name="pile_take_live">このカードはまだ誰も使っていません。あなたの番なら、山札から引く代わりに取ることができます — ただしすぐに使わなければならず、手札に加えることはできません。</string>
+    <string name="pile_take_spent">すでにアクションが使われているため、取ることはできません。同じランクのカードなら、その上に投げ込むことは引き続きできます。</string>
+    <string name="pile_take_none">このカードにはアクションがないため、取ることはできません。同じランクのカードなら、その上に投げ込むことは引き続きできます。</string>
+
     <!-- What the deck count means, when it is asked. -->
     <string name="deck_title">山札</string>
     <string name="deck_body">引ける残り%1$dです。\n\nなくなると捨て札の山がシャッフルされて山札に戻り、その山を見て学んだことはすべて — あなたが学んだことも含めて — 意味を失います。山札が残り少ないラウンドはVintoを宣言するタイミングです。</string>
