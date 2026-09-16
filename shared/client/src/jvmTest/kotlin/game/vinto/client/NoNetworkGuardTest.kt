@@ -88,6 +88,18 @@ class NoNetworkGuardTest {
 
                 var moves = 0
                 while (!session.isOver && moves++ < MOVE_LIMIT) {
+                    // A bot calling Vinto opens this seat's window to confer with the rest of
+                    // the coalition, and the table holds there until the person closes it.
+                    // That is not a `GameAction` and no board of playable seats represents it,
+                    // so the runner proposes the next bot's draw instead, the session refuses
+                    // an action from a seat that is not this one, and the drive stops a dozen
+                    // moves short of scoring. Which bot calls, and when, is exactly what a
+                    // change to the bot moves around.
+                    if (session.view.value.conferMsRemaining != null) {
+                        session.doneConferring()
+                        continue
+                    }
+
                     val action = person.nextAction(session.state.everySeatPlayable()) ?: break
                     if (session.dispatch(action) != null) break
                 }

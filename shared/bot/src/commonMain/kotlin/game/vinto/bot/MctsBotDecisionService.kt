@@ -257,7 +257,7 @@ class MctsBotDecisionService(
         var expanded = false
 
         while (!expanded && !StateTransition.isTerminal(state)) {
-            val legal = MoveGenerator.generateMoves(state)
+            val legal = MoveGenerator.generateMoves(state, aims = aimsAt(node.visits))
             val untried = node.untried(legal)
             val next = when {
                 legal.isEmpty() -> null
@@ -275,6 +275,32 @@ class MctsBotDecisionService(
 
         return node to state
     }
+
+    /**
+     * Progressive widening: how many of a node's aims are on the table, given how often the
+     * search has been here (Coulom 2007; Chaslot, Winands et al. 2008).
+     *
+     * A card that names two cards at a four-handed table has a couple of dozen aims, and a
+     * node carries the *mean* of what it offers. Put all of them up at once and the handful
+     * that move points are averaged with the rest, which prices the card itself below a plain
+     * draw — a Jack left free on the pile, a Queen aimed anywhere but at the Joker. Cutting
+     * the list instead would be the other error: a bound that never lifts is a move the
+     * search cannot reach however long it runs.
+     *
+     * So the list opens with the visits. [MoveGenerator] hands its aims over best first and
+     * this decides how far down to read.
+     *
+     * Measured, because it is the kind of thing that sounds like tuning. Taking the bound off
+     * — every aim up from the first visit — costs the **hard** bot the most and costs it a
+     * lot: over the twelve seeds of `TournamentTest` its mean hand goes from 7.56 to 11.85,
+     * which is worse than easy's, and at a mixed table it stops finishing lowest. That is the
+     * dilution, and it lands hardest on hard for the reason it is hard — 5,000 iterations
+     * spread over every aim at every node buy less than 2,000 spent on the aims worth
+     * comparing. It also runs about twice as long, which a Durable Object's CPU budget and a
+     * phone both notice.
+     */
+    private fun aimsAt(visits: Int): Int =
+        maxOf(MINIMUM_AIMS, visits / SAMPLES_PER_AIM)
 
     private fun rollout(start: MctsGameState): MctsGameState {
         var state = start
@@ -460,6 +486,21 @@ class MctsBotDecisionService(
         )
     }
 }
+
+/**
+ * A node always gets to compare *something*; one aim is a choice the search never makes.
+ */
+private const val MINIMUM_AIMS = 2
+
+/**
+ * An aim is added once every aim already up could have had this many samples.
+ *
+ * The bound is a *sample* budget rather than a width, which is the only form of it that says
+ * anything true: a node cannot tell two aims apart on a handful of rollouts each, so opening a
+ * third before it can is how the mean gets diluted. At the budgets in [MCTS_DIFFICULTY_CONFIGS]
+ * a node the search commits to reads well down its list, and one it visits twice reads two.
+ */
+private const val SAMPLES_PER_AIM = 100
 
 /**
  * There is exactly one bot engine.

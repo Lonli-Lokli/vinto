@@ -4,7 +4,8 @@ import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -33,6 +34,9 @@ class FinalRoundIsWatchedTest {
         val session = LocalGameSession(seed = 20260819L, difficulty = Difficulty.EASY)
         val me = session.playerId
 
+        val batches = mutableListOf<List<Frame>>()
+        backgroundScope.launch { session.frames.collect { batches += it } }
+
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
         session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
@@ -52,8 +56,10 @@ class FinalRoundIsWatchedTest {
         }
         assertTrue(called, "never managed to call Vinto, so this case tested nothing")
 
-        // `frames` replays its last batch, which is the one the call produced.
-        val batch = session.frames.first()
+        // Collected rather than taken off the front: a batch is handed out once and in order
+        // (`GameSession.frames`), so the call's own batch is the last of them, not the first.
+        runCurrent()
+        val batch = batches.last()
 
         assertTrue(session.isOver, "the call did not finish the round: ${session.state.phase}")
         assertTrue(batch.isNotEmpty(), "the call produced no frames at all")

@@ -4,6 +4,8 @@ import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,12 +26,18 @@ class FramesCarryNarrationTest {
         val session = LocalGameSession(seed = 21L, difficulty = Difficulty.EASY)
         val me = session.playerId
 
+        // Collected rather than read off a cache: a batch is handed out once, to whoever is
+        // watching when it happens (`GameSession.frames`).
+        val batches = mutableListOf<List<Frame>>()
+        backgroundScope.launch { session.frames.collect { batches += it } }
+
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
         session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
         session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
 
-        val onFrames = session.frames.replayCache.flatten().flatMap { it.said }
+        runCurrent()
+        val onFrames = batches.last().flatMap { it.said }
         assertTrue(onFrames.isNotEmpty(), "a batch of moves carried no narration at all")
         assertEquals(
             session.log.value.takeLast(onFrames.size),

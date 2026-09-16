@@ -23,13 +23,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -637,12 +640,12 @@ class RemoteGameSession internal constructor(
     )
     override val events: SharedFlow<SessionEvent> = _events.asSharedFlow()
 
-    private val _frames = MutableSharedFlow<List<Frame>>(
-        replay = 1,
-        extraBufferCapacity = BUFFER,
+    // Handed out once, never replayed — see `GameSession.frames`.
+    private val _frames = Channel<List<Frame>>(
+        capacity = BUFFER,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
-    override val frames: SharedFlow<List<Frame>> = _frames.asSharedFlow()
+    override val frames: Flow<List<Frame>> = _frames.receiveAsFlow()
 
     // Nobody narrates an online game yet: narration reads full states, and a client has
     // only views. The strip stays empty rather than wrong.
@@ -870,7 +873,7 @@ class RemoteGameSession internal constructor(
         }
 
         _view.value = landing
-        if (batch.isNotEmpty()) _frames.tryEmit(batch)
+        if (batch.isNotEmpty()) _frames.trySend(batch)
     }
 
     /** A frame that lands the table somewhere without narrating the journey. */

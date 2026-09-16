@@ -10,6 +10,7 @@ import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PlayerIdPayload
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -59,6 +60,10 @@ class RemoteSessionTest {
         val session = assertNotNull(wire.room.session.value, "a deal creates the session")
         assertEquals(wire.dealtView.viewerId, session.playerId)
 
+        // Collected rather than read off a cache: a batch is handed out once (`GameSession.frames`).
+        val batches = mutableListOf<List<Frame>>()
+        backgroundScope.launch { session.frames.collect { batches += it } }
+
         // Two bot moves arrive, each with its per-event view: two frames, in order.
         val other = wire.dealtView.players[1].id
         wire.deliver(
@@ -73,8 +78,9 @@ class RemoteSessionTest {
         )
         wire.settle()
 
+        wire.settled()
         assertEquals(2, session.cursor, "the cursor tracks the log")
-        val batch = session.frames.replayCache.last()
+        val batch = batches.last()
         assertEquals(2, batch.size, "one frame per event — this is what the stage animates")
         assertTrue(
             session.events.replayCache.any { it is SessionEvent.BotsPlayed },
@@ -127,6 +133,8 @@ class RemoteSessionTest {
         wire.settle()
         val session = assertNotNull(wire.room.session.value)
         val cursorBefore = session.cursor
+        val batches = mutableListOf<List<Frame>>()
+        backgroundScope.launch { session.frames.collect { batches += it } }
 
         // The socket dies mid-game. The loop backs off, reconnects, and joins as the token.
         wire.socket.fail(RuntimeException("tunnel"))
@@ -151,9 +159,9 @@ class RemoteSessionTest {
                 ServerMessage.Sync(events = emptyList(), nextIndex = 41, view = wire.dealtView),
             ),
         )
-        wire.settle()
+        wire.settled()
         assertEquals(41, session.cursor)
-        assertEquals(1, session.frames.replayCache.last().size, "the catch-up is one frame")
+        assertEquals(1, batches.last().size, "the catch-up is one frame")
 
         wire.room.leave()
     }

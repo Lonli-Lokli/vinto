@@ -4,6 +4,7 @@ import game.vinto.engine.ActionValidator
 import game.vinto.engine.GameEngine
 import game.vinto.engine.ReduceResult
 import game.vinto.engine.Validation
+import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameRecording
 import game.vinto.shapes.GameState
@@ -161,6 +162,67 @@ class ReportedGamesTest {
             throwers,
             aimed,
             "a nine was thrown in and never played — the window's throws, in order, were $throwers",
+        )
+    }
+
+    /**
+     * An unused Jack on the pile, and a Joker the bot has watched go into somebody's row.
+     *
+     * Reported 2026-09-16: *"when I drawn joker and swapped blindly with jack, bot did not
+     * play jack to swap my known joker with his known or unknown card."* The report is that
+     * exactly. The human draws the Joker face-up, swaps it into position 2 and puts the Jack
+     * it displaced on the pile unplayed; every seat watches both halves, so Ember starts its
+     * turn knowing where a −1 is and looking at a free Jack that could fetch it. It drew from
+     * the deck instead.
+     *
+     * What was wrong was the *shortlist*, not the valuation. A Jack was offered three own
+     * positions against three of each opponent's — twenty-seven aims, of which three fetched
+     * the Joker and the rest traded one unread slot for another. A node in the tree carries
+     * the mean of what it offers, so two dozen coin flips priced taking the Jack below drawing
+     * a card, and the search spent its iterations on the deck. With the shortlist ordered by
+     * what the mover can price and cut to [MoveGenerator]'s own budget, taking the Jack wins
+     * every seed here by a wide margin.
+     *
+     * **Played at hard**, though the report is a moderate game, and the difference is the
+     * point: moderate records a card it is shown three times in four
+     * (`DIFFICULTY_CONFIGS`), so on two of these five seeds Ember never wrote the Joker down
+     * at all and no search could have fetched it. That is the memory model, and it is a
+     * separate question from this one. Hard is where "known" means known.
+     */
+    @Test
+    fun aJackLeftOnThePileIsTakenForAKnownJoker() {
+        val report = recording("jack-on-the-pile-left-for-a-known-joker")
+        val botsTurn = report.actions.indexOfFirst { entry ->
+            val action = entry.action
+            action is GameAction.DrawCard && action.payload.playerId == "bot-1"
+        }
+
+        val drewInstead = mutableListOf<String>()
+        for (seed in 1..5) {
+            val runner = BotRunner(Difficulty.HARD, Random(seed))
+            val state = replayed(report, upTo = botsTurn, runner = runner)
+
+            val top = checkNotNull(state.discardPile.peekTop()) { "the report has an empty pile" }
+            assertEquals(Rank.JACK, top.rank, "the report's pile does not show a Jack")
+            assertTrue(!top.played, "the report's Jack has already been played")
+            assertEquals(
+                Rank.JOKER,
+                state.players.first { it.id == "bot-1" }.opponentKnowledge
+                    ?.get("human-1")
+                    ?.knownCards
+                    ?.get(2)
+                    ?.rank,
+                "the report's bot has not been shown the Joker",
+            )
+
+            val next = runner.nextAction(state)
+            if (next !is GameAction.PlayDiscard) drewInstead += "seed $seed: $next"
+        }
+
+        assertTrue(
+            drewInstead.isEmpty(),
+            "a free Jack was left on the pile with a known Joker on the table:\n" +
+                drewInstead.joinToString("\n"),
         )
     }
 

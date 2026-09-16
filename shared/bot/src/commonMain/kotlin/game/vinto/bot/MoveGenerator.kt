@@ -16,11 +16,24 @@ import game.vinto.shapes.isActionable
  *    from two *different* players; the coalition may not touch the Vinto caller's cards in
  *    the final round; and Vinto is called at the end of a turn, not the start. A generator
  *    that proposes an illegal move produces a bot the engine rejects mid-game.
- *  - **Orderings**, which are a search budget. A Jack could pair any of its owner's cards
- *    with any card at the table; the shortlist below keeps the pairs a player would actually
- *    consider — the dearest card it holds against the cheapest it has seen, and a blind slot
- *    against a blind slot — so the iterations go on comparing them rather than enumerating
- *    them. The shortlist orders candidates; the search chooses among them.
+ *  - **Orderings**, which are a prior. An aimed card could pair any of its owner's cards with
+ *    any card at the table, and the search cannot afford to treat all of those as equals. So
+ *    the aims come out **best first**, priced in the one currency the mover actually has: the
+ *    value of a card it remembers, and the deck's mean for a slot it has not read.
+ *
+ * The ordering is a prior, not a decision — [generateMoves] takes an `aims` budget and the
+ * search raises it as it visits a node (`MctsBotDecisionService.aimsAt`), so a node the
+ * search keeps coming back to ends up looking at every aim. What the prior buys is the first
+ * few visits, which at 2,000 iterations across a table of four is most of them.
+ *
+ * **Why this is not a detail.** A node carries the *mean* of what it offers, not the best of
+ * it, so an aim list padded with trades between two slots nobody has read prices its own
+ * parent down. That is how a free Jack was left on the pile with a Joker face-up in
+ * somebody's row, and how a Queen was aimed anywhere but at the Joker it had watched land:
+ * both reported from a phone, both in `ReportedGamesTest`. The Queen's was the blunter of
+ * the two — its targets were "every unread slot, then the cards I know", cut to three, and a
+ * five-card hand has four unread slots, so a card the bot *had* read could not be aimed at
+ * at all.
  */
 object MoveGenerator {
 
@@ -30,7 +43,11 @@ object MoveGenerator {
     /** Own and opposing positions kept per Jack or Queen, each side. */
     private const val SHORTLIST = 3
 
-    fun generateMoves(state: MctsGameState): List<MctsMove> {
+    /**
+     * @param aims how many of an action's targets to offer, best first. Unbounded for a
+     *   caller that wants the whole set; the search raises it with a node's visit count.
+     */
+    fun generateMoves(state: MctsGameState, aims: Int = Int.MAX_VALUE): List<MctsMove> {
         val currentPlayer = state.currentPlayer ?: return emptyList()
 
         if (state.awaitingVintoDecision) return endOfTurnMoves(state, currentPlayer)
@@ -39,7 +56,7 @@ object MoveGenerator {
         // to sit it out.
         if (state.isTossInPhase) return tossInMoves(state, currentPlayer)
 
-        state.pendingCard?.let { return pendingCardMoves(state, currentPlayer, it) }
+        state.pendingCard?.let { return pendingCardMoves(state, currentPlayer, it, aims) }
 
         val moves = mutableListOf<MctsMove>()
         if (state.deckSize > 0) moves += MctsMove(MctsMoveType.DRAW, currentPlayer.id)
@@ -77,10 +94,11 @@ object MoveGenerator {
         state: MctsGameState,
         currentPlayer: MctsPlayerState,
         pending: Card,
+        aims: Int,
     ): List<MctsMove> {
         val moves = mutableListOf<MctsMove>()
         val action = getCardAction(pending.rank).takeIf { pending.rank.isActionable() && !pending.played }
-        if (action != null) moves += generateActionMoves(state, action)
+        if (action != null) moves += generateActionMoves(state, action, aims)
 
         if (state.pendingOrigin == PendingOrigin.DRAWN) {
             for (position in 0 until currentPlayer.cardCount) {
@@ -129,26 +147,38 @@ object MoveGenerator {
         return moves
     }
 
-    fun generateActionMoves(state: MctsGameState, actionType: CardAction): List<MctsMove> {
+    fun generateActionMoves(
+        state: MctsGameState,
+        actionType: CardAction,
+        aims: Int = Int.MAX_VALUE,
+    ): List<MctsMove> {
         val currentPlayer = state.currentPlayer ?: return emptyList()
         val rank = state.pendingCard?.rank
 
-        return when (actionType) {
-            CardAction.PEEK_OWN -> unknownPositions(currentPlayer).map { position ->
-                aimed(currentPlayer, rank, listOf(MctsActionTarget(currentPlayer.id, position)))
-            }
+        return aimsFor(state, currentPlayer, rank, actionType).take(aims)
+    }
 
-            CardAction.PEEK_OPPONENT -> targetableOpponents(state, currentPlayer).flatMap { opponent ->
-                unknownPositions(opponent).map { position ->
-                    aimed(currentPlayer, rank, listOf(MctsActionTarget(opponent.id, position)))
-                }
-            }
-
-            CardAction.SWAP_CARDS -> twoPlayerMoves(state, currentPlayer, peekFirst = false)
-            CardAction.PEEK_AND_SWAP -> twoPlayerMoves(state, currentPlayer, peekFirst = true)
-            CardAction.FORCE_DRAW -> forceDrawMoves(state, currentPlayer)
-            CardAction.DECLARE_ACTION -> kingMoves(state, currentPlayer)
+    /** Every aim this action could take, best first. The budget is applied by the caller. */
+    private fun aimsFor(
+        state: MctsGameState,
+        currentPlayer: MctsPlayerState,
+        rank: Rank?,
+        actionType: CardAction,
+    ): List<MctsMove> = when (actionType) {
+        CardAction.PEEK_OWN -> unknownPositions(currentPlayer).map { position ->
+            aimed(currentPlayer, rank, listOf(MctsActionTarget(currentPlayer.id, position)))
         }
+
+        CardAction.PEEK_OPPONENT -> targetableOpponents(state, currentPlayer).flatMap { opponent ->
+            unknownPositions(opponent).map { position ->
+                aimed(currentPlayer, rank, listOf(MctsActionTarget(opponent.id, position)))
+            }
+        }
+
+        CardAction.SWAP_CARDS -> twoPlayerMoves(state, currentPlayer, peekFirst = false)
+        CardAction.PEEK_AND_SWAP -> twoPlayerMoves(state, currentPlayer, peekFirst = true)
+        CardAction.FORCE_DRAW -> forceDrawMoves(state, currentPlayer)
+        CardAction.DECLARE_ACTION -> kingMoves(state, currentPlayer)
     }
 
     private fun aimed(
@@ -168,14 +198,22 @@ object MoveGenerator {
 
     /**
      * Jack and Queen both take two cards from two *different* players — a rule, not a
-     * preference. The shortlist pairs the mover's dearest known cards (or a blind slot, which
-     * the search prices by sampling it) against the cheapest cards it has seen in each
-     * opponent's hand, plus that opponent's blind slots; the Queen, which looks before it
-     * trades, prefers blind slots on both sides.
+     * preference — and both are aimed by the same question: **what would this trade be
+     * worth?** Every slot is priced at the card the mover remembers there, or at the deck's
+     * mean where it has read nothing, and the pairs come out by what they gain. So the
+     * cheapest card the mover has seen in somebody's row is the first target on the table,
+     * and the dearest card it can name is the first thing it offers for it.
      *
-     * The Jack also gets the one legitimate "no": aim it and leave both cards where they
-     * are. A Jack that was tossed in has to be aimed, and a search never offered the skip
-     * could not choose it when every trade on the table loses points.
+     * The two cards are alike enough to share the ordering and differ in one place only. A
+     * Jack is blind: it takes what it aimed at, so its gain is the price difference, and it
+     * gets the one legitimate "no" — aim it and leave both cards where they are, ranked at
+     * the nothing it changes, which is what a search picks when every trade on the table
+     * loses. A Queen looks first and only trades when the trade sheds points, so it cannot
+     * lose by aiming and its downside is floored at zero.
+     *
+     * [SHORTLIST] bounds each *side* rather than the pairs, and with the sides ordered it
+     * cannot cut the pair that matters: the dearest card the mover holds against the
+     * cheapest it has seen is pair one by construction. What it drops is the middle.
      */
     private fun twoPlayerMoves(
         state: MctsGameState,
@@ -183,35 +221,81 @@ object MoveGenerator {
         peekFirst: Boolean,
     ): List<MctsMove> {
         val rank = state.pendingCard?.rank
-        val ownPositions = if (peekFirst) {
-            unknownPositions(currentPlayer) + knownPositionsByValue(currentPlayer).reversed()
-        } else {
-            knownPositionsByValue(currentPlayer).reversed() + unknownPositions(currentPlayer)
-        }.take(SHORTLIST)
+        val unread = averageRemainingCardValue(state.botMemory)
+        fun priceOf(player: MctsPlayerState, position: Int) =
+            price(state, currentPlayer, player, position, unread)
 
-        val moves = mutableListOf<MctsMove>()
+        // Dearest first on the mover's side, cheapest first on the other: the two ends of
+        // the same ordering, which is what a trade is.
+        val ownPositions = (0 until currentPlayer.cardCount)
+            .sortedByDescending { priceOf(currentPlayer, it) }
+            .take(SHORTLIST)
+
+        val aims = mutableListOf<Pair<MctsMove, Double>>()
         for (opponent in targetableOpponents(state, currentPlayer)) {
-            val theirPositions = if (peekFirst) {
-                unknownPositions(opponent) + knownPositionsByValue(opponent)
-            } else {
-                // Cheapest first: a blind swap *receives* this card, so the Joker the bot has
-                // seen in an opponent's hand is the whole point of playing the Jack.
-                knownPositionsByValue(opponent) + unknownPositions(opponent)
-            }.take(SHORTLIST)
+            val theirPositions = (0 until opponent.cardCount)
+                .sortedBy { priceOf(opponent, it) }
+                .take(SHORTLIST)
 
-            for (own in ownPositions) {
-                for (theirs in theirPositions) {
+            for (theirs in theirPositions) {
+                for (own in ownPositions) {
                     val targets = listOf(
                         MctsActionTarget(currentPlayer.id, own),
                         MctsActionTarget(opponent.id, theirs),
                     )
-                    moves += aimed(currentPlayer, rank, targets, shouldSwap = true)
+                    val gain = priceOf(currentPlayer, own) - priceOf(opponent, theirs)
+                    aims += aimed(currentPlayer, rank, targets, shouldSwap = true) to
+                        if (peekFirst) maxOf(0.0, gain) else gain
                 }
             }
         }
 
-        if (!peekFirst) moves.firstOrNull()?.let { moves += it.copy(shouldSwap = false) }
-        return moves
+        // The Jack's "no", priced at what it does: nothing. It outranks every trade that
+        // loses and is outranked by every trade that gains, which is the whole of the rule.
+        if (!peekFirst) {
+            aims.firstOrNull()?.let { (best, _) -> aims += best.copy(shouldSwap = false) to 0.0 }
+        }
+
+        // Stable, so equal trades keep the order the sides put them in and one position
+        // always produces one list.
+        return aims.sortedByDescending { it.second }.map { it.first }
+    }
+
+    /**
+     * What [mover] can price [player]'s slot at — a card it can actually see, or the average
+     * of what is left in the deck, which is the number an unread card is given in
+     * [StateTransition.handTotal] and in the rollout alike.
+     *
+     * **Who is looking decides what can be seen, and getting that wrong costs the bot the
+     * board.** A move is generated for whoever is to move in the sampled world, and
+     * `MctsPlayerState.knownCards` means one thing only: what the *searching* bot knows. Read
+     * as though it were the mover's own knowledge it hands every rival a window onto the bot's
+     * row — so in the search the whole table could see the bot's cards, and every Jack and
+     * Queen dealt to an opponent came straight for the best of them. A Joker the bot had just
+     * won was gone again within a turn in 29% of rollouts, and the branch that won it priced
+     * out below drawing a card. That is why *more* search made it worse: the deeper the tree
+     * went, the more clairvoyant opponents it played against.
+     *
+     * So each seat sees what the rest of the model already grants it — `MutableMctsState.knows`
+     * and the rollout's `seenPositions` draw this same line. The bot
+     * sees by memory, of anyone. Everyone else sees the cards the table has watched them look
+     * at, in their own hand, and nothing whatever of anybody else's.
+     */
+    private fun price(
+        state: MctsGameState,
+        mover: MctsPlayerState,
+        player: MctsPlayerState,
+        position: Int,
+        unread: Double,
+    ): Double {
+        val seen = when {
+            mover.id == state.botPlayerId -> knownCards(player)[position]
+            mover.id != player.id -> null
+            position in player.ownerKnows ->
+                state.hiddenCards[state.hiddenCardKey(player.id, position)]
+            else -> null
+        }
+        return seen?.value?.toDouble() ?: unread
     }
 
     /**
@@ -329,8 +413,4 @@ object MoveGenerator {
             val memory = player.knownCards[position]
             memory == null || memory.confidence <= TRUSTED_CONFIDENCE
         }
-
-    /** Known positions, cheapest first. */
-    fun knownPositionsByValue(player: MctsPlayerState): List<Int> =
-        knownCards(player).entries.sortedBy { it.value.value }.map { it.key }
 }

@@ -6,6 +6,7 @@ import game.vinto.shapes.CoalitionPlan
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.TableTalk
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -80,8 +81,16 @@ interface GameSession {
      * point of design C1: a screen animates *frames*, and whether they were computed from a
      * local reducer or parsed off a socket is not its business. Lifting it is what let
      * `GameHolder` be typed to the interface and the same table serve both games.
+     *
+     * **Handed out once.** A batch waits for a stage to take it and is then gone, which is
+     * what tells this stream apart from [log] beside it: the log is what has been *said* and
+     * is replayed to whoever arrives, a frame is a thing that *happens*. Handing one to a
+     * second subscriber is showing the past as the present — a player who opened the settings
+     * mid-round and came back watched the bot's last turn play out again, minutes after it
+     * had (`ComingBackDoesNotReplayTest`). Waiting is still fine: a stage built a moment after
+     * the first move gets everything it missed, in order.
      */
-    val frames: SharedFlow<List<Frame>>
+    val frames: Flow<List<Frame>>
 
     /** What has happened lately, in words, newest last. May stay empty where nobody narrates. */
     val log: StateFlow<List<Say>>

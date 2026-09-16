@@ -1,6 +1,8 @@
 package game.vinto.client
 
 import game.vinto.shapes.Difficulty
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -19,13 +21,18 @@ class SelfPlayTest {
     fun aSessionPlaysItselfToScoring() = runTest(timeout = LONG) {
         val session = LocalGameSession(seed = SEED, difficulty = Difficulty.EASY)
 
+        // The drive is synchronous on this dispatcher, so the collector gets no turn until it
+        // is over — which is fine, because a batch waits in the stream until somebody takes
+        // it and is then gone (`GameSession.frames`).
+        val batches = mutableListOf<List<Frame>>()
+        backgroundScope.launch { session.frames.collect { batches += it } }
+
         assertTrue(session.playItselfOut(seed = SEED), "the game never reached its scoring")
         assertTrue(session.isOver, "over means over")
 
-        // The replay cache rather than a collector: the drive is synchronous on this
-        // dispatcher, so a launched collector would not get a turn until it was over anyway.
+        runCurrent()
         assertTrue(
-            session.frames.replayCache.flatten().isNotEmpty(),
+            batches.flatten().isNotEmpty(),
             "a played game emitted no frames for the screen",
         )
     }

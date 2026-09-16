@@ -31,12 +31,15 @@ import game.vinto.shapes.lockingLaneOf
 import game.vinto.shapes.retired
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
@@ -156,12 +159,11 @@ class LocalGameSession(
      * through the bots' turns at the pace it draws them rather than jumping to the end and
      * narrating backwards.
      */
-    private val _frames = MutableSharedFlow<List<Frame>>(
-        replay = 1,
-        extraBufferCapacity = EVENT_BUFFER,
+    private val _frames = Channel<List<Frame>>(
+        capacity = EVENT_BUFFER,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
-    override val frames: SharedFlow<List<Frame>> = _frames.asSharedFlow()
+    override val frames: Flow<List<Frame>> = _frames.receiveAsFlow()
 
     /**
      * What the table has said. Replayed generously, because a strip that subscribes a moment
@@ -390,7 +392,7 @@ class LocalGameSession(
         // The view first here, unlike `dispatch`'s tail: what it publishes is the *window
         // closing*, which is this seat's own answer and must not wait on a bot's search.
         _view.value = myView()
-        playBots().takeIf { it.isNotEmpty() }?.let { _frames.tryEmit(it) }
+        playBots().takeIf { it.isNotEmpty() }?.let { _frames.trySend(it) }
         return null
     }
 
@@ -479,7 +481,7 @@ class LocalGameSession(
         // The screen animates each batch as it arrives (`CardStage` collects them), and
         // `doneConferring` above already emits the bots' turns as a batch of their own, so this
         // is the shape the stream was built for rather than a new one.
-        _frames.tryEmit(seen.toList())
+        _frames.trySend(seen.toList())
 
         val bots = playBots()
 
@@ -488,7 +490,7 @@ class LocalGameSession(
         // that would jump it past every bot's turn arrives. It narrows a race rather than
         // closing one — the hold in `CardStage` is what actually closes it, and
         // `ThinkingAheadTest` is the report both halves answer.
-        if (bots.isNotEmpty()) _frames.tryEmit(bots)
+        if (bots.isNotEmpty()) _frames.trySend(bots)
         // After the bots, because opening the confer window is something `playBots` decides.
         _view.value = myView()
         return null

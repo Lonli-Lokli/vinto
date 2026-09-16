@@ -17,6 +17,7 @@ import game.vinto.shapes.GameAction
 import game.vinto.shapes.PlayerIdPayload
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.yield
 
 /**
  * A room's wire, scripted: the transport faked and nothing else.
@@ -137,6 +138,19 @@ internal class Wire(
 
     /** Lets the room's loop drain what the wire delivered. */
     fun settle() = scope.testScheduler.advanceUntilIdle()
+
+    /**
+     * The same, plus a turn for anything *collecting* what the loop produced.
+     *
+     * `advanceUntilIdle` is called from inside the test coroutine, which is itself a task on
+     * that scheduler — so a collector waiting on a channel is resumed but does not get to run
+     * until the body suspends. Frames are handed out once now (`GameSession.frames`), so a
+     * test that watches them has to be one that suspends.
+     */
+    suspend fun settled() {
+        settle()
+        yield()
+    }
 
     /** Runs what is ready without advancing the clock — for steps holding a timeout. */
     fun pump() = scope.testScheduler.runCurrent()

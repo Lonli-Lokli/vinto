@@ -205,6 +205,48 @@ class SwapTargetSelectionTest {
         assertTrue(botTargets(decision).isNotEmpty())
     }
 
+    /**
+     * Reported 2026-09-16, a turn after the Jack in
+     * `ReportedGamesTest.aJackLeftOnThePileIsTakenForAKnownJoker`: *"similar problem happened
+     * later in the game with queen — joker was not the target for exchange."*
+     *
+     * A five-card hand is the whole of it. The Queen's targets used to be every slot the bot
+     * had **not** read, then the cards it had, cut to the shortlist — and four of five slots
+     * are unread in a hand nobody has worked on yet, so the shortlist filled up with blind
+     * slots before it reached a single card the bot could name. The one card on the table it
+     * had watched land could not be aimed at at all, and no amount of searching recovers a
+     * target that was never offered.
+     *
+     * The sibling test above hid it for the same reason it passed: it deals the human two
+     * cards, so there is one unread slot and the Joker always fit.
+     */
+    @Test
+    fun aQueenIsAimedAtAKnownJokerAcrossAFullHand() {
+        val joker = testCard(Rank.JOKER, "human-joker")
+        val decision = service().selectActionTargets(
+            contextFor(
+                actionCard = testCard(Rank.QUEEN, "queen-card"),
+                botCards = List(5) { testCard(Rank.TEN, "bot-card-$it") },
+                botKnown = listOf(0, 1, 2, 3, 4),
+                humanCards = listOf(
+                    testCard(Rank.FOUR, "human-card-0"),
+                    testCard(Rank.SIX, "human-card-1"),
+                    joker,
+                    testCard(Rank.KING, "human-card-3"),
+                    testCard(Rank.QUEEN, "human-card-4"),
+                ),
+                knownOfHuman = mapOf(2 to joker),
+            ),
+        )
+
+        assertTwoTargetsFromDifferentPlayers(decision)
+        assertTrue(
+            decision.targets.any { it.playerId == humanId && it.position == 2 },
+            "the Queen passed over the one card it had been shown: aimed at " +
+                decision.targets.joinToString { "${it.playerId}@${it.position}" },
+        )
+    }
+
     @Test
     fun aQueenIncludesTheBotWhenItStillHasABlindSpot() {
         val decision = service().selectActionTargets(
