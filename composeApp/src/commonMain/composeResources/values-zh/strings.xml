@@ -253,6 +253,10 @@
     <string name="talk_worse">您说这会让您更吃亏。</string>
     <string name="talk_worse_they">%1$s说这会让自己更吃亏。</string>
     <string name="table_see_score">查看得分</string>
+    <string name="table_round_you_won">本轮获胜</string>
+    <string name="table_round_you_lost">本轮落败</string>
+    <string name="table_round_points_you_called">您获得 %1$s，其他玩家各获得 %2$s。</string>
+    <string name="table_round_points_they_called">%1$s获得 %2$s，其他玩家各获得 %3$s。</string>
 
     <string name="header_support">请我喝杯咖啡</string>
     <string name="header_report">反馈问题</string>

@@ -325,6 +325,14 @@
     <string name="talk_worse">You say it would leave you worse off.</string>
     <string name="talk_worse_they">%1$s says it would leave them worse off.</string>
     <string name="table_see_score">See the score</string>
+    <!-- The round's end, said on the felt so nobody has to open a table of numbers to learn who
+         won. Reported from a phone: the round finished on a chime and a button, and the answer
+         was only ever inside the score sheet. %1$s is the caller's name, and the two numbers are
+         already signed (+3 / −1) by the caller. -->
+    <string name="table_round_you_won">You won this round</string>
+    <string name="table_round_you_lost">You lost this round</string>
+    <string name="table_round_points_you_called">You take %1$s, and the others take %2$s each.</string>
+    <string name="table_round_points_they_called">%1$s takes %2$s, and everyone else takes %3$s each.</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
     <!-- Web and desktop only: the phones sell a fixed-price in-app purchase instead, and an

@@ -8,7 +8,7 @@ import game.vinto.engine.PublicReveal
 import game.vinto.engine.ReduceResult
 import game.vinto.engine.STARTING_POINTS
 import game.vinto.engine.Validation
-import game.vinto.engine.calculateFinalScores
+import game.vinto.engine.calculateCardTotal
 import game.vinto.engine.calculateRoundPoints
 import game.vinto.engine.initializeGame
 import game.vinto.engine.projectView
@@ -1374,7 +1374,11 @@ private fun recordRoundEnd(state: RoomState): RoomState {
     val result = RoundResult(
         roundNumber = state.session.rounds.size + 1,
         vintoCallerId = game.vintoCallerId,
-        scores = calculateFinalScores(game.players, game.vintoCallerId),
+        // Each seat's own total. `calculateFinalScores` flattens every coalition member onto
+        // the best of them, which is what the round *pays* and not what anybody held — see
+        // `LocalGame.result`. The client derives the decisive hand from these with
+        // `bestCoalitionHands`, so nothing downstream needs the flattening.
+        scores = game.players.associate { it.id to calculateCardTotal(it.cards) },
         points = calculateRoundPoints(game.players, game.vintoCallerId),
     )
 

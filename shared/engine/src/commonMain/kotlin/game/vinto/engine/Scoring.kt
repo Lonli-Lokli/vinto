@@ -40,7 +40,7 @@ fun calculateCardTotal(cards: List<Card>): Int = cards.sumOf { it.value }
  *
  * - the caller is strictly lower  → caller **+3**, every coalition member **−1**
  * - a coalition member is lower   → caller **−1**, every coalition member **+3**
- * - a tie                         → caller **+3**, coalition **0**
+ * - a tie                         → caller **+2**, coalition **0**
  *
  * A tie going to the caller is not a rounding convenience: it is what makes "beat them" mean
  * beat them, and it is why the coalition planner searches for a strictly lower total.

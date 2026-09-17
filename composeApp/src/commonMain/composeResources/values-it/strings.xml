@@ -266,6 +266,10 @@
     <string name="talk_worse">Lei dice che questo peggiorerebbe la Sua posizione.</string>
     <string name="talk_worse_they">%1$s dice che questo peggiorerebbe la propria posizione.</string>
     <string name="table_see_score">Vedi il punteggio</string>
+    <string name="table_round_you_won">Round vinto</string>
+    <string name="table_round_you_lost">Round perso</string>
+    <string name="table_round_points_you_called">Si prendono %1$s, e gli altri %2$s ciascuno.</string>
+    <string name="table_round_points_they_called">%1$s prende %2$s, e tutti gli altri %3$s ciascuno.</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">Offrimi un caffè</string>

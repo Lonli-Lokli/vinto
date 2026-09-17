@@ -253,6 +253,10 @@
     <string name="talk_worse">טענה שזה יחליש את המצב שלכם.</string>
     <string name="talk_worse_they">טענה שזה יחליש את המצב של %1$s.</string>
     <string name="table_see_score">צפייה בניקוד</string>
+    <string name="table_round_you_won">ניצחון בסיבוב הזה</string>
+    <string name="table_round_you_lost">הפסד בסיבוב הזה</string>
+    <string name="table_round_points_you_called">מקבלים %1$s, ולכל השאר %2$s כל אחד.</string>
+    <string name="table_round_points_they_called">%1$s זוכה ב-%2$s, ולכל השאר %3$s כל אחד.</string>
 
     <string name="header_support">קניית קפה בשבילי</string>
     <string name="header_report">דיווח על בעיה</string>

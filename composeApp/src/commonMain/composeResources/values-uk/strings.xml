@@ -271,6 +271,10 @@
     <string name="talk_worse">Ви кажете, що це погіршить ваше становище.</string>
     <string name="talk_worse_they">%1$s каже, що це погіршить становище.</string>
     <string name="table_see_score">Переглянути рахунок</string>
+    <string name="table_round_you_won">Ви виграли цей раунд</string>
+    <string name="table_round_you_lost">Ви програли цей раунд</string>
+    <string name="table_round_points_you_called">Ви отримуєте %1$s, а інші — по %2$s кожен.</string>
+    <string name="table_round_points_they_called">%1$s отримує %2$s, а решта — по %3$s кожен.</string>
 
     <string name="header_support">Пригостити кавою</string>
     <string name="header_report">Повідомити про проблему</string>

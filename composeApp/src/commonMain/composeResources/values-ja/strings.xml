@@ -267,6 +267,10 @@
     <string name="talk_worse">それでは自分が不利になると伝えています。</string>
     <string name="talk_worse_they">%1$sは、それでは自分が不利になると言っています。</string>
     <string name="table_see_score">スコアを見る</string>
+    <string name="table_round_you_won">このラウンドは勝ちです</string>
+    <string name="table_round_you_lost">このラウンドは負けです</string>
+    <string name="table_round_points_you_called">獲得は%1$s、他の人はそれぞれ%2$sです。</string>
+    <string name="table_round_points_they_called">%1$sの獲得は%2$s、他の人はそれぞれ%3$sです。</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">コーヒーをおごる</string>

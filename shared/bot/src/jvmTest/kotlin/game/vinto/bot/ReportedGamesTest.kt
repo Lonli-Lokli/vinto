@@ -13,6 +13,7 @@ import game.vinto.shapes.VintoJson
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
@@ -226,8 +227,66 @@ class ReportedGamesTest {
         )
     }
 
+    /**
+     * A card a teammate has named for you is a card you can throw.
+     *
+     * Reported 2026-09-16: *"why bots didn't toss in 3 while they seems like to know them?"*
+     * They did know. The round ended with a three face up, Ember holding one at position 4 and
+     * Tide holding one at position 1, and neither went in — while Tide threw the *other* three
+     * it happened to have read itself. The difference is the whole of it: a seat threw what its
+     * own memory held and sat on what the table had told it.
+     *
+     * And the table had told it, in as many words. `DECLARE_CARDS` put
+     * `bot-3 -> [4] [THREE]` on Ember and `bot-1 -> [1] [THREE]` on Tide, and a claim about
+     * **somebody else's** card is [BotRunner.seenClaims] — read straight off
+     * `opponentKnowledge`, the engine's own record of what that seat was shown. It cannot be a
+     * guess. The planner already counts it ("a standing public claim counts wherever it has not
+     * read the card itself"); what dropped it was one filter in `tossInAction`, there to stop a
+     * bot guessing, which cannot tell a guess from a teammate who looked.
+     *
+     * That filter is what the final round's whole declaring step is for. A coalition pools what
+     * it knows so its members can *act* on it, and a member who will not throw a card its
+     * teammate just named has not pooled anything.
+     */
+    @Test
+    fun aThreeATeammateNamedForYouGoesIn() {
+        val report = recording("threes-not-thrown-in")
+
+        // The moment before Ember passes on the window: the three is up, both claims stand.
+        val passes = report.actions.indexOfLast { entry ->
+            val action = entry.action
+            action is GameAction.PlayerTossInFinished && action.payload.playerId == "bot-1"
+        }
+        val runner = BotRunner(Difficulty.MODERATE, Random(1))
+        val state = replayed(report, upTo = passes, runner = runner)
+
+        assertEquals(
+            Rank.THREE,
+            state.discardPile.peekTop()?.rank,
+            "the report's pile does not show a three",
+        )
+        val ember = state.players.first { it.id == "bot-1" }
+        assertEquals(Rank.THREE, ember.cards[EMBERS_THREE].rank, "the report's Ember is not holding a three")
+        assertTrue(EMBERS_THREE !in ember.knownCardPositions, "Ember read it itself, so this proves nothing")
+        val named = ember.claims.orEmpty().any { claim ->
+            claim.by == "bot-3" && claim.positions == listOf(EMBERS_THREE) && claim.ranks == listOf(Rank.THREE)
+        }
+        assertTrue(named, "the report's Dune never named Ember's three: ${ember.claims}")
+
+        val next = runner.nextAction(state)
+        val throwing = assertIs<GameAction.ParticipateInTossIn>(
+            next,
+            "Ember sat on a three its teammate had named: $next",
+        )
+        assertEquals("bot-1", throwing.payload.playerId)
+        assertTrue(EMBERS_THREE in throwing.payload.positions, "Ember threw something other than the named three")
+    }
+
     private companion object {
         /** Three peeks is six actions; the bound is only there so a defect cannot hang the suite. */
         const val STEP_LIMIT = 40
+
+        /** Where the report's Dune named Ember's three. */
+        const val EMBERS_THREE = 4
     }
 }

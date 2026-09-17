@@ -262,6 +262,10 @@
     <string name="talk_worse">Anda mengatakan itu akan merugikan Anda.</string>
     <string name="talk_worse_they">%1$s mengatakan itu akan merugikan dirinya.</string>
     <string name="table_see_score">Lihat skor</string>
+    <string name="table_round_you_won">Anda menang ronde ini</string>
+    <string name="table_round_you_lost">Anda kalah ronde ini</string>
+    <string name="table_round_points_you_called">Anda mendapat %1$s, dan yang lain mendapat %2$s masing-masing.</string>
+    <string name="table_round_points_they_called">%1$s mendapat %2$s, dan yang lain mendapat %3$s masing-masing.</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">Belikan saya kopi</string>

@@ -263,6 +263,10 @@
     <string name="talk_worse">Vous dites que cela vous désavantagerait.</string>
     <string name="talk_worse_they">%1$s dit que cela desservirait sa position.</string>
     <string name="table_see_score">Voir le score</string>
+    <string name="table_round_you_won">Manche remportée</string>
+    <string name="table_round_you_lost">Manche perdue</string>
+    <string name="table_round_points_you_called">Vous prenez %1$s, et les autres prennent %2$s chacun.</string>
+    <string name="table_round_points_they_called">%1$s prend %2$s, et les autres prennent %3$s chacun.</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">M’offrir un café</string>

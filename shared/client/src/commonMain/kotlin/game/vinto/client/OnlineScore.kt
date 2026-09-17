@@ -58,7 +58,7 @@ sealed interface RoundOutcome {
     /** The caller finished at or under the best of the others, and takes +3. */
     data class CallerWon(val caller: Int, val best: Int) : RoundOutcome
 
-    /** Level: the caller still takes +3, and the others take nothing rather than losing one. */
+    /** Level: the call held, so the caller takes +2, and the others take nothing rather than losing one. */
     data class Level(val caller: Int, val best: Int) : RoundOutcome
 
     /** Somebody beat the caller. The coalition takes +3 each and the caller −1. */
@@ -66,6 +66,52 @@ sealed interface RoundOutcome {
 
     /** Nobody called; the deck ran out. Every hand is counted and nothing is paid. */
     data object DeckRanOut : RoundOutcome
+}
+
+/**
+ * How the round came out **for the seat looking at it**: the fact, the two numbers, and which
+ * side of it this player was on.
+ *
+ * The fact first, because that is what somebody wants the moment the last coalition turn lands
+ * — who won, and what each side takes — and until now the felt said none of it. A round ended
+ * on a chime and a button reading "See the score", so the only way to learn the answer was to
+ * open a table of numbers and work it out of a column of +3 and −1 (reported from a phone).
+ *
+ * [viewerWon] is the *side's* result rather than the seat's, which is the whole point of a
+ * coalition: a member whose own hand was nowhere near the best still won when the coalition
+ * beat the call, and should be told so. Null where there is nothing to have won — nobody
+ * called, or this is a table being watched rather than played.
+ */
+data class RoundVerdict(
+    val outcome: RoundOutcome,
+    /** What the round paid the caller, and what it paid each of the others. */
+    val callerPoints: Int,
+    val coalitionPoints: Int,
+    val viewerWon: Boolean?,
+)
+
+/**
+ * The round's end from [viewerId]'s side of it.
+ *
+ * A level round counts as the call holding — it pays the caller and not the coalition, and
+ * `score_level` has always said so in as many words ("Level — the call held").
+ */
+fun verdictFor(result: RoundResult, viewerId: String): RoundVerdict {
+    val outcome = outcomeOf(result.hands, result.callerId)
+    val caller = result.callerId
+    val callHeld = outcome is RoundOutcome.CallerWon || outcome is RoundOutcome.Level
+
+    val seated = result.seats.any { it.first == viewerId }
+    return RoundVerdict(
+        outcome = outcome,
+        callerPoints = caller?.let { result.points[it] } ?: 0,
+        coalitionPoints = result.points.filterKeys { it != caller }.values.firstOrNull() ?: 0,
+        viewerWon = when {
+            caller == null || !seated -> null
+            viewerId == caller -> callHeld
+            else -> !callHeld
+        },
+    )
 }
 
 /** Reads [RoundOutcome] off the same public facts [roundPoints] uses. */

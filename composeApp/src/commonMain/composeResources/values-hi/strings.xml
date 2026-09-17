@@ -265,6 +265,10 @@
     <string name="talk_worse">आप कहते हैं कि इससे आपकी स्थिति ख़राब हो जाएगी।</string>
     <string name="talk_worse_they">%1$s ने कहा कि इससे उनकी स्थिति ख़राब हो जाएगी।</string>
     <string name="table_see_score">स्कोर देखें</string>
+    <string name="table_round_you_won">यह राउंड आपके नाम रहा</string>
+    <string name="table_round_you_lost">इस राउंड में जीत नहीं मिली</string>
+    <string name="table_round_points_you_called">आपको %1$s मिलते हैं, और बाकी सभी को %2$s मिलते हैं।</string>
+    <string name="table_round_points_they_called">%1$s को %2$s मिलते हैं, और बाकी सभी को %3$s मिलते हैं।</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">मुझे एक कॉफ़ी पिलाएं</string>

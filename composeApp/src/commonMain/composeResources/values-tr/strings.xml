@@ -265,6 +265,10 @@
     <string name="talk_worse">Bunun sizi daha kötü bir duruma sokacağını söylüyorsunuz.</string>
     <string name="talk_worse_they">%1$s, bunun kendisini daha kötü bir duruma sokacağını söylüyor.</string>
     <string name="table_see_score">Skoru gör</string>
+    <string name="table_round_you_won">Bu turu kazandınız</string>
+    <string name="table_round_you_lost">Bu turu kaybettiniz</string>
+    <string name="table_round_points_you_called">Siz %1$s alıyorsunuz, diğerleri kişi başı %2$s alıyor.</string>
+    <string name="table_round_points_they_called">%1$s alıyor: %2$s, herkes kişi başı %3$s alıyor.</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">Bana bir kahve ısmarla</string>

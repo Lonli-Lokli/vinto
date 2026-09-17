@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -18,12 +19,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import game.vinto.app.CountRefusals
 import game.vinto.app.LocalCounting
 import game.vinto.app.LocalVault
 import game.vinto.app.art.Res
 import game.vinto.app.art.report_subject
+import game.vinto.app.art.table_round_points_they_called
+import game.vinto.app.art.table_round_points_you_called
+import game.vinto.app.art.table_round_you_lost
+import game.vinto.app.art.table_round_you_won
 import game.vinto.app.art.table_see_score
 import game.vinto.app.counted
 import game.vinto.app.elapsedMs
@@ -36,10 +44,12 @@ import game.vinto.client.LocalGame
 import game.vinto.client.Pace
 import game.vinto.client.Question
 import game.vinto.client.RoundResult
+import game.vinto.client.RoundVerdict
 import game.vinto.client.dealScenes
 import game.vinto.client.loadStats
 import game.vinto.client.plus
 import game.vinto.client.saveStats
+import game.vinto.client.verdictFor
 import game.vinto.protocol.AnalyticsEvent
 import game.vinto.shapes.GamePhase
 import org.jetbrains.compose.resources.stringResource
@@ -169,7 +179,15 @@ fun GameScreen(
 
                 // On the shown table, not the live one: the round is over when the player has
                 // seen it end, which is a second or two after the engine says so.
-                if (shown.phase == GamePhase.SCORING) RoundOver(onSee = { scoreOpen = true })
+                if (shown.phase == GamePhase.SCORING) {
+                    RoundOver(
+                        verdict = game.result?.let { verdictFor(it, session.playerId) },
+                        caller = game.result?.callerId?.let { id ->
+                            game.result?.seats?.firstOrNull { it.first == id }?.second
+                        },
+                        onSee = { scoreOpen = true },
+                    )
+                }
             }
         }
     }
@@ -261,14 +279,23 @@ private fun SoloScore(
 private val DialogGap = 6.dp
 
 /**
- * The round is over; the hands are face-up and the score is one tap away.
+ * The round is over: **who won, what it paid**, and the score one tap away.
  *
  * A button rather than the sheet opening itself, because the moment a round ends is the one
  * moment a player wants to look at the table — every hand is turned over, including the ones
  * they spent the round guessing at.
+ *
+ * Which is exactly why the answer has to be *here*. This strip was a chime and the button, so
+ * a round ended saying nothing at all and the only way to learn who had won was to leave the
+ * table you had just been given and read a column of +3 and −1 (reported from a phone). The
+ * fact comes first now, then what each side takes, and the numbers are still one tap behind.
+ *
+ * **The sign is the side's, not the seat's.** A coalition member who finished nowhere near the
+ * best hand still won when the coalition beat the call, and gets the fireworks for it — that
+ * is what being in a coalition means, and `verdictFor` is where it is decided.
  */
 @Composable
-private fun RoundOver(onSee: () -> Unit) {
+internal fun RoundOver(verdict: RoundVerdict?, caller: String?, onSee: () -> Unit) {
     // The round's one chime, fired when the player is *shown* the end — this strip appears
     // on the shown table, a beat after the engine finished — and once, because this
     // composable exists exactly once per round's ending.
@@ -280,6 +307,8 @@ private fun RoundOver(onSee: () -> Unit) {
             modifier = Modifier.padding(Pad).fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            verdict?.let { Won(it, caller) }
+
             // A button, not a bar: full width on a phone, capped and centred on a desktop,
             // where a strip-spanning button reads as a banner rather than a control.
             GameButton(
@@ -291,6 +320,46 @@ private fun RoundOver(onSee: () -> Unit) {
         }
     }
 }
+
+/**
+ * The round's fact, from the side of whoever is reading it: the sign, who won, and the points.
+ *
+ * Nothing at all where nobody called — there were no sides, so a fireworks or a sad face would
+ * both be a lie, and `score_deck_ended` in the sheet is the honest account of that round.
+ */
+@Composable
+private fun Won(verdict: RoundVerdict, caller: String?) {
+    val won = verdict.viewerWon ?: return
+
+    Text(
+        text = (if (won) "🎆 " else "😔 ") +
+            stringResource(if (won) Res.string.table_round_you_won else Res.string.table_round_you_lost),
+        fontSize = VerdictSize,
+        fontWeight = FontWeight.Bold,
+        color = if (won) Rail.gold else Rail.ink,
+        textAlign = TextAlign.Center,
+    )
+
+    // Both sides' points, so the sentence answers "and what did that cost?" without the table.
+    // Signed here rather than in the words: a minus belongs to the number, and nineteen
+    // translations should not each have to remember that.
+    val mine = verdict.callerPoints.signed()
+    val theirs = verdict.coalitionPoints.signed()
+    Text(
+        text = if (caller == null) {
+            stringResource(Res.string.table_round_points_you_called, mine, theirs)
+        } else {
+            stringResource(Res.string.table_round_points_they_called, caller, mine, theirs)
+        },
+        fontSize = VerdictBodySize,
+        color = Rail.inkDim,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.padding(bottom = DialogGap),
+    )
+}
+
+private val VerdictSize = 20.sp
+private val VerdictBodySize = 14.sp
 
 /** The widest "See the score" needs to be, on any screen. */
 private val RoundOverWidth = 420.dp

@@ -56,7 +56,13 @@ data class PlayerProfile(
 data class RoundResult(
     val roundNumber: Int,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val vintoCallerId: String? = null,
-    /** Hand totals, coalition members scored on their best (see `calculateFinalScores`). */
+    /**
+     * What each seat actually held, per seat.
+     *
+     * Not the coalition flattened onto its best hand: that is what the round *pays*, and it
+     * lives in [points]. A reader wanting the hand the round was decided against derives it
+     * with `bestCoalitionHands`.
+     */
     val scores: Map<String, Int>,
     /** What the round paid, per `VINTO_RULES.md`: +3/-1, a tie to the caller. */
     val points: Map<String, Int>,

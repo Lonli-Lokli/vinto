@@ -301,8 +301,13 @@ private fun Cell(text: String, dim: Boolean, bold: Boolean = false) {
     )
 }
 
-/** A round's points read as a change, so "+3" and "-1" say which way it went. */
-private fun Int?.signed(): String = when {
+/**
+ * A round's points read as a change, so "+3" and "-1" say which way it went.
+ *
+ * Internal rather than private since the felt's own verdict says the same two numbers
+ * (`RoundOver`), and a second copy of this is a second place for the sign to go missing.
+ */
+internal fun Int?.signed(): String = when {
     this == null -> "—"
     this > 0 -> "+$this"
     else -> "$this"

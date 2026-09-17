@@ -265,6 +265,10 @@
     <string name="talk_worse">تصريح بأن ذلك سيجعل وضعك أسوأ.</string>
     <string name="talk_worse_they">تصريح من %1$s بأن ذلك سيؤدي إلى نتيجة أسوأ.</string>
     <string name="table_see_score">شاهد النتيجة</string>
+    <string name="table_round_you_won">فوزك بهذه الجولة</string>
+    <string name="table_round_you_lost">خسارتك في هذه الجولة</string>
+    <string name="table_round_points_you_called">نصيبك %1$s، ونصيب البقية %2$s لكل منهم.</string>
+    <string name="table_round_points_they_called">نصيب %1$s %2$s، ونصيب البقية %3$s لكل منهم.</string>
 
     <!-- The header's three controls, for somebody who cannot see them. -->
     <string name="header_support">اشترِ لي قهوة</string>

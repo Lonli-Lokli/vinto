@@ -1,7 +1,7 @@
 package game.vinto.client
 
 import game.vinto.engine.STARTING_POINTS
-import game.vinto.engine.calculateFinalScores
+import game.vinto.engine.calculateCardTotal
 import game.vinto.engine.calculateRoundPoints
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.Prng
@@ -64,12 +64,20 @@ class LocalGame private constructor(
      * what was on the table, and [RoundResult.points] is what the round was worth under the
      * rules. A caller who finishes on 12 against a coalition's 9 loses the round while
      * holding the higher total, and a screen with only one of these makes that look wrong.
+     *
+     * **Each seat's own total, not `calculateFinalScores`.** That function gives every
+     * coalition member the *best* coalition hand, which is exactly right for what the round
+     * pays — the coalition wins or loses together — and wrong for the question "what did this
+     * seat hold". It made three rows of a score sheet read identically, all wearing "best of
+     * the others" when one of them held 36 (reported from a phone), and it told `Stats` that
+     * every member had finished on the best hand and won. Togetherness lives in [points],
+     * where it belongs; `bestCoalitionHands` derives the decisive row from these.
      */
     val result: RoundResult?
         get() = session.takeIf { it.isOver }?.state?.let { over ->
             RoundResult(
                 callerId = over.vintoCallerId,
-                hands = calculateFinalScores(over.players, over.vintoCallerId),
+                hands = over.players.associate { it.id to calculateCardTotal(it.cards) },
                 points = calculateRoundPoints(over.players, over.vintoCallerId),
                 seats = over.players.map { it.id to it.nickname },
             )

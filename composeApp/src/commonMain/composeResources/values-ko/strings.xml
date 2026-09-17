@@ -253,6 +253,10 @@
     <string name="talk_worse">그러면 자신에게 불리해진다고 말해요.</string>
     <string name="talk_worse_they">%1$s가 그러면 자신에게 불리해진다고 말해요.</string>
     <string name="table_see_score">점수 보기</string>
+    <string name="table_round_you_won">이번 라운드는 이겼어요</string>
+    <string name="table_round_you_lost">이번 라운드는 졌어요</string>
+    <string name="table_round_points_you_called">%1$s점을 얻고, 나머지는 각각 %2$s점을 얻어요.</string>
+    <string name="table_round_points_they_called">%1$s님이 %2$s점을 얻고, 나머지는 각각 %3$s점을 얻어요.</string>
 
     <string name="header_support">커피 한 잔 사주기</string>
     <string name="header_report">문제 신고</string>

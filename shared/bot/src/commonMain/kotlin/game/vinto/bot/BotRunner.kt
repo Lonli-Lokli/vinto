@@ -363,6 +363,28 @@ class BotRunner(
         return exact + pair
     }
 
+    /**
+     * Positions of [player]'s hand that **somebody else** has named, to exactly one rank.
+     *
+     * Safe to throw on, and that is a fact about where the claim comes from rather than a bet.
+     * A claim on a seat made by anyone else is [seenClaims], built from `opponentKnowledge` —
+     * the engine's own record of what that seat was *shown*, renumbered by the engine on every
+     * removal. It cannot be a guess. A seat's claims about its **own** hand are the ones that
+     * come from memory and can be wrong ([ownClaims]), and they are excluded: this seat's own
+     * belief already reaches the decision through `knownCardPositions`, and counting it twice
+     * would only launder a hunch into a fact.
+     *
+     * One rank, because a throw names one card. The hazy pair claim — "these two are a King and
+     * an Ace, I forget which way round" — is exactly as much as its owner remembers and not
+     * enough to throw on.
+     */
+    private fun namedFor(player: PlayerState): Set<Int> =
+        player.claims.orEmpty()
+            .filter { it.by != player.id && it.ranks.size == 1 && it.positions.size == 1 }
+            .filter { it.positions.single() in player.cards.indices }
+            .map { it.positions.single() }
+            .toSet()
+
     /** What [player] has seen of [other]'s hand, said out loud so the plan may use it. */
     private fun seenClaims(player: PlayerState, other: PlayerState): List<Claim> =
         player.opponentKnowledge?.get(other.id)?.knownCards.orEmpty()
@@ -495,12 +517,19 @@ class BotRunner(
                 barred -> emptyList()
 
                 coalition != null ->
-                    // The planner already restricts itself to cards this seat has read
-                    // (unread positions are `known = false` in the plan); the filter is the
-                    // belt to that brace — a coalition bot never tosses a card it has not
-                    // actually seen.
+                    // What this seat can actually name: its own read cards, and the ones a
+                    // teammate has named for it.
+                    //
+                    // The filter here used to be `knownCardPositions` alone — belt to the
+                    // planner's brace, so a coalition bot never threw a card it had not seen
+                    // itself. It could not tell a guess from a teammate who had looked, and
+                    // that is the one distinction the final round is built on: a three sat in
+                    // Ember's hand with a three face up and Dune's `DECLARE_CARDS` naming it,
+                    // and Ember passed (`ReportedGamesTest.aThreeATeammateNamedForYouGoesIn`).
+                    // A coalition that pools what it knows and then will not act on it has
+                    // pooled nothing.
                     planCoalitionTossIn(coalition, tossIn.ranks)
-                        .filter { it in player.knownCardPositions }
+                        .filter { it in player.knownCardPositions || it in namedFor(player) }
 
                 // Solo, the bot throws what it *believes* matches — its memory of its own
                 // hand, not the engine's record — and pays the ordinary penalty when a weak
