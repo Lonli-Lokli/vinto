@@ -42,7 +42,7 @@ class EverySeatsOwnHandTest {
     }
 
     @Test
-    fun aCoalitionMemberIsShownItsOwnTotalAndNotTheCoalitionsBest() = runTest {
+    fun aCoalitionMemberIsShownItsOwnTotalAndNotTheCoalitionsBest() = runTest(timeout = WHOLE_GAME) {
         val game = playedOut()
         val result = assertNotNull(game.result, "the game did not finish")
         val caller = assertNotNull(result.callerId, "the round ended with nobody calling")
@@ -77,8 +77,13 @@ class EverySeatsOwnHandTest {
      * coalition member actually wins — and a test that silently never reaches it is worse than
      * no test. The sweep asserts it reached one.
      */
+    // Six whole MCTS games, which is two hundred seconds on an iOS simulator against seventeen
+    // for the single game above it — so the budget is [WHOLE_GAME] and not `runTest`'s own
+    // minute. `TestBudget` says in as many words that this rule had been written down and then
+    // not applied to the next test written in the same session; this was that next test, and
+    // `kmp-ios` said so on the nightly before anybody noticed.
     @Test
-    fun onlyTheSeatThatFinishedLowestBanksAWin() = runTest {
+    fun onlyTheSeatThatFinishedLowestBanksAWin() = runTest(timeout = WHOLE_GAME) {
         var coalitionWins = 0
 
         for (seed in 1L..6L) {
@@ -100,6 +105,13 @@ class EverySeatsOwnHandTest {
                 winners,
                 "on seed $seed a seat banked a win for a hand that was not the lowest",
             )
+
+            // The sweep is a **search**, not a sample: it is here to reach a round a coalition
+            // member actually wins, and every game it plays is checked on the way. So it stops
+            // at the first one. A whole game is about a minute on an iOS simulator, and six of
+            // them is 346 s against the five-minute budget — `kmp-ios` failed on that and
+            // nothing else did.
+            if (coalitionWins > 0) break
         }
 
         assertTrue(coalitionWins > 0, "no coalition member ever finished lowest, so this proves nothing")
