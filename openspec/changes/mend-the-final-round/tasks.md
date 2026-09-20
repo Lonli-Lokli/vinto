@@ -134,9 +134,24 @@ engine rather than the bot.
       fired. `PendingCardOrigin` tells them apart: stranded cards come off the **deck**, won ones
       out of a **hand**. `ReportedGamesTest.aJackWonByAKingsCorrectDeclarationIsPlayed`, red on
       all five seeds before the fix
-- [ ] 5.2 Explain the King played the long way round — drawn, played, an opponent's 3 declared,
-      then its own 3 thrown in — to a total reachable by swapping the King in. Verify whether
-      the search prices the line correctly or the rollout misprices the declaration
+- [x] 5.2 **Explained, and it was not merely long — it cost Ember the round.** Replayed from
+      `a-king-declared-an-opponents-three.json`. Ember held `[3]`; Tide held `[3, K]` and
+      **knew only the King**, so Tide could never have thrown that three itself. Ember's King
+      named it, correctly, and Tide went from three points to nil for nothing. Ember then threw
+      its own three and called Vinto into a tie it had just created — and a tie pays the caller
+      **+2** where a win pays +3. The maintainer's instinct that the long way round was pointless
+      was right, and it was worse than pointless.
+      The rule is a domination rather than a preference, and it lives in `MoveGenerator.kingMoves`
+      where a move that can never be better simply is not offered. A correct declaration does two
+      things — removes the named card and hands over its action — so for a **two through a six**,
+      whose action is nothing, naming an opponent's copy differs from naming your own in exactly
+      one way: they shed instead of you. The window opens on the same rank either way. Two
+      exclusions carry their weight: an **action card** stays on offer in any hand, because its
+      action is real value and is how a King wins somebody's Jack (5.1); and a **Joker** is the
+      rule backwards — worth minus one, so removing it *raises* the total it sits in and an
+      opponent's is the one to name.
+      `ReportedGamesTest.aKingNamesItsOwnLowCardRatherThanHandingAnOpponentTheDiscard`, red on
+      three of five seeds before the fix
 - [x] 5.3 **It is the queue, and it took an engine rule, a bot rule and four corpus tails.**
       The first reading was wrong and a change was written and reverted: `tossInAction` does
       return the throw before it reaches `shouldCallVinto`, and the one card it holds back — a
@@ -161,5 +176,12 @@ engine rather than the bot.
       regenerations did not leave behind (`-Pcorpus` to report, `-Pcorpus=write` to rewrite); it
       copies the head rather than re-encoding it, recomputes every kept hash first, and refuses
       a file whose every action is still legal.
-- [ ] 5.4 Verify `TournamentTest` after §5: unchanged, or regenerated with the numbers and the
-      reason in the commit
+- [x] 5.4 **Regenerated, and the ladder got sharper.** The mixed table is the one that ranks the
+      difficulties — a homogeneous table's mean hand says the table was easier to sit at, not that
+      the bot was better — and there **moderate's mean hand went 10.33 → 6.91 and hard's
+      9.54 → 8.33**, both better, while easy's went 13.66 → 15.58. Easy forgets on purpose, so it
+      has the fewest known cards for 5.2's rule to bite on and now loses more ground to the seats
+      above it, which is what a difficulty ladder is for. Games got shorter at every difficulty
+      (−20.7, −8.1, −19.4 actions), which is the reported complaint showing up as a number. The
+      round-points column moved both ways and twelve games is too few to read it, so nothing is
+      claimed from it

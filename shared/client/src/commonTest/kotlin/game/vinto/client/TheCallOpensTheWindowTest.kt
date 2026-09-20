@@ -107,12 +107,38 @@ class TheCallOpensTheWindowTest {
 
         // And the round is still whole: the seat on play is the caller's neighbour, so not one
         // of the three coalition turns has been spent while the person was not looking.
-        val seats = session.view.value.players.map { it.id }
-        assertEquals(
-            seats[(seats.indexOf(caller) + 1) % seats.size],
-            seats[session.view.value.currentPlayerIndex],
-            "a coalition seat was skipped between the call and the window",
-        )
+        val after = session.view.value
+        val seats = after.players.map { it.id }
+        val onPlay = seats[after.currentPlayerIndex]
+        val owed = after.activeTossIn?.queuedActions.orEmpty().filter { it.playerId != caller }
+
+        // Two positions are correct here and only these two, so the claim is about the seats
+        // rather than about one index.
+        //
+        // Usually the call clears the window and play moves to the caller's neighbour. But a
+        // throw **another seat** made is owed its action, and the call does not take it away —
+        // `handleCallVinto` keeps that window, and the turn advances when the queue drains
+        // instead. So the caller staying on play with somebody else's card still in the queue is
+        // the round holding still, not a seat losing its turn.
+        //
+        // This asserted the neighbour outright, and went red the day the caller stopped being
+        // allowed to call over its *own* queued throw: this deal's caller now calls a beat
+        // later, with a teammate's Queen still owed. Either position leaves all three coalition
+        // turns unspent, which is the thing worth holding; a *middle* coalition seat on play
+        // would fail both halves, which is the thing worth catching.
+        if (owed.isEmpty()) {
+            assertEquals(
+                seats[(seats.indexOf(caller) + 1) % seats.size],
+                onPlay,
+                "a coalition seat was skipped between the call and the window",
+            )
+        } else {
+            assertEquals(
+                caller,
+                onPlay,
+                "the round moved on while a throw was still owed its action: $owed",
+            )
+        }
     }
 
     private companion object {

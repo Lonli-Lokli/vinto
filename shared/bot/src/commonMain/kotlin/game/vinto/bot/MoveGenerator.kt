@@ -4,6 +4,8 @@ import game.vinto.shapes.Card
 import game.vinto.shapes.CardAction
 import game.vinto.shapes.Rank
 import game.vinto.shapes.getCardAction
+import game.vinto.shapes.getCardValue
+import game.vinto.shapes.hasAction
 import game.vinto.shapes.isActionable
 
 /**
@@ -319,14 +321,19 @@ object MoveGenerator {
      * in. Only a card the mover *knows* is a candidate — naming a card blind costs a penalty
      * card, and the search has nothing to learn from a guess. Own cards come first, then each
      * opponent's; in coalition the caller's cards are off limits, as everywhere.
+     *
+     * **A gift is not a move.** See [givesItAway]: an opponent's two through six is dropped
+     * where the mover holds that rank itself.
      */
     private fun kingMoves(state: MctsGameState, currentPlayer: MctsPlayerState): List<MctsMove> {
         val rank = state.pendingCard?.rank
         val holders = listOf(currentPlayer) + targetableOpponents(state, currentPlayer)
+        val ownRanks = knownCards(currentPlayer).values.map { it.rank }.toSet()
 
         return holders.flatMap { holder ->
             knownCards(holder).entries
                 .sortedByDescending { it.value.value }
+                .filterNot { holder.id != currentPlayer.id && givesItAway(it.value.rank, ownRanks) }
                 .map { (position, card) ->
                     aimed(
                         currentPlayer,
@@ -337,6 +344,28 @@ object MoveGenerator {
                 }
         }
     }
+
+    /**
+     * Whether naming this rank in somebody else's hand can only help them.
+     *
+     * A correct declaration does two things: it takes the named card out of its hand, and it
+     * hands the declarer that card's action. For a **two through a six** the action is nothing,
+     * so naming an opponent's copy differs from naming the mover's own in exactly one way —
+     * they shed a card and the mover does not. The window opens on the same rank either way,
+     * so nothing else about the table changes. That is a dominated move and it is not offered.
+     *
+     * Reported from a phone: Ember held a three, named Tide's three, and Tide — who did not
+     * know it held one and could never have thrown it — went from three points to nil. Ember
+     * then called Vinto into a tie it had just created, and a tie pays the caller +2 where a
+     * win pays +3.
+     *
+     * Two exclusions, both load-bearing. An **action card** is still on offer in any hand: its
+     * action is real value, which is how a King wins somebody's Jack. And a **Joker** is the
+     * whole rule backwards — it is worth minus one, so removing it *raises* the total it sits
+     * in, and an opponent's is exactly the one to name.
+     */
+    private fun givesItAway(rank: Rank, ownRanks: Set<Rank>): Boolean =
+        !hasAction(rank) && getCardValue(rank) > 0 && rank in ownRanks
 
     /**
      * A second check that a move is playable, used where moves are carried between states.

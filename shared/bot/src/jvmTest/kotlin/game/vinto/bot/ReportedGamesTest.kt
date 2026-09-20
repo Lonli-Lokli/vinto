@@ -9,6 +9,7 @@ import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameRecording
 import game.vinto.shapes.GameState
 import game.vinto.shapes.Rank
+import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.VintoJson
 import kotlin.random.Random
 import kotlin.test.Test
@@ -73,6 +74,46 @@ class ReportedGamesTest {
             if (next !is GameAction.SelectActionTarget) bad += "seed " + seed + ": " + next?.type
         }
         assertTrue(bad.isEmpty(), "the Jack a King won was put down unplayed:\n" + bad.joinToString("\n"))
+    }
+
+    @Test
+    fun aKingNamesItsOwnLowCardRatherThanHandingAnOpponentTheDiscard() {
+        // Reported 2026-09-19: Ember drew a King, played it, declared Tide's three — correctly —
+        // and then threw its own three into the window that opened. The maintainer asked why the
+        // long way round, when the same zero was reachable by declaring its own three.
+        //
+        // Replaying the hands says it was not merely long, it cost Ember the round. Ember held
+        // [3], Tide held [3, K] and **knew only the King** — so Tide could never have thrown
+        // that three itself. Naming it gave Tide the discard for nothing: Tide went from three
+        // points to zero and tied the hand Ember then called Vinto on, and a tie pays the caller
+        // +2 where a win pays +3.
+        //
+        // The rule is a domination, not a preference. A correct declaration removes the named
+        // card and hands over its action; for a rank with no action — a two through a six — the
+        // action is worth nothing, so naming an opponent's copy differs from naming your own in
+        // exactly one way: they shed instead of you. An opponent's **action** card is a
+        // different question and still on offer, because its action is real value.
+        val report = recording("a-king-declared-an-opponents-three")
+        val aiming = report.actions.indexOfFirst { it.action is GameAction.DeclareKingAction }
+        assertTrue(aiming > 0, "the report no longer contains the King's declaration")
+
+        val bad = mutableListOf<String>()
+        for (seed in 1..5) {
+            val runner = BotRunner(Difficulty.MODERATE, Random(seed.toLong()))
+            // The state the King is aimed from: pending King, waiting to be pointed at a card.
+            val state = replayed(report, aiming - 1, runner)
+            assertEquals(Rank.KING, state.pendingAction?.card?.rank, "the report no longer plays a King")
+
+            val next = runner.nextAction(state)
+            val aimed = (next as? GameAction.SelectActionTarget)?.payload
+            val at = (aimed as? SelectActionTargetPayload.Positional)?.targetPlayerId
+            if (at != "bot-1") bad += "seed " + seed + ": aimed at " + at + " (" + next?.type + ")"
+        }
+        assertTrue(
+            bad.isEmpty(),
+            "the King gave an opponent a free discard instead of shedding its own three:\n" +
+                bad.joinToString("\n"),
+        )
     }
 
     @Test

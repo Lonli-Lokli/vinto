@@ -7,10 +7,10 @@
             "games": 12,
             "finished": 12,
             "endedOnVinto": 12,
-            "callerWins": 9,
-            "coalitionWins": 3,
-            "meanHandTotalCentis": 935,
-            "meanActionsCentis": 21975,
+            "callerWins": 8,
+            "coalitionWins": 4,
+            "meanHandTotalCentis": 993,
+            "meanActionsCentis": 19908,
             "bestHandTotal": -1,
             "worstHandTotal": 35
         },
@@ -19,47 +19,47 @@
             "games": 12,
             "finished": 12,
             "endedOnVinto": 12,
-            "callerWins": 7,
-            "coalitionWins": 5,
-            "meanHandTotalCentis": 741,
-            "meanActionsCentis": 20933,
-            "bestHandTotal": -1,
-            "worstHandTotal": 30
+            "callerWins": 4,
+            "coalitionWins": 8,
+            "meanHandTotalCentis": 677,
+            "meanActionsCentis": 20125,
+            "bestHandTotal": -2,
+            "worstHandTotal": 27
         },
         {
             "difficulty": "hard",
             "games": 12,
             "finished": 12,
             "endedOnVinto": 12,
-            "callerWins": 7,
-            "coalitionWins": 5,
+            "callerWins": 6,
+            "coalitionWins": 6,
             "meanHandTotalCentis": 756,
-            "meanActionsCentis": 23316,
-            "bestHandTotal": -2,
-            "worstHandTotal": 33
+            "meanActionsCentis": 21375,
+            "bestHandTotal": -1,
+            "worstHandTotal": 41
         }
     ],
     "mixed": [
         {
             "difficulty": "easy",
             "seats": 12,
-            "meanRoundPointsCentis": 91,
-            "meanHandTotalCentis": 1366,
-            "lowestFinishes": 4
+            "meanRoundPointsCentis": 108,
+            "meanHandTotalCentis": 1558,
+            "lowestFinishes": 1
         },
         {
             "difficulty": "moderate",
             "seats": 12,
             "meanRoundPointsCentis": 58,
-            "meanHandTotalCentis": 1033,
+            "meanHandTotalCentis": 691,
             "lowestFinishes": 3
         },
         {
             "difficulty": "hard",
             "seats": 24,
-            "meanRoundPointsCentis": 116,
-            "meanHandTotalCentis": 954,
-            "lowestFinishes": 10
+            "meanRoundPointsCentis": 91,
+            "meanHandTotalCentis": 833,
+            "lowestFinishes": 9
         }
     ]
 }

@@ -619,19 +619,9 @@ class BotRunner(
             // the first one down unplayed: reported from a phone as three bots tossing nines in
             // and one nine being played.
             //
-            // **And unless a King just won it**, which the queue cannot say either. A correct
-            // declaration takes the named card out of its owner's hand and hands its action to
-            // the declarer at `choosing-action` — and `setupKingTossIn` has taken that King off
-            // the queue by then, so `resolvingATossIn` is already false. The bot aimed a King at
-            // somebody's Jack, was given the Jack, and binned it: reported from a phone as
-            // "why ember with king declare my jack? And why it didn't move anything".
-            // `PendingCardOrigin` is what tells the two apart. A card stranded by a window that
-            // opened over it came off the **deck** and cannot be played from where it sits; one
-            // a King won came out of a **hand**, and the engine is waiting to be told where to
-            // aim it.
-            pending.actionPhase == ActionPhase.CHOOSING_ACTION &&
-                pending.from == PendingCardOrigin.DRAWING &&
-                !state.resolvingATossIn ->
+            // **And unless a King just won it**, which the queue cannot say either — see
+            // [strandedHere].
+            pending.actionPhase == ActionPhase.CHOOSING_ACTION && strandedHere(state, pending) ->
                 abandonAction(player)
 
             else -> actionTargetAction(state, player, pending)
@@ -859,6 +849,31 @@ class BotRunner(
 
         return targetId != vintoCallerId
     }
+
+    /**
+     * Whether a pending card at `choosing-action` is stuck there, or merely waiting to be aimed.
+     *
+     * Two different cards arrive looking identical. One is **stranded**: drawn before a toss-in
+     * window opened over it, brought back by `advanceTurnAfterTossIn` with its sub-phase moved
+     * and its action phase left alone. The other is one a **King just won** — a correct
+     * declaration takes the named card out of its owner's hand and hands its action to the
+     * declarer, right here, and `setupKingTossIn` has already taken that King off the queue so
+     * `resolvingATossIn` cannot tell them apart either. The bot aimed a King at somebody's Jack,
+     * was handed the Jack, and binned it: *"why ember with king declare my jack? And why it
+     * didn't move anything"*.
+     *
+     * The line between them is what the engine will still accept. Nothing in `ActionValidator`
+     * reads `actionPhase` for a **target**, so a won Jack, Queen or peek can be aimed from here
+     * and played. A **King** cannot: `DECLARE_KING_ACTION` insists on `selecting-target`, so a
+     * King here has no legal way forward whoever handed it over — aiming it anyway is how a bot
+     * ends up declaring a King the engine refuses, which `SelfPlayGateTest` caught the moment
+     * this guard first read `PendingCardOrigin` alone. A card off the **deck** keeps the old
+     * answer for the old reason: use, swap and discard all need `choosing`, and it is not that
+     * either.
+     */
+    private fun strandedHere(state: GameState, pending: PendingAction): Boolean =
+        !state.resolvingATossIn &&
+            (pending.from == PendingCardOrigin.DRAWING || pending.card.rank == Rank.KING)
 
     /**
      * Put the card down unplayed and move on.
