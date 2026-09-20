@@ -19,6 +19,7 @@ import game.vinto.shapes.GameState
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.ParticipateInTossInPayload
 import game.vinto.shapes.PendingAction
+import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PlayerState
 import game.vinto.shapes.PositionPayload
@@ -617,7 +618,20 @@ class BotRunner(
             // has always been able to aim. Only this line read it, and it put every throw after
             // the first one down unplayed: reported from a phone as three bots tossing nines in
             // and one nine being played.
-            pending.actionPhase == ActionPhase.CHOOSING_ACTION && !state.resolvingATossIn ->
+            //
+            // **And unless a King just won it**, which the queue cannot say either. A correct
+            // declaration takes the named card out of its owner's hand and hands its action to
+            // the declarer at `choosing-action` — and `setupKingTossIn` has taken that King off
+            // the queue by then, so `resolvingATossIn` is already false. The bot aimed a King at
+            // somebody's Jack, was given the Jack, and binned it: reported from a phone as
+            // "why ember with king declare my jack? And why it didn't move anything".
+            // `PendingCardOrigin` is what tells the two apart. A card stranded by a window that
+            // opened over it came off the **deck** and cannot be played from where it sits; one
+            // a King won came out of a **hand**, and the engine is waiting to be told where to
+            // aim it.
+            pending.actionPhase == ActionPhase.CHOOSING_ACTION &&
+                pending.from == PendingCardOrigin.DRAWING &&
+                !state.resolvingATossIn ->
                 abandonAction(player)
 
             else -> actionTargetAction(state, player, pending)

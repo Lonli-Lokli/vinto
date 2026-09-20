@@ -45,6 +45,37 @@ class ReportedGamesTest {
     }
 
     @Test
+    fun aJackWonByAKingsCorrectDeclarationIsPlayed() {
+        // Reported 2026-09-19: "Explain why ember with king declare my jack? And why it didn't
+        // move anything." Replaying it says the engine was right and the bot was not. Tide threw
+        // a King into a window, pointed it at the person's third card and declared "Jack" —
+        // correctly, so the Jack left that hand (five cards became four) and the engine handed
+        // Tide the Jack to play: `pendingAction` a JACK, `AWAITING_ACTION`, a target type set.
+        // Tide answered `CONFIRM_PEEK`, which is the engine's "put it down unplayed", and the
+        // blind swap a King had just bought went in the bin.
+        //
+        // `BotRunner` abandons a pending card at `choosing-action` outside a toss-in, because a
+        // card stranded by a window that opened over it arrives looking exactly like that and
+        // cannot be played from there. A card a King has just won is the opposite: the engine is
+        // waiting to be told where to aim it. `PendingCardOrigin` is what tells them apart —
+        // stranded cards come from the deck, won ones out of a hand.
+        val report = recording("a-kings-won-jack-was-put-down")
+        val declared = report.actions.indexOfFirst { it.action is GameAction.DeclareKingAction }
+        assertTrue(declared > 0, "the report no longer contains the King's declaration")
+
+        val bad = mutableListOf<String>()
+        for (seed in 1..5) {
+            val runner = BotRunner(Difficulty.MODERATE, Random(seed.toLong()))
+            val state = replayed(report, declared + 1, runner)
+            assertEquals(Rank.JACK, state.pendingAction?.card?.rank, "the report no longer wins a Jack")
+
+            val next = runner.nextAction(state)
+            if (next !is GameAction.SelectActionTarget) bad += "seed " + seed + ": " + next?.type
+        }
+        assertTrue(bad.isEmpty(), "the Jack a King won was put down unplayed:\n" + bad.joinToString("\n"))
+    }
+
+    @Test
     fun aDrawnJokerIsNeverThrownAway() {
         // Reported 2026-09-06: Ember drew the Joker with two fives it knew about in hand, and
         // put it on the pile. A Joker is worth -1; keeping it in place of any card is better,

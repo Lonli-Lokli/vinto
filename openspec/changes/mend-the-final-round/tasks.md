@@ -119,10 +119,21 @@ plan the coalition agrees to and cannot play. Model faults first, appearance sec
 Explanations first. Neither is a fix until it is understood, and one of them may be the
 engine rather than the bot.
 
-- [ ] 5.1 Explain, from `2026-09-19-2200-report2.json`, the King that declared a card correctly
-      and then moved nothing: the recording shows `DECLARE_KING_ACTION` with the right rank
-      followed by `CONFIRM_PEEK`, which is the wrong-declaration branch. Verify against
-      `ActionValidator` and the King handler before touching the bot
+- [x] 5.1 **Explained by replaying it, and the engine was right.** The recording was read into
+      `shared/bot`'s reports as `a-kings-won-jack-was-put-down.json` and replayed with the state
+      printed either side of the declaration. Tide threw a King into a window, pointed it at the
+      person's third card and declared "Jack" — **correctly**: the Jack left that hand, five
+      cards became four, and the engine handed Tide the Jack to play (`pendingAction` a JACK,
+      `AWAITING_ACTION`, a target type set). So `DECLARE_KING_ACTION` followed by `CONFIRM_PEEK`
+      is not the wrong-declaration branch after all; it is the bot answering "put it down
+      unplayed" to a card it had just won.
+      `BotRunner` abandons a pending card at `choosing-action` outside a toss-in, because a card
+      stranded by a window that opened over it arrives looking exactly like that and cannot be
+      played from where it sits. A card a King has won is the opposite — and `setupKingTossIn`
+      has already taken that King off the queue, so `resolvingATossIn` is false and the guard
+      fired. `PendingCardOrigin` tells them apart: stranded cards come off the **deck**, won ones
+      out of a **hand**. `ReportedGamesTest.aJackWonByAKingsCorrectDeclarationIsPlayed`, red on
+      all five seeds before the fix
 - [ ] 5.2 Explain the King played the long way round — drawn, played, an opponent's 3 declared,
       then its own 3 thrown in — to a total reachable by swapping the King in. Verify whether
       the search prices the line correctly or the rollout misprices the declaration
