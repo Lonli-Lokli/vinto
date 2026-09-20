@@ -385,18 +385,43 @@ private fun PlayerView.locate(step: Step): Step? = when (step) {
     }
 }
 
-private fun PlayerView.locate(at: CardAt): CardAt? {
-    val anchor = at.anchor
-    if (anchor != null) {
-        for (seat in players) {
-            val position = seat.claims
-                .firstOrNull { it.positions.size == 1 && sameClaim(it, anchor) }
-                ?.positions
-                ?.single()
-            if (position != null && position in seat.cards.indices) return CardAt(seat.id, position, anchor)
-        }
-    }
-    return at.takeIf { cardAt(it) != null }
+/**
+ * Where the card named by [at] is now, or null where it has gone.
+ *
+ * `internal` so the rule can be tested as the rule it is, the way `believedOnView` and
+ * `cardAt` are: a plan that names the wrong seat is a plan the coalition agrees to and cannot
+ * play, and going through a whole rehearsal to find that out tests the rehearsal instead.
+ */
+internal fun PlayerView.locate(at: CardAt): CardAt? {
+    val anchor = at.anchor ?: return at.takeIf { cardAt(it) != null }
+
+    fun claimedPosition(seat: PlayerSeatView): Int? = seat.claims
+        .firstOrNull { it.positions.size == 1 && sameClaim(it, anchor) }
+        ?.positions
+        ?.single()
+        ?.takeIf { it in seat.cards.indices }
+
+    // Where the plan put it, first. A card that has not travelled is never looked for anywhere
+    // else — the anchor is there to follow a card that moved, not to re-open the question of
+    // which card was meant.
+    players.firstOrNull { it.id == at.seat }
+        ?.let { claimedPosition(it) }
+        ?.let { return CardAt(at.seat, it, anchor) }
+
+    // Then the rest of the coalition. **Never the caller**: a plan may not touch their cards,
+    // so a step relocated onto them is not the wrong seat, it is a step the round would refuse.
+    //
+    // And only where the answer is unambiguous. `sameClaim` compares who spoke, the ranks and
+    // covering — never whose card it was about — so one seat saying "King" about two hands
+    // leaves two claims this cannot tell apart, and walking the seats in order silently picked
+    // whichever came first. Reported from a phone as a planned trade with the top seat
+    // replaying as a trade with the caller. Two candidates is not a card that moved; it is two
+    // cards, and the plan keeps the one it named.
+    val candidates = players
+        .filter { it.id != at.seat && it.id != vintoCallerId }
+        .mapNotNull { seat -> claimedPosition(seat)?.let { CardAt(seat.id, it, anchor) } }
+
+    return candidates.singleOrNull() ?: at.takeIf { cardAt(it) != null }
 }
 
 private fun sameClaim(claim: Claim, other: Claim): Boolean =

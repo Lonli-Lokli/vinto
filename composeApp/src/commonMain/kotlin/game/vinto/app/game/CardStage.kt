@@ -966,10 +966,17 @@ val LocalStage = compositionLocalOf { Stage() }
  * whole — what changes is that a tap in plan mode now has a legitimate meaning, so the guard
  * routes instead of muting.
  *
- * In [TableMode.LIVE] a move goes where it always went. In [TableMode.PLAN] only a
- * [Move.Quiet] passes — the composer's own return type, which [Move.Send] is not a subtype of
- * — so the felt cannot dispatch a `GameAction` from a hypothetical table even if something
- * upstream handed it one. The type is the guard; this is the place it is applied.
+ * In [TableMode.LIVE] a move goes where it always went. In [TableMode.PLAN] a [Move.Quiet]
+ * passes — the composer's own return type, which [Move.Send] is not a subtype of — so the felt
+ * cannot dispatch a `GameAction` from a hypothetical table even if something upstream handed it
+ * one. The type is the guard; this is the place it is applied.
+ *
+ * **And [Move.Done] passes, named here rather than made quiet.** It is the press the coalition's
+ * turns are waiting on, and the plan is where it lives (`PlanBoard.startingTurns`) — so a router
+ * that dropped it left a button that did nothing at all, reported from a phone as "start round
+ * button wasn't working". It is not quiet and must not be called so: it sets three turns going.
+ * What makes it safe here is what the guard is actually for — a tap on a ghost card becoming a
+ * `GameAction` — and `Done` is a rail button carrying no card and no action.
  */
 @Composable
 fun ((Move) -> Unit).routed(table: Table): (Move) -> Unit {
@@ -980,7 +987,7 @@ fun ((Move) -> Unit).routed(table: Table): (Move) -> Unit {
     val mode = table.mode
     return remember(onMove, mode) {
         if (mode == TableMode.PLAN) {
-            { move -> if (move is Move.Quiet) onMove(move) }
+            { move -> if (move is Move.Quiet || move is Move.Done) onMove(move) }
         } else {
             onMove
         }

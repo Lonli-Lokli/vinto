@@ -166,14 +166,27 @@ private fun touchComposer(there: PlayerView, seat: String, lane: Lane?, asking: 
     return PlanComposer(seat, emptyMap(), touches)
 }
 
-/** A trade: the one at [part], between two hands, of cards the table has been told about. */
+/**
+ * A trade: the one at [part], between two hands, of any coalition cards.
+ *
+ * **Any of them, named or not.** This read `spokenCards` — only what the table had been told
+ * about — which is the right rule for a step that *claims* something and the wrong one for a
+ * Jack, because a Jack is blind: what it moves is decided by where the cards are and not by
+ * what anybody has said about them. A coalition that may only trade cards it has already
+ * described cannot plan the commonest Jack there is, and the felt simply did not respond to
+ * the cards a person tried to pick — reported from a phone as not being able to select two
+ * cards at all.
+ *
+ * What a card is *worth* to the plan is a separate question, and one the board already answers
+ * honestly: an unnamed card prices at the deck's mean and says nothing about its rank.
+ */
 private fun tradeComposer(there: PlayerView, seat: String, lane: Lane?, part: Part): PlanComposer {
     // The card put down is on the pile by the time a called Jack acts, so it is not one the
     // Jack can move.
     val gone = (lane?.step as? Step.PutDown)
         ?.takeIf { part == Part.Called }
         ?.let { CardRef(it.card.seat, it.card.position) }
-    val tradable = spokenCards(there).filter { it != gone }
+    val tradable = coalitionCards(there).filter { it != gone }
 
     fun trade(from: CardRef, to: CardRef): Move.Plan? =
         lane.edit(seat, part, Step.Swap(cardAt(there, from), cardAt(there, to)))?.let { Move.Plan(it) }

@@ -281,34 +281,37 @@ class PlanBoardTest {
         assertNotNull(table.board, "naming a rank closed the plan behind it")
     }
 
+    /**
+     * A Jack's palette is every coalition card, named or not.
+     *
+     * **This reverses a decision, deliberately.** The palette used to be what the table had been
+     * told about plus what the viewer had read, so that "saying what a card is puts it on the
+     * palette, which is what makes declaring worth doing (design D7)". The incentive was real
+     * and the cost was worse: a Jack is *blind* — what it moves is decided by where the cards
+     * are, not by what anybody has said — so the commonest Jack of all, two unknown cards
+     * traded on position, could not be planned, and the felt did not respond to the cards a
+     * person tried to pick. Reported from a phone as not being able to select two cards at all.
+     *
+     * Declaring is still worth doing, and it is worth doing for the reason it always was rather
+     * than for a gate: a named card is one the plan can *price* and can claim a rank for. What
+     * went is naming as the price of admission.
+     */
     @Test
-    fun thePaletteIsWhatHasBeenSaidAndWhatYouHaveRead() {
-        // Nina's first card is claimed; her second is not, and nothing has been said about the
-        // person's cards or Don's — so the only card a swap may name is Nina's first and, once
-        // the person has read one of their own, that one. Saying what a card is puts it on the
-        // palette, which is what makes declaring worth doing (design D7).
-        val nothingRead = assertNotNull(
+    fun aJacksPaletteIsEveryCoalitionCard() {
+        val composer = assertNotNull(
             assertNotNull(
                 tableFor(view(finalRound(discardTop = Rank.JACK)), Question.ThePlan(), plan = takingTheJack()).board,
             ).lanes[0].composer,
         )
-        assertEquals(setOf(CardRef(nina, 0)), nothingRead.drops.keys, "an unspoken card was on the palette")
 
-        val read = view(
-            finalRound(discardTop = Rank.JACK).let { s ->
-                s.copy(players = s.players.map { p -> if (p.id == me) p.copy(knownCardPositions = listOf(1)) else p })
-            },
-        )
-        val mine = assertNotNull(
-            assertNotNull(
-                tableFor(read, question = Question.ThePlan(), plan = takingTheJack()).board,
-            ).lanes[0].composer,
-        )
+        // Nina's second card and both of the person's are unspoken for, and all of them are
+        // here; the caller's are not, which is the rule that does not move.
         assertEquals(
-            setOf(CardRef(nina, 0), CardRef(me, 1)),
-            mine.drops.keys,
-            "a card of your own you have read is not on the palette",
+            setOf(CardRef(me, 0), CardRef(me, 1), CardRef(nina, 0), CardRef(nina, 1), CardRef(don, 0)),
+            composer.drops.keys,
+            "the palette is not every coalition card",
         )
+        assertTrue(composer.drops.keys.none { it.playerId == caller }, "the caller's cards were on the palette")
     }
 
     @Test

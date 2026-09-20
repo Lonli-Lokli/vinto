@@ -2,6 +2,7 @@ package game.vinto.client
 
 import game.vinto.engine.CardView
 import game.vinto.engine.projectView
+import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
 import game.vinto.shapes.Claim
 import game.vinto.shapes.Difficulty
@@ -631,6 +632,60 @@ class HumanCoalitionMemberTest {
         assertTrue(
             onThePlan.choices.none { it.move is Move.Done },
             "the plan still offered to start a round that is already running",
+        )
+    }
+
+    /**
+     * Answering the throw the call itself opened does not end the talking.
+     *
+     * Reported 2026-09-17: *"I wasn't able to declare my cards! Game immediately started when I
+     * pressed share what I know."* The call's own card leaves a toss-in window open, and a
+     * throw is priced and timed where talk is neither — so `tableBody` puts that question first
+     * and the declaring table waits behind it. The player's first tap is therefore always the
+     * toss-in's, and [dispatch] read *any* action but a declaration as "this seat has started
+     * playing, so it has finished talking" and shut the confer window on it. One press, made
+     * before the declaring table had ever been on screen, and the round ran.
+     *
+     * Ending your share of a window is not playing. It is the same gesture as the confer
+     * window's own button, pointed at a different window, and it is the one thing a coalition
+     * member has to do *before* they can say anything at all.
+     */
+    @Test
+    fun answeringTheCallsOwnThrowLeavesTheTalkingOpen() = runTest {
+        val window = ActiveTossIn(
+            ranks = listOf(Rank.THREE),
+            initiatorId = "bot-2",
+            originalPlayerIndex = 1,
+            participants = emptyList(),
+            queuedActions = emptyList(),
+            waitingForInput = true,
+            playersReadyForNextTurn = emptyList(),
+        )
+        val session = LocalGameSession(
+            seed = 5L,
+            difficulty = Difficulty.MODERATE,
+            resuming = finalRound(callerId = "bot-2", leaderId = null, currentPlayerIndex = 2)
+                .copy(subPhase = GameSubPhase.TOSS_QUEUE_ACTIVE, activeTossIn = window),
+        )
+        session.dispatch(GameAction.Empty(JsonNull))
+        assertNotNull(session.view.value.conferMsRemaining, "the fixture's window is not open")
+
+        // The throw is what the table asks first, so this is the player's first tap.
+        assertEquals(
+            Ask.TossIn(listOf(Rank.THREE), barred = false),
+            tableFor(session.view.value).prompt,
+            "the throw is not the question standing in front of the declaring",
+        )
+        assertNull(session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload("human-1"))))
+
+        assertNotNull(
+            session.view.value.conferMsRemaining,
+            "saying no to the throw ended the talking, so the cards could never be declared",
+        )
+        assertEquals(
+            Ask.SayWhatYouKnow,
+            tableFor(session.view.value).prompt,
+            "the declaring table did not come up behind the throw",
         )
     }
 

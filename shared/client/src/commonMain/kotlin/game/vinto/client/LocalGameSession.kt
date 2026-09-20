@@ -409,8 +409,17 @@ class LocalGameSession(
         // `GameAction` like any other and came through here, so the first card a person named
         // shut the window they were naming it in — the bots took their turns and there was no
         // way to say a second thing. Reported from a phone, and it is what the window exists
-        // for, so it is the one action that leaves it open.
-        if (conferring && action !is GameAction.DeclareCards) {
+        // for, so it leaves the window open.
+        //
+        // **Nor is answering the throw the call itself opened.** The caller's last card leaves
+        // a toss-in window standing, and a throw is priced and timed where talk is neither — so
+        // `tableBody` puts that question in front of the declaring table. Which made it the
+        // player's *first* tap, every time, and it shut the window before the declaring table
+        // had ever been on screen: "I wasn't able to declare my cards! Game immediately started
+        // when I pressed share what I know" (reported from a phone). Ending your share of a
+        // window is the same gesture as this one, pointed at a different window, and throwing a
+        // match into it is answering that window rather than taking a turn.
+        if (conferring && !action.allowedWhileConferring) {
             conferring = false
             conferred = true
         }
@@ -548,10 +557,13 @@ class LocalGameSession(
         val next = onBotDispatcher {
             var working = start
             while (moves < MAX_BOT_STEPS && working.phase != GamePhase.SCORING) {
-                // The window holds the bots' **turns**, never their declarations. A coalition
-                // confers in order to pool what it knows, so a window that silenced the bots
-                // would be a conversation with nothing in it — the person would be asked to
-                // plan against three hands nobody had described.
+                // The window holds the bots' **turns**, and only those. A coalition confers in
+                // order to pool what it knows, so a window that silenced the bots would be a
+                // conversation with nothing in it — the person would be asked to plan against
+                // three hands nobody had described. It does not hold their answer to the throw
+                // the call left standing either: that window is in front of the declaring table
+                // for everyone, and a table where only the person may answer it is a table
+                // where it never closes (`allowedWhileConferring`).
                 //
                 // **Asked of `working`, every pass.** It used to be read once, above the loop,
                 // and the call that opens the window is a move *in* the loop — a bot ends its
@@ -560,7 +572,7 @@ class LocalGameSession(
                 // confer about. Reported from a phone as the bots playing on without waiting to
                 // be told anything.
                 val holding = holdingTheWindow(working, held)
-                if (holding && nextBotAction(working) !is GameAction.DeclareCards) break
+                if (holding && nextBotAction(working)?.allowedWhileConferring != true) break
 
                 // Anything the bots have to say about the position they are in, before they
                 // move in it. Talk is not a move — it changes no state and is not counted
@@ -742,3 +754,18 @@ class LocalGameSession(
         const val LOG_LENGTH = 24
     }
 }
+
+/**
+ * Whether a seat may do this while the coalition is still conferring.
+ *
+ * Everything that is not a seat's *turn*: saying what it knows, and answering the throw the
+ * call left open. Taking the turn is what finishes the talking, and a turn is none of these.
+ *
+ * Read on both sides of the window, and it has to be: the person is held to it by
+ * `LocalGameSession.dispatch` and the bots by the loop in `playBots`. Letting one through and
+ * not the other is a table where the throw can never be answered.
+ */
+private val GameAction.allowedWhileConferring: Boolean
+    get() = this is GameAction.DeclareCards ||
+        this is GameAction.ParticipateInTossIn ||
+        this is GameAction.PlayerTossInFinished

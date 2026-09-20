@@ -246,12 +246,26 @@ class PlanAsTalkTest {
         val asking = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, called))
         assertEquals(Says.WhichTwo, asking.own().last())
         assertTrue(asking.slot(Says.WhichTwo).asked)
-        // The Jack may trade anything the table has been told about — never the caller's cards,
-        // and never the card that is on the pile by then.
+        // The Jack may trade any coalition card — never the caller's, and never the card that
+        // is on the pile by then.
         val composer = assertNotNull(asking.board?.building?.composer)
         assertTrue(composer.sources.isNotEmpty())
         assertTrue(composer.sources.none { it.playerId == caller })
         assertFalse(CardRef(me, 0) in composer.sources, "the card put down was offered for trading")
+
+        // **Including cards nobody has named.** A Jack is blind: what it moves is decided by
+        // where the cards are, not by what has been said about them, and a coalition that may
+        // only trade what it has already described cannot plan the commonest Jack there is —
+        // reported from a phone as not being able to pick two cards at all. `nina` position 1
+        // and `me` position 1 are unspoken for in this fixture.
+        assertTrue(
+            CardRef(nina, 1) in composer.sources,
+            "a teammate's unnamed card could not be traded: ${composer.sources}",
+        )
+        assertNotNull(
+            composer.drops[CardRef(nina, 1)]?.get(PlanTarget.Card(CardRef(me, 1))),
+            "two unnamed cards could not be traded with each other",
+        )
 
         val traded = called.copy(
             lanes = listOf(
