@@ -3,6 +3,7 @@ package game.vinto.app.game
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -150,6 +151,9 @@ private val LabelSize = 10.sp
 
 /** Every row under the page is this tall, and so is every row inside it: one height, aligned. */
 private val RowHigh = 44.dp
+
+/** Slow enough to read a sentence off, which is the whole point of moving it at all. */
+private val HintCreep = 18.dp
 
 /** A card in the sentence: at the height of a word, with its badges hanging off its corners. */
 private val MiniWidth = 22.dp
@@ -424,11 +428,15 @@ private fun Answers(board: Board, table: Table, onMove: (Move) -> Unit) {
     val stage = LocalStage.current
     val seats = table.seats.filter { !it.planTurn }
     val sentence = board.sentence
+    val chips = board.answers.isNotEmpty() || seats.isNotEmpty() || sentence?.hasNews == true
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(RowHigh)
-            .horizontalScroll(rememberScrollState())
+            // Chips are a strip and scroll by hand; the hint is a sentence and must not, or it
+            // is bounded by nothing and cannot know it does not fit. See the hint below.
+            .then(if (chips) Modifier.horizontalScroll(rememberScrollState()) else Modifier)
             .markedAs(stage, "plan:answers"),
         horizontalArrangement = Arrangement.spacedBy(Half),
         verticalAlignment = Alignment.CenterVertically,
@@ -444,6 +452,15 @@ private fun Answers(board: Board, table: Table, onMove: (Move) -> Unit) {
                     fontStyle = FontStyle.Italic,
                     color = Rail.inkDim,
                     maxLines = 1,
+                    // Reported from a phone with the picture to prove it: the line ended mid-word
+                    // at the right rim — "touch the pla" — and nothing said there was more. It was
+                    // one line inside a strip that scrolls by hand, so it simply ran off, and the
+                    // page is exactly two rows deep so it cannot wrap onto a third.
+                    //
+                    // "I think we should make in plan mode all of this auto scrollable slowly",
+                    // which is what this is. It costs nothing when the line already fits: a
+                    // marquee that is not overflowing does not animate.
+                    modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE, velocity = HintCreep),
                 )
             }
         }

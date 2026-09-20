@@ -34,9 +34,16 @@ plan the coalition agrees to and cannot play. Model faults first, appearance sec
       not answer a touch on it. Reversing that is 3.3a; this line closes with it
 - [ ] 2.4 Draw an already-chosen card as chosen — lifted the way the table lifts a card, not a
       border — and verify `ScreenContrastTest` still clears AA in both themes
-- [ ] 2.5 Keep the plan's sentence on screen: scroll it into view as it grows rather than
-      letting it run under the edge, and verify `RailFitsTest` covers the longest sentence the
-      composer can build at a doubled system font
+- [x] 2.5 **The hint crept off the right rim, and the screenshot proved it.** Not the sentence:
+      the *hint* under it, drawn `maxLines = 1` inside the answers row — a strip that scrolls by
+      hand because it usually holds chips. A sentence in a hand-scrolled strip is bounded by
+      nothing, so it cannot know it does not fit and simply runs off: the report's picture ends
+      mid-word at the rim, "touch the pla", with nothing saying there is more. The page is
+      exactly two rows deep so it cannot wrap onto a third either.
+      The row now scrolls only when it holds chips, which gives the hint a width to be bounded
+      by, and the hint creeps — *"I think we should make in plan mode all of this auto scrollable
+      slowly"*, at 18dp/s. It costs nothing when the line already fits: a marquee that is not
+      overflowing does not animate
 
 ## 3. The plan can say what the rules allow
 
