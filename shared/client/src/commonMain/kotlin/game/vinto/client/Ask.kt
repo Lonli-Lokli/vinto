@@ -112,6 +112,14 @@ sealed interface Ask {
 
     data class WhichRankShouldTheyDeclare(val who: Speaker) : Ask
 
+    /**
+     * Which rank [who] calls the card they put down as — the guess that buys its action.
+     *
+     * Only ever asked of a card nobody has read: where the table can name the card there is one
+     * sane call and the sentence offers it in a word.
+     */
+    data class WhichRankShouldTheyCallIt(val who: Speaker) : Ask
+
     /** Which of [who]'s own cards goes on the pile, for a teammate holding its rank to throw in on. */
     data class WhichCardShouldTheyPutDown(val who: Speaker) : Ask
 

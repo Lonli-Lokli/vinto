@@ -543,6 +543,8 @@
     <string name="ask_which_two_will_it_swap">¿Qué dos cartas cambia la %1$s? Toca una, luego la otra.</string>
     <string name="ask_which_rank_will_you_declare">¿Qué rango declararás con el Rey?</string>
     <string name="ask_which_rank_should_they_declare">¿Qué rango debería declarar %1$s con el Rey?</string>
+    <string name="ask_which_rank_will_you_call_it">¿Qué rango cantarás? Un acierto activa la acción de esa carta.</string>
+    <string name="ask_which_rank_should_they_call_it">¿Qué rango debería cantar %1$s? Un acierto activa la acción de esa carta.</string>
     <string name="ask_which_card_will_you_put_down">¿Cuál de tus cartas sale para hacerle sitio?</string>
     <string name="ask_which_card_should_they_put_down">¿Cuál de las cartas de %1$s sale para hacerle sitio?</string>
     <string name="detail_plan_is_a_suggestion">Un plan es una sugerencia. Decide quien tenga el turno.</string>
@@ -570,6 +572,8 @@
     <string name="says_what_with">¿y luego?</string>
     <string name="says_which_card">¿qué carta sale?</string>
     <string name="says_call_it">+ cantar %1$s</string>
+    <string name="says_call_it_anything">+ cantar…</string>
+    <string name="says_called_it">canta %1$s</string>
     <string name="says_which_two">¿qué dos cartas?</string>
     <string name="says_which_to_look_at">¿a qué carta?</string>
     <string name="says_forces">y hace que %1$s robe</string>
@@ -629,6 +633,7 @@
     <string name="choice_use_from_pile">Usar %1$s</string>
     <string name="choice_use_action">Usar acción</string>
     <string name="choice_swap_cards">Cambiar cartas</string>
+    <string name="choice_keep_it">Guardarla</string>
     <string name="choice_discard">Descartar</string>
     <string name="choice_just_swap">Solo cambiar</string>
     <string name="choice_put_it_down">Soltarla</string>

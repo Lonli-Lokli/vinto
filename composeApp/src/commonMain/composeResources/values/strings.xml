@@ -696,6 +696,11 @@
     <string name="ask_which_two_will_it_swap">Which two cards does the %1$s swap? Touch one, then the other.</string>
     <string name="ask_which_rank_will_you_declare">Which rank will you declare with the King?</string>
     <string name="ask_which_rank_should_they_declare">Which rank should %1$s declare with the King?</string>
+    <!-- Planning a card nobody has read onto the pile: calling it right plays its action, calling
+         it wrong costs a penalty card. Only the action cards are offered, because a correct call
+         on a two through a six plays nothing at all. -->
+    <string name="ask_which_rank_will_you_call_it">Which rank will you call it? A right guess plays that card’s action.</string>
+    <string name="ask_which_rank_should_they_call_it">Which rank should %1$s call it? A right guess plays that card’s action.</string>
     <!-- After "Swap it in": which card leaves to make room for the draw. Neutral about why —
          it used to say "for a teammate to throw in on", and a member swapping the draw into
          their Jack's place so as to call the Jack was being told a different purpose. -->
@@ -749,6 +754,11 @@
     <string name="says_what_with">and then?</string>
     <string name="says_which_card">which card goes out?</string>
     <string name="says_call_it">+ call it %1$s</string>
+    <!-- The same offer for a card nobody has read: the rank comes off the rail, not from a word. -->
+    <string name="says_call_it_anything">+ call it…</string>
+    <!-- The call once made, and only on a card nobody can name — for a card the table knows,
+         "puts down your Jack, calls it a Jack" is the same word twice. -->
+    <string name="says_called_it">calls it %1$s</string>
     <string name="says_which_two">which two cards?</string>
     <string name="says_which_to_look_at">at which card?</string>
     <string name="says_forces">makes %1$s draw</string>
@@ -910,6 +920,9 @@
     <string name="choice_use_from_pile">Use %1$s</string>
     <string name="choice_use_action">Use Action</string>
     <string name="choice_swap_cards">Swap Cards</string>
+    <!-- The same button for a hand with nothing in it: there is no card to swap with, so the
+         drawn card simply goes in and the "which card does it replace?" question is skipped. -->
+    <string name="choice_keep_it">Keep It</string>
     <string name="choice_discard">Discard</string>
     <string name="choice_just_swap">Just Swap</string>
     <string name="choice_put_it_down">Put it down</string>

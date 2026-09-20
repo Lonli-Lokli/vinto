@@ -39,9 +39,11 @@ import game.vinto.app.art.ask_which_card_they_throw_in
 import game.vinto.app.art.ask_which_card_will_it_look_at
 import game.vinto.app.art.ask_which_card_will_you_put_down
 import game.vinto.app.art.ask_which_card_you_throw_in
+import game.vinto.app.art.ask_which_rank_should_they_call_it
 import game.vinto.app.art.ask_which_rank_should_they_declare
 import game.vinto.app.art.ask_which_rank_they_throw_in
 import game.vinto.app.art.ask_which_rank_throw_in
+import game.vinto.app.art.ask_which_rank_will_you_call_it
 import game.vinto.app.art.ask_which_rank_will_you_declare
 import game.vinto.app.art.ask_which_two_will_it_swap
 import game.vinto.app.art.ask_which_way_round
@@ -163,6 +165,7 @@ import game.vinto.app.art.choice_discard
 import game.vinto.app.art.choice_done
 import game.vinto.app.art.choice_draw_card
 import game.vinto.app.art.choice_just_swap
+import game.vinto.app.art.choice_keep_it
 import game.vinto.app.art.choice_leave_them
 import game.vinto.app.art.choice_put_it_down
 import game.vinto.app.art.choice_start_round
@@ -250,6 +253,8 @@ import game.vinto.app.art.log_you
 import game.vinto.app.art.says_add_throw
 import game.vinto.app.art.says_and_then
 import game.vinto.app.art.says_call_it
+import game.vinto.app.art.says_call_it_anything
+import game.vinto.app.art.says_called_it
 import game.vinto.app.art.says_draws
 import game.vinto.app.art.says_drew
 import game.vinto.app.art.says_drew_word
@@ -502,6 +507,7 @@ fun labelled(label: Label): String = when (label) {
     is Label.UseFromPile -> stringResource(Res.string.choice_use_from_pile, getCardName(label.rank))
     Label.UseAction -> stringResource(Res.string.choice_use_action)
     Label.SwapCards -> stringResource(Res.string.choice_swap_cards)
+    Label.KeepIt -> stringResource(Res.string.choice_keep_it)
     Label.Discard -> stringResource(Res.string.choice_discard)
     Label.JustSwap -> stringResource(Res.string.choice_just_swap)
     Label.PutItDown -> stringResource(Res.string.choice_put_it_down)
@@ -575,6 +581,11 @@ fun asked(ask: Ask): String = when (ask) {
         ask.who,
         Res.string.ask_which_rank_will_you_declare,
         Res.string.ask_which_rank_should_they_declare,
+    )
+    is Ask.WhichRankShouldTheyCallIt -> aboutTurn(
+        ask.who,
+        Res.string.ask_which_rank_will_you_call_it,
+        Res.string.ask_which_rank_should_they_call_it,
     )
     is Ask.WhichCardShouldTheyPutDown -> aboutTurn(
         ask.who,
@@ -799,7 +810,8 @@ fun saysWords(says: Says): String = when (says) {
     is Says.PutsDown -> putsDownWords(says)
     Says.WhichCard -> stringResource(Res.string.says_which_card)
     Says.LetsItGo -> stringResource(Res.string.says_lets_it_go)
-    is Says.CallIt -> stringResource(Res.string.says_call_it, cardName(says.rank))
+    is Says.CallIt -> callItWords(says)
+    is Says.Called -> stringResource(Res.string.says_called_it, cardName(says.rank))
     is Says.Trade -> tradeWords(says)
     Says.WhichTwo -> stringResource(Res.string.says_which_two)
     is Says.Looks -> stringResource(Res.string.says_looks_at_one, whose(says.card.who), says.card.slot)
@@ -833,9 +845,16 @@ fun chipWords(says: Says): String = when (says) {
     is Says.Throws -> stringResource(Res.string.says_throws_word)
     is Says.Trade, is Says.Points -> ""
     Says.Draws, Says.WellSee, Says.AndThen, Says.WhatWith, Says.PlaysIt, Says.WhichCard, Says.LetsItGo,
-    is Says.CallIt, Says.WhichTwo, Says.WhichToLookAt, Says.WhichToPointAt, is Says.Names, is Says.Forces,
-    Says.WhoDraws, Says.WhichToThrow, Says.AddThrow,
+    is Says.CallIt, is Says.Called, Says.WhichTwo, Says.WhichToLookAt, Says.WhichToPointAt,
+    is Says.Names, is Says.Forces, Says.WhoDraws, Says.WhichToThrow, Says.AddThrow,
     -> saysWords(says)
+}
+
+/** "+ call it a Jack" where the table can name the card, and the open rail where it cannot. */
+@Composable
+private fun callItWords(says: Says.CallIt): String {
+    val rank = says.rank ?: return stringResource(Res.string.says_call_it_anything)
+    return stringResource(Res.string.says_call_it, cardName(rank))
 }
 
 @Composable

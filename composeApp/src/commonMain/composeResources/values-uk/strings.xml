@@ -523,6 +523,8 @@
     <string name="ask_which_two_will_it_swap">Які дві карти поміняє %1$s? Торкніться однієї, потім іншої.</string>
     <string name="ask_which_rank_will_you_declare">Яке достоїнство ви назвете Королем?</string>
     <string name="ask_which_rank_should_they_declare">Яке достоїнство має назвати %1$s Королем?</string>
+    <string name="ask_which_rank_will_you_call_it">Яке достоїнство ви назвете? Правильна догадка зіграє дію цієї карти.</string>
+    <string name="ask_which_rank_should_they_call_it">Яке достоїнство має назвати %1$s? Правильна догадка зіграє дію цієї карти.</string>
     <string name="ask_which_card_will_you_put_down">Яку з ваших карт ви приберете, щоб звільнити місце?</string>
     <string name="ask_which_card_should_they_put_down">Яку з карт %1$s прибере, щоб звільнити місце?</string>
     <string name="detail_plan_is_a_suggestion">План — лише пропозиція. Рішення залишається за гравцем, чий зараз хід.</string>
@@ -550,6 +552,8 @@
     <string name="says_what_with">а що потім?</string>
     <string name="says_which_card">яка карта йде?</string>
     <string name="says_call_it">+ назвати %1$s</string>
+    <string name="says_call_it_anything">+ назвати…</string>
+    <string name="says_called_it">називає її %1$s</string>
     <string name="says_which_two">які дві карти?</string>
     <string name="says_which_to_look_at">на яку карту?</string>
     <string name="says_forces">і змушує %1$s взяти карту</string>
@@ -608,6 +612,7 @@
     <string name="choice_use_from_pile">Зіграти %1$s</string>
     <string name="choice_use_action">Зіграти дію</string>
     <string name="choice_swap_cards">Поміняти карти</string>
+    <string name="choice_keep_it">Залишити</string>
     <string name="choice_discard">Скинути</string>
     <string name="choice_just_swap">Просто поміняти</string>
     <string name="choice_put_it_down">Покласти</string>

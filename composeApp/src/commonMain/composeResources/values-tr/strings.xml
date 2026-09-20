@@ -533,6 +533,8 @@
     <string name="ask_which_two_will_it_swap">%1$s hangi iki kartı değiştiriyor? Birine, sonra diğerine dokun.</string>
     <string name="ask_which_rank_will_you_declare">Papaz ile hangi değeri söyleyeceksin?</string>
     <string name="ask_which_rank_should_they_declare">%1$s Papaz ile hangi değeri söylemeli?</string>
+    <string name="ask_which_rank_will_you_call_it">Hangi değeri söyleyeceksin? Doğru tahmin, o kartın eylemini oynar.</string>
+    <string name="ask_which_rank_should_they_call_it">%1$s hangi değeri söylemeli? Doğru tahmin, o kartın eylemini oynar.</string>
     <string name="ask_which_card_will_you_put_down">Yer açmak için hangi kartını koyacaksın?</string>
     <string name="ask_which_card_should_they_put_down">%1$s yer açmak için hangi kartını koymalı?</string>
     <string name="detail_plan_is_a_suggestion">Plan bir öneridir. Karar, sırası kimdeyse onundur.</string>
@@ -560,6 +562,8 @@
     <string name="says_what_with">peki sonra?</string>
     <string name="says_which_card">hangi kart çıkıyor?</string>
     <string name="says_call_it">+ %1$s söyle</string>
+    <string name="says_call_it_anything">+ söyle…</string>
+    <string name="says_called_it">%1$s olduğunu söylüyor</string>
     <string name="says_which_two">hangi iki kart?</string>
     <string name="says_which_to_look_at">hangi karta?</string>
     <string name="says_forces">ve %1$s kart çektiriyor</string>
@@ -619,6 +623,7 @@
     <string name="choice_use_from_pile">%1$s Kullan</string>
     <string name="choice_use_action">Eylemi Kullan</string>
     <string name="choice_swap_cards">Kartları Değiştir</string>
+    <string name="choice_keep_it">Sakla</string>
     <string name="choice_discard">At</string>
     <string name="choice_just_swap">Yalnızca Değiştir</string>
     <string name="choice_put_it_down">Bırak</string>

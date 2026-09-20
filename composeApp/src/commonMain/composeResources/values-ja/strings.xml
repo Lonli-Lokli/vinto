@@ -538,6 +538,8 @@
     <string name="ask_which_two_will_it_swap">%1$sが交換する2枚のカードはどれですか？ 1枚目、次に2枚目に触れてください。</string>
     <string name="ask_which_rank_will_you_declare">キングでどのランクを宣言しますか？</string>
     <string name="ask_which_rank_should_they_declare">%1$sはキングでどのランクを宣言すべきですか？</string>
+    <string name="ask_which_rank_will_you_call_it">どのランクと名乗りますか？ 当たれば、そのカードのアクションが発動します。</string>
+    <string name="ask_which_rank_should_they_call_it">%1$sはどのランクと名乗るべきですか？ 当たれば、そのカードのアクションが発動します。</string>
     <string name="ask_which_card_will_you_put_down">どの手札を出して場所を空けますか？</string>
     <string name="ask_which_card_should_they_put_down">%1$sはどの手札を出して場所を空けるべきですか？</string>
     <string name="detail_plan_is_a_suggestion">計画はあくまで提案です。決めるのは手番の人です。</string>
@@ -565,6 +567,8 @@
     <string name="says_what_with">そして次は？</string>
     <string name="says_which_card">どのカードを出す？</string>
     <string name="says_call_it">＋ %1$sと名乗る</string>
+    <string name="says_call_it_anything">＋ 名乗る…</string>
+    <string name="says_called_it">%1$sと名乗る</string>
     <string name="says_which_two">どの2枚？</string>
     <string name="says_which_to_look_at">どのカードを？</string>
     <string name="says_forces">そして%1$sに引かせる</string>
@@ -625,6 +629,7 @@
     <string name="choice_use_from_pile">%1$sを使う</string>
     <string name="choice_use_action">アクションを使う</string>
     <string name="choice_swap_cards">カードを交換</string>
+    <string name="choice_keep_it">手元に残す</string>
     <string name="choice_discard">捨てる</string>
     <string name="choice_just_swap">そのまま交換</string>
     <string name="choice_put_it_down">置く</string>

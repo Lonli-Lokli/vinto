@@ -905,7 +905,8 @@ private fun WordContent(slot: Slot, ink: Color, plain: Boolean, onMove: (Move) -
         }
 
         Says.Draws, Says.WellSee, Says.AndThen, Says.WhatWith, Says.PlaysIt, Says.WhichCard, Says.LetsItGo,
-        is Says.CallIt, Says.WhichTwo, Says.WhichToLookAt, Says.WhichToPointAt, is Says.Names, is Says.Forces,
+        is Says.CallIt, is Says.Called, Says.WhichTwo, Says.WhichToLookAt, Says.WhichToPointAt,
+        is Says.Names, is Says.Forces,
         Says.WhoDraws, Says.WhichToThrow, Says.AddThrow,
         -> {
             WordText(chipWords(says), ink, plain)

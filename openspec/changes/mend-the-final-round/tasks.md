@@ -28,10 +28,10 @@ plan the coalition agrees to and cannot play. Model faults first, appearance sec
       Fixed: the card's own seat first, then the coalition only, and only where the answer is
       unambiguous. Verified by `APlanNamesTheSeatItMeansTest` against `locate` itself, which is
       `internal` for the purpose the way `believedOnView` and `cardAt` already are
-- [ ] 2.3 ~~Make a two-seat selection reachable from every pair of seats~~ — **not a selection
-      fault.** `tradeComposer` builds from `spokenCards`, "every coalition card the table has
-      been told about", so an unclaimed card was never offered. That is the decided rule the
-      plan speaks only of known cards, and reversing it is §3.3; this line folds into it
+- [x] 2.3 ~~Make a two-seat selection reachable from every pair of seats~~ — **not a selection
+      fault**, and fixed by 3.3a. `tradeComposer` built from `spokenCards`, "every coalition card
+      the table has been told about", so an unclaimed card was never offered and the felt could
+      not answer a touch on it. Reversing that is 3.3a; this line closes with it
 - [ ] 2.4 Draw an already-chosen card as chosen — lifted the way the table lifts a card, not a
       border — and verify `ScreenContrastTest` still clears AA in both themes
 - [ ] 2.5 Keep the plan's sentence on screen: scroll it into view as it grows rather than
@@ -40,10 +40,23 @@ plan the coalition agrees to and cannot play. Model faults first, appearance sec
 
 ## 3. The plan can say what the rules allow
 
-- [ ] 3.1 Offer a toss-in step on the coalition's **first** turn, as every later turn already
-      has, and verify a test asserts the first lane's steps are the same set as the second's
-- [ ] 3.2 Carry throws already queued when Vinto was called into the plan, and verify a test
-      builds a plan from a state with a queued throw and finds it in the lane that plays it
+- [ ] 3.1 + 3.2 **ONE feature, and it moves the wire — needs a decision (see below).** Measured
+      rather than guessed: a probe built the first coalition turn and the second and compared
+      them. The first turn is *not* missing the toss-in row — `AddThrow` is offered on both, the
+      felt lights cards on both. What is missing is the card the throws would land on.
+      `Rehearsal.playTurn` plays the lane's step and *then* its `tossIns`, and `Lane.landing`
+      returns the rank **this turn's own move** puts on the pile. So every throw in lane *n*
+      answers lane *n*'s discard, and the one window with no lane at all is the window that is
+      **already open when the plan is composed** — the caller's last card, still face up, which
+      §1.1 proved a member may still answer during the confer. At the head of the first turn the
+      pile's own card is ignored: `landing` is null, so a member who can see they hold the
+      matching rank cannot plan that throw and any throw they do plan rehearses as blind. That
+      is exactly "toss-in for the first step", and it is also where a throw **queued before the
+      call** belongs — B is the same slot, filled from the engine rather than by a touch.
+      Fixing it means a throw slot ahead of the first lane's step, which is a new field on
+      `Lane` or on `CoalitionPlan` — so §3.4's "the wire is unmoved by §3" was written on the
+      assumption §3 was UI-only and no longer holds. **Put the shape to the maintainer before
+      building it**; everything in §4 and §5 is independent and goes first
 - [x] 3.3a **A Jack's palette is every coalition card.** `tradeComposer` read `spokenCards` —
       only what the table had been told about — which is right for a step that *claims*
       something and wrong for a Jack, because a Jack is blind: what it moves is decided by where
@@ -55,14 +68,22 @@ plan the coalition agrees to and cannot play. Model faults first, appearance sec
 - [x] 3.3b **The King already allows it.** `Asking.Point` offers any coalition card ("the King
       may name a card nobody has spoken about, which is a guess, and the rank comes afterwards")
       and `declareRanks` offers every rank, `muted` only changing the tone. Nothing to fix
-- [ ] 3.3c **The put-down's guess is the real gap.** `callOffer` returns null unless the table
-      already knows the rank, so a card nobody has read cannot be declared on the way out. Needs
-      the rank rail `Question.Naming` already gives the King, with `declareRanks` generalised to
-      write `Step.PutDown.guess` as well as `Step.Declare.rank`
-- [ ] 3.3d **"Skipping 2-6" belongs to the put-down only.** A guess buys the card's action, and
-      2-6 have none, so offering them is offering a penalty for nothing. A **King** is the other
-      way round: declaring your own 2 correctly *sheds* it, which is the whole point of naming a
-      low card. Filter the put-down's ranks; leave the King's alone
+- [x] 3.3c + 3.3d **The put-down's guess was the real gap, and it needed a question of its
+      own.** `callOffer` returned null unless the table already knew the rank, so a card nobody
+      had read could not be called on the way out at all. The first attempt reused
+      `Question.Naming` at `Part.Called` and broke the King: **that path is already taken** —
+      `stepAt(Part.Called)` is what the *called card* does, and a called King naming a rank is
+      exactly that, while `rankAt(Part.Called)` is the guess. Two different things at one path.
+      So the guess got `Question.Calling(seat, at)`, which is honest about what it is: a word on
+      the put-down, not a step at a part. `callingTable` + `callRanks`, a `Says.CallIt(rank?)`
+      whose null opens the rail, and a `Says.Called` for the call made — said **only** where the
+      card is unnamed, because "puts down your Jack, calls it a Jack" is the same word twice.
+      `PlanAsTalkTest.aCardNobodyHasReadIsCalledOffTheRankRailWithoutTheRanksThatDoNothing`.
+      The filter is 3.3d and it lives in `callRanks` alone: a guess buys the card's action, and
+      2-6 and the Joker have none, so offering them is offering a penalty for nothing. The
+      **King** is the other way round — declaring your own 2 correctly *sheds* it, which is the
+      whole point of naming a low card — so `declareRanks` keeps every rank, and each says so
+      in its own doc comment. Four new words, translated into all 19 locales
 - [ ] 3.4 Verify the wire is unmoved by §3: a test asserts `CoalitionPlan`'s serialized shape is
       byte-identical to the committed sample
 
@@ -76,9 +97,22 @@ plan the coalition agrees to and cannot play. Model faults first, appearance sec
 - [ ] 4.3 Stop the plate moving when its seat throws a card in: the thinking mark comes and goes
       and the plate is meant to hold still (`SteadyPlateTest`), so extend that test to a
       toss-in rather than writing a second one
-- [ ] 4.4 Let a seat with no cards take the turn the rules still give it — draw, and keep the
-      card — and verify at the **lowest layer that exhibits it**: `ActionValidator` first, and
-      only then the plan, since the plan cannot offer a turn the engine refuses
+- [x] 4.4 **A swap into the empty place, and no new action for it.** The engine had no answer at
+      all: `ActionValidator` asks for a position inside `cards.indices`, empty on an empty hand,
+      so every swap was refused — and `handleSwapCard` reads `player.cards[position]` first, so
+      one that got through would have thrown rather than refused. Position 0 and no other, and
+      **no declaration**: a guess names the card that goes out, nothing goes out, so there is
+      nothing to be right or wrong about and a penalty for it would punish nothing. Nothing lands
+      either, so no window opens — the turn ends the moment the card is placed, said by marking
+      every seat ready so `shouldAdvanceTurn` moves it on inside the same `reduce`; the window's
+      *ranks* are left untouched, because they describe the pile's top and that has not moved.
+      No new `GameAction`, so the wire's vocabulary is unmoved, and the parity corpus is green
+      without a fixture changing — a validator that refuses *less* can never reject a recorded
+      action, and the handler's new branch is unreachable for a hand that has cards.
+      `AnEmptyHandStillTakesItsTurnTest`, then the table above it: "Swap Cards" opened a question
+      whose answer was an empty list of taps, a screen with nothing on it and no way forward, so
+      with no cards the question is skipped and one button says what happens — `Label.KeepIt`,
+      `AnEmptyHandKeepsWhatItDrawsTest`, one more word in 19 locales
 
 ## 5. The two King lines
 
@@ -92,7 +126,17 @@ engine rather than the bot.
 - [ ] 5.2 Explain the King played the long way round — drawn, played, an opponent's 3 declared,
       then its own 3 thrown in — to a total reachable by swapping the King in. Verify whether
       the search prices the line correctly or the rollout misprices the declaration
-- [ ] 5.3 Stop the caller calling Vinto while holding cards it could still throw in, and verify
-      the rule at the point the call is decided rather than in the rollout
+- [ ] 5.3 **The rule is already there, and the one card it spares is spared on purpose.** Read
+      before changed, and a change was written and then reverted. `BotRunner.tossInAction`
+      already returns `ParticipateInTossIn` *before* it ever reaches `shouldCallVinto`, so a bot
+      that can throw throws, and reaches the call on the next pass with a smaller hand. The only
+      card it holds back is a Joker: `TossInRule` filters the window's ranks to
+      `getCardValue(it) >= 0`, and a Joker is worth **minus one** — shedding it makes the hand
+      worse, so forcing it out before a call would be a bug rather than a fix. That is what the
+      reverted change would have done.
+      So either the caller had not *read* the matching card — in which case it cannot throw and
+      the plan is honest — or the report is about somebody else's hand ("he" is ambiguous).
+      **Needs the recording to locate**, which is 5.1's `2026-09-19-2200-report2.json`; do not
+      touch the bot until it says which seat and which card
 - [ ] 5.4 Verify `TournamentTest` after §5: unchanged, or regenerated with the numbers and the
       reason in the commit

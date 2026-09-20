@@ -537,6 +537,8 @@
     <string name="ask_which_two_will_it_swap">Quelles deux cartes échange %1$s ? Touchez l’une, puis l’autre.</string>
     <string name="ask_which_rank_will_you_declare">Quelle valeur allez-vous déclarer avec le Roi ?</string>
     <string name="ask_which_rank_should_they_declare">Quelle valeur %1$s devrait déclarer avec le Roi ?</string>
+    <string name="ask_which_rank_will_you_call_it">Quelle valeur allez-vous annoncer ? Un bon pari joue l’action de cette carte.</string>
+    <string name="ask_which_rank_should_they_call_it">Quelle valeur %1$s devrait annoncer ? Un bon pari joue l’action de cette carte.</string>
     <string name="ask_which_card_will_you_put_down">Laquelle de vos cartes sort pour lui faire de la place ?</string>
     <string name="ask_which_card_should_they_put_down">Laquelle des cartes de %1$s sort pour lui faire de la place ?</string>
     <string name="detail_plan_is_a_suggestion">Un plan n’est qu’une suggestion. C’est à la personne dont c’est le tour de décider.</string>
@@ -569,6 +571,8 @@
     <string name="says_what_with">et ensuite ?</string>
     <string name="says_which_card">quelle carte sort ?</string>
     <string name="says_call_it">+ la nommer %1$s</string>
+    <string name="says_call_it_anything">+ l’annoncer…</string>
+    <string name="says_called_it">annonce le %1$s</string>
     <string name="says_which_two">quelles deux cartes ?</string>
     <string name="says_which_to_look_at">laquelle regarder ?</string>
     <string name="says_forces">et fait piocher %1$s</string>
@@ -632,6 +636,7 @@
     <string name="choice_use_from_pile">Utiliser %1$s</string>
     <string name="choice_use_action">Utiliser l’action</string>
     <string name="choice_swap_cards">Échanger les cartes</string>
+    <string name="choice_keep_it">La garder</string>
     <string name="choice_discard">Défausser</string>
     <string name="choice_just_swap">Juste échanger</string>
     <string name="choice_put_it_down">Poser</string>

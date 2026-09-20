@@ -8,9 +8,11 @@ import game.vinto.shapes.Believed
 import game.vinto.shapes.Card
 import game.vinto.shapes.CardAt
 import game.vinto.shapes.Lane
+import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
 import game.vinto.shapes.TossIn
+import game.vinto.shapes.hasAction
 
 /**
  * How a touch on the felt becomes one `PlanEdit` (design D5).
@@ -21,11 +23,12 @@ import game.vinto.shapes.TossIn
  * King points at: one touch. A throw-in: one touch on a coalition card — a card known to match
  * the landing rank, or one nobody has named, which throws blind.
  *
- * The palette for a trade is **what has been said**: a card somebody has claimed, or one of
- * the viewer's own they have read. A card nobody knows anything about is not on offer for
- * moving — a plan that moved it would be moving a guess — and that is what makes declaring
- * worth doing. Only what `CoalitionPlan.edited` would accept is here: a lane the door refuses
- * gets no composer at all rather than one whose drops are refused.
+ * The palette for a trade is **every coalition card**, named or not, because a Jack is blind:
+ * what it moves is decided by where the cards are and not by what anybody has said about them.
+ * What a card is *worth* to the plan is the separate question, and the board answers it
+ * honestly — an unnamed card prices at the deck's mean. Only what `CoalitionPlan.edited` would
+ * accept is here: a lane the door refuses gets no composer at all rather than one whose drops
+ * are refused.
  */
 
 /** Where a card may be put, when the plan is being composed by moving it. */
@@ -126,15 +129,6 @@ private fun whichCardComposer(there: PlayerView, seat: String): PlanComposer {
     )
 }
 
-/** Every coalition card the table has been told about: what a trade may name. */
-private fun spokenCards(there: PlayerView): List<CardRef> = there.players
-    .filter { it.id != there.vintoCallerId }
-    .flatMap { hand ->
-        hand.cards.indices
-            .filter { spokenFor(there, hand, it) }
-            .map { CardRef(hand.id, it) }
-    }
-
 /** Every coalition card, named or not. */
 private fun coalitionCards(there: PlayerView): List<CardRef> = there.players
     .filter { it.id != there.vintoCallerId }
@@ -169,8 +163,8 @@ private fun touchComposer(there: PlayerView, seat: String, lane: Lane?, asking: 
 /**
  * A trade: the one at [part], between two hands, of any coalition cards.
  *
- * **Any of them, named or not.** This read `spokenCards` — only what the table had been told
- * about — which is the right rule for a step that *claims* something and the wrong one for a
+ * **Any of them, named or not.** This offered only what the table had been told about, which
+ * is the right rule for a step that *claims* something and the wrong one for a
  * Jack, because a Jack is blind: what it moves is decided by where the cards are and not by
  * what anybody has said about them. A coalition that may only trade cards it has already
  * described cannot plan the commonest Jack there is, and the felt simply did not respond to
@@ -246,6 +240,9 @@ private fun throwComposer(start: Start, seat: String, lane: Lane?, index: Int): 
 /**
  * The full set of ranks a King at [part] may name: lit for what the pointed card is said to be,
  * or — for the older King that points at nobody — for the ranks the coalition is known to hold.
+ *
+ * **Every rank, two to six included** — unlike [callRanks]. A King that declares your own low
+ * card correctly sheds it, which is often exactly why a person names one.
  */
 internal fun declareRanks(view: PlayerView, seat: String, lane: Lane?, part: Part): List<RankChoice> {
     val standing = lane.stepAt(part) as? Step.Declare
@@ -255,6 +252,26 @@ internal fun declareRanks(view: PlayerView, seat: String, lane: Lane?, part: Par
         val declared = standing?.copy(rank = rank) ?: Step.Declare(rank)
         val edit = lane.edit(seat, part, declared) ?: return@mapNotNull null
         RankChoice(rank, Move.Plan(edit), muted = rank !in known)
+    }
+}
+
+/**
+ * The ranks a put-down may be called as — the only way a card nobody has read can be made to act.
+ *
+ * **Two to six are not here, and [declareRanks] keeps them.** A call buys the card's action; a
+ * two through a six, and a Joker, have none, so calling one correctly plays nothing and calling
+ * one wrong costs a penalty card — an offer that cannot pay. The King is the opposite case: it
+ * declares a rank at the whole table, and naming your own low card correctly sheds it.
+ *
+ * Lit for what the table says the card is, which for a card nobody has read is nothing: no rank
+ * is a better guess than another, so none of them is dimmed.
+ */
+internal fun callRanks(view: PlayerView, seat: String, lane: Lane?): List<RankChoice> {
+    val standing = lane?.step as? Step.PutDown ?: return emptyList()
+    val known = knownRankOf(view, standing.card)
+    return ALL_RANKS.filter { hasAction(it) }.map { rank ->
+        val edit = PlanEdit.SetLane(seat, standing.copy(guess = rank))
+        RankChoice(rank, Move.Plan(edit), muted = known != null && rank != known)
     }
 }
 
@@ -369,13 +386,6 @@ private fun ranksTheCoalitionIsKnownToHold(view: PlayerView): Set<Rank> =
 internal fun believedOnView(view: PlayerView, at: CardAt): Believed =
     view.players.firstOrNull { it.id == at.seat }?.let { believedOnView(it, at.position) }
         ?: Believed(ALL_RANKS.toSet(), disputed = false, sources = emptyList())
-
-/** A card the plan may name in a trade: claimed by somebody, or one of the viewer's own they have read. */
-private fun spokenFor(view: PlayerView, hand: PlayerSeatView, position: Int): Boolean {
-    val claimed = believedOnView(hand, position).sources.isNotEmpty()
-    val ownAndRead = hand.id == view.viewerId && position in hand.knownCardPositions
-    return claimed || ownAndRead
-}
 
 internal fun cardAt(view: PlayerView, ref: CardRef): CardAt {
     val hand = view.players.firstOrNull { it.id == ref.playerId }

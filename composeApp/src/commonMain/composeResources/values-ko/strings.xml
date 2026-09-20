@@ -505,6 +505,8 @@
     <string name="ask_which_two_will_it_swap">%1$s가 교환할 두 카드는 무엇인가요? 하나를 탭한 다음 다른 하나를 탭하세요.</string>
     <string name="ask_which_rank_will_you_declare">킹으로 어떤 숫자를 선언할까요?</string>
     <string name="ask_which_rank_should_they_declare">%1$s는 킹으로 어떤 숫자를 선언해야 할까요?</string>
+    <string name="ask_which_rank_will_you_call_it">어떤 숫자라고 부를까요? 맞히면 그 카드의 능력이 발동돼요.</string>
+    <string name="ask_which_rank_should_they_call_it">%1$s는 어떤 숫자라고 불러야 할까요? 맞히면 그 카드의 능력이 발동돼요.</string>
     <string name="ask_which_card_will_you_put_down">자리를 만들기 위해 어떤 카드를 내려놓을까요?</string>
     <string name="ask_which_card_should_they_put_down">%1$s는 자리를 만들기 위해 어떤 카드를 내려놓아야 할까요?</string>
     <string name="detail_plan_is_a_suggestion">계획은 하나의 제안일 뿐이에요. 결정은 차례인 사람이 해요.</string>
@@ -532,6 +534,8 @@
     <string name="says_what_with">그다음엔요?</string>
     <string name="says_which_card">어떤 카드가 나가나요?</string>
     <string name="says_call_it">+ %1$s라고 부르기</string>
+    <string name="says_call_it_anything">+ 숫자 부르기…</string>
+    <string name="says_called_it">%1$s라고 부르기</string>
     <string name="says_which_two">어느 두 장인가요?</string>
     <string name="says_which_to_look_at">어느 카드를요?</string>
     <string name="says_forces">그리고 %1$s에게 뽑게 하기</string>
@@ -590,6 +594,7 @@
     <string name="choice_use_from_pile">%1$s 사용</string>
     <string name="choice_use_action">능력 사용</string>
     <string name="choice_swap_cards">카드 바꾸기</string>
+    <string name="choice_keep_it">가지기</string>
     <string name="choice_discard">버리기</string>
     <string name="choice_just_swap">그냥 바꾸기</string>
     <string name="choice_put_it_down">내려놓기</string>

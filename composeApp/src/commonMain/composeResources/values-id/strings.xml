@@ -527,6 +527,8 @@
     <string name="ask_which_two_will_it_swap">Dua kartu mana yang ditukar %1$s? Sentuh satu, lalu yang lain.</string>
     <string name="ask_which_rank_will_you_declare">Nilai apa yang akan Anda umumkan dengan King?</string>
     <string name="ask_which_rank_should_they_declare">Nilai apa yang sebaiknya %1$s umumkan dengan King?</string>
+    <string name="ask_which_rank_will_you_call_it">Nilai apa yang akan Anda sebutkan? Tebakan yang benar akan memainkan aksi kartu itu.</string>
+    <string name="ask_which_rank_should_they_call_it">Nilai apa yang sebaiknya %1$s sebutkan? Tebakan yang benar akan memainkan aksi kartu itu.</string>
     <string name="ask_which_card_will_you_put_down">Kartu mana yang Anda letakkan untuk memberi ruang?</string>
     <string name="ask_which_card_should_they_put_down">Kartu mana yang harus %1$s letakkan untuk memberi ruang?</string>
     <string name="detail_plan_is_a_suggestion">Rencana hanyalah saran. Yang menentukan adalah pemain yang gilirannya sedang berlangsung.</string>
@@ -554,6 +556,8 @@
     <string name="says_what_with">lalu apa?</string>
     <string name="says_which_card">kartu mana yang keluar?</string>
     <string name="says_call_it">+ sebutkan %1$s</string>
+    <string name="says_call_it_anything">+ sebutkan…</string>
+    <string name="says_called_it">menyebutkan %1$s</string>
     <string name="says_which_two">dua kartu yang mana?</string>
     <string name="says_which_to_look_at">kartu yang mana?</string>
     <string name="says_forces">lalu membuat %1$s mengambil kartu</string>
@@ -613,6 +617,7 @@
     <string name="choice_use_from_pile">Gunakan %1$s</string>
     <string name="choice_use_action">Gunakan Aksi</string>
     <string name="choice_swap_cards">Tukar Kartu</string>
+    <string name="choice_keep_it">Simpan</string>
     <string name="choice_discard">Buang</string>
     <string name="choice_just_swap">Tukar Saja</string>
     <string name="choice_put_it_down">Letakkan</string>

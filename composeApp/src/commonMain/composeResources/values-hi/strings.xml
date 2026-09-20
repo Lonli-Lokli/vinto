@@ -531,6 +531,8 @@
     <string name="ask_which_two_will_it_swap">%1$s कौन-से दो पत्ते बदलता है? पहले एक को छुएं, फिर दूसरे को।</string>
     <string name="ask_which_rank_will_you_declare">King के साथ आप कौन-सी रैंक बताएंगे?</string>
     <string name="ask_which_rank_should_they_declare">King के साथ %1$s को कौन-सी रैंक बतानी चाहिए?</string>
+    <string name="ask_which_rank_will_you_call_it">आप इसे कौन-सी रैंक बताएंगे? सही अंदाज़ा उस पत्ते की कार्रवाई चलाएगा।</string>
+    <string name="ask_which_rank_should_they_call_it">%1$s को इसे कौन-सी रैंक बतानी चाहिए? सही अंदाज़ा उस पत्ते की कार्रवाई चलाएगा।</string>
     <string name="ask_which_card_will_you_put_down">इसके लिए जगह बनाने के लिए आपका कौन-सा पत्ता बाहर जाएगा?</string>
     <string name="ask_which_card_should_they_put_down">इसके लिए जगह बनाने के लिए %1$s का कौन-सा पत्ता बाहर जाएगा?</string>
     <string name="detail_plan_is_a_suggestion">योजना एक सुझाव है। बारी जिसकी है, फैसला वही करेगा।</string>
@@ -558,6 +560,8 @@
     <string name="says_what_with">और फिर?</string>
     <string name="says_which_card">कौन-सा पत्ता बाहर जाएगा?</string>
     <string name="says_call_it">+ %1$s बताएं</string>
+    <string name="says_call_it_anything">+ बताएं…</string>
+    <string name="says_called_it">इसे %1$s बताते हैं</string>
     <string name="says_which_two">कौन-से दो पत्ते?</string>
     <string name="says_which_to_look_at">किस पत्ते पर?</string>
     <string name="says_forces">और %1$s को उठवाते हैं</string>
@@ -618,6 +622,7 @@
     <string name="choice_use_from_pile">%1$s इस्तेमाल करें</string>
     <string name="choice_use_action">कार्रवाई इस्तेमाल करें</string>
     <string name="choice_swap_cards">पत्ते बदलें</string>
+    <string name="choice_keep_it">कार्ड रखें</string>
     <string name="choice_discard">छोड़ें</string>
     <string name="choice_just_swap">बस बदलें</string>
     <string name="choice_put_it_down">नीचे रखें</string>

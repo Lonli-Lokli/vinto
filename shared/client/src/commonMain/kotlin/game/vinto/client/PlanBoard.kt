@@ -819,6 +819,31 @@ internal fun namingTable(
 }
 
 /**
+ * Calling the card a turn puts down: the guess that buys its action, off the rail of action
+ * cards. Only ever asked of a card nobody has read — where the table can name the card there is
+ * one sane call and the sentence offers it in a word.
+ */
+internal fun callingTable(
+    view: PlayerView,
+    question: Question.Calling,
+    plan: CoalitionPlan?,
+    away: Set<String> = emptySet(),
+    reveals: List<PublicReveal> = emptyList(),
+): Table {
+    val focus = Question.ThePlan(at = question.at)
+    val composing = compose(view, plan, away, reveals, focus, question = question)
+        ?: return Table(Ask.Watching)
+    val seat = composing.seat ?: return Table(Ask.Watching)
+
+    return Table(
+        prompt = Ask.WhichRankShouldTheyCallIt(speakerFor(view, seat)),
+        detail = Detail.APlanIsASuggestion,
+        ranks = if (composing.editable) callRanks(composing.there, seat, composing.lane) else emptyList(),
+        board = composing.board(),
+    )
+}
+
+/**
  * The cards an action names, touched on the felt: the two a Jack or a Queen trades, the one a
  * 7 to 10 looks at, the one a King points at. Reopened from the sentence, where the felt already
  * asks the same of the next open part.

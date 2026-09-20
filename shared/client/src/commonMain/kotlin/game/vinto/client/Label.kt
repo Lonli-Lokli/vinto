@@ -129,6 +129,14 @@ sealed interface Label {
     /** Put the card in play into the hand, in place of one already there. */
     data object SwapCards : Label
 
+    /**
+     * Put the card in play into a hand with nothing in it.
+     *
+     * Its own word because [SwapCards] is a lie here — there is no card to swap with, so the
+     * question of which one is skipped and this does the whole thing in one touch.
+     */
+    data object KeepIt : Label
+
     /** Throw the drawn card away without taking it. */
     data object Discard : Label
 

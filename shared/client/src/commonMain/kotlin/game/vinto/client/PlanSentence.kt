@@ -118,8 +118,8 @@ sealed interface Says {
     /** Whether this word says something that will happen, rather than asking for it or offering it. */
     val said: Boolean
         get() = when (this) {
-            Draws, is Takes, is Drew, PlaysIt, is PutsDown, LetsItGo, is Trade, is Looks, is Names,
-            is Forces, is Throws,
+            Draws, is Takes, is Drew, PlaysIt, is PutsDown, LetsItGo, is Called, is Trade, is Looks,
+            is Names, is Forces, is Throws,
             -> true
             is Points -> rank != null
             WellSee, AndThen, WhatWith, WhichCard, is CallIt, WhichTwo, WhichToLookAt, WhichToPointAt,
@@ -152,10 +152,21 @@ sealed interface Says {
     data object LetsItGo : Says
 
     /**
-     * On offer: call the put-down card, which is what lets it act. There is no word for a call
-     * made — the action after the put-down is the call.
+     * On offer: call the put-down card, which is what lets it act. [rank] is what the table says
+     * the card is, and null for a card nobody has read — where the call is a guess off the whole
+     * rail rather than one word.
      */
-    data class CallIt(val rank: Rank) : Says
+    data class CallIt(val rank: Rank?) : Says
+
+    /**
+     * A call made on a card nobody can name.
+     *
+     * There is no word for a call made on a card the table *can* name: "puts down your Jack,
+     * calls it a Jack" is the same word twice, and the action after the put-down is the call.
+     * A card nobody has read is the other case — the put-down named no rank, so without this the
+     * action below it would belong to nothing anybody can see.
+     */
+    data class Called(val rank: Rank) : Says
 
     /**
      * Two cards and the arrow between them: a Jack's trade, or a Queen's look with [swap]
@@ -521,6 +532,8 @@ internal class Words(
         if (call == null) {
             callOffer(step)?.let { add(it) }
         } else {
+            // Only where the put-down itself named no rank: see `Says.Called`.
+            if (knownRankOf(start.view, step.card) == null) add(callSaid(call))
             addAll(actionSlots(Part.Called, call, step.then))
         }
     }
@@ -546,13 +559,31 @@ internal class Words(
     private fun putDownSlot(step: Step.PutDown): Slot =
         Slot(Says.PutsDown(cardWord(step.card)), quiet(Move.Ask(Question.PuttingDown(seat, at))))
 
-    /** "+ calls it": offered for a card the table knows to be an action card, and never once made. */
+    /**
+     * "+ calls it", while no call is made: one word for a card the table knows to be an action
+     * card, and the open rail for a card nobody has read.
+     *
+     * A card known to be a two through a six is offered nothing at all, because there is nothing
+     * to win: calling it right plays an action that does not exist, and calling it anything else
+     * costs a penalty card.
+     */
     private fun callOffer(step: Step.PutDown): Slot? {
-        val known = knownRankOf(start.view, step.card) ?: return null
+        val known = knownRankOf(start.view, step.card)
+        if (known == null) {
+            val rail = quiet(Move.Ask(Question.Calling(seat, at))) ?: return null
+            return Slot(Says.CallIt(null), rail, offer = true)
+        }
         if (!hasAction(known)) return null
         val call = quiet(Move.Plan(PlanEdit.SetLane(seat, step.copy(guess = known)))) ?: return null
         return Slot(Says.CallIt(known), call, offer = true)
     }
+
+    /** The call made on a card nobody can name, and the rail back to change it. */
+    private fun callSaid(call: Rank): Slot = Slot(
+        Says.Called(call),
+        quiet(Move.Ask(Question.Calling(seat, at))),
+        asked = question is Question.Calling,
+    )
 
     /** What the card of [rank] at [part] does: said, asked for, or nothing for a card that does nothing. */
     fun actionSlots(part: Part, rank: Rank?, said: Step?): List<Slot> {

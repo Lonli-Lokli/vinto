@@ -505,6 +505,8 @@
     <string name="ask_which_two_will_it_swap">אילו שני קלפים %1$s מחליף? געו באחד, ואז בשני.</string>
     <string name="ask_which_rank_will_you_declare">איזו דרגה תכריזו עם המלך?</string>
     <string name="ask_which_rank_should_they_declare">איזו דרגה %1$s צריכים להכריז עם המלך?</string>
+    <string name="ask_which_rank_will_you_call_it">איזו דרגה תכריזו? ניחוש נכון משחק את פעולת הקלף.</string>
+    <string name="ask_which_rank_should_they_call_it">איזו דרגה %1$s צריכים להכריז? ניחוש נכון משחק את פעולת הקלף.</string>
     <string name="ask_which_card_will_you_put_down">איזה מהקלפים שלכם יוצא כדי לפנות לו מקום?</string>
     <string name="ask_which_card_should_they_put_down">איזה מהקלפים של %1$s יוצא כדי לפנות לו מקום?</string>
     <string name="detail_plan_is_a_suggestion">תוכנית היא רק הצעה. ההחלטה היא של מי שבתורם לשחק.</string>
@@ -532,6 +534,8 @@
     <string name="says_what_with">ואז?</string>
     <string name="says_which_card">איזה קלף יוצא?</string>
     <string name="says_call_it">+ להכריז שזה %1$s</string>
+    <string name="says_call_it_anything">+ להכריז…</string>
+    <string name="says_called_it">מכריזים שזה %1$s</string>
     <string name="says_which_two">אילו שני קלפים?</string>
     <string name="says_which_to_look_at">באיזה קלף?</string>
     <string name="says_forces">וגורמים ל־%1$s למשוך</string>
@@ -591,6 +595,7 @@
     <string name="choice_use_from_pile">שימוש ב-%1$s</string>
     <string name="choice_use_action">שימוש בפעולה</string>
     <string name="choice_swap_cards">החלפת קלפים</string>
+    <string name="choice_keep_it">השארה</string>
     <string name="choice_discard">השלכה</string>
     <string name="choice_just_swap">רק להחליף</string>
     <string name="choice_put_it_down">הניחו אותו</string>

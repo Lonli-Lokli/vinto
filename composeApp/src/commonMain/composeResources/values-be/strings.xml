@@ -521,6 +521,8 @@
     <string name="ask_which_two_will_it_swap">Якія дзве карткі памяняе %1$s? Дакраніцеся да адной, потым да другой.</string>
     <string name="ask_which_rank_will_you_declare">Які ранг вы абвесціце Каралём?</string>
     <string name="ask_which_rank_should_they_declare">Які ранг варта абвясціць %1$s Каралём?</string>
+    <string name="ask_which_rank_will_you_call_it">Якім рангам вы яе назавяце? Правільная здагадка разыграе дзеянне гэтай карткі.</string>
+    <string name="ask_which_rank_should_they_call_it">Якім рангам варта назваць яе %1$s? Правільная здагадка разыграе дзеянне гэтай карткі.</string>
     <string name="ask_which_card_will_you_put_down">Якую з вашых картак вы прыбераце, каб вызваліць месца?</string>
     <string name="ask_which_card_should_they_put_down">Якую з картак %1$s прыбярэ, каб вызваліць месца?</string>
     <string name="detail_plan_is_a_suggestion">План — толькі прапанова. Апошняе слова — за гульцом, чый ход.</string>
@@ -548,6 +550,8 @@
     <string name="says_what_with">і што далей?</string>
     <string name="says_which_card">якая картка выходзіць?</string>
     <string name="says_call_it">+ назваць %1$s</string>
+    <string name="says_call_it_anything">+ назваць…</string>
+    <string name="says_called_it">называе %1$s</string>
     <string name="says_which_two">якія дзве карткі?</string>
     <string name="says_which_to_look_at">на якую картку?</string>
     <string name="says_forces">і прымушае %1$s цягнуць</string>
@@ -607,6 +611,7 @@
     <string name="choice_use_from_pile">Разыграць %1$s</string>
     <string name="choice_use_action">Разыграць дзеянне</string>
     <string name="choice_swap_cards">Памяняць карткі</string>
+    <string name="choice_keep_it">Пакінуць</string>
     <string name="choice_discard">Скінуць</string>
     <string name="choice_just_swap">Проста памяняць</string>
     <string name="choice_put_it_down">Пакласці</string>

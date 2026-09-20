@@ -532,6 +532,8 @@
     <string name="ask_which_two_will_it_swap">Quali due carte scambia %1$s? Tocchi prima una, poi l'altra.</string>
     <string name="ask_which_rank_will_you_declare">Quale valore dichiarerai con il Re?</string>
     <string name="ask_which_rank_should_they_declare">Quale valore dovrebbe dichiarare %1$s con il Re?</string>
+    <string name="ask_which_rank_will_you_call_it">Quale valore chiamerà? Se indovina, si gioca l’azione di quella carta.</string>
+    <string name="ask_which_rank_should_they_call_it">Quale valore dovrebbe chiamare %1$s? Se indovina, si gioca l’azione di quella carta.</string>
     <string name="ask_which_card_will_you_put_down">Quale delle Sue carte esce per farle spazio?</string>
     <string name="ask_which_card_should_they_put_down">Quale delle carte di %1$s esce per farle spazio?</string>
     <string name="detail_plan_is_a_suggestion">Un piano è un suggerimento. Decide chi ha il turno.</string>
@@ -560,6 +562,8 @@
     <string name="says_what_with">e poi?</string>
     <string name="says_which_card">quale carta esce?</string>
     <string name="says_call_it">+ chiamarla %1$s</string>
+    <string name="says_call_it_anything">+ chiamarla…</string>
+    <string name="says_called_it">la chiama %1$s</string>
     <string name="says_which_two">quali due carte?</string>
     <string name="says_which_to_look_at">quale carta?</string>
     <string name="says_forces">e fa pescare %1$s</string>
@@ -620,6 +624,7 @@
     <string name="choice_use_from_pile">Usa %1$s</string>
     <string name="choice_use_action">Usa azione</string>
     <string name="choice_swap_cards">Scambia carte</string>
+    <string name="choice_keep_it">Tieni</string>
     <string name="choice_discard">Scarta</string>
     <string name="choice_just_swap">Scambia soltanto</string>
     <string name="choice_put_it_down">Mettila giù</string>

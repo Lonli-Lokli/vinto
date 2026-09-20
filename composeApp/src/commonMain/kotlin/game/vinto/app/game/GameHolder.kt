@@ -379,6 +379,7 @@ private fun Question.backOnThePlan(): Question = when (this) {
     is Question.Doing -> Question.ThePlan(at = at)
     is Question.PuttingDown -> Question.ThePlan(at = at)
     is Question.Naming -> Question.ThePlan(at = at)
+    is Question.Calling -> Question.ThePlan(at = at)
     is Question.Aiming -> Question.ThePlan(at = at)
     is Question.Forcing -> Question.ThePlan(at = at)
     is Question.Throwing -> Question.ThePlan(at = at)
@@ -389,7 +390,7 @@ private fun Question.backOnThePlan(): Question = when (this) {
 private val Question.isPlanning: Boolean
     get() = when (this) {
         is Question.ThePlan, is Question.Doing, is Question.PuttingDown, is Question.Naming,
-        is Question.Aiming, is Question.Forcing, is Question.Throwing,
+        is Question.Calling, is Question.Aiming, is Question.Forcing, is Question.Throwing,
         -> true
         Question.None, Question.WhichSlot, is Question.CallRank, is Question.Claiming -> false
     }

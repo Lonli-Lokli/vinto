@@ -2,6 +2,7 @@ package game.vinto.client
 
 import game.vinto.engine.PlayerView
 import game.vinto.engine.projectView
+import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActionPhase
 import game.vinto.shapes.Card
 import game.vinto.shapes.CardAt
@@ -23,6 +24,7 @@ import game.vinto.shapes.Step
 import game.vinto.shapes.TossIn
 import game.vinto.shapes.getCardShortDescription
 import game.vinto.shapes.getCardValue
+import game.vinto.shapes.hasAction
 import game.vinto.shapes.laneOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -216,9 +218,10 @@ class PlanAsTalkTest {
     }
 
     @Test
-    fun puttingDownOffersEveryOwnCardAndTheCallOnlyForAKnownActionCard() {
-        // Any of my cards may go out, known or not; a call is offered only for a card the table
-        // knows to be an action card, and there is no separate word for the call once made.
+    fun puttingDownOffersEveryOwnCardAndNamesTheCallForAKnownActionCard() {
+        // Any of my cards may go out, known or not; a card the table knows to be an action card
+        // is called in one word, and there is no separate word for that call once made. A card
+        // nobody has read is called off the rail instead — see the test below.
         val asking = tableFor(view(), Question.PuttingDown(me, myPage), plan = reaching(myPage))
         assertEquals(listOf(Says.Draws, Says.WhichCard), asking.own())
         assertEquals(setOf(CardRef(me, 0), CardRef(me, 1), CardRef(me, 2)), asking.taps.keys)
@@ -235,9 +238,56 @@ class PlanAsTalkTest {
             assertIs<PlanEdit.SetLane>(putDown.slot(Says.CallIt(Rank.JACK)).open.edit()).step.bare(),
         )
 
-        val two = CoalitionPlan(lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 1)))))
-        val silent = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, two))
-        assertEquals(listOf(Says.Draws, Says.PutsDown(CardWord(Speaker.You, "Human1", 2, null))), silent.own())
+        // A card the table knows is *not* an action card is offered no call at all: calling it
+        // right plays an action that does not exist, and calling it anything else costs a
+        // penalty card. Nina has told us her first card is a five.
+        val five = CoalitionPlan(lanes = listOf(Lane(nina, Step.PutDown(CardAt(nina, 0)))))
+        val silent = tableFor(view(), Question.ThePlan(at = ninasPage), plan = five)
+        assertEquals(
+            listOf(Says.Draws, Says.PutsDown(CardWord(Speaker.Named("Bot3"), "Bot3", 1, Rank.FIVE))),
+            silent.own(),
+        )
+
+        // And a call made on a card the table can name gets no word of its own: "puts down your
+        // King, calls it a King" is the same word twice.
+        val called = CoalitionPlan(lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 2), guess = Rank.KING))))
+        val shown = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, called))
+        assertNull(shown.own().firstOrNull { it is Says.Called }, "the call was said twice over")
+    }
+
+    @Test
+    fun aCardNobodyHasReadIsCalledOffTheRankRailWithoutTheRanksThatDoNothing() {
+        // Reported from a phone: "when we swap unknown card plan does not allow us specify rank
+        // for unknown card, we should allow it (skipping 2-6)". My second card is a card the
+        // table has never been told about and I have never read.
+        val blind = CoalitionPlan(lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 1)))))
+        val putDown = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, blind))
+        assertEquals(
+            listOf(Says.Draws, Says.PutsDown(CardWord(Speaker.You, "Human1", 2, null)), Says.CallIt(null)),
+            putDown.own(),
+        )
+        val offer = putDown.slot(Says.CallIt(null))
+        assertTrue(offer.offer)
+        assertEquals(Move.Ask(Question.Calling(me, myPage)), offer.open)
+
+        // The rail is every action card and only those: a call buys the card's action, and a
+        // two through a six has none, so naming one correctly does nothing and naming one wrong
+        // costs a penalty card.
+        val rail = tableFor(view(), Question.Calling(me, myPage), plan = reaching(myPage, blind))
+        assertEquals(ALL_RANKS.filter { hasAction(it) }, rail.ranks.map { it.rank })
+        assertTrue(rail.ranks.none { it.rank == Rank.THREE || it.rank == Rank.JOKER }, "${rail.ranks}")
+        assertEquals(
+            Step.PutDown(CardAt(me, 1), guess = Rank.QUEEN),
+            assertIs<PlanEdit.SetLane>(rail.ranks.first { it.rank == Rank.QUEEN }.move.edit()).step.bare(),
+        )
+
+        // And the call made is a word of its own here. For a card the table can name it would be
+        // the same word twice — the put-down already said what it is — but this put-down named
+        // no rank, so without it the Queen's look below belongs to nothing anybody can see.
+        val queen = CoalitionPlan(lanes = listOf(Lane(me, Step.PutDown(CardAt(me, 1), guess = Rank.QUEEN))))
+        val made = tableFor(view(), Question.ThePlan(at = myPage), plan = reaching(myPage, queen))
+        assertEquals(Says.Called(Rank.QUEEN), made.own()[2])
+        assertEquals(Move.Ask(Question.Calling(me, myPage)), made.slot(Says.Called(Rank.QUEEN)).open)
     }
 
     @Test

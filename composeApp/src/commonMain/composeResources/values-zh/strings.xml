@@ -505,6 +505,8 @@
     <string name="ask_which_two_will_it_swap">%1$s交换的是哪两张牌？先点一张，再点另一张。</string>
     <string name="ask_which_rank_will_you_declare">用国王声明哪个点数？</string>
     <string name="ask_which_rank_should_they_declare">%1$s该用国王声明哪个点数？</string>
+    <string name="ask_which_rank_will_you_call_it">您要报出哪个点数？猜对了就会触发那张牌的效果。</string>
+    <string name="ask_which_rank_should_they_call_it">%1$s要报出哪个点数？猜对了就会触发那张牌的效果。</string>
     <string name="ask_which_card_will_you_put_down">您要放下哪张牌来腾出位置？</string>
     <string name="ask_which_card_should_they_put_down">%1$s该放下哪张牌来腾出位置？</string>
     <string name="detail_plan_is_a_suggestion">计划只是建议，轮到谁就由谁决定。</string>
@@ -532,6 +534,8 @@
     <string name="says_what_with">然后呢？</string>
     <string name="says_which_card">出哪张牌？</string>
     <string name="says_call_it">+ 报出%1$s</string>
+    <string name="says_call_it_anything">+ 报出…</string>
+    <string name="says_called_it">报出%1$s</string>
     <string name="says_which_two">哪两张牌？</string>
     <string name="says_which_to_look_at">看哪张牌？</string>
     <string name="says_forces">并让%1$s摸牌</string>
@@ -591,6 +595,7 @@
     <string name="choice_use_from_pile">使用 %1$s</string>
     <string name="choice_use_action">使用动作</string>
     <string name="choice_swap_cards">交换卡牌</string>
+    <string name="choice_keep_it">留下</string>
     <string name="choice_discard">弃牌</string>
     <string name="choice_just_swap">直接交换</string>
     <string name="choice_put_it_down">放下</string>

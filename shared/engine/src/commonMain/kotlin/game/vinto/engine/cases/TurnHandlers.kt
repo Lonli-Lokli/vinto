@@ -1,8 +1,10 @@
 package game.vinto.engine.cases
 
 import game.vinto.engine.MutableActiveTossIn
+import game.vinto.engine.MutableCard
 import game.vinto.engine.MutableGameState
 import game.vinto.engine.MutablePendingAction
+import game.vinto.engine.MutablePlayerState
 import game.vinto.engine.addTossInCard
 import game.vinto.engine.clearDeclarationAt
 import game.vinto.engine.getAutomaticallyReadyPlayers
@@ -95,6 +97,11 @@ fun handleSwapCard(state: MutableGameState, action: GameAction.SwapCard): Boolea
     val pendingCard = state.pendingAction?.card ?: return false
     val player = state.playerById(playerId) ?: return false
 
+    // A hand with nothing in it: the card goes into the empty place and nothing comes out, so
+    // there is no card to land, no window to answer and no rank to guess. `ActionValidator`
+    // refuses every other position and any declaration here (`emptyHandSwap`).
+    if (player.cards.isEmpty()) return keepIntoTheEmptyPlace(state, player, playerId, pendingCard)
+
     val cardFromHand = player.cards[position]
     player.cards[position] = pendingCard
     player.clearDeclarationAt(position)
@@ -146,6 +153,50 @@ fun handleSwapCard(state: MutableGameState, action: GameAction.SwapCard): Boolea
     }
 
     state.discardPile.addToTop(cardFromHand)
+    state.pendingAction = null
+    state.subPhase = GameSubPhase.TOSS_QUEUE_ACTIVE
+    return true
+}
+
+/**
+ * A seat with no cards keeping what it drew: the card goes into the empty place, and nothing
+ * comes out.
+ *
+ * A hand reaches zero by throwing its last card in, and the rules still give that seat a turn.
+ * Reported from a phone as *"if player has no cards he can draw and just put this card in his
+ * hand"*, and worth having: a Joker kept takes a hand from nothing to minus one.
+ *
+ * **No card lands, so no window opens.** Every other turn ends by putting something face up and
+ * letting the table answer it; this one ends the moment the card is placed, which is said here
+ * by marking every seat ready — `GameEngine.shouldAdvanceTurn` then moves the turn on inside the
+ * same `reduce`. The window's *ranks* are left exactly as they were, because they describe the
+ * card on top of the pile and that card has not moved; blanking them would tell the next turn
+ * there is nothing on the pile to match.
+ */
+private fun keepIntoTheEmptyPlace(
+    state: MutableGameState,
+    player: MutablePlayerState,
+    playerId: String,
+    pendingCard: MutableCard,
+): Boolean {
+    player.cards.add(pendingCard)
+    player.knownCardPositions.add(0)
+    // They put it there in front of everybody, so the whole table watched it arrive.
+    learnCardAt(state, playerId, 0, pendingCard.freeze())
+
+    val window = state.activeTossIn ?: MutableActiveTossIn(
+        // Nothing has landed this round, so there is nothing anybody could match.
+        ranks = mutableListOf(),
+        initiatorId = playerId,
+        originalPlayerIndex = state.currentPlayerIndex,
+        participants = mutableListOf(),
+        queuedActions = mutableListOf(),
+        waitingForInput = false,
+        playersReadyForNextTurn = mutableListOf(),
+    ).also { state.activeTossIn = it }
+
+    window.waitingForInput = false
+    window.playersReadyForNextTurn = state.players.map { it.id }.toMutableList()
     state.pendingAction = null
     state.subPhase = GameSubPhase.TOSS_QUEUE_ACTIVE
     return true

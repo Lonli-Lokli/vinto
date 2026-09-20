@@ -529,6 +529,8 @@
     <string name="ask_which_two_will_it_swap">ما البطاقتان اللتان يبدّلهما %1$s؟ المس واحدة، ثم الأخرى.</string>
     <string name="ask_which_rank_will_you_declare">ما الرتبة التي ستُعلَن بالملك في دورك؟</string>
     <string name="ask_which_rank_should_they_declare">ما الرتبة التي ستُعلَن بالملك في دور %1$s؟</string>
+    <string name="ask_which_rank_will_you_call_it">ما الرتبة التي ستسمّيها؟ التسمية الصحيحة تُشغّل فعل تلك البطاقة.</string>
+    <string name="ask_which_rank_should_they_call_it">ما الرتبة التي سيسمّيها %1$s؟ التسمية الصحيحة تُشغّل فعل تلك البطاقة.</string>
     <string name="ask_which_card_will_you_put_down">أي بطاقاتك تخرج لتفسح المجال لها؟</string>
     <string name="ask_which_card_should_they_put_down">أي بطاقات %1$s تخرج لتفسح المجال لها؟</string>
     <string name="detail_plan_is_a_suggestion">الخطة اقتراح لا أكثر. القرار لمن يملك الدور.</string>
@@ -556,6 +558,8 @@
     <string name="says_what_with">وماذا بعد؟</string>
     <string name="says_which_card">أي بطاقة تخرج؟</string>
     <string name="says_call_it">+ تسمية: %1$s</string>
+    <string name="says_call_it_anything">+ تسمية…</string>
+    <string name="says_called_it">تسميتها %1$s</string>
     <string name="says_which_two">أي بطاقتين؟</string>
     <string name="says_which_to_look_at">أي بطاقة؟</string>
     <string name="says_forces">وإجبار %1$s على السحب</string>
@@ -615,6 +619,7 @@
     <string name="choice_use_from_pile">استخدم %1$s</string>
     <string name="choice_use_action">استخدم الفعل</string>
     <string name="choice_swap_cards">بادل البطاقات</string>
+    <string name="choice_keep_it">احتفظ بها</string>
     <string name="choice_discard">تخلّص</string>
     <string name="choice_just_swap">بادل فقط</string>
     <string name="choice_put_it_down">ضعها</string>

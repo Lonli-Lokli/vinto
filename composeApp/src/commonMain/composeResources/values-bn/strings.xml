@@ -505,6 +505,8 @@
     <string name="ask_which_two_will_it_swap">%1$s কোন দুটি তাস বদলায়? একটিতে স্পর্শ করুন, তারপর অন্যটিতে।</string>
     <string name="ask_which_rank_will_you_declare">King দিয়ে আপনি কোন র‌্যাংক ঘোষণা করবেন?</string>
     <string name="ask_which_rank_should_they_declare">King দিয়ে %1$s কোন র‌্যাংক ঘোষণা করবেন?</string>
+    <string name="ask_which_rank_will_you_call_it">আপনি কোন র‌্যাংকের নাম বলবেন? ঠিক অনুমানে ওই তাসের ক্রিয়া কার্যকর হবে।</string>
+    <string name="ask_which_rank_should_they_call_it">%1$s কোন র‌্যাংকের নাম বলবেন? ঠিক অনুমানে ওই তাসের ক্রিয়া কার্যকর হবে।</string>
     <string name="ask_which_card_will_you_put_down">এর জন্য জায়গা করে দিতে আপনার কোন তাসটি বেরিয়ে যাবে?</string>
     <string name="ask_which_card_should_they_put_down">এর জন্য জায়গা করে দিতে %1$s-এর কোন তাসটি বেরিয়ে যাবে?</string>
     <string name="detail_plan_is_a_suggestion">একটি পরিকল্পনা একটি পরামর্শমাত্র। যার পালা, সিদ্ধান্ত তাঁরই।</string>
@@ -532,6 +534,8 @@
     <string name="says_what_with">তারপর?</string>
     <string name="says_which_card">কোন তাস বেরিয়ে যাবে?</string>
     <string name="says_call_it">+ নাম বলুন: %1$s</string>
+    <string name="says_call_it_anything">+ নাম বলুন…</string>
+    <string name="says_called_it">একে %1$s বলেন</string>
     <string name="says_which_two">কোন দুটি তাস?</string>
     <string name="says_which_to_look_at">কোন তাসে?</string>
     <string name="says_forces">ও %1$s-কে তাস তুলতে বাধ্য করেন</string>
@@ -590,6 +594,7 @@
     <string name="choice_use_from_pile">%1$s ব্যবহার করুন</string>
     <string name="choice_use_action">কার্যক্রম ব্যবহার করুন</string>
     <string name="choice_swap_cards">তাস বদলান</string>
+    <string name="choice_keep_it">রেখে দিন</string>
     <string name="choice_discard">বাতিল করুন</string>
     <string name="choice_just_swap">শুধু বদলান</string>
     <string name="choice_put_it_down">রেখে দিন</string>

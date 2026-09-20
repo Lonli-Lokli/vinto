@@ -507,6 +507,8 @@
     <string name="ask_which_two_will_it_swap">Welche zwei Karten tauscht %1$s? Berühren Sie zuerst die eine, dann die andere.</string>
     <string name="ask_which_rank_will_you_declare">Welchen Rang erklären Sie mit dem König?</string>
     <string name="ask_which_rank_should_they_declare">Welchen Rang soll %1$s mit dem König erklären?</string>
+    <string name="ask_which_rank_will_you_call_it">Welchen Rang sagen Sie an? Eine richtige Vermutung spielt die Aktion dieser Karte.</string>
+    <string name="ask_which_rank_should_they_call_it">Welchen Rang soll %1$s ansagen? Eine richtige Vermutung spielt die Aktion dieser Karte.</string>
     <string name="ask_which_card_will_you_put_down">Welche Ihrer Karten geht heraus, um Platz dafür zu machen?</string>
     <string name="ask_which_card_should_they_put_down">Welche Karte von %1$s geht heraus, um Platz dafür zu machen?</string>
     <string name="detail_plan_is_a_suggestion">Ein Plan ist ein Vorschlag. Wer am Zug ist, entscheidet.</string>
@@ -534,6 +536,8 @@
     <string name="says_what_with">und dann?</string>
     <string name="says_which_card">welche Karte geht heraus?</string>
     <string name="says_call_it">+ ansagen: %1$s</string>
+    <string name="says_call_it_anything">+ ansagen…</string>
+    <string name="says_called_it">sagt %1$s an</string>
     <string name="says_which_two">welche zwei Karten?</string>
     <string name="says_which_to_look_at">welche Karte?</string>
     <string name="says_forces">und lässt %1$s ziehen</string>
@@ -593,6 +597,7 @@
     <string name="choice_use_from_pile">%1$s nutzen</string>
     <string name="choice_use_action">Aktion nutzen</string>
     <string name="choice_swap_cards">Karten tauschen</string>
+    <string name="choice_keep_it">Behalten</string>
     <string name="choice_discard">Ablegen</string>
     <string name="choice_just_swap">Nur tauschen</string>
     <string name="choice_put_it_down">Ablegen</string>

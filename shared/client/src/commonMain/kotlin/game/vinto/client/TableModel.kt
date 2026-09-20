@@ -438,6 +438,16 @@ sealed interface Question {
     data class Naming(val seat: String, val at: Int, val part: Part) : Question
 
     /**
+     * Final round: which rank [seat] calls the card they put down as, off the rail of action
+     * cards — the only way a card nobody has read can be made to act.
+     *
+     * Its own question rather than a [Naming] at [Part.Called], because that path is already
+     * taken: `stepAt(Part.Called)` is what the *called card* does, and a called King naming a
+     * rank is exactly that. The guess is not a step at a part; it is a word on the put-down.
+     */
+    data class Calling(val seat: String, val at: Int) : Question
+
+    /**
      * Final round: the cards the action at [part] of [seat]'s turn names, touched on the felt —
      * the two a Jack or a Queen trades, the one a 7 to 10 looks at, the one a King points at.
      * [picked] is the first of two, already up (design D5).
@@ -672,6 +682,7 @@ private fun planTable(
     question is Question.PuttingDown && mayDeclare(view) ->
         puttingDownTable(view, question, plan, away, reveals)
     question is Question.Naming && mayDeclare(view) -> namingTable(view, question, plan, away, reveals)
+    question is Question.Calling && mayDeclare(view) -> callingTable(view, question, plan, away, reveals)
     question is Question.Aiming && mayDeclare(view) -> aimingTable(view, question, plan, away, reveals)
     question is Question.Forcing && mayDeclare(view) -> forcingTable(view, question, plan, away, reveals)
     question is Question.Throwing && mayDeclare(view) -> throwingTable(view, question, plan, away, reveals)
@@ -1187,7 +1198,14 @@ private fun choosingTable(view: PlayerView, pending: PendingActionView): Table {
 
     // A card taken off the discard pile must be played; it cannot be kept.
     if (pending.canGoToHand) {
-        choices += Choice(Label.SwapCards, Move.Ask(Question.WhichSlot), Tone.KEEP)
+        // A hand with nothing in it has no slot to choose and no card going out to guess at, so
+        // the question is skipped and the button says what happens. Asking anyway opened a
+        // screen with no cards on it and no way forward.
+        choices += if (view.players.first { it.id == me }.cards.isEmpty()) {
+            Choice(Label.KeepIt, Move.Send(GameAction.SwapCard(SwapCardPayload(me, 0))), Tone.KEEP)
+        } else {
+            Choice(Label.SwapCards, Move.Ask(Question.WhichSlot), Tone.KEEP)
+        }
         choices += Choice(Label.Discard, Move.Send(GameAction.DiscardCard(PlayerIdPayload(me))))
     }
 

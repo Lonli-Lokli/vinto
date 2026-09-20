@@ -86,6 +86,7 @@ object ActionValidator {
             }
             ?: when {
                 state.pendingAction == null -> Validation.Invalid("No pending action")
+                state.currentPlayer().cards.isEmpty() -> emptyHandSwap(action)
                 action.payload.position !in state.currentPlayer().cards.indices ->
                     Validation.Invalid("Invalid position ${action.payload.position}")
 
@@ -552,6 +553,29 @@ object ActionValidator {
     /** True while queued toss-in actions are being worked through. */
 
     /** Null when the condition holds, so callers can chain with `?:`. */
+
+    /**
+     * A seat with no cards swapping into **the empty place**.
+     *
+     * A hand reaches zero by throwing its last card in, and the rules still give that seat a
+     * turn: it draws, and may keep what it drew — reported from a phone, and worth having,
+     * because a Joker kept takes a hand from nothing to minus one. `cards.indices` is empty, so
+     * every position was refused and the seat could only let the card go.
+     *
+     * Position 0 and no other: this is the empty hand's case, not a way to grow a hand by one.
+     * And no declaration — a guess names the card that goes out, nothing goes out, so there is
+     * nothing to be right or wrong about and a penalty card for it would punish nothing.
+     */
+    private fun emptyHandSwap(action: GameAction.SwapCard): Validation = when {
+        action.payload.position != 0 ->
+            Validation.Invalid("Invalid position ${action.payload.position}")
+
+        action.payload.declaredRank != null ->
+            Validation.Invalid("Nothing leaves an empty hand to declare")
+
+        else -> Validation.Valid
+    }
+
     private fun GameState.requireTurn(playerId: String, actionType: String): Validation? =
         if (currentPlayer().id == playerId) {
             null

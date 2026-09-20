@@ -522,6 +522,8 @@
     <string name="ask_which_two_will_it_swap">%1$s کون سے دو پتے بدلتا ہے؟ ایک کو چھوئیں، پھر دوسرے کو۔</string>
     <string name="ask_which_rank_will_you_declare">آپ بادشاہ کے ساتھ کون سا درجہ بتائیں گے؟</string>
     <string name="ask_which_rank_should_they_declare">%1$s بادشاہ کے ساتھ کون سا درجہ بتائے؟</string>
+    <string name="ask_which_rank_will_you_call_it">آپ اسے کون سا درجہ قرار دیں گے؟ صحیح اندازہ اس پتے کا عمل چلاتا ہے۔</string>
+    <string name="ask_which_rank_should_they_call_it">%1$s اسے کون سا درجہ قرار دے؟ صحیح اندازہ اس پتے کا عمل چلاتا ہے۔</string>
     <string name="ask_which_card_will_you_put_down">اسے جگہ دینے کے لیے آپ کا کون سا پتہ باہر جائے گا؟</string>
     <string name="ask_which_card_should_they_put_down">اسے جگہ دینے کے لیے %1$s کا کون سا پتہ باہر جائے گا؟</string>
     <string name="detail_plan_is_a_suggestion">منصوبہ محض ایک تجویز ہے۔ فیصلہ اسی کا ہوتا ہے جس کی باری ہو۔</string>
@@ -549,6 +551,8 @@
     <string name="says_what_with">اور پھر؟</string>
     <string name="says_which_card">کون سا پتہ باہر جائے گا؟</string>
     <string name="says_call_it">+ اسے %1$s قرار دیں</string>
+    <string name="says_call_it_anything">+ قرار دیں</string>
+    <string name="says_called_it">اسے %1$s قرار دیتے ہیں</string>
     <string name="says_which_two">کون سے دو پتے؟</string>
     <string name="says_which_to_look_at">کون سا پتہ دیکھیں؟</string>
     <string name="says_forces">اور %1$s کو نکالنے پر مجبور کرتے ہیں</string>
@@ -607,6 +611,7 @@
     <string name="choice_use_from_pile">%1$s استعمال کریں</string>
     <string name="choice_use_action">عمل استعمال کریں</string>
     <string name="choice_swap_cards">پتے بدلیں</string>
+    <string name="choice_keep_it">رکھ لیں</string>
     <string name="choice_discard">پھینکیں</string>
     <string name="choice_just_swap">بس بدل دیں</string>
     <string name="choice_put_it_down">اسے نیچے رکھیں</string>
