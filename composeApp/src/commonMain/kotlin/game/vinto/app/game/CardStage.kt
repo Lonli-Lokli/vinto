@@ -1674,7 +1674,11 @@ private fun cardFor(rank: Rank): Card {
 
 @Composable
 private fun BeingLookedAt(stage: Stage, anchor: Anchor, card: CardView, sizes: TableSizes) {
-    val berth = stage.berthOf(anchor) ?: return
+    // [Stage.berthOrNearby], not the strict lookup, and for the reason that helper exists: a
+    // card held up on its way *out* of a hand is measured against a table that has already lost
+    // it, so its own slot is gone. That is the King's named card, which is now shown where it
+    // lay before it travels — and with the strict lookup it was shown nowhere at all.
+    val berth = stage.berthOrNearby(anchor) ?: return
     val lift = remember { Animatable(0f) }
     val settling = anchor in stage.settling
 

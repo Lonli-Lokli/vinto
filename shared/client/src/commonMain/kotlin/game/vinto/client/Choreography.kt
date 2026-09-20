@@ -533,8 +533,7 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         //
         // A wrong name leaves the card where it is, revealed, and costs a card: nothing moves
         // but the penalty, which the penalty scene animates.
-        is GameAction.DeclareKingAction ->
-            listOf(Beat.Borrowed(action.payload.declaredRank)) + namedCardScene(before, after)
+        is GameAction.DeclareKingAction -> namedCardScene(action.payload.declaredRank, before, after)
 
         // The two swaps that happen inside an action rather than as a move of their own, so
         // their endpoints come from the targets the action was aimed at.
@@ -679,27 +678,38 @@ private fun peekScene(after: PlayerView, payload: SelectActionTargetPayload.Posi
 private fun discardScene(): Scene = emptyList()
 
 /**
- * The card a King named, on its way out of the hand it was named in.
+ * The card a King named: held up where it lay, then on its way out of the hand it was named in.
  *
  * Only when the name was right, which is read from the hand rather than from the rank: a
  * correct name takes the card out — to the pile, or into play from the pile if it has its own
- * action — and a wrong one leaves it where it is. Either way the card is public by then, so it
- * travels face up and lit: this is the moment the King's guess is answered.
+ * action — and a wrong one leaves it where it is.
+ *
+ * **Shown before it travels.** It used only to fly, and `InFlight` swells a `shown` flight as
+ * it goes — but that swell peaks at the *midpoint*, and for a seat at the side of the table the
+ * midpoint is still over by that seat. Reported from a phone as the card growing off to one side
+ * and only then setting off, which is not what it was doing and not what a table does either: at
+ * a table the card is held up where it was taken from, so everybody can see which card it was
+ * and whose, and then it goes on the pile.
+ *
+ * The flight picks it up out of the air — the hand-off `Stage.fly` already makes, releasing a
+ * lifted card in the same call that starts the flight and setting off from where it hovers.
+ *
+ * **A wrong name stages nothing at all**, borrowed rank included. The card stays in the hand, so
+ * anything played here would be showing a card leaving that did not; what the table is owed is
+ * the reveal, and `revealScene` carries that on its own.
  */
-private fun namedCardScene(before: PlayerView, after: PlayerView): Scene {
+private fun namedCardScene(declared: Rank, before: PlayerView, after: PlayerView): Scene {
     val target = before.pendingAction?.targets?.firstOrNull() ?: return emptyList()
     val had = before.players.firstOrNull { it.id == target.playerId }?.cards?.size
     val has = after.players.firstOrNull { it.id == target.playerId }?.cards?.size
     if (had == null || has == null || has >= had) return emptyList()
 
     val named = after.pendingCard() ?: after.discardTop
-    return listOf(
-        Beat.Move(
-            Anchor.Seat(target.playerId, target.position),
-            Anchor.Discard,
-            named,
-            shown = true,
-        ),
+    val seat = Anchor.Seat(target.playerId, target.position)
+    return listOfNotNull(
+        Beat.Borrowed(declared),
+        named?.let { Beat.Reveal(seat, it) },
+        Beat.Move(seat, Anchor.Discard, named, shown = true),
     )
 }
 

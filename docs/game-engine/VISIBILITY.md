@@ -129,8 +129,8 @@ which is the fix for her first card lowering itself between taps, made executabl
 | Execute the Jack swap | first target ⇄ second target | neither turns over | nobody | two crossing flights, blank, from where the cards hover |
 | Skip the Jack swap | nothing | both cards lower home | — | both lifted cards flinch, then come home |
 | Aim a King | nothing | a blank lift, held through the declaration | nobody | a lift, held |
-| Declare a King, right | the named card: hand → pile | turns face up as it leaves, lit — the flight takes it from where it hovers | every seat | the borrowed rank held up, a lit flight, a green ring |
-| Declare a King, wrong | deck → the declarer's row | the named card turns face up **where it hovers**, still lifted through the verdict, then lowers face-down | every seat, for the moment | the borrowed rank held up, a red ring, the penalty flight and flinch, then the reveal |
+| Declare a King, right | the named card: hand → pile | held up **where it lay** first, so the table sees which card it was and whose, then turns face up as it leaves, lit — the flight takes it from where it hovers | every seat | the borrowed rank held up, the card shown at its seat, a lit flight, a green ring |
+| Declare a King, wrong | deck → the declarer's row | the named card turns face up **where it hovers**, still lifted through the verdict, then lowers face-down | every seat, for the moment | a red ring, the penalty flight and flinch, then the reveal — and **no borrowed rank**, because nothing was played |
 | Aim an Ace | deck → the target's row | flies face down | nobody | the target's seat ringed — and still ringed when the card lands, because the naming and the flight are one moment — a line, the flight, a flinch |
 | Toss in, right | your row → pile | face up as it flies | every seat | one flight per thrown card, thrown together |
 | Toss in, wrong | deck → your row | the attempt turns face up **where it lies**, then back down | every seat, for the moment | the penalty flight, flinch, ring and line, then the reveal |

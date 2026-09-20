@@ -2007,13 +2007,29 @@ private fun Piles(view: PlayerView, sizes: TableSizes, board: Board?, onHelp: (H
             }
         }
 
+        // The second row of the two-by-two, and it has to stay a grid.
+        //
+        // Both rows are centred in this column, so the column is as wide as its widest row —
+        // and the toss-in column grows with every card thrown into the window. That dragged the
+        // drawn card leftwards out from under the deck, one throw at a time, reported from a
+        // phone as "tossin cards moves drawn card to the left when added more".
+        //
+        // So the toss-in is held to the width of the pile above it, and its cards spill out of
+        // that width without widening it (`unbounded`). The row is then exactly as wide as the
+        // row of piles, whatever is in the window, and neither card under them moves.
         Row(
             horizontalArrangement = Arrangement.spacedBy(Gap),
             verticalAlignment = Alignment.Top,
             modifier = Modifier.padding(top = Tight),
         ) {
             DrawnCard(view, sizes, stage, board?.drawing?.takeIf { !stage.rehearsing }, onHelp)
-            TossIn(view)
+            Box(
+                modifier = Modifier
+                    .width(sizes.theirs.width)
+                    .wrapContentWidth(Alignment.CenterHorizontally, unbounded = true),
+            ) {
+                TossIn(view)
+            }
         }
     }
 }

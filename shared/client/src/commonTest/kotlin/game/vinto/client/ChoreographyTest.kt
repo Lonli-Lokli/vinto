@@ -397,19 +397,30 @@ class ChoreographyTest {
         )
     }
 
-    /** A King says what it is pretending to be before it does that card's job. */
+    /**
+     * A King says what it is pretending to be before it does that card's job.
+     *
+     * Named **correctly**, which is the only case there is a job to do — a wrong name leaves the
+     * card in the hand, and nothing is staged for it at all
+     * (`ADeclaredCardIsShownWhereItLayTest`). This used to name a nine whatever was there and
+     * pass either way, because the borrowed rank was shown before anyone knew if it was right.
+     */
     @Test
     fun aKingNamesWhatItBorrowed() = runTest {
         val session = aiming(Rank.KING)
         session.dispatch((session.table().taps.values.first() as Move.Send).action)
 
+        val pointedAt = assertNotNull(session.state.pendingAction?.targets?.firstOrNull())
+        val real = session.state.players
+            .first { it.id == pointedAt.playerId }.cards[pointedAt.position].rank
+
         val scenes = scenesOf(session)
-        val nine = session.table().ranks.first { it.rank == Rank.NINE }
-        session.dispatch((nine.move as Move.Send).action)
+        val called = session.table().ranks.first { it.rank == real }
+        session.dispatch((called.move as Move.Send).action)
         runCurrent()
 
         val borrowed = scenes.flatten().flatten().filterIsInstance<Beat.Borrowed>()
-        assertEquals(Rank.NINE, borrowed.singleOrNull()?.rank, "it said which: $borrowed")
+        assertEquals(real, borrowed.singleOrNull()?.rank, "it said which: $borrowed")
     }
 
     // ------------------------------------------------------------------ the deal

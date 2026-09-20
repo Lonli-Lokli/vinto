@@ -330,8 +330,8 @@ class TransformationMatrixTest {
         },
         Row(
             "DECLARE_KING_ACTION (right, plain card)",
-            actorSees = "borrowed + fly you[3]→pile face lit; verdict green",
-            othersSee = "borrowed + fly you[3]→pile face lit; verdict green",
+            actorSees = "borrowed + reveal you[3] + fly you[3]→pile face lit; verdict green",
+            othersSee = "borrowed + reveal you[3] + fly you[3]→pile face lit; verdict green",
         ) {
             val play = Play().kingAimedAtPlanted(withAction = false)
             play.act(GameAction.DeclareKingAction(DeclareKingActionPayload(play.me, play.planted)))
@@ -339,8 +339,8 @@ class TransformationMatrixTest {
         },
         Row(
             "DECLARE_KING_ACTION (right, action card)",
-            actorSees = "borrowed + fly you[3]→pile face lit; verdict green",
-            othersSee = "borrowed + fly you[3]→pile face lit; verdict green",
+            actorSees = "borrowed + reveal you[3] + fly you[3]→pile face lit; verdict green",
+            othersSee = "borrowed + reveal you[3] + fly you[3]→pile face lit; verdict green",
         ) {
             val play = Play().kingAimedAtPlanted(withAction = true)
             play.act(GameAction.DeclareKingAction(DeclareKingActionPayload(play.me, play.planted)))
@@ -348,9 +348,9 @@ class TransformationMatrixTest {
         },
         Row(
             "DECLARE_KING_ACTION (wrong)",
-            actorSees = "borrowed; verdict red; " +
+            actorSees = "verdict red; " +
                 "fly deck→you[5] + flinch you[5] + attend you penalty; reveal you[3]",
-            othersSee = "borrowed; verdict red; " +
+            othersSee = "verdict red; " +
                 "fly deck→you[5] + flinch you[5] + attend you penalty; reveal you[3]",
         ) {
             val play = Play().kingAimedAtPlanted(withAction = false)
