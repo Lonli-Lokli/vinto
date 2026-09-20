@@ -22,7 +22,7 @@ import kotlin.test.assertTrue
  * attempt to act out of turn, in a game position that actually arose, and every one must be
  * rejected.
  *
- * That is roughly 13,991 states × 3 impostors — a scale of adversarial case no fixture set
+ * That is roughly 13,988 states × 3 impostors — a scale of adversarial case no fixture set
  * would reach by hand, obtained for free from recordings that already exist.
  */
 class ValidatorImpersonationTest {
@@ -90,7 +90,7 @@ class ValidatorImpersonationTest {
             }
         }
 
-        // ~6,250 of the 13,991 actions bind to a seat — the rest are toss-in, which any
+        // ~6,250 of the 13,988 actions bind to a seat — the rest are toss-in, which any
         // player may legitimately send — times three other players at the table.
         assertTrue(attempts > 15_000, "expected the whole corpus to be probed, tried $attempts")
         assertEquals(emptyList(), accepted, "the validator let another player act")

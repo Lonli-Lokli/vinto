@@ -44,4 +44,18 @@ tasks.withType<Test>().configureEach {
         testLogging.showStandardStreams = true
         if (tournament.get() == "write") systemProperty("vinto.tournament.write", "true")
     }
+
+    // Retailing the parity corpus is the same shape of decision and a larger one: it rewrites a
+    // frozen artefact, so it never runs unasked. `fixtures/recordings/README.md` is the argument
+    // it has to answer to.
+    val corpus = providers.gradleProperty("corpus")
+    if (!corpus.isPresent) {
+        filter {
+            excludeTestsMatching("game.vinto.bot.RegenerateCorpusTailsTest")
+            isFailOnNoMatchingTests = false
+        }
+    } else {
+        testLogging.showStandardStreams = true
+        if (corpus.get() == "write") systemProperty("vinto.corpus.write", "true")
+    }
 }

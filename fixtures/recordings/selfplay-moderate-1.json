@@ -2145,12 +2145,82 @@
     },
     {
       "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-1"
+        }
+      },
+      "stateHash": "267d823b6547a2a8344261ae758f8cb0b953402e578d5ed2d20c63eb5e3e7de3"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-2",
+          "positions": [
+            0
+          ]
+        }
+      },
+      "stateHash": "6890520a10ab2dc20099a772ce93cf3457ca14eb71466d3772b4a12430f78bfb"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-2"
+        }
+      },
+      "stateHash": "a2aca0bcc94c8221d8c9d18de38a8bdd5175e4f38348d38b0bbd9bb9fc728748"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "eaa89dbe1ae73ce284d0332c7a047e0e7c1cc42354b62fb21442f141edbd75b3"
+    },
+    {
+      "action": {
+        "type": "SELECT_ACTION_TARGET",
+        "payload": {
+          "rank": "Any",
+          "playerId": "bot-1",
+          "targetPlayerId": "human-1",
+          "position": 1
+        }
+      },
+      "stateHash": "8ed3c9b72971453e4c6c8b81d04c27971373e264a523d23fe048e4fcd7bc58a7"
+    },
+    {
+      "action": {
+        "type": "DECLARE_KING_ACTION",
+        "payload": {
+          "playerId": "bot-1",
+          "declaredRank": "4"
+        }
+      },
+      "stateHash": "04d0397109bc8de77c9266f3bf61629a5c3e383fd28b2c2ba42ce33944c9e6d4"
+    },
+    {
+      "action": {
+        "type": "PLAYER_TOSS_IN_FINISHED",
+        "payload": {
+          "playerId": "human-1"
+        }
+      },
+      "stateHash": "7238610ead5529250149f1bf9e79c424f1a83a4ef405f8299caf0701c2273d3b"
+    },
+    {
+      "action": {
         "type": "CALL_VINTO",
         "payload": {
           "playerId": "bot-1"
         }
       },
-      "stateHash": "57363ef800cdfa8fa4953eb6da7076e12b3384b4178d4bc921b2e026a74bae05"
+      "stateHash": "5d86812aba7701eb2986ad8cfea663cd4cdae844498477753357d079ceae2917"
     },
     {
       "action": {
@@ -2167,55 +2237,11 @@
               "ranks": [
                 "3"
               ]
-            },
-            {
-              "by": "human-1",
-              "positions": [
-                1
-              ],
-              "ranks": [
-                "4"
-              ]
             }
           ]
         }
       },
-      "stateHash": "ea5ea8964bdef63e795f81c8f72b63e56ad764597e99efbd52489dd6bd08bc46"
-    },
-    {
-      "action": {
-        "type": "DECLARE_CARDS",
-        "payload": {
-          "playerId": "bot-2",
-          "about": "bot-2",
-          "claims": [
-            {
-              "by": "bot-2",
-              "positions": [
-                0
-              ],
-              "ranks": [
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8",
-                "9",
-                "10",
-                "J",
-                "Q",
-                "K",
-                "A",
-                "Joker"
-              ],
-              "covering": false
-            }
-          ]
-        }
-      },
-      "stateHash": "1abf37766b383ab6589b6a732fb353a085b5dbde7ac07cf1dbd99e9ccb8d6db2"
+      "stateHash": "f23016f0949fc6a2d0aacd56146668efcaa9e4d8b8b0b041ec804480e55983d2"
     },
     {
       "action": {
@@ -2236,15 +2262,6 @@
             {
               "by": "bot-3",
               "positions": [
-                1
-              ],
-              "ranks": [
-                "A"
-              ]
-            },
-            {
-              "by": "bot-3",
-              "positions": [
                 3
               ],
               "ranks": [
@@ -2259,11 +2276,20 @@
               "ranks": [
                 "3"
               ]
+            },
+            {
+              "by": "bot-3",
+              "positions": [
+                1
+              ],
+              "ranks": [
+                "A"
+              ]
             }
           ]
         }
       },
-      "stateHash": "5c53987fa79eed9a4d21ef97fbeb892f8722e6a7c70321c219c221ef35145908"
+      "stateHash": "b5943ca4f32883113d91c6196eaa2a2d44260bb3df1db0258d24e9ee841890cb"
     },
     {
       "action": {
@@ -2275,7 +2301,7 @@
             {
               "by": "human-1",
               "positions": [
-                1
+                0
               ],
               "ranks": [
                 "K"
@@ -2284,7 +2310,7 @@
             {
               "by": "human-1",
               "positions": [
-                2
+                1
               ],
               "ranks": [
                 "A"
@@ -2293,7 +2319,7 @@
           ]
         }
       },
-      "stateHash": "92245a0d8a0f619adca99b0e75ca01a4bc8df66b4b9d02ffe88f901d32899815"
+      "stateHash": "7ccba3b02e69a3bb7578dc92916f76e2b58bc63e90ea7b3a8683988c36f150cc"
     },
     {
       "action": {
@@ -2314,7 +2340,7 @@
           ]
         }
       },
-      "stateHash": "ecda8804642f17bad207ab76ae53ba7e51a05eaa7f58976da906ec9d2449c05a"
+      "stateHash": "89b698146d7ccac004e4c0b46c6324dc93deac05acbb3c779999dd785e946367"
     },
     {
       "action": {
@@ -2323,15 +2349,6 @@
           "playerId": "bot-2",
           "about": "human-1",
           "claims": [
-            {
-              "by": "bot-2",
-              "positions": [
-                1
-              ],
-              "ranks": [
-                "4"
-              ]
-            },
             {
               "by": "bot-2",
               "positions": [
@@ -2344,7 +2361,7 @@
           ]
         }
       },
-      "stateHash": "60849243a90ec14c034426a8976b617e80972deea10b452733ca71d4e920f504"
+      "stateHash": "e1f264589b15eef638c6c4c86a5481962d568e5eea0b559146dc2b7d7760ab47"
     },
     {
       "action": {
@@ -2365,7 +2382,7 @@
           ]
         }
       },
-      "stateHash": "1f71b922e94df2f45844ad1fa5a9775914737b3f84388fd751c208d5096fb0cc"
+      "stateHash": "c1e8d8c9aeb8342f283dd2b9500b0af758448029a896c92bc528ef68e68577ac"
     },
     {
       "action": {
@@ -2377,7 +2394,7 @@
             {
               "by": "bot-3",
               "positions": [
-                3
+                2
               ],
               "ranks": [
                 "9"
@@ -2391,20 +2408,11 @@
               "ranks": [
                 "3"
               ]
-            },
-            {
-              "by": "bot-3",
-              "positions": [
-                1
-              ],
-              "ranks": [
-                "4"
-              ]
             }
           ]
         }
       },
-      "stateHash": "8d02d4784262b46cf0aa1c27a4c5b2df1d81f06bb2809212b738f28aff3c1dc0"
+      "stateHash": "62d09bc1d61ed5a26c17aef39f984a86f2769d63ae40debf503a0b426e16cf0f"
     },
     {
       "action": {
@@ -2416,7 +2424,7 @@
             {
               "by": "bot-3",
               "positions": [
-                1
+                0
               ],
               "ranks": [
                 "K"
@@ -2425,98 +2433,7 @@
           ]
         }
       },
-      "stateHash": "fdff78a2fdac784d6c480d6b170ec8fcb48089711045eca2b151d2a89ffe2075"
-    },
-    {
-      "action": {
-        "type": "PARTICIPATE_IN_TOSS_IN",
-        "payload": {
-          "playerId": "bot-2",
-          "positions": [
-            0
-          ]
-        }
-      },
-      "stateHash": "ef5a8453362354ae9eecaa2babc95c43636c8c3f527b4fa9e260fc7b5ab86273"
-    },
-    {
-      "action": {
-        "type": "PLAYER_TOSS_IN_FINISHED",
-        "payload": {
-          "playerId": "bot-2"
-        }
-      },
-      "stateHash": "da81f732fff8ab3e4c9930f08d65f81ad59d4ce4980d30be789b634ca8311439"
-    },
-    {
-      "action": {
-        "type": "PLAYER_TOSS_IN_FINISHED",
-        "payload": {
-          "playerId": "bot-3"
-        }
-      },
-      "stateHash": "70ad2e46c07a71fa9f338f21fb71b3c8ef3fae6efb02c9ad8af970c42c815e41"
-    },
-    {
-      "action": {
-        "type": "SELECT_ACTION_TARGET",
-        "payload": {
-          "rank": "Any",
-          "playerId": "bot-1",
-          "targetPlayerId": "human-1",
-          "position": 0
-        }
-      },
-      "stateHash": "35d6350c7229c54b3926b20bd55e3c51cfb535e845f2cf23164924dded841e20"
-    },
-    {
-      "action": {
-        "type": "DECLARE_KING_ACTION",
-        "payload": {
-          "playerId": "bot-1",
-          "declaredRank": "3"
-        }
-      },
-      "stateHash": "6bb02704a75c74a0a993ad6da57f8398af948ca7c30f84bd113d45fae718fbb0"
-    },
-    {
-      "action": {
-        "type": "PLAYER_TOSS_IN_FINISHED",
-        "payload": {
-          "playerId": "human-1"
-        }
-      },
-      "stateHash": "916abb2e4108fd493f3efa7d014dfefe3bf9a69d99b61432b5d1f53937d12fca"
-    },
-    {
-      "action": {
-        "type": "PLAYER_TOSS_IN_FINISHED",
-        "payload": {
-          "playerId": "bot-2"
-        }
-      },
-      "stateHash": "00008df199eb8389631ab9975250e3bf98cad10ddeaa7d78b7ae2896b0d8ee11"
-    },
-    {
-      "action": {
-        "type": "PARTICIPATE_IN_TOSS_IN",
-        "payload": {
-          "playerId": "bot-3",
-          "positions": [
-            4
-          ]
-        }
-      },
-      "stateHash": "af4d0e7406b6689f1f2dd8cb9997a5b24021ae14851f705cd56a1c133f133917"
-    },
-    {
-      "action": {
-        "type": "PLAYER_TOSS_IN_FINISHED",
-        "payload": {
-          "playerId": "bot-3"
-        }
-      },
-      "stateHash": "9f1f7cbeca521b28a1cbacf3ad02c603d9c36471012b44e44c0c10c0d8dbb683"
+      "stateHash": "41c9330a000e5ef95a14e53eaf77e4910115e6aed57aa4d7686c5f546fd971be"
     },
     {
       "action": {
@@ -2525,7 +2442,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "ce9820b1131307f926869d7815586a756c547f62714b385a180a8eb205f1182f"
+      "stateHash": "7c5cfd7fd6e3cf42eea526093115d3a56c8ff3a5356ae895a16b2f8bc03cfb48"
     },
     {
       "action": {
@@ -2534,7 +2451,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "096c6fc6d5a64e67d08cf9eaba161662efc0f6b9e5297ca803eba4179e69ee44"
+      "stateHash": "160ca38cd32ddb8e4cb1d9a58df12454b006206313ab86044a9696c354a8a7ee"
     },
     {
       "action": {
@@ -2543,10 +2460,10 @@
           "rank": "Any",
           "playerId": "bot-2",
           "targetPlayerId": "bot-2",
-          "position": 0
+          "position": 1
         }
       },
-      "stateHash": "68c83e42358953afa0b78019e0e06d2f0361be0b251e10620618f656d8d4660f"
+      "stateHash": "43fc1c2914e09aa6a20826bf57965332a47615ea443d88f5886169902741bc30"
     },
     {
       "action": {
@@ -2555,10 +2472,10 @@
           "rank": "Any",
           "playerId": "bot-2",
           "targetPlayerId": "bot-3",
-          "position": 2
+          "position": 0
         }
       },
-      "stateHash": "af7d4bb8511896b43e6374541e8c28bc84c18d51cc62f17fa769d8c1103f3c3e"
+      "stateHash": "2e4538661d1b41db8118f76676fb91b49bfe737cb1044ee4eba42e2656489373"
     },
     {
       "action": {
@@ -2567,7 +2484,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "d0b754279502d716897eed65c177ed562c5d50fb0c932ccc34bb8f62e521cea1"
+      "stateHash": "a0a5f2616a8532293d3dbeaa7246d72ce1ba214eea77ac49e93043d583372e4a"
     },
     {
       "action": {
@@ -2576,7 +2493,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "8a58b00560d360c182e60521bc6b8f8addbd9d00cae7e6c6bb205d4de3f2e9c5"
+      "stateHash": "2377cea4c68bc0b308ef098c37e14abf9096831cdb06ae2883821c602cdb8365"
     },
     {
       "action": {
@@ -2585,7 +2502,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "3783d00688e8df79cbf87c61df0234e77ad966f3c03568940ffe60273dc3cc1a"
+      "stateHash": "cc19ead1aa9b259c7acea7e66a2d77e2724b690cd2c33e45927d2b05902fe10f"
     },
     {
       "action": {
@@ -2594,7 +2511,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "f613c8f966ca343a1bcb20c43cc3a93e605927a81f9f91f2fe0bc2aeb246afbe"
+      "stateHash": "f06a62bc04164945a668e1464e84383ff76928fdb81b3e5669a1b078d8aeb2d1"
     },
     {
       "action": {
@@ -2603,7 +2520,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "3b9451d97de949d7a210a0a92301d33ea1e760305737cd294c4cfc8907d3999d"
+      "stateHash": "b3e6b8348e231cdd016efd0969850a84ae3b71a71808767ea093a0ffdda4b548"
     },
     {
       "action": {
@@ -2612,7 +2529,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "e7a41641fa8e292d7d2de873a0e9b704bbdcea79ab0763077f8ea501e97331ac"
+      "stateHash": "85b4bf55a39da2eec4b0ee30c985985f998e95bbe11f83c455dd03e75d1dd62e"
     },
     {
       "action": {
@@ -2621,7 +2538,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "ff833e31175c10fbfec479bfb4947bacf754a4bcb0a5b356a1cbc5c2b0f7c08f"
+      "stateHash": "303a33f16a8b668dba7d2137e8f9d9e44f93a7620034d77a6f57bf0b22369b39"
     },
     {
       "action": {
@@ -2630,7 +2547,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "d2eef6d2c87979927c4ec81502b91cec2f0e5cb5e8cb4dab867663ab774f2781"
+      "stateHash": "f242054af9e5054420da7502304ce88d6418a756a170986bbd050f39a9c08dc8"
     },
     {
       "action": {
@@ -2638,11 +2555,12 @@
         "payload": {
           "playerId": "bot-3",
           "positions": [
+            0,
             1
           ]
         }
       },
-      "stateHash": "d16706884beb5e8bfd08e45d5a648cd07b33f7f0ec3699ba7cfc5e546669f856"
+      "stateHash": "5a762cdf77c6e87d37b00bc5478bba231887e6c43d4cf8b1073a49ac481dd626"
     },
     {
       "action": {
@@ -2651,7 +2569,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "fc04c0bf6d647b90337576bf056f47fc3eec959da4f829e8a954bdcab162449d"
+      "stateHash": "7e5dbbb760da31fea11f3a802b7d4daffebad52b483d439152e59c5a4d2b623e"
     },
     {
       "action": {
@@ -2660,7 +2578,16 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "a2a7067b8f7a4d2687ed5219a5c92175d253c917e2410ac55d4c6e9793137255"
+      "stateHash": "0270473976e3fe0132164c09076017ccb3f78c1cc34401709c6378f5040cc4e5"
+    },
+    {
+      "action": {
+        "type": "CONFIRM_PEEK",
+        "payload": {
+          "playerId": "bot-3"
+        }
+      },
+      "stateHash": "88c3f411897f6f181719274acd9accce40cf40dbf691c340b2919d6adb3eb328"
     },
     {
       "action": {
@@ -2669,7 +2596,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "61d6bc6db2eabdd2ee9e47627e24782e32d7a4f4eafc9b8f7f60acd6a217c467"
+      "stateHash": "f896af3e178286003ad3dc65fa2a8ee891d6b584599ffaedfdeb47a90595b855"
     },
     {
       "action": {
@@ -2678,7 +2605,7 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "bf901f5b50cbede3c48126340af975364c293d343ab961302a9bc3e75a6e516b"
+      "stateHash": "fc68dc136641a7e62f2657244b9bc7e39fd290e79447b018bbc936a2c566ed3a"
     },
     {
       "action": {
@@ -2687,7 +2614,7 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "cbe08a4cacee2daa0a8d457012511cae076d9605a183700c1ed7d5921d70290b"
+      "stateHash": "3c9951824f73bc56ce062e40c3ea480da2b7289b917427c6d6f6de05d0354d87"
     },
     {
       "action": {
@@ -2696,7 +2623,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "a7f89585b0335f9edcbb6ad1cd03c7a5265c865ba43a4c7bbf57d970b8c8be0a"
+      "stateHash": "b370e2f8beb2c52c55563e637d34b26227325823162704e3a0053dd2047f7c60"
     },
     {
       "action": {
@@ -2705,7 +2632,19 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "42c82c1bbe01c046d393bf8a8ce5f73fe25a480d671b33be8d02a095e6358609"
+      "stateHash": "291b91ae961723b61151a0eecfebaa0f591bfd5495fd49f4596a6fdd98282c91"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "human-1",
+          "positions": [
+            0
+          ]
+        }
+      },
+      "stateHash": "96f076cad2767e4507ab7e69c5f5edf2b8a4ab19a898cc4720444dde903eb7af"
     },
     {
       "action": {
@@ -2714,7 +2653,7 @@
           "playerId": "human-1"
         }
       },
-      "stateHash": "51340009b71460492f2eb37595e25e65f4d6eb8d8a330f62b2448dcb4e070533"
+      "stateHash": "613b90f4d0761bf8c6ea4c5307bb16ea944932dd96840f01c0b1f68b203f3e4d"
     },
     {
       "action": {
@@ -2723,7 +2662,19 @@
           "playerId": "bot-2"
         }
       },
-      "stateHash": "2c8ea41c9aab86f4e48bf91eb94762fec46535b24cbe43d7cfd148f932037438"
+      "stateHash": "47bab0370abe9fd84882106eda466a655050e6d121a42e0aca74a67890cea1c9"
+    },
+    {
+      "action": {
+        "type": "PARTICIPATE_IN_TOSS_IN",
+        "payload": {
+          "playerId": "bot-3",
+          "positions": [
+            2
+          ]
+        }
+      },
+      "stateHash": "10f8ff22e77bc8036c9493ef106aede3af097ba2232cc1c1af338a3f7af26776"
     },
     {
       "action": {
@@ -2732,13 +2683,13 @@
           "playerId": "bot-3"
         }
       },
-      "stateHash": "fcadd03ddb691f32aee1272f265b4d1868131157cc19f2d93a7df9b0f7f3ffe7"
+      "stateHash": "0bb3bc1ae562df5ff008b1e4d0497da9b90a0b7c63f600494a747d9b19753b9b"
     }
   ],
   "finalState": {
     "gameId": "vinto-1",
     "roundNumber": 7,
-    "turnNumber": 25,
+    "turnNumber": 24,
     "phase": "scoring",
     "subPhase": "idle",
     "finalTurnTriggered": true,
@@ -2750,12 +2701,6 @@
         "isHuman": false,
         "isBot": true,
         "cards": [
-          {
-            "id": "4_1",
-            "rank": "4",
-            "value": 4,
-            "played": false
-          },
           {
             "id": "4_3",
             "rank": "4",
@@ -2770,9 +2715,7 @@
             "played": false
           }
         ],
-        "knownCardPositions": [
-          0
-        ],
+        "knownCardPositions": [],
         "isVintoCaller": false,
         "coalitionWith": [
           "human-1",
@@ -2782,11 +2725,11 @@
         "opponentKnowledge": {
           "bot-2": {
             "knownCards": {
-              "1": {
-                "id": "A_2",
-                "rank": "A",
-                "value": 1,
-                "actionText": "Force opponent to draw",
+              "0": {
+                "id": "K_0",
+                "rank": "K",
+                "value": 0,
+                "actionText": "Declare any card's action",
                 "played": false
               }
             }
@@ -2795,52 +2738,17 @@
             "knownCards": {}
           },
           "bot-3": {
-            "knownCards": {
-              "1": {
-                "id": "K_0",
-                "rank": "K",
-                "value": 0,
-                "actionText": "Declare any card's action",
-                "played": false
-              }
-            }
+            "knownCards": {}
           }
         },
         "claims": [
           {
-            "by": "human-1",
-            "positions": [
-              0
-            ],
-            "ranks": [
-              "4"
-            ]
-          },
-          {
-            "by": "bot-2",
-            "positions": [
-              0
-            ],
-            "ranks": [
-              "4"
-            ]
-          },
-          {
             "by": "bot-3",
             "positions": [
-              2
+              1
             ],
             "ranks": [
               "9"
-            ]
-          },
-          {
-            "by": "bot-3",
-            "positions": [
-              0
-            ],
-            "ranks": [
-              "4"
             ]
           }
         ]
@@ -2857,21 +2765,11 @@
         "coalitionWith": [],
         "opponentKnowledge": {
           "human-1": {
-            "knownCards": {
-              "0": {
-                "id": "4_1",
-                "rank": "4",
-                "value": 4,
-                "played": false
-              }
-            }
-          },
-          "bot-2": {
             "knownCards": {}
           },
-          "bot-3": {
+          "bot-2": {
             "knownCards": {
-              "1": {
+              "0": {
                 "id": "K_0",
                 "rank": "K",
                 "value": 0,
@@ -2879,6 +2777,9 @@
                 "played": false
               }
             }
+          },
+          "bot-3": {
+            "knownCards": {}
           }
         }
       },
@@ -2890,17 +2791,16 @@
         "isBot": true,
         "cards": [
           {
-            "id": "7_2",
-            "rank": "7",
-            "value": 7,
-            "actionText": "Peek 1 of your cards",
+            "id": "K_0",
+            "rank": "K",
+            "value": 0,
+            "actionText": "Declare any card's action",
             "played": false
           },
           {
-            "id": "A_2",
-            "rank": "A",
-            "value": 1,
-            "actionText": "Force opponent to draw",
+            "id": "Joker2",
+            "rank": "Joker",
+            "value": -1,
             "played": false
           }
         ],
@@ -2913,14 +2813,7 @@
         ],
         "opponentKnowledge": {
           "human-1": {
-            "knownCards": {
-              "0": {
-                "id": "4_1",
-                "rank": "4",
-                "value": 4,
-                "played": false
-              }
-            }
+            "knownCards": {}
           },
           "bot-1": {
             "knownCards": {}
@@ -2933,10 +2826,28 @@
           {
             "by": "human-1",
             "positions": [
+              0
+            ],
+            "ranks": [
+              "K"
+            ]
+          },
+          {
+            "by": "bot-3",
+            "positions": [
+              0
+            ],
+            "ranks": [
+              "K"
+            ]
+          },
+          {
+            "by": "bot-3",
+            "positions": [
               1
             ],
             "ranks": [
-              "A"
+              "Joker"
             ]
           }
         ]
@@ -2949,16 +2860,10 @@
         "isBot": true,
         "cards": [
           {
-            "id": "Joker2",
-            "rank": "Joker",
-            "value": -1,
-            "played": false
-          },
-          {
-            "id": "K_0",
-            "rank": "K",
-            "value": 0,
-            "actionText": "Declare any card's action",
+            "id": "7_2",
+            "rank": "7",
+            "value": 7,
+            "actionText": "Peek 1 of your cards",
             "played": false
           },
           {
@@ -2969,8 +2874,6 @@
           }
         ],
         "knownCardPositions": [
-          0,
-          2,
           1
         ],
         "isVintoCaller": false,
@@ -2982,13 +2885,7 @@
         "opponentKnowledge": {
           "human-1": {
             "knownCards": {
-              "0": {
-                "id": "4_1",
-                "rank": "4",
-                "value": 4,
-                "played": false
-              },
-              "2": {
+              "1": {
                 "id": "9_0",
                 "rank": "9",
                 "value": 9,
@@ -2998,7 +2895,21 @@
             }
           },
           "bot-2": {
-            "knownCards": {}
+            "knownCards": {
+              "0": {
+                "id": "K_0",
+                "rank": "K",
+                "value": 0,
+                "actionText": "Declare any card's action",
+                "played": false
+              },
+              "1": {
+                "id": "Joker2",
+                "rank": "Joker",
+                "value": -1,
+                "played": false
+              }
+            }
           },
           "bot-1": {
             "knownCards": {}
@@ -3008,37 +2919,10 @@
           {
             "by": "bot-3",
             "positions": [
-              0
-            ],
-            "ranks": [
-              "Joker"
-            ]
-          },
-          {
-            "by": "bot-3",
-            "positions": [
-              2
-            ],
-            "ranks": [
-              "Joker"
-            ]
-          },
-          {
-            "by": "human-1",
-            "positions": [
               1
             ],
             "ranks": [
-              "K"
-            ]
-          },
-          {
-            "by": "bot-3",
-            "positions": [
-              1
-            ],
-            "ranks": [
-              "K"
+              "Joker"
             ]
           }
         ]
@@ -3130,6 +3014,18 @@
         "played": false
       },
       {
+        "id": "3_0",
+        "rank": "3",
+        "value": 3,
+        "played": false
+      },
+      {
+        "id": "3_1",
+        "rank": "3",
+        "value": 3,
+        "played": false
+      },
+      {
         "id": "A_0",
         "rank": "A",
         "value": 1,
@@ -3137,7 +3033,14 @@
         "played": false
       },
       {
-        "id": "tossin_queued_24_bot-3_A_1",
+        "id": "tossin_queued_23_bot-3_A_1",
+        "rank": "A",
+        "value": 1,
+        "actionText": "Force opponent to draw",
+        "played": true
+      },
+      {
+        "id": "tossin_queued_23_bot-3_A_2",
         "rank": "A",
         "value": 1,
         "actionText": "Force opponent to draw",
@@ -3157,15 +3060,9 @@
         "played": false
       },
       {
-        "id": "3_0",
-        "rank": "3",
-        "value": 3,
-        "played": false
-      },
-      {
-        "id": "3_1",
-        "rank": "3",
-        "value": 3,
+        "id": "4_1",
+        "rank": "4",
+        "value": 4,
         "played": false
       },
       {
@@ -3363,5 +3260,5 @@
     "difficulty": "moderate",
     "rngState": 2583707578
   },
-  "finalStateHash": "fcadd03ddb691f32aee1272f265b4d1868131157cc19f2d93a7df9b0f7f3ffe7"
+  "finalStateHash": "0bb3bc1ae562df5ff008b1e4d0497da9b90a0b7c63f600494a747d9b19753b9b"
 }

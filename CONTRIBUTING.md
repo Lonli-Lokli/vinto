@@ -48,7 +48,7 @@ install, which is how the runners see it.
 
 ```sh
 ./gradlew detekt                        # static analysis, every module and source set
-./gradlew :shared:engine:jvmTest        # the parity gate: 50 recordings, 13,991 actions
+./gradlew :shared:engine:jvmTest        # the parity gate: 50 recordings, 13,988 actions
 ./gradlew :composeApp:jvmTest           # the Compose suites, headless
 ```
 

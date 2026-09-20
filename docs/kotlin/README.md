@@ -509,7 +509,7 @@ iOS cannot fail on a non-Mac host. Build on macOS before trusting a shared-code 
 ./gradlew :shared:shapes:allTests              # expect 6 PRNG tests per target
 ./gradlew :worker:jsNodeProductionRun          # expect "gate ok: rngState=2583707619"
 ./gradlew detekt                               # expect no issues; failOnSeverity is Info
-./gradlew :shared:engine:jvmTest               # expect 50/50 recordings, 13,991 actions
+./gradlew :shared:engine:jvmTest               # expect 50/50 recordings, 13,988 actions
 ```
 
 `rngState=2583707619` after shuffling 54 cards with seed 42 is the useful number: it was

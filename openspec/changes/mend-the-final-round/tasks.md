@@ -55,8 +55,12 @@ plan the coalition agrees to and cannot play. Model faults first, appearance sec
       call** belongs — B is the same slot, filled from the engine rather than by a touch.
       Fixing it means a throw slot ahead of the first lane's step, which is a new field on
       `Lane` or on `CoalitionPlan` — so §3.4's "the wire is unmoved by §3" was written on the
-      assumption §3 was UI-only and no longer holds. **Put the shape to the maintainer before
-      building it**; everything in §4 and §5 is independent and goes first
+      assumption §3 was UI-only and no longer holds.
+      **Decided by the maintainer:** it belongs to the **first player's turn**, and the row is
+      shown *only* where such throws have actually been made by coalition players. So it is a
+      field on `Lane`, not a standing row on `CoalitionPlan`, and it is absent rather than empty
+      when the window opened on nothing — which also answers B, since a throw queued at the
+      moment of the call is exactly what fills it
 - [x] 3.3a **A Jack's palette is every coalition card.** `tradeComposer` read `spokenCards` —
       only what the table had been told about — which is right for a step that *claims*
       something and wrong for a Jack, because a Jack is blind: what it moves is decided by where
@@ -126,17 +130,29 @@ engine rather than the bot.
 - [ ] 5.2 Explain the King played the long way round — drawn, played, an opponent's 3 declared,
       then its own 3 thrown in — to a total reachable by swapping the King in. Verify whether
       the search prices the line correctly or the rollout misprices the declaration
-- [ ] 5.3 **The rule is already there, and the one card it spares is spared on purpose.** Read
-      before changed, and a change was written and then reverted. `BotRunner.tossInAction`
-      already returns `ParticipateInTossIn` *before* it ever reaches `shouldCallVinto`, so a bot
-      that can throw throws, and reaches the call on the next pass with a smaller hand. The only
-      card it holds back is a Joker: `TossInRule` filters the window's ranks to
-      `getCardValue(it) >= 0`, and a Joker is worth **minus one** — shedding it makes the hand
-      worse, so forcing it out before a call would be a bug rather than a fix. That is what the
-      reverted change would have done.
-      So either the caller had not *read* the matching card — in which case it cannot throw and
-      the plan is honest — or the report is about somebody else's hand ("he" is ambiguous).
-      **Needs the recording to locate**, which is 5.1's `2026-09-19-2200-report2.json`; do not
-      touch the bot until it says which seat and which card
+- [x] 5.3 **It is the queue, and it took an engine rule, a bot rule and four corpus tails.**
+      The first reading was wrong and a change was written and reverted: `tossInAction` does
+      return the throw before it reaches `shouldCallVinto`, and the one card it holds back — a
+      Joker, worth **minus one** — is held back on purpose. The maintainer then said exactly
+      what they saw: *"bot played card, then toss in, then called vinto and then played toss in
+      cards he tossed in before"*. The gap is one pass later. Once the bot **has** thrown, its
+      card is out of its hand and in `queuedActions`, `positions` is empty, and nothing stopped
+      it calling with its own throw still unplayed.
+      A thrown action card lives nowhere but that queue until it is played, so the caller has a
+      card in flight and a hand that has not finished moving — and the final round's rule that
+      nobody may touch the caller's cards starts biting halfway through the caller's own action.
+      Vinto is declared at the *end* of a turn and the window is that end.
+      `ActionValidator.requireOwnThrowsSpent` refuses it, `BotRunner` applies the same test so a
+      bot never proposes a call the engine would refuse, and `TheCallWaitsForTheCallersOwnThrow`
+      holds both halves: refused while owed, and landing once the throw has played. Only the
+      **caller's own** throws — another seat's are owed their action too and still get it.
+      Four corpus recordings hold that exact sequence, and all four are among the six whose
+      tails were already regenerated on 2026-09-15, so **no TypeScript evidence was at stake**.
+      Retailed: 13,988 actions now, 13,781 TypeScript's and 207 this engine's, with the first
+      differing byte in each file being the `CALL_VINTO` itself — stronger than last time, where
+      the call's own hash moved. `RegenerateCorpusTailsTest` is the tool the last two
+      regenerations did not leave behind (`-Pcorpus` to report, `-Pcorpus=write` to rewrite); it
+      copies the head rather than re-encoding it, recomputes every kept hash first, and refuses
+      a file whose every action is still legal.
 - [ ] 5.4 Verify `TournamentTest` after §5: unchanged, or regenerated with the numbers and the
       reason in the commit

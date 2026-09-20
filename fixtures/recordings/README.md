@@ -1,4 +1,4 @@
-# The parity corpus — frozen, and twice repaired
+# The parity corpus — frozen, and three times repaired
 
 50 games. Every action carries a canonical state hash, and the Kotlin engine reproduces every
 one of them, per action, in `CorpusReplayTest`.
@@ -6,9 +6,9 @@ one of them, per action, in `CorpusReplayTest`.
 **These files are frozen.** `CorpusIsFrozenTest` fails if any of them changes, and
 `MANIFEST.sha256` beside this file is what it checks against.
 
-They have been changed **twice** — on 2026-09-07 and on 2026-09-15 — and both are recorded
-below rather than in a commit message, because a reader needs to know which of these numbers
-TypeScript computed and which this engine did.
+They have been changed **three times** — on 2026-09-07, 2026-09-15 and 2026-09-20 — and all
+three are recorded below rather than in a commit message, because a reader needs to know which
+of these numbers TypeScript computed and which this engine did.
 
 ---
 
@@ -30,6 +30,58 @@ JVM, JS and Wasm; the tournament baseline pins the bot's strength against commit
 `CorpusReplayTest` holds these fifty. What none of those can catch is a handler that was ported
 *wrong from the start*, in a way that is self-consistent. Only an implementation written from
 the rules can catch that, and there is no longer one.
+
+## The 2026-09-20 tail regeneration
+
+A player reported the order of a turn's end: *"I saw that bot played card, then toss in, then
+called vinto and then played toss in cards he tossed in before. It must not work like this —
+before allowing calling vinto engine must verify that all vinto caller cards has been processed
+including toss in cards."*
+
+That is the 2026-09-15 rule read one step further. A thrown action card lives nowhere but
+`queuedActions` until it is played, so a seat that has thrown has a card in flight and a hand
+that has not finished moving — and the final round's own rule, that nobody may touch the
+caller's cards, begins biting halfway through the caller's own action. Vinto is declared at the
+**end** of a turn, and the window is that end: the call comes after the throws the turn set off,
+not between them. `ActionValidator` now refuses a call while the caller's own throw is still
+owed its action, and `BotRunner` applies the same test so a bot never proposes a call the engine
+would refuse.
+
+Four of the fifty games reach a `CALL_VINTO` the caller made over its own queued throw — and all
+four are games whose tails were **already** regenerated on 2026-09-15. **So nothing TypeScript
+computed was at stake in this one**, bar the four `CALL_VINTO` actions themselves: the bytes
+replaced were this engine's own, five days old.
+
+**What moved, exactly.** In each of the four files the first byte to differ is the `CALL_VINTO`
+itself. Everything before it — `formatVersion`, `meta`, `settings`, `initialState`, and every
+kept action *with its recorded hash* — is byte-for-byte what it was, which is stronger than
+2026-09-15 managed: there the call's own hash moved, and here the call is simply no longer
+there. The tool copies the head rather than re-encoding it, precisely so that claim needs no
+asterisk, and it recomputes every kept hash and refuses to write if one has moved.
+
+| Recording | Unchanged through action | Replaced | Written |
+| --- | --- | --- | --- |
+| `selfplay-moderate-1.json` | 177 | 42 | 42 |
+| `selfplay-moderate-10.json` | 245 | 39 | 40 |
+| `selfplay-moderate-29.json` | 281 | 19 | 21 |
+| `selfplay-moderate-45.json` | 251 | 36 | 30 |
+
+The corpus is **13,988 actions now, of which 13,781 are TypeScript's and 207 are this engine's**.
+The other 46 files are untouched.
+
+**This one left a tool behind**, which the first two did not:
+
+```sh
+./gradlew :shared:bot:jvmTest --tests '*RegenerateCorpusTailsTest*' -Pcorpus        # report
+./gradlew :shared:bot:jvmTest --tests '*RegenerateCorpusTailsTest*' -Pcorpus=write  # rewrite
+```
+
+It only ever *shortens* a recording to the last action the rules still accept and plays on from
+there with this engine's bots, and it refuses a file whose every recorded action is still legal.
+It is not a way to extend the corpus, and it is excluded from `jvmTest` unless asked for.
+
+The rule the four tails now follow is held by a test that says which rule it is:
+`TheCallWaitsForTheCallersOwnThrowTest`.
 
 ## The 2026-09-15 tail regeneration
 
@@ -71,8 +123,9 @@ The other 44 files are untouched.
 | `selfplay-moderate-43.json` | action 246 | 20 | 35 |
 | `selfplay-moderate-45.json` | action 252 | 19 | 35 |
 
-So the corpus is **13,991 actions, of which 13,785 are TypeScript's and 206 are this engine's**,
-and the 206 are named above rather than scattered. Read a tail in one of those six files as you
+That made the corpus 13,991 actions, of which 13,785 were TypeScript's and 206 this engine's.
+Four of these six were retailed again on 2026-09-20, above, so the standing figures are the ones
+there; the 206 are named here rather than scattered. Read a tail in one of those six files as you
 would read anything in `fixtures/kotlin-recordings/`: a regression gate, not evidence. The
 pre-regeneration files are in git history, and the diff in each is a single contiguous block
 starting at that call's hash.

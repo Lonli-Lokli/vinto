@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 /**
  * The corpus is frozen, and this is what makes that a rule rather than a preference.
  *
- * `fixtures/recordings` holds 50 games and 13,991 actions. Almost all of them carry what
+ * `fixtures/recordings` holds 50 games and 13,988 actions. Almost all of them carry what
  * **TypeScript computed**, and that is the whole value of it: an independent implementation,
  * written from the rules rather than from this code, agreed on every one of those numbers. The
  * TypeScript engine is gone, so what is lost cannot be recovered.

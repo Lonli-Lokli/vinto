@@ -169,8 +169,13 @@ flowchart TD
 ## Declaring Vinto (Final Round)
 
 - At the **end of a player’s turn**, they may declare **“Vinto”**.
-- **A card already tossed in is still played.** The throws a turn set off resolve before the
-  final round begins, whoever threw them — the caller included. The PDF says nothing about the
+- **A card already tossed in is still played, and the caller's own throws play first.** The
+  throws a turn set off resolve before the final round begins, whoever threw them — the caller
+  included. And where the thrower *is* the caller, the call waits: a card thrown into the window
+  is owed its action, a turn with an action owed is not over, and Vinto is declared at the end of
+  a turn. Reported from a phone as a bot playing a card, throwing one in, calling, and only then
+  playing what it threw. Held by `FinalRoundRulesTest.aCardThrownInBeforeTheCallIsStillPlayed`
+  and `TheCallWaitsForTheCallersOwnThrowTest`. The PDF says nothing about the
   order because at a table there is no order to state: a tossed-in card's action happens at once,
   and “Vinto” comes after it. Both engines dropped them, and the card with them: a thrown action
   card is taken out of the hand and rebuilt at the moment it is played, so clearing the window
@@ -237,6 +242,7 @@ the engines has been either fixed or decided:
 | May an Ace be taken from the discard under Option B? | **Yes** — it is an action card like any other. The PDF's "7–K" is loose |
 | Does the discard start with a face-up card? | **No.** The PDF and the engines agree; this file was the thing that was wrong |
 | Is a card tossed in before a Vinto call still played? | **Yes** — the throw resolves, then the final round starts. Not in the PDF, and both engines dropped it; see “Declaring Vinto” |
+| May the caller call while a card **they** threw is still waiting to act? | **No.** Vinto is declared at the end of a turn, and a throw owed its action means the turn is not over. `ActionValidator` refuses it and the bot applies the same test; four corpus tails were regenerated for it on 2026-09-20 |
 | §8.2 ranks "from lowest total score to highest" | Read as most points first, the only reading consistent with §8.1's +3 / −1 |
 
 A rules change lands in the engine and, if it moves any recorded state, has to answer to the

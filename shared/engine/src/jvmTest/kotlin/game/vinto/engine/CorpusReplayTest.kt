@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
  * engine, and the canonical state hash is compared **after every action**.
  *
  * This is the check the whole migration rests on. It is not a sample or a smoke test — it is
- * all 50 recordings and all 13,991 actions. A single wrong branch anywhere in the engine moves
+ * all 50 recordings and all 13,988 actions. A single wrong branch anywhere in the engine moves
  * a hash and names the action it happened on.
  *
  * A matching hash mostly still means two independent implementations of the rules produced
@@ -55,7 +55,7 @@ class CorpusReplayTest {
 
         val totalActions = results.sumOf { it.second.steps }
         assertTrue(
-            totalActions >= 13_991,
+            totalActions >= 13_988,
             "expected the whole corpus to replay, only $totalActions actions did",
         )
     }

@@ -25,7 +25,7 @@ sealed interface Validation {
  *
  * Ported from `legacy-web/packages/engine/src/lib/action-validator.ts`. The corpus cannot check it: every
  * recorded action was legal when it was written, so a validator that returned `Valid`
- * unconditionally would replay all 13,991 of them identically. It is covered by its own tests
+ * unconditionally would replay all 13,988 of them identically. It is covered by its own tests
  * instead.
  */
 object ActionValidator {
@@ -168,6 +168,7 @@ object ActionValidator {
 
                 else -> null
             }
+                ?: state.requireOwnThrowsSpent(action.payload.playerId)
                 ?: if (state.vintoCallerId != null) {
                     Validation.Invalid("Vinto already called")
                 } else {
@@ -574,6 +575,31 @@ object ActionValidator {
             Validation.Invalid("Nothing leaves an empty hand to declare")
 
         else -> Validation.Valid
+    }
+
+    /**
+     * The caller's own throws must have played before the call.
+     *
+     * Reported from a phone: a bot played a card, threw one of its own into the window that
+     * opened, **called Vinto**, and only then did the thrown card act. A thrown action card
+     * lives nowhere but [ActiveTossIn.queuedActions] until it is played, so a caller with one
+     * still queued has a card in flight and a hand that has not finished moving — and the final
+     * round's own rule, that nobody may touch the caller's cards, begins biting halfway through
+     * the caller's own action. Vinto is declared at the *end* of a turn, and the window is that
+     * end: the call comes after the throws the turn set off, not between them.
+     *
+     * **Only the caller's own.** A throw another seat made is owed its action just as much, and
+     * still gets it (`handleCallVinto`, `FinalRoundRulesTest`) — the call does not wait on other
+     * seats, because it is not their turn that is ending.
+     */
+    private fun GameState.requireOwnThrowsSpent(playerId: String): Validation? {
+        val inFlight = resolvingATossIn && pendingAction?.playerId == playerId
+        val owed = inFlight || activeTossIn?.queuedActions.orEmpty().any { it.playerId == playerId }
+        return if (owed) {
+            Validation.Invalid("Play the cards you threw in before calling Vinto")
+        } else {
+            null
+        }
     }
 
     private fun GameState.requireTurn(playerId: String, actionType: String): Validation? =

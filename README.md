@@ -169,7 +169,8 @@ twice — a Next.js client came first, and the two were held identical by a repl
 what survives that arrangement is `fixtures/`: 50 games whose state hashes the TypeScript
 engine computed, now frozen, and still replayed on every run. Twice a part of them has been
 remade, because both engines shared a defect the corpus then recorded as the rule: what each
-seat has been shown, on 2026-09-07, and the tails of six games, on 2026-09-15.
+seat has been shown, on 2026-09-07; the tails of six games, on 2026-09-15; and four of those
+six again on 2026-09-20.
 `fixtures/recordings/README.md` says what moved each time and what provably did not.
 
 ```
@@ -194,9 +195,9 @@ docs/kotlin/       # ARCHITECTURE.md (the shape), README.md (the state), protoco
   game from an online one.
 - **worker**: the authoritative room. It deals from a seed, validates every action, and sends
   each socket its own redacted view.
-- **fixtures**: 50 recordings and 13,991 actions, each carrying a state hash a *second
-  implementation* computed — bar one channel and the tails of six games, each remade once and
-  written up in `fixtures/recordings/README.md`. Frozen, and deliberately not extensible.
+- **fixtures**: 50 recordings and 13,988 actions, each carrying a state hash a *second
+  implementation* computed — bar one channel and the tails of six games, all written up in
+  `fixtures/recordings/README.md`. Frozen, and deliberately not extensible.
 
 ## Getting Started
 

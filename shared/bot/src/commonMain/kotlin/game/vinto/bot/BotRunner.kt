@@ -541,25 +541,42 @@ class BotRunner(
                 )
             }
 
-            if (positions.isNotEmpty() &&
-                (coalition != null || serviceFor(player.id).shouldParticipateInTossIn(tossIn.ranks, context))
-            ) {
-                return GameAction.ParticipateInTossIn(
-                    ParticipateInTossInPayload(player.id, positions),
-                )
-            }
-
-            val ownsTheTurn = state.players.indexOfFirst { it.id == player.id } == tossIn.originalPlayerIndex
-            if (ownsTheTurn && state.vintoCallerId == null &&
-                serviceFor(player.id).shouldCallVinto(context)
-            ) {
-                return GameAction.CallVinto(PlayerIdPayload(player.id))
-            }
-
-            return GameAction.PlayerTossInFinished(PlayerIdPayload(player.id))
+            return answerTheWindow(state, tossIn, player, context, coalition != null, positions)
         }
 
         return null
+    }
+
+    /** What one bot does with an open window: throw, call Vinto, or stand down. */
+    private fun answerTheWindow(
+        state: GameState,
+        tossIn: ActiveTossIn,
+        player: PlayerState,
+        context: BotDecisionContext,
+        planned: Boolean,
+        positions: List<Int>,
+    ): GameAction {
+        if (positions.isNotEmpty() &&
+            (planned || serviceFor(player.id).shouldParticipateInTossIn(tossIn.ranks, context))
+        ) {
+            return GameAction.ParticipateInTossIn(ParticipateInTossInPayload(player.id, positions))
+        }
+
+        // The same rule the validator applies, so a bot never proposes a call the engine would
+        // refuse. A card thrown into this window is owed its action and lives nowhere but the
+        // queue until it is played, so a seat that has thrown has not finished its turn — and
+        // Vinto is declared at the *end* of one. Without this the bot played a card, threw one
+        // of its own in, called, and only then did the thrown card act, which is how it was
+        // reported from a phone (`ActionValidator.requireOwnThrowsSpent`,
+        // `TheCallWaitsForTheCallersOwnThrowTest`). It comes back to the call on the next pass
+        // through this window, once the queue has drained.
+        val mayCall = state.players.indexOfFirst { it.id == player.id } == tossIn.originalPlayerIndex &&
+            tossIn.queuedActions.none { it.playerId == player.id }
+        if (mayCall && state.vintoCallerId == null && serviceFor(player.id).shouldCallVinto(context)) {
+            return GameAction.CallVinto(PlayerIdPayload(player.id))
+        }
+
+        return GameAction.PlayerTossInFinished(PlayerIdPayload(player.id))
     }
 
     /** Only cards the bot believes it has read, and only ranks in the window. */
