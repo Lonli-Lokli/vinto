@@ -219,9 +219,7 @@ private fun DrawScope.drawOrbit(orbit: AvatarTraits.Orbit, c: Offset, r: Float, 
     }
 
     when (orbit.pip) {
-        0 -> {
-            Unit
-        }
+        0 -> {}
         1 -> {
             drawCircle(color = Ink, radius = r * CENTRE_R, center = c)
         }
@@ -309,9 +307,7 @@ private fun DrawScope.drawHerald(
     // rather than as a second mark floating over it. That is how a charge behaves on a shield,
     // and it is also what keeps it visible whichever part of the field it lands on.
     when (herald.charge) {
-        PLAIN_FIELD -> {
-            Unit
-        }
+        PLAIN_FIELD -> {}
         ROUNDEL -> {
             drawCircle(color = ground, radius = r * CHARGE_R, center = c)
         }
@@ -457,9 +453,7 @@ private fun DrawScope.drawRune(rune: AvatarTraits.Rune, c: Offset, r: Float, pen
     }
 
     when (rune.head) {
-        HEAD_PLAIN -> {
-            Unit
-        }
+        HEAD_PLAIN -> {}
         HEAD_FORKED -> {
             // Forked, which is the strongest of the three at small size.
             engrave(Offset(c.x, top), Offset(c.x - r * HEAD_REACH, top - r * HEAD_RISE), pen)
@@ -500,9 +494,7 @@ private fun DrawScope.drawWhorl(whorl: AvatarTraits.Whorl, c: Offset, r: Float, 
     }
 
     when (whorl.pip) {
-        0 -> {
-            Unit
-        }
+        0 -> {}
         1 -> {
             drawCircle(color = Ink, radius = r * CENTRE_R, center = c)
         }

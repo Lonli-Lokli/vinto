@@ -698,6 +698,10 @@ private fun About() {
 
     val subject = stringResource(Res.string.settings_share_subject)
     val body = stringResource(Res.string.settings_share_body, Pages.GAME)
+
+    // The fourth of these and the one that was left warning — see `GameScreen` for why the
+    // replacement is not reachable from common code yet, and for the probe that says when it is.
+    @Suppress("DEPRECATION")
     val clipboard = LocalClipboardManager.current
     Setting(
         title = stringResource(Res.string.settings_share),

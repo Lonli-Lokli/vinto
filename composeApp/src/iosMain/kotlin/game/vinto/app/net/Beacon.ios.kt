@@ -1,5 +1,6 @@
 package game.vinto.app.net
 
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
@@ -19,7 +20,7 @@ import platform.Foundation.setValue
  * Fired and not awaited: the task is resumed and the function returns. Nothing reads the
  * response, and a failure is a lost count.
  */
-@OptIn(ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 actual suspend fun postBeacon(url: String, body: String, contentType: String, auth: String?) {
     val target = NSURL.URLWithString(url) ?: return
     val request = NSMutableURLRequest.requestWithURL(target)
@@ -46,7 +47,7 @@ actual suspend fun postBeacon(url: String, body: String, contentType: String, au
  *
  * `dataWithBytes:` copies, so the pinned buffer does not have to outlive this call.
  */
-@OptIn(ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 private fun String.toNSData(): NSData {
     val bytes = encodeToByteArray()
     if (bytes.isEmpty()) return NSData()

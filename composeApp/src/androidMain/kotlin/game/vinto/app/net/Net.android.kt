@@ -113,7 +113,7 @@ private class AndroidRoomConnector(private val baseUrl: String) : RoomConnector 
                     override fun onResponse(call: Call, response: Response) {
                         response.use {
                             if (continuation.isActive) {
-                                continuation.resume(it.code to it.body?.string().orEmpty())
+                                continuation.resume(it.code to it.body.string())
                             }
                         }
                     }

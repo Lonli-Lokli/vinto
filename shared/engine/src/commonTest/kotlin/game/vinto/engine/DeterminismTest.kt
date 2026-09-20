@@ -10,6 +10,7 @@ import game.vinto.shapes.TossInAction
 import game.vinto.shapes.canonicalizeGameState
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -133,8 +134,10 @@ class DeterminismTest {
         val id = first.pendingAction?.card?.id
         assertEquals(id, second.pendingAction?.card?.id)
         assertTrue(id?.contains("tossin_queued_7_p2_9") == true, "unexpected id: $id")
-        assertTrue(
-            id?.let { Regex("\\d{13}").containsMatchIn(it) } == false,
+        // `id` is known non-null from the line above — `assertTrue` carries a contract — so the
+        // safe call was one the compiler could already answer.
+        assertFalse(
+            Regex("\\d{13}").containsMatchIn(id),
             "the id carries what looks like epoch millis: $id",
         )
     }

@@ -62,9 +62,7 @@ object IosBilling {
             updatedTransactions.filterIsInstance<SKPaymentTransaction>().forEach { transaction ->
                 when (transaction.transactionState) {
                     // Still in flight; StoreKit will call again with the outcome.
-                    SKPaymentTransactionState.SKPaymentTransactionStatePurchasing -> {
-                        Unit
-                    }
+                    SKPaymentTransactionState.SKPaymentTransactionStatePurchasing -> {}
 
                     SKPaymentTransactionState.SKPaymentTransactionStatePurchased,
                     SKPaymentTransactionState.SKPaymentTransactionStateRestored,

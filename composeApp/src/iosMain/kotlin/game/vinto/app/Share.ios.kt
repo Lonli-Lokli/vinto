@@ -1,5 +1,6 @@
 package game.vinto.app
 
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.useContents
@@ -31,7 +32,7 @@ actual fun shareText(subject: String, body: String): Boolean = present(listOf(bo
  * the leading item — a text-first order shows a URL card and buries the thing somebody is meant to
  * scan.
  */
-@OptIn(ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 actual fun sharePicture(subject: String, body: String, picture: ByteArray): Boolean {
     if (picture.isEmpty()) return false
     val data = picture.usePinned { pinned ->

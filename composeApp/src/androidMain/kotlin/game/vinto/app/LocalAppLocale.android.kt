@@ -18,7 +18,10 @@ actual object LocalAppLocale {
         val configuration = LocalConfiguration.current
         if (device == null) device = Locale.getDefault()
 
-        val chosen = value?.let(::Locale) ?: device!!
+        // `Locale(tag)` is deprecated; `forLanguageTag` is the replacement and takes the same
+        // BCP 47 tags `Language.kt` already stores ("pt", "zh"), so nothing about the values
+        // changes — an underscore form would not have worked with the old constructor either.
+        val chosen = value?.let(Locale::forLanguageTag) ?: device!!
         Locale.setDefault(chosen)
         configuration.setLocale(chosen)
         val resources = LocalContext.current.resources

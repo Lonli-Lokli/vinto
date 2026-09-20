@@ -233,12 +233,14 @@ class MctsBotDecisionService(
     /** The whole tree, for a test that wants to read the root's statistics. */
     internal fun searchTree(root: MctsGameState): MctsNode {
         val tree = MctsNode(move = null, parent = null, seats = root.players.size)
-        val deadline = config.timeLimitMillis?.let { TimeSource.Monotonic.markNow() }
+        // Read once: the limit cannot change under the loop, and asking twice per iteration left
+        // the second question with only one possible answer.
+        val limit = config.timeLimitMillis
+        val started = TimeSource.Monotonic.markNow()
         var iterations = 0
 
         while (iterations < config.iterations) {
-            val limit = config.timeLimitMillis
-            if (deadline != null && limit != null && deadline.elapsedNow().inWholeMilliseconds >= limit) break
+            if (limit != null && started.elapsedNow().inWholeMilliseconds >= limit) break
 
             val world = determinize(root, random)
             val (leaf, state) = descend(tree, world)

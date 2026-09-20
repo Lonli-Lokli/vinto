@@ -135,6 +135,34 @@ allprojects {
     tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
         jvmTarget = "17"
     }
+
+    /**
+     * A compiler warning in shipped code fails the build.
+     *
+     * detekt has covered style and complexity since the beginning; what nothing covered was
+     * what the *compiler* says — and a deprecation is the compiler's business, not detekt's.
+     * Asked for after an Android `Locale(String)` sat deprecated in `LocalAppLocale` with
+     * nothing to stop it: warnings scroll past in a CI log nobody reads to the end of.
+     *
+     * Kotlin has no per-diagnostic severity, so the lever is all-or-nothing. That is the right
+     * setting for this project — it is the same argument `failOnSeverity = Info` above makes —
+     * and the tree meets it: every main compilation on every target was warning-free when this
+     * was switched on, which is five `Unit` no-op branches, two iOS opt-ins, one Android
+     * deprecation and one safe call after the sweep that came with it.
+     *
+     * **Main compilations only, and that is a deferral rather than a decision.**
+     * `runComposeUiTest` is deprecated in 242 places across the Compose suite, and its
+     * replacement is not a rename: the v2 API runs on `StandardTestDispatcher`, so coroutines
+     * queue where they used to run at once. That is a behavioural migration of every UI test in
+     * the repository and it does not belong inside a gate being switched on. Widen this to the
+     * test compilations the day that migration lands — the name filter is the only thing in the
+     * way.
+     */
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
+        if (!name.contains("Test")) {
+            compilerOptions.allWarningsAsErrors.set(true)
+        }
+    }
 }
 
 /**

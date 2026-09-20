@@ -638,9 +638,7 @@ internal class Words(
                 add(Slot(Says.Forces(who(said.seat)), forcing, asked = lit))
             }
 
-            is Step.PutDown, Step.Bin, Step.UseIt, Step.TakeTheDiscard -> {
-                Unit
-            }
+            is Step.PutDown, Step.Bin, Step.UseIt, Step.TakeTheDiscard -> {}
         }
     }
 
