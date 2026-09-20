@@ -117,6 +117,7 @@ import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.GeneratedAvatar
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Signal
+import game.vinto.app.theme.Slate
 import game.vinto.app.theme.VintoDialog
 import game.vinto.app.theme.Wordmark
 import game.vinto.app.theme.contactShadow
@@ -188,6 +189,11 @@ private val Tight = 4.dp
 private val Edge = 6.dp
 private val FeltCorner = 14.dp
 private val Rim = 2.dp
+
+/** The edge that says a seat is the Vinto caller, and the room reserved for it on every seat. */
+private val CallerRing = 2.dp
+private val CallerPad = 3.dp
+private val CallerShape = RoundedCornerShape(10.dp)
 
 /** How a contact shadow sits under the thing that casts it: low, and flattened. */
 private const val SHADOW_DROP = 0.72f
@@ -1291,7 +1297,7 @@ private fun TopSeat(
     // phone, where the hand fills the width, the seat looked centred, and on a desktop, where it
     // does not, the whole seat sat against the left rim with the felt empty beside it.
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().ringed(seat, view),
         horizontalArrangement = Arrangement.spacedBy(Gap, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1299,6 +1305,34 @@ private fun TopSeat(
         Plate(seat, view, table, sizes, onMove)
     }
 }
+
+/**
+ * The edge round a seat and its cards: gold for the Vinto caller, nothing for anybody else.
+ *
+ * The crown on the plate said who called; it did not say what that *means*, which is that the
+ * hand beside it is out of reach for the rest of the round — no Jack, no Queen, no Ace, and
+ * nothing the coalition's plan may name. The model has always known it and the felt only
+ * whispered it: *"we have mark but visually it's not enough. What about drawing border around
+ * him and his cards? It will even show that you cannot touch his cards."*
+ *
+ * A **colour** rather than a border that comes and goes, and the room for it is reserved on
+ * every seat. A border that appears is a seat that grows, and a seat that grows re-pitches the
+ * hand beside it — which is the fault `SteadyPlateTest` holds the plate still for, and it was
+ * reported once already.
+ */
+internal fun callersEdge(isCaller: Boolean): Color = if (isCaller) Slate.gold else Color.Transparent
+
+/**
+ * The seat, and the cards in front of it, inside one edge. See [callersEdge].
+ *
+ * Read off the **view's** `vintoCallerId` rather than the seat's own flag, because that is the
+ * field the rest of the final round is decided from — `coalitionCards` skips the caller by it,
+ * and so does every target check. A seat flag that disagreed would draw a ring round a hand the
+ * plan still offered, or leave one plain that it did not.
+ */
+private fun Modifier.ringed(seat: PlayerSeatView, view: PlayerView): Modifier = this
+    .border(CallerRing, callersEdge(seat.id == view.vintoCallerId), CallerShape)
+    .padding(CallerPad)
 
 /** Left hand, piles, right hand — the widest row, and the one that has to fit a phone. */
 @Composable
@@ -1356,6 +1390,7 @@ private fun SideSeat(
     if (seat == null) return
 
     Column(
+        modifier = Modifier.ringed(seat, view),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Tight),
     ) {
@@ -1391,6 +1426,7 @@ private fun NearSeat(
     mine: Boolean,
 ) {
     Column(
+        modifier = Modifier.ringed(seat, view),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Tight),
     ) {

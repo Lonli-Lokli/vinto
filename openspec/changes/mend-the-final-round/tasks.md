@@ -89,9 +89,18 @@ plan the coalition agrees to and cannot play. Model faults first, appearance sec
 
 ## 4. Four smaller faults
 
-- [ ] 4.1 Draw the Vinto caller as untouchable — the seat and its cards inside one border — and
-      verify a test asserts the border is present exactly for the caller and that the caller's
-      cards offer no plan target
+- [x] 4.1 **The caller and their cards inside one gold edge.** The crown said who called; it did
+      not say what that *means*, which is that the hand beside it is out of reach for the rest of
+      the round. Read off the **view's** `vintoCallerId` rather than the seat's own flag, because
+      that is the field the rest of the final round is decided from — `coalitionCards` skips the
+      caller by it — so the ring can never disagree with what the plan will offer.
+      A **colour** rather than a border that comes and goes, with the room reserved on every
+      seat: a border that appears is a seat that grows, and a seat that grows re-pitches the hand
+      beside it, which is the fault `SteadyPlateTest` exists for and was reported once already.
+      `TheCallerIsDrawnUntouchableTest` on `callersEdge`; six goldens regenerated and looked at
+      in both themes. The staged plan scene turned out to set `vintoCallerId` on the view and
+      **not** `isVintoCaller` on the seat, so it had been photographing a final round whose caller
+      wore no crown either; fixed, so the picture is now of the thing it claims to be
 - [ ] 4.2 Stop drawing a declared King enlarged as though it had been played, and verify the
       case from the reports renders the card in its seat
 - [ ] 4.3 Stop the plate moving when its seat throws a card in: the thinking mark comes and goes

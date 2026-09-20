@@ -122,7 +122,10 @@ class ScreenshotTest {
             vintoCallerId = caller.id,
             players = whole.players.map { seat ->
                 if (seat.id == caller.id) {
-                    seat
+                    // The seat's own flag as well as the view's id. It was only the id, so this
+                    // scene staged a final round whose caller wore neither the crown nor — once
+                    // there was one — the border that says their hand is out of reach.
+                    seat.copy(isVintoCaller = true)
                 } else {
                     seat.copy(claims = listOf(Claim(seat.id, listOf(0), listOf(Rank.FIVE))))
                 }
