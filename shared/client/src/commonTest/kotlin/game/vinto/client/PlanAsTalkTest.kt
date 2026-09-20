@@ -4,6 +4,7 @@ import game.vinto.engine.PlayerView
 import game.vinto.engine.projectView
 import game.vinto.shapes.ALL_RANKS
 import game.vinto.shapes.ActionPhase
+import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
 import game.vinto.shapes.CardAt
 import game.vinto.shapes.Claim
@@ -22,6 +23,7 @@ import game.vinto.shapes.PlayerState
 import game.vinto.shapes.Rank
 import game.vinto.shapes.Step
 import game.vinto.shapes.TossIn
+import game.vinto.shapes.TossInAction
 import game.vinto.shapes.getCardShortDescription
 import game.vinto.shapes.getCardValue
 import game.vinto.shapes.hasAction
@@ -90,6 +92,7 @@ class PlanAsTalkTest {
         onPlay: String = caller,
         pending: PendingAction? = null,
         subPhase: GameSubPhase = GameSubPhase.IDLE,
+        queued: List<TossInAction> = emptyList(),
     ) = GameState(
         gameId = "talk",
         roundNumber = 1,
@@ -109,7 +112,19 @@ class PlanAsTalkTest {
         drawPile = Pile((0..6).map { card(Rank.FOUR, "draw-$it") }),
         discardPile = Pile(listOf(card(discardTop, "discard-top"))),
         pendingAction = pending,
-        activeTossIn = null,
+        activeTossIn = if (queued.isEmpty()) {
+            null
+        } else {
+            ActiveTossIn(
+                ranks = listOf(discardTop),
+                initiatorId = caller,
+                originalPlayerIndex = listOf(me, caller, nina, don).indexOf(caller),
+                participants = queued.map { it.playerId },
+                queuedActions = queued,
+                waitingForInput = true,
+                playersReadyForNextTurn = emptyList(),
+            )
+        },
         turnActions = emptyList(),
         roundActions = emptyList(),
         roundFailedAttempts = emptyList(),
@@ -461,6 +476,39 @@ class PlanAsTalkTest {
     }
 
     // ------------------------------------------------------------------ throws
+
+    @Test
+    fun aThrowMadeBeforeTheCallIsSaidOnTheFirstTurnAndNowhereElse() {
+        // Reported from a phone twice over: the first turn missing the toss-in the others have,
+        // and "if bots or somebody tossin before vinto called vinto their toss in must be part
+        // of plan". Both are the same window — the one already open when the plan is composed,
+        // answering the caller's own last card. It belongs to nobody's turn, so the maintainer
+        // put it on the first player's, visible only where such throws have been made.
+        val thrown = listOf(TossInAction(nina, Rank.THREE, position = 1), TossInAction(caller, Rank.THREE, 0))
+        val table = tableFor(view(finalRound(queued = thrown)), Question.ThePlan(at = ninasPage))
+
+        val said = table.sentence().throws.flatMap { it.slots }.map { it.says }
+        assertEquals(Says.Throws(Speaker.Named("Bot3"), card = null, rank = Rank.THREE, blind = false), said.first())
+        // The caller's own throw is not the coalition's business and is never drawn here.
+        assertTrue(said.none { it is Says.Throws && it.who == Speaker.Named("Bot2") }, "$said")
+        // A fact, not a step: there is nothing to touch and nothing the plan could edit away.
+        assertNull(table.sentence().throws.first().slots.first().open)
+
+        // The second turn says nothing of it — the window it answered closed before that turn.
+        val later = tableFor(
+            view(finalRound(queued = thrown)),
+            Question.ThePlan(at = donsPage),
+            plan = reaching(donsPage),
+        )
+        assertTrue(
+            later.sentence().throws.flatMap { it.slots }.none { it.says is Says.Throws },
+            "the throw was repeated on a turn it does not belong to",
+        )
+
+        // And with no such throws the row is simply absent, not an empty one.
+        val quiet = tableFor(view(), Question.ThePlan(at = ninasPage))
+        assertTrue(quiet.sentence().throws.flatMap { it.slots }.none { it.says is Says.Throws })
+    }
 
     @Test
     fun aThrowIsPickedOnTheFeltAndOneTheTableCannotVouchForIsBlind() {

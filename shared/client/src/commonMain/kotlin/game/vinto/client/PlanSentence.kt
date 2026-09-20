@@ -677,6 +677,7 @@ internal class Words(
 
     /** "Then Tide throws in a five, and …" — one clause per throw, then the throw on offer. */
     fun throwClauses(): List<Clause> = buildList {
+        addAll(standingThrows())
         val throws = lane?.tossIns.orEmpty()
         val landing = lane.landing(start)
         throws.forEachIndexed { index, tossIn ->
@@ -688,6 +689,34 @@ internal class Words(
             asking -> add(Clause(null, listOf(Slot(Says.WhichToThrow, back(), asked = true))))
             another != null -> add(Clause(null, listOf(Slot(Says.AddThrow, another, offer = true))))
         }
+    }
+
+    /**
+     * The throws the coalition had already made when Vinto was called — on the **first** turn,
+     * and nowhere else.
+     *
+     * They answer the caller's own last card, which is still face up when the plan opens, and
+     * they happened before any turn the plan is about. So they belong to no lane, and until now
+     * the plan had no place to say them at all: reported from a phone as the first turn missing
+     * the toss-in every later turn has, and as *"if bots or somebody tossin before vinto called
+     * vinto their toss in must be part of plan"*. One window, two reports.
+     *
+     * **Facts, not steps.** They are read off the open window rather than carried in the plan,
+     * so nothing about `CoalitionPlan` moves, nothing here can be edited away, and a member who
+     * throws while the plan is open sees it appear. Their card has already left the hand — a
+     * thrown card lives only in the queue until it is played — so the clause names who and what
+     * rank and no position. Never the caller's own: the coalition is not planning around what
+     * the seat it is playing against threw.
+     */
+    private fun standingThrows(): List<Clause> {
+        if (at != 1) return emptyList()
+        val caller = start.view.vintoCallerId
+        return start.view.activeTossIn?.queuedActions.orEmpty()
+            .filter { it.playerId != caller }
+            .map { thrown ->
+                val said = Says.Throws(who(thrown.playerId), card = null, rank = thrown.rank, blind = false)
+                Clause(null, listOf(Slot(said)))
+            }
     }
 
     private fun throwClause(index: Int, tossIn: TossIn, landing: Rank?): List<Slot> = buildList {

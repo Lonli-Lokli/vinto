@@ -40,27 +40,25 @@ plan the coalition agrees to and cannot play. Model faults first, appearance sec
 
 ## 3. The plan can say what the rules allow
 
-- [ ] 3.1 + 3.2 **ONE feature, and it moves the wire — needs a decision (see below).** Measured
-      rather than guessed: a probe built the first coalition turn and the second and compared
-      them. The first turn is *not* missing the toss-in row — `AddThrow` is offered on both, the
-      felt lights cards on both. What is missing is the card the throws would land on.
-      `Rehearsal.playTurn` plays the lane's step and *then* its `tossIns`, and `Lane.landing`
-      returns the rank **this turn's own move** puts on the pile. So every throw in lane *n*
-      answers lane *n*'s discard, and the one window with no lane at all is the window that is
-      **already open when the plan is composed** — the caller's last card, still face up, which
-      §1.1 proved a member may still answer during the confer. At the head of the first turn the
-      pile's own card is ignored: `landing` is null, so a member who can see they hold the
-      matching rank cannot plan that throw and any throw they do plan rehearses as blind. That
-      is exactly "toss-in for the first step", and it is also where a throw **queued before the
-      call** belongs — B is the same slot, filled from the engine rather than by a touch.
-      Fixing it means a throw slot ahead of the first lane's step, which is a new field on
-      `Lane` or on `CoalitionPlan` — so §3.4's "the wire is unmoved by §3" was written on the
-      assumption §3 was UI-only and no longer holds.
-      **Decided by the maintainer:** it belongs to the **first player's turn**, and the row is
-      shown *only* where such throws have actually been made by coalition players. So it is a
-      field on `Lane`, not a standing row on `CoalitionPlan`, and it is absent rather than empty
-      when the window opened on nothing — which also answers B, since a throw queued at the
-      moment of the call is exactly what fills it
+- [x] 3.1 + 3.2 **One window, two reports — and no wire change after all.** Measured rather
+      than guessed: a probe built the first coalition turn and the second and compared them. The
+      first turn is *not* missing the toss-in row; `AddThrow` is offered on both. What is missing
+      is the window the throws would answer. `Rehearsal.playTurn` plays a lane's step and *then*
+      its `tossIns`, and `Lane.landing` returns what **that turn's own move** puts on the pile —
+      so every throw in lane *n* answers lane *n*'s discard, and the one window with no lane at
+      all is the one **already open when the plan is composed**: the caller's last card, still
+      face up, which §1.1 proved a member may still answer during the confer. That is "toss-in
+      for the first step", and it is also where a throw **queued before the call** belongs.
+      The maintainer placed it on the **first player's turn**, shown only where such throws have
+      actually been made. Which makes it smaller than the `Lane`/`CoalitionPlan` field I had
+      assumed: a throw already made is a **fact**, not a plan step, so `Words.standingThrows`
+      reads it off `view.activeTossIn.queuedActions` and says it. Nothing about `CoalitionPlan`
+      moves, nothing can be edited away, and a member who throws while the plan is open sees it
+      appear. Never the caller's own. The thrown card has already left the hand — it lives only
+      in the queue until it is played — so the clause names who and what rank and no position.
+      `PlanAsTalkTest.aThrowMadeBeforeTheCallIsSaidOnTheFirstTurnAndNowhereElse`
+- [x] 3.4 The wire is unmoved by §3 after all, so there is nothing to verify: §3.3c added a
+      `Question`, which is client state, and §3.1/3.2 turned out to need no plan field at all
 - [x] 3.3a **A Jack's palette is every coalition card.** `tradeComposer` read `spokenCards` —
       only what the table had been told about — which is right for a step that *claims*
       something and wrong for a Jack, because a Jack is blind: what it moves is decided by where
@@ -88,8 +86,6 @@ plan the coalition agrees to and cannot play. Model faults first, appearance sec
       **King** is the other way round — declaring your own 2 correctly *sheds* it, which is the
       whole point of naming a low card — so `declareRanks` keeps every rank, and each says so
       in its own doc comment. Four new words, translated into all 19 locales
-- [ ] 3.4 Verify the wire is unmoved by §3: a test asserts `CoalitionPlan`'s serialized shape is
-      byte-identical to the committed sample
 
 ## 4. Four smaller faults
 
