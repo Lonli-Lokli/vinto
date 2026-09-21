@@ -2,11 +2,15 @@ package game.vinto.app
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.use
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.MemoryVault
 import org.jetbrains.skia.EncodedImageFormat
+import org.jetbrains.skia.Image
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -105,12 +109,58 @@ class StoreShotsTest {
                 Thread.sleep(WARM_SLEEP_MS)
                 image = scene.render((it + 1) * WARM_STEP_NANOS)
             }
+            stillShuffling(image, name)
             val png = image.encodeToData(EncodedImageFormat.PNG) ?: error("$name did not encode")
             File(dir, "$name.png").writeBytes(png.bytes)
         }
     }
 
+    /**
+     * Refuses a shot of the opening splash.
+     *
+     * Two of these scenes stage a whole game before they have anything to draw, and a render
+     * that arrives first photographs *"Vinto! Shuffling…"* — a flat green field with a card and
+     * two words on it. That is not a failure anybody notices: the file is written, the run is
+     * green, `bridge` copies it and the store shows a loading screen as a screenshot. It is
+     * exactly the fault `zdymak.config.mjs` records against the simulator, which sat on that
+     * splash after 75 s of settle.
+     *
+     * The splash is almost entirely one colour, and no real screen is: the felt alone carries a
+     * gradient, and every screen has a rail under it. So a shot whose sampled pixels are nine
+     * tenths one colour has not finished, and the run stops rather than writing it.
+     */
+    private fun stillShuffling(image: Image, name: String) {
+        val pixels = image.toComposeImageBitmap().toPixelMap()
+        var commonest = 0
+        val seen = mutableMapOf<Int, Int>()
+        var sampled = 0
+        var y = 0
+        while (y < pixels.height) {
+            var x = 0
+            while (x < pixels.width) {
+                val at = pixels[x, y].toArgb()
+                val count = (seen[at] ?: 0) + 1
+                seen[at] = count
+                if (count > commonest) commonest = count
+                sampled++
+                x += SAMPLE_STEP
+            }
+            y += SAMPLE_STEP
+        }
+        assertTrue(
+            commonest < sampled * FLAT_ENOUGH,
+            "$name is still on the shuffling splash: ${commonest * 100 / sampled}% of it is one " +
+                "colour. The scene stages a game before it can draw; give it longer to settle.",
+        )
+    }
+
     private companion object {
+        /** Every nth pixel each way — enough to tell a splash from a table, cheap enough to run. */
+        const val SAMPLE_STEP = 16
+
+        /** How much of a shot may be a single colour before it is not a screen at all. */
+        const val FLAT_ENOUGH = 0.9
+
         /** App Store 6.9" — and well over Play's 1080px floor for a phone shot. */
         const val WIDE = 1290
         const val HIGH = 2796
@@ -137,8 +187,8 @@ class StoreShotsTest {
         /** The same pinned seed `MarketingState` deals from, so a shot is the same shot twice. */
         const val MARKETING_SEED = 20_260_903L
 
-        const val WARM_FRAMES = 10
-        const val WARM_SLEEP_MS = 50L
+        const val WARM_FRAMES = 120
+        const val WARM_SLEEP_MS = 100L
         const val WARM_STEP_NANOS = 1_000_000_000L
     }
 }
