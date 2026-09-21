@@ -117,7 +117,10 @@ class LandingTest {
             "the card jumped ${drift / scale}dp as it landed: flight $final, rest $slot",
         )
 
-        val side = layout.sizes.side
+        // `theirs`, not a size of its own: all three opponents are drawn alike now — and
+        // **crowded**, because the hand this card lands in is holding six, which is one past
+        // the deal and so one past the size a hand is drawn at.
+        val side = layout.sizes.theirs.crowded()
         val expectedW = side.height.value * scale
         val expectedH = side.width.value * scale
         assertTrue(
@@ -176,7 +179,8 @@ class LandingTest {
                 "lifted $lifted, resting $resting",
         )
 
-        val side = layout.sizes.side
+        // `theirs`, not a size of its own: all three opponents are drawn alike now.
+        val side = layout.sizes.theirs
         assertTrue(
             kotlin.math.abs(lifted.width - side.height.value * scale) <= SLACK_PX * scale &&
                 kotlin.math.abs(lifted.height - side.width.value * scale) <= SLACK_PX * scale,

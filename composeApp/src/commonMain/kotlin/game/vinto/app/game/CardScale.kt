@@ -48,6 +48,9 @@ val CrowdedTap: Dp = 32.dp
  */
 const val ART_CORNER: Float = 44f / 825f
 
+/** One step down for a crowded hand, as a fraction of the size it was drawn at. */
+private const val CROWD_STEP = 0.8f
+
 /** How large one card is drawn. */
 data class CardScale(
     val width: Dp,
@@ -76,12 +79,18 @@ data class CardScale(
      * tighter hand. The aspect is kept, because a card that changes shape stops looking like
      * a card.
      */
-    fun crowded(): CardScale =
-        if (width <= CrowdedTap) {
+    fun crowded(): CardScale {
+        // A *step*, not a collapse to the floor. Dropping every crowded hand straight to
+        // [CrowdedTap] made them all the same size whatever they started at, which threw away
+        // the one hierarchy this table has: your own hand is drawn a third larger than anybody
+        // else's, and a crowded table stopped saying so.
+        val step = maxOf(width * CROWD_STEP, CrowdedTap)
+        return if (step >= width) {
             copy(floor = CrowdedTap)
         } else {
-            CardScale(CrowdedTap, height * (CrowdedTap / width), floor = CrowdedTap)
+            CardScale(step, height * (step / width), floor = CrowdedTap)
         }
+    }
 }
 
 /**

@@ -21,6 +21,7 @@ import game.vinto.app.theme.VintoTheme
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -213,7 +214,10 @@ class LandscapeTableTest {
             // The line may close up hard — a column of nine in a rotated phone's height is
             // the tightest squeeze on the table — but every card keeps a visible strip.
             cards.zipWithNext { (whatA, a), (_, b) ->
-                val strip = maxOf(b.left - a.left, b.top - a.top)
+                // The distance between them, not the direction: a seat down the right edge counts
+                // its cards from its own plate, so its hand runs the other way and a signed
+                // difference came back negative — nought showing, on a hand that was fine.
+                val strip = maxOf(abs(b.left - a.left), abs(b.top - a.top))
                 assertTrue(
                     strip >= STRIP,
                     "only ${strip.toInt()}dp of $whatA is left showing in landscape",

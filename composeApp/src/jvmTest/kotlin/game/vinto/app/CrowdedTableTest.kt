@@ -10,6 +10,7 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.game.TableLayout
 import game.vinto.app.game.TableScreen
@@ -18,6 +19,7 @@ import game.vinto.app.theme.VintoTheme
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
 import game.vinto.engine.PlayerView
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -60,7 +62,10 @@ class CrowdedTableTest {
             // The line may close up — that is what a hand of nine does — but never so far
             // that a card has no strip of its own to be tapped by.
             cards.zipWithNext { (whatA, a), (_, b) ->
-                val strip = maxOf(b.left - a.left, b.top - a.top)
+                // The distance between them, not the direction: a seat down the right edge counts
+                // its cards from its own plate, so its hand runs the other way and a signed
+                // difference came back negative — nought showing, on a hand that was fine.
+                val strip = maxOf(abs(b.left - a.left), abs(b.top - a.top))
                 assertTrue(
                     strip >= STRIP,
                     "only ${strip.toInt()}dp of $whatA is left showing, under a ${STRIP.toInt()}dp thumb",
@@ -76,6 +81,50 @@ class CrowdedTableTest {
                 .forEach { (whatB, b) ->
                     assertTrue(!a.touches(b), "$whatA is sitting on $whatB: $a vs $b")
                 }
+        }
+    }
+
+    /**
+     * The same question on every phone people actually hold.
+     *
+     * The case above is one screen, and the size of the screen is exactly what decides this: a
+     * side seat's column gets whatever height the two hands above and below leave it, and on a
+     * short phone with nine cards everywhere that is a third of what it needs. So the cards
+     * slide, and what matters is how much of each is left to put a thumb on.
+     *
+     * **24dp, which is WCAG 2.2 AA (SC 2.5.8).** Crowded hands give up the AAA number on
+     * purpose ([CrowdedTap]); they do not give up this one. It is an absolute rather than a
+     * fraction of the card because a fraction only holds while every card is one size — 55% of
+     * a 44dp card is 24.2dp and 55% of a 32dp one is 17.6dp, and the day a crowded hand could
+     * be drawn at 32 the fraction quietly stopped meaning what it was chosen to mean.
+     */
+    @Test
+    fun everyPhonePeopleHoldKeepsAThumbsWorthShowing() {
+        val phones = listOf(
+            "Galaxy S23" to (360.dp to 780.dp),
+            "iPhone SE" to (375.dp to 667.dp),
+            "iPhone 15" to (393.dp to 852.dp),
+            "Pixel 7" to (412.dp to 892.dp),
+            "iPhone 15 Pro Max" to (430.dp to 932.dp),
+        )
+
+        phones.forEach { (phone, size) ->
+            val (wide, high) = size
+            runComposeUiTest {
+                show(crowded(dealt(), HELD), wide, high)
+                cardBounds().groupBy { (label, _) -> label.substringBefore(", card ") }
+                    .forEach { (who, cards) ->
+                        assertEquals(HELD, cards.size, "$who on a $phone is holding all $HELD")
+                        cards.zipWithNext { (what, a), (_, b) ->
+                            val strip = maxOf(abs(b.left - a.left), abs(b.top - a.top))
+                            assertTrue(
+                                strip >= STRIP,
+                                "on a $phone only ${strip.toInt()}dp of $what is showing, " +
+                                    "under a ${STRIP.toInt()}dp thumb",
+                            )
+                        }
+                    }
+            }
         }
     }
 
@@ -133,13 +182,13 @@ class CrowdedTableTest {
         left < other.right && other.left < right && top < other.bottom && other.top < bottom
 
     /** The table, at the size of an ordinary phone. */
-    private fun ComposeUiTest.show(view: PlayerView) {
+    private fun ComposeUiTest.show(view: PlayerView, wide: Dp = PHONE_W, high: Dp = PHONE_H) {
         setContent {
             VintoTheme {
-                Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
+                Box(modifier = Modifier.size(wide, high)) {
                     TableScreen(
                         state = TableState(view, tableFor(view), null, emptyList(), 1),
-                        layout = TableLayout.forScreen(PHONE_H),
+                        layout = TableLayout.forScreen(high),
                         onMove = {},
                         onHelp = {},
                         onSettings = {},
