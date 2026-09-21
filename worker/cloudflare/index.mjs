@@ -21,6 +21,7 @@ import {
   roundEndPoint,
   roundStartPoint,
   seatFilledPoint,
+  clientJoinedPoint,
   seatVacatedPoint,
   sessionEndedPoint,
   newRoom, joinRoom, viewForSeat, seatForToken, replayRecordingJson,
@@ -829,6 +830,13 @@ export class Room {
         } else {
           this.#emit((wallMs, requests) => seatFilledPoint(
             seatedHumans, seatedBots, false, wallMs, requests,
+          ));
+          // How this person is playing, counted once when they arrive and never for a bot.
+          // `clientJoinedPoint` answers null for a platform or a language it does not know, and
+          // `#emit` treats null as nothing to write — so an old build, or one sending rubbish,
+          // is simply not counted rather than putting free text in the store.
+          this.#emit((wallMs, requests) => clientJoinedPoint(
+            msg.platform ?? null, msg.locale ?? null, msg.build ?? 0, wallMs, requests,
           ));
         }
 

@@ -2,9 +2,11 @@ package game.vinto.worker
 
 import game.vinto.protocol.AnalyticsEvent
 import game.vinto.protocol.AnalyticsJson
+import game.vinto.protocol.ClientPlatform
 import game.vinto.protocol.Cost
 import game.vinto.protocol.DataPoint
 import game.vinto.protocol.Difficulty
+import game.vinto.protocol.Locale
 import game.vinto.protocol.RoundEnding
 import game.vinto.protocol.SessionEnding
 import game.vinto.protocol.toDataPoint
@@ -32,6 +34,26 @@ private fun difficultyOf(name: String): Difficulty =
 @JsExport
 public fun roomCreatedPoint(listed: Boolean, difficulty: String, wallMs: Double, requests: Double): String =
     point(AnalyticsEvent.RoomCreated(listed, difficultyOf(difficulty)), wallMs, requests)
+
+/**
+ * One human arriving, with what they arrived on.
+ *
+ * Refuses anything it does not recognise rather than storing it: an unknown platform or a
+ * language tag outside [LOCALES] returns null and nothing is written. The shim treats a null
+ * point as "nothing to emit", so a client that sends rubbish is simply not counted.
+ */
+@JsExport
+public fun clientJoinedPoint(
+    platform: String?,
+    locale: String?,
+    build: Int,
+    wallMs: Double,
+    requests: Double,
+): String? {
+    val known = ClientPlatform.entries.firstOrNull { it.name == platform } ?: return null
+    val spoken = Locale.withTag(locale) ?: return null
+    return point(AnalyticsEvent.ClientJoined(known, spoken, build), wallMs, requests)
+}
 
 @JsExport
 public fun seatFilledPoint(

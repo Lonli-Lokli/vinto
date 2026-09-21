@@ -127,6 +127,31 @@ public sealed interface AnalyticsEvent {
         override val name: String get() = "players_live"
     }
 
+    /**
+     * One human took a seat, and how they are playing.
+     *
+     * **Online only, and asked for in those words** — *"I am interested in online players only,
+     * local can stay anonymous"*. A solo round says what it was, never what it was played on:
+     * the store consoles already break installs down by platform, country and OS version, and
+     * they see the people who never opened the app, which nothing here can.
+     *
+     * One row per arrival rather than fields on [SeatFilled], because that event is about the
+     * *table* — how full it is — and four people at one table may be on four different things.
+     * It also keeps both inside the three-tag budget instead of moving it.
+     *
+     * [locale] is a tag and [build] a measure, which is the usual split: the language is a
+     * grouping and the build number is a number. Neither is anything a player typed.
+     */
+    @Serializable
+    @SerialName("client_joined")
+    data class ClientJoined(
+        val platform: ClientPlatform,
+        val locale: Locale,
+        val build: Int,
+    ) : AnalyticsEvent {
+        override val name: String get() = "client_joined"
+    }
+
     @Serializable
     @SerialName("session_ended")
     public data class SessionEnded(val reason: SessionEnding, val rounds: Int, val durationMs: Double) :
@@ -157,6 +182,59 @@ public sealed interface AnalyticsEvent {
 
 @Serializable
 public enum class Difficulty { EASY, MODERATE, HARD }
+
+/**
+ * What a client is running on, as a closed set rather than a sentence.
+ *
+ * The same distinction `Host` draws and `platformName` gets wrong: "Android 34" is prose for a
+ * person to read, and this is a value a query groups by. Four cases because four is what ships;
+ * a fifth is a compile error in the client that has to supply it.
+ */
+@Serializable
+enum class ClientPlatform { ANDROID, IOS, WEB, DESKTOP }
+
+/**
+ * The languages a client may report, and the only ones that are ever written down.
+ *
+ * **An enum, not a set of tags, and the difference is the invariant.** The rule here is that
+ * free text is *unrepresentable* rather than filtered — `AnalyticsPrivacyTest` refuses a `String`
+ * on any event, and it refused this one, which is exactly its job. The wire still carries a tag,
+ * because an unknown enum value would fail the whole `Join` from a newer client; the room turns
+ * it into one of these or drops it.
+ *
+ * Mirrors `Language.kt` in the app the way [Difficulty] mirrors the engine's, for the same
+ * reason: adding a language is then a compile error here rather than a silently uncounted one.
+ * `EveryLanguageIsCountableTest` and `LanguageTagsAreCountableTest` hold the two together.
+ */
+@Serializable
+enum class Locale(val tag: String) {
+    ARABIC("ar"),
+    BELARUSIAN("be"),
+    BENGALI("bn"),
+    GERMAN("de"),
+    ENGLISH("en"),
+    SPANISH("es"),
+    FRENCH("fr"),
+    HEBREW("he"),
+    HINDI("hi"),
+    INDONESIAN("id"),
+    ITALIAN("it"),
+    JAPANESE("ja"),
+    KOREAN("ko"),
+    POLISH("pl"),
+    PORTUGUESE("pt"),
+    RUSSIAN("ru"),
+    TURKISH("tr"),
+    UKRAINIAN("uk"),
+    URDU("ur"),
+    CHINESE("zh"),
+    ;
+
+    companion object {
+        /** The language a tag names, or null for one this game does not ship. */
+        fun withTag(tag: String?): Locale? = entries.firstOrNull { it.tag == tag }
+    }
+}
 
 @Serializable
 public enum class RoundEnding { VINTO_CALLED, DECK_EXHAUSTED, ABANDONED }
@@ -324,6 +402,11 @@ public fun AnalyticsEvent.toDataPoint(cost: Cost? = null, sampleRate: Double = 1
         is AnalyticsEvent.PlayersLive -> {
             measures += "humans" to humans.toDouble()
             measures += "rooms" to rooms.toDouble()
+        }
+        is AnalyticsEvent.ClientJoined -> {
+            tags += "platform" to platform.name
+            tags += "locale" to locale.tag
+            measures += "build" to build.toDouble()
         }
         is AnalyticsEvent.SoloRound -> {
             tags += DIFFICULTY to difficulty.name

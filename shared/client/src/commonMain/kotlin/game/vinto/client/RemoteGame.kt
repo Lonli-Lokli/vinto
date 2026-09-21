@@ -104,6 +104,14 @@ class RemoteRoom(
     private val vault: Vault,
     private val nickname: String,
     scope: CoroutineScope,
+    /**
+     * What this client is, for the one count that is about online players.
+     *
+     * Supplied by the app rather than discovered here, because `shared/client` has no platform
+     * and `NoNetworkGuardTest` is the reason it must not grow one. Last and defaulted, so every
+     * test and every caller that does not care sends nothing and is simply not counted.
+     */
+    private val client: ClientFacts = ClientFacts(),
 ) {
     private val _connection = MutableStateFlow<ConnectionState>(ConnectionState.Connecting)
     val connection: StateFlow<ConnectionState> = _connection.asStateFlow()
@@ -370,6 +378,9 @@ class RemoteRoom(
                             // nobody picked one, so there is always something true to send.
                             avatarGround = mine.avatarGround,
                             protocol = PROTOCOL_VERSION,
+                            platform = client.platform,
+                            locale = client.locale,
+                            build = client.build,
                         )
                         opened.send(encode(join))
 

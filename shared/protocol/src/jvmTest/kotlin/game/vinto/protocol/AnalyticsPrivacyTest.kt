@@ -93,6 +93,7 @@ class AnalyticsPrivacyTest {
             AnalyticsEvent.SoloRound(finished = true, difficulty = Difficulty.EASY, turns = 30, durationMs = 60_000.0),
             AnalyticsEvent.Lesson(finished = false, reachedStage = 7, durationMs = 120_000.0),
             AnalyticsEvent.PlayersLive(rooms = 3, humans = 7),
+            AnalyticsEvent.ClientJoined(ClientPlatform.ANDROID, Locale.BELARUSIAN, build = 612),
         )
 
         // Every case is covered, so adding one without a sample here fails rather than
@@ -106,6 +107,8 @@ class AnalyticsPrivacyTest {
             addAll(Difficulty.entries.map { it.name })
             addAll(RoundEnding.entries.map { it.name })
             addAll(SessionEnding.entries.map { it.name })
+            addAll(ClientPlatform.entries.map { it.name })
+            addAll(Locale.entries.map { it.tag })
             addAll(listOf("true", "false"))
             add(GAME)
             addAll(samples.map { it.name })
@@ -121,7 +124,7 @@ class AnalyticsPrivacyTest {
             // `rooms` is the service's population, and is not `rounds` above it. `humans`
             // arrives as both a tag — how many sat at one table — and a measure — how many were
             // on the whole service; the same word because it is the same thing counted.
-            "rooms",
+            "rooms", "platform", "locale", "build",
         )
 
         for (sample in samples) {

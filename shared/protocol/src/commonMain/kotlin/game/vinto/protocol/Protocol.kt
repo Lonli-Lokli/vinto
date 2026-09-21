@@ -152,6 +152,21 @@ sealed interface ClientMessage {
          * Absent from every build before the number existed, which the room reads as 1.
          */
         val protocol: Int? = null,
+        /**
+         * What this client is running on, what language it is in, and which build it is.
+         *
+         * Counted once, when a human takes a seat, and never for a bot — see
+         * [AnalyticsEvent.ClientJoined] for why online and not solo. All three are optional and
+         * additive: a build that predates them simply reports nothing, which is a row the
+         * dashboard shows as unknown rather than a message an old room cannot read.
+         *
+         * [locale] is a tag, turned into a [Locale] at the room before it is written down and
+         * dropped if it names none — what reaches the store has to be a closed vocabulary, and a
+         * client is not the thing that decides what the vocabulary is.
+         */
+        val platform: ClientPlatform? = null,
+        val locale: String? = null,
+        val build: Int? = null,
     ) : ClientMessage
 
     /** One game action, authorised by the token — never by the socket's memory of a seat. */

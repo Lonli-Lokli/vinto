@@ -98,6 +98,30 @@
       "chart": "table"
     },
     {
+      "title": "What online players are playing on",
+      "note": "one row per human arrival \u2014 solo play says nothing about its machine",
+      "event": "client_joined",
+      "agg": "count",
+      "by": "tag:platform",
+      "chart": "table"
+    },
+    {
+      "title": "Which language online players read it in",
+      "event": "client_joined",
+      "agg": "count",
+      "by": "tag:locale",
+      "chart": "table"
+    },
+    {
+      "title": "Which build online players are on",
+      "note": "the newest build seen, by day \u2014 how fast an update reaches people",
+      "event": "client_joined",
+      "agg": "max",
+      "measure": "build",
+      "by": "day",
+      "chart": "line"
+    },
+    {
       "title": "Which difficulty people choose",
       "event": "solo_round",
       "agg": "count",

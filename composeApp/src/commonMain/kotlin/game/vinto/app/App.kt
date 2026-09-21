@@ -42,6 +42,7 @@ import game.vinto.app.theme.rememberFeedback
 import game.vinto.app.theme.rememberSounds
 import game.vinto.client.Analytics
 import game.vinto.client.AnalyticsConsent
+import game.vinto.client.ClientFacts
 import game.vinto.client.LocalGame
 import game.vinto.client.Pace
 import game.vinto.client.Question
@@ -59,6 +60,8 @@ import game.vinto.client.loadGame
 import game.vinto.client.loadSettings
 import game.vinto.client.rememberRoom
 import game.vinto.client.saveSettings
+import game.vinto.protocol.ClientPlatform
+import game.vinto.protocol.Locale
 import game.vinto.protocol.Surface
 import kotlinx.coroutines.Dispatchers
 
@@ -121,11 +124,7 @@ private const val MaxTypeScale = 1.25f
 fun App(
     seeds: () -> Long = ::freshSeed,
     vault: Vault = remember { platformVault() },
-    /**
-     * Where anonymous counts go. Injected like [seeds] and [vault] and for the same reason:
-     * a test needs to see what the app would have sent, and the only honest way to check that
-     * is to let it send to something that records.
-     */
+    /** Where anonymous counts go; see [LocalCounting], and what happens without it. */
     counting: Counting? = null,
     /**
      * A state to open in, for a store capture. Null in every real launch.
@@ -142,37 +141,23 @@ fun App(
     // One connector for the app's lifetime, and a scope for the rooms it opens: a room's
     // socket loop belongs to the app, not to whichever screen happens to be showing it.
     val connector = remember { platformRoomConnector(ROOM_SERVICE) }
-    // With a handler, so a coroutine that fails out here is *reported* rather than printed to
-    // a console nobody is reading. Everything long-lived rides on this scope — the socket
-    // loop, the analytics sink, a room's reconnects — and those are exactly the failures that
-    // leave the app looking fine and doing nothing, which no fatal handler will ever see.
+    // With a handler, so a coroutine that fails out here is *reported* rather than printed to a
+    // console nobody is reading. Everything long-lived rides on this scope — the socket loop, the
+    // analytics sink, a room's reconnects — and those are exactly the failures that leave the app
+    // looking fine and doing nothing, which no fatal handler will ever see.
     val appScope = rememberCoroutineScope { Crashes.handler() }
 
     val sink = rememberSink(appScope)
+    val door = rememberDoorway(connector, vault, appScope, seeds)
     ReportCrashes()
 
-    fun enterRoom(code: String, nickname: String): Screen =
-        roomScreen(connector, vault, appScope, code, nickname)
-
-    fun invitedScreen(code: String): Screen = invitationLands(code, vault, seeds, ::enterRoom)
-
-    Startup(vault, sink, marketing, ::invitedScreen) { loaded, where ->
+    Startup(vault, sink, marketing, door.invited) { loaded, where ->
         settings = loaded
         screen = where
     }
 
     // And the ones that arrive after the launch.
-    InvitationsWhileRunning(screen, ::invitedScreen) { screen = it }
-
-    // Every change is written down as it is made. There is no "save" button in a settings
-    // screen worth having, and four values are not worth batching.
-    fun change(updated: Settings) {
-        settings = updated
-        vault.saveSettings(updated)
-        // Immediately, not on next launch: somebody who just turned it off means now, and
-        // `consentChanged` discards whatever was buffered rather than flushing it.
-        sink.consentChanged(consentFrom(updated))
-    }
+    InvitationsWhileRunning(screen, door.invited) { screen = it }
 
     // Back goes home from anywhere that is not home, and closes the app from there — which is
     // what a phone's back button means everywhere else, and what its absence made look like a
@@ -184,8 +169,7 @@ fun App(
     val dark = settings.theme.isDark()
     SystemBars(dark)
     // The network, as the platform reports it: read once here, for the one screen that asks.
-    // `UNKNOWN` until the platform has spoken, so the first frame never says "offline" on the
-    // strength of nothing.
+    // `UNKNOWN` until the platform has spoken, so no first frame says "offline" on nothing.
     val reachability by remember { platformReachability() }.collectAsState(Reachability.UNKNOWN)
     // Outside the theme, because changing language throws the composition away and re-reads
     // every string — and the theme is cheaper to rebuild than to reason about half-rebuilt.
@@ -218,9 +202,7 @@ fun App(
                                     is Screen.Home -> HomeScreen(
                                         settings = settings,
                                         canContinue = here.canContinue,
-                                        go = homeActions(vault, seeds, settings) {
-                                            screen = it
-                                        },
+                                        go = homeActions(vault, seeds, settings) { screen = it },
                                     )
 
                                     is Screen.Settings -> SettingsScreen(
@@ -228,7 +210,7 @@ fun App(
                                         canForget = vault.loadGame() != null,
                                         page = here.page,
                                         onOpen = { screen = here.copy(page = it) },
-                                        onChange = ::change,
+                                        onChange = { saveSettings(it, vault, sink) { s -> settings = s } },
                                         onForget = {
                                             vault.forgetGame()
                                             screen = Screen.Home(canContinue = false)
@@ -257,7 +239,7 @@ fun App(
                                         where = here,
                                         connector = connector,
                                         vault = vault,
-                                        enterRoom = ::enterRoom,
+                                        enterRoom = door.enter,
                                         go = { screen = it },
                                     )
 
@@ -588,20 +570,101 @@ private fun invitationLands(
  * asking for one: the whole point of the link is that six characters do not have to be typed,
  * and stopping to ask a name would put a form back exactly where one was removed.
  */
+
+/**
+ * The two ways into a room, built once: by code, and by an invitation.
+ *
+ * Together because they are the same door — an invitation resolves to a code and then walks
+ * through the other one — and out here because what they need is read in a composition and used
+ * outside it. `LocalAppLocale.current` is the live language the app is *showing* rather than the
+ * one that was chosen, which for most people is nothing at all: "follow the device" is the
+ * default, and a count of chosen languages would be a count of the few who went looking.
+ */
+@Composable
+private fun rememberDoorway(
+    connector: RoomConnector,
+    vault: Vault,
+    scope: kotlinx.coroutines.CoroutineScope,
+    seeds: () -> Long,
+): Doorway {
+    val me = ClientFacts(clientPlatform, countable(LocalAppLocale.current), BUILD_NUMBER.toIntOrNull())
+    fun enterRoom(code: String, nickname: String): Screen =
+        roomScreen(connector, vault, scope, code, nickname, me)
+    return Doorway(::enterRoom) { code -> invitationLands(code, vault, seeds, ::enterRoom) }
+}
+
+/**
+ * A settings change, written down as it is made.
+ *
+ * There is no "save" button in a settings screen worth having, and four values are not worth
+ * batching. Consent is told immediately rather than on the next launch: somebody who has just
+ * turned counting off means now, and `consentChanged` discards whatever was buffered rather
+ * than flushing it.
+ */
+private fun saveSettings(updated: Settings, vault: Vault, sink: Analytics, hold: (Settings) -> Unit) {
+    hold(updated)
+    vault.saveSettings(updated)
+    sink.consentChanged(consentFrom(updated))
+}
+
+/** The two ways in: with a code and a name, or with an invitation that carries the code. */
+private data class Doorway(
+    val enter: (code: String, nickname: String) -> Screen,
+    val invited: (code: String) -> Screen,
+)
+
 private fun roomScreen(
     connector: RoomConnector,
     vault: Vault,
     scope: kotlinx.coroutines.CoroutineScope,
     code: String,
     nickname: String,
+    /** What this client is, for the one count that is about online players. */
+    me: ClientFacts,
 ): Screen {
     // Remembered here rather than on the way out, because the way out that matters is the one
     // nobody presses: a phone that dies in a lobby has still left a seat to come back to.
     vault.rememberRoom(code)
     return Screen.InRoom(
-        RemoteRoom(connector = connector, code = code, vault = vault, nickname = nickname, scope = scope),
+        RemoteRoom(
+            connector = connector,
+            code = code,
+            vault = vault,
+            nickname = nickname,
+            client = me,
+            scope = scope,
+        ),
     )
 }
+
+/**
+ * Which of the four things this is, composed rather than asked.
+ *
+ * [Host] deliberately cannot tell Android from iOS — *"a phone is a phone whether it runs
+ * Android or iOS… the two places that care about which phone already have their own seams for
+ * it"* — and [crashPlatform] cannot tell Android from the desktop, because both are `java` to
+ * Sentry. Together they answer it exactly, so this is a third reading of two existing seams
+ * rather than a third seam.
+ */
+
+/**
+ * A language tag reduced to the closed set the store will accept, or null.
+ *
+ * Platforms disagree about the shape: Android and the desktop answer `en_GB`, iOS answers
+ * `en-GB`, a browser answers `en`. The store's vocabulary is the base language, so the tag is
+ * cut to it — and anything that is not a [Locale] is dropped rather than sent, because a client
+ * does not get to decide what words go in the dataset.
+ */
+internal fun countable(tag: String): String? =
+    Locale.withTag(tag.takeWhile { it.isLetter() }.lowercase())?.tag
+
+internal val clientPlatform: ClientPlatform
+    get() = when {
+        host == Host.WEB -> ClientPlatform.WEB
+        host == Host.DESKTOP -> ClientPlatform.DESKTOP
+        crashPlatform == SentryPlatform.COCOA -> ClientPlatform.IOS
+        else -> ClientPlatform.ANDROID
+    }
 
 /**
  * Everything between launching and playing, which is one disk read and one decision.
