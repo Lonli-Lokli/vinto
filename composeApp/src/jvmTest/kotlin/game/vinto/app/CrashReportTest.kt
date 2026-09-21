@@ -85,7 +85,7 @@ class CrashReportTest {
         val envelope = crashEnvelope(
             CrashReport(
                 eventId = "deadbeef", sentAtIso = "2026-08-30T00:00:00Z", timestampSeconds = 1.0,
-                platform = SentryPlatform.JAVA, dist = "0", os = "JVM 17", release = "1.0", environment = "production",
+                platform = SentryPlatform.JAVA, dist = "0", commit = "abc1234", os = "JVM 17", release = "1.0", environment = "production",
                 surface = CrashSurface.ONLINE, type = "IllegalStateException",
                 message = "join failed for ?room=7KQ2MP",
                 frames = listOf("RemoteGame.kt:120 room: \"7KQ2MP\""),
@@ -99,7 +99,7 @@ class CrashReportTest {
         val envelope = crashEnvelope(
             CrashReport(
                 eventId = "deadbeef", sentAtIso = "2026-08-30T00:00:00Z", timestampSeconds = 1.0,
-                platform = SentryPlatform.JAVA, dist = "0", os = "JVM 17", release = "1.0", environment = "production",
+                platform = SentryPlatform.JAVA, dist = "0", commit = "abc1234", os = "JVM 17", release = "1.0", environment = "production",
                 surface = CrashSurface.SOLO, type = "Error",
                 message = "he said \"no\"\nand left\t",
                 frames = emptyList(),
@@ -117,7 +117,7 @@ class CrashReportTest {
         val envelope = crashEnvelope(
             CrashReport(
                 eventId = "deadbeef", sentAtIso = "2026-08-30T00:00:00Z", timestampSeconds = 1.0,
-                platform = SentryPlatform.JAVA, dist = "0", os = "JVM 17", release = "1.0", environment = "production",
+                platform = SentryPlatform.JAVA, dist = "0", commit = "abc1234", os = "JVM 17", release = "1.0", environment = "production",
                 surface = CrashSurface.MENU, type = "Error", message = "x",
                 frames = listOf("newest.kt", "middle.kt", "oldest.kt"),
             ),
@@ -132,7 +132,7 @@ class CrashReportTest {
     private fun envelope() = crashEnvelope(
         CrashReport(
             eventId = "deadbeef", sentAtIso = "2026-08-30T00:00:00Z", timestampSeconds = 1_756_512_000.0,
-            platform = SentryPlatform.JAVA, dist = "0", os = "JVM 17", release = "vinto@1.0.0", environment = "production",
+            platform = SentryPlatform.JAVA, dist = "0", commit = "abc1234", os = "JVM 17", release = "vinto@1.0.0", environment = "production",
             surface = CrashSurface.SOLO, type = "IllegalStateException",
             message = "the stage never drained",
             frames = listOf("CardStage.kt:610", "GameScreen.kt:130"),
@@ -152,7 +152,7 @@ class CrashReportTest {
         val envelope = crashEnvelope(
             CrashReport(
                 eventId = "deadbeef", sentAtIso = "2026-08-30T00:00:00Z", timestampSeconds = 1.0,
-                platform = SentryPlatform.JAVA, dist = "0", os = "JVM 17", release = "1.0", environment = "production",
+                platform = SentryPlatform.JAVA, dist = "0", commit = "abc1234", os = "JVM 17", release = "1.0", environment = "production",
                 surface = CrashSurface.ONLINE, type = "Error", message = "boom",
                 place = CrashPlace(gameId = "game-1699", round = 3, turn = 14),
             ),
@@ -174,7 +174,7 @@ class CrashReportTest {
         val envelope = crashEnvelope(
             CrashReport(
                 eventId = "deadbeef", sentAtIso = "2026-08-30T00:00:00Z", timestampSeconds = 1.0,
-                platform = SentryPlatform.JAVA, dist = "0", os = "JVM 17", release = "1.0", environment = "production",
+                platform = SentryPlatform.JAVA, dist = "0", commit = "abc1234", os = "JVM 17", release = "1.0", environment = "production",
                 surface = CrashSurface.MENU, type = "Error", message = "boom",
             ),
         )
@@ -191,7 +191,7 @@ class CrashReportTest {
         val envelope = crashEnvelope(
             CrashReport(
                 eventId = "deadbeef", sentAtIso = "2026-08-30T00:00:00Z", timestampSeconds = 1.0,
-                platform = SentryPlatform.JAVA, dist = "0", os = "JVM 17", release = "1.0", environment = "production",
+                platform = SentryPlatform.JAVA, dist = "0", commit = "abc1234", os = "JVM 17", release = "1.0", environment = "production",
                 surface = CrashSurface.SOLO, type = "Error", message = "boom",
                 place = CrashPlace(gameId = "game-7"),
             ),
@@ -213,7 +213,7 @@ class CrashReportTest {
         val envelope = crashEnvelope(
             CrashReport(
                 eventId = "deadbeef", sentAtIso = "2026-08-30T00:00:00Z", timestampSeconds = 1.0,
-                platform = SentryPlatform.JAVA, dist = "0", os = "JVM 17", release = "1.0", environment = "production",
+                platform = SentryPlatform.JAVA, dist = "0", commit = "abc1234", os = "JVM 17", release = "1.0", environment = "production",
                 surface = CrashSurface.ONLINE, type = "Error", message = "boom",
                 place = CrashPlace(gameId = "room: \"7KQ2MP\""),
             ),

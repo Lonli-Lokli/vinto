@@ -311,6 +311,9 @@ abstract class GenerateBuildInfo : DefaultTask() {
     @get:Input
     abstract val buildNumber: Property<String>
 
+    @get:Input
+    abstract val buildCommit: Property<String>
+
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
@@ -337,6 +340,18 @@ abstract class GenerateBuildInfo : DefaultTask() {
             | * player reads back off the home screen is the one a crash report can be matched to.
             | */
             |internal const val BUILD_NUMBER: String = "${buildNumber.get()}"
+            |
+            |/**
+            | * The commit this was built from, short.
+            | *
+            | * The build number is a *count* of commits, which names a revision only while the
+            | * build came off master with a clean tree — and a crash report has to be readable
+            | * when it did not. So the revision itself rides along, and a report can be opened
+            | * against the code that produced it rather than against the code of the day.
+            | *
+            | * `unknown` outside a git checkout, which is a release tarball or a CI archive.
+            | */
+            |internal const val BUILD_COMMIT: String = "${buildCommit.get()}"
             |
             """.trimMargin(),
         )
@@ -372,6 +387,11 @@ val generateBuildInfo =
                     .standardOutput.asText.map { (it.trim().toIntOrNull() ?: 0) + offset }
                     .map { it.toString() },
             ).orElse("1"),
+        )
+        buildCommit.set(
+            providers.exec { commandLine("git", "rev-parse", "--short", "HEAD") }
+                .standardOutput.asText.map { it.trim().ifEmpty { "unknown" } }
+                .orElse("unknown"),
         )
         sentryDsn.set(
             providers.gradleProperty("vinto.sentryDsn")

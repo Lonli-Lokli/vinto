@@ -1,5 +1,6 @@
 package game.vinto.app.crash
 
+import game.vinto.app.BUILD_COMMIT
 import game.vinto.app.BUILD_NUMBER
 import game.vinto.app.SENTRY_DSN
 import game.vinto.app.VERSION
@@ -68,6 +69,7 @@ object Crashes {
             platform = crashPlatform,
             release = "vinto@$VERSION",
             dist = BUILD_NUMBER,
+            commit = BUILD_COMMIT,
             os = platformName(),
             environment = sentryEnvironment(),
             scope = scope,

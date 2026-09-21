@@ -52,6 +52,8 @@ class CrashReporter(
     private val release: String,
     /** Which build of [release] — the commit count, so two builds of `1.0` are tellable apart. */
     private val dist: String,
+    /** The commit this build came from, so a report can be opened against its own code. */
+    private val commit: String,
     /** The machine in words, carried as a tag because [platform] is not for reading. */
     private val os: String,
     private val environment: String,
@@ -98,6 +100,7 @@ class CrashReporter(
                 platform = platform,
                 release = release,
                 dist = dist,
+                commit = commit,
                 os = os,
                 environment = environment,
                 surface = surface(),

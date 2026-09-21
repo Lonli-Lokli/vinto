@@ -68,6 +68,19 @@ class ACrashCanBeReadTest {
         assertEquals(SentryPlatform.JAVA, crashPlatform)
     }
 
+    /**
+     * And the revision, because the build number is a count and not a name.
+     *
+     * `dist` is the commit *count*, which identifies a revision only while the build came off
+     * master with a clean tree — and a report has to be readable when it did not. With the sha
+     * on it, a report opens against the code that produced it rather than the code of the day.
+     */
+    @Test
+    fun theCommitItWasBuiltFromRidesAlongWithTheCount() {
+        val item = envelope().split("\n").last()
+        assertTrue(item.contains(""""commit":"f0efca97""""), "no revision on the report:\n$item")
+    }
+
     /** The sentence for a person is still carried, where a person reads it. */
     @Test
     fun theHumanNameForTheMachineIsKeptAsATag() {
@@ -88,6 +101,7 @@ class ACrashCanBeReadTest {
             platform = SentryPlatform.JAVA,
             release = "vinto@1.0",
             dist = "609",
+            commit = "f0efca97",
             os = os,
             environment = "production",
             surface = CrashSurface.SOLO,

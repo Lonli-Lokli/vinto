@@ -147,6 +147,14 @@ data class CrashReport(
      * ever filed belongs to one release and no report can be told from one three weeks older.
      */
     val dist: String,
+    /**
+     * The commit this build came from, short.
+     *
+     * Beside [dist] rather than instead of it: the build number is what a player can read off
+     * the home screen and what the stores index, and this is what a repository can be opened at.
+     * A count only names a revision while the build came off master with a clean tree.
+     */
+    val commit: String,
     /** The machine in words — "Android 34", "iOS 26.5" — for a person, as a tag. */
     val os: String,
     val environment: String,
@@ -174,7 +182,8 @@ fun crashEnvelope(report: CrashReport): String = with(report) {
         append(""","dist":"""").append(dist).append('"')
         append(""","environment":"""").append(environment).append('"')
         append(""","tags":{"surface":"""").append(surface.name)
-        append("""","os":""").append(json(os)).append('}')
+        append("""","os":""").append(json(os))
+        append(""","commit":""").append(json(commit)).append('}')
         // Omitted entirely when there is nothing to say, rather than sent as three nulls: an
         // `extra` block that is always present teaches a reader to skim past it.
         if (!place.isEmpty) {

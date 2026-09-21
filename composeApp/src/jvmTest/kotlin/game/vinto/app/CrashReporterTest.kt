@@ -41,7 +41,7 @@ class CrashReporterTest {
         },
     ) = CrashReporter(
         dsn = dsn,
-        platform = SentryPlatform.JAVA, dist = "0", os = "JVM 17",
+        platform = SentryPlatform.JAVA, dist = "0", commit = "abc1234", os = "JVM 17",
         release = "vinto@0.1.0",
         environment = "production",
         scope = scope,
