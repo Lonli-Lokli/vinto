@@ -92,6 +92,7 @@ class AnalyticsPrivacyTest {
             AnalyticsEvent.SessionEnded(reason = SessionEnding.PLAYED_OUT, rounds = 3, durationMs = 600_000.0),
             AnalyticsEvent.SoloRound(finished = true, difficulty = Difficulty.EASY, turns = 30, durationMs = 60_000.0),
             AnalyticsEvent.Lesson(finished = false, reachedStage = 7, durationMs = 120_000.0),
+            AnalyticsEvent.PlayersLive(rooms = 3, humans = 7),
         )
 
         // Every case is covered, so adding one without a sample here fails rather than
@@ -117,6 +118,10 @@ class AnalyticsPrivacyTest {
             "difficulty", "listed", "humans", "bots", "by_bot", "grace", "ended_by", "caller_won",
             "reason", "finished", "away_ms", "round_number", "duration_ms", "actions", "rounds",
             "turns", "reached_stage", "wall_ms", "requests",
+            // `rooms` is the service's population, and is not `rounds` above it. `humans`
+            // arrives as both a tag — how many sat at one table — and a measure — how many were
+            // on the whole service; the same word because it is the same thing counted.
+            "rooms",
         )
 
         for (sample in samples) {

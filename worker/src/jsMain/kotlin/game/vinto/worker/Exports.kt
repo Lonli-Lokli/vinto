@@ -24,6 +24,7 @@ import game.vinto.room.newRegistry as coreNewRegistry
 import game.vinto.room.newRoom as coreNewRoom
 import game.vinto.room.nextAlarmAt as coreNextAlarmAt
 import game.vinto.room.onAlarm as coreOnAlarm
+import game.vinto.room.playersLiveEvent as corePlayersLiveEvent
 import game.vinto.room.readyEnvelopes as coreReadyEnvelopes
 import game.vinto.room.readyForNextRound as coreReadyForNextRound
 import game.vinto.room.registrySize as coreRegistrySize
@@ -252,3 +253,13 @@ fun touchRoom(
 
 @JsExport
 fun registrySize(registryJson: String): Int = coreRegistrySize(registryJson)
+
+/**
+ * The service's population, as the analytics event the shim writes.
+ *
+ * Emitted on every `/touch`, which is every arrival and departure — see the event's own note
+ * for why a gauge rather than a count, and why not on a timer.
+ */
+@JsExport
+fun playersLiveEvent(registryJson: String, nowMs: Double): String =
+    corePlayersLiveEvent(registryJson, nowMs)

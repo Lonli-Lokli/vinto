@@ -1,5 +1,6 @@
 package game.vinto.room
 
+import game.vinto.protocol.AnalyticsEvent
 import game.vinto.protocol.CODE_ALPHABET
 import game.vinto.protocol.CODE_LENGTH
 import game.vinto.protocol.PublicRoom
@@ -466,3 +467,43 @@ fun touchRoom(
 /** How many rooms the registry believes are live. The cap in phase 5 is applied against this. */
 fun registrySize(registryJson: String): Int =
     VintoJson.decodeFromString(RegistryState.serializer(), registryJson).size
+
+/**
+ * The service's population at one instant: rooms with people in them, and people.
+ *
+ * Serialisable rather than a pair of ints because it crosses into JavaScript, where every
+ * export here is a JSON string — the same shape as everything else in this file.
+ */
+@Serializable
+data class PlayersLive(val rooms: Int, val humans: Int)
+
+/**
+ * Who is playing right now, by the same lease the public list uses.
+ *
+ * **Stale rows count nobody.** A room whose last word was ten minutes ago is not a room with
+ * four people in it, whatever its last touch said — that is the whole point of the lease, and a
+ * gauge that ignored it would report the ghosts `RegistryLeaseTest` exists to sweep.
+ */
+fun liveNow(registryJson: String, nowMs: Double): String {
+    val state = VintoJson.decodeFromString(RegistryState.serializer(), registryJson)
+    val live = state.rooms.filterNot { it.staleAt(nowMs) }
+    return VintoJson.encodeToString(
+        PlayersLive.serializer(),
+        PlayersLive(rooms = live.count { it.humans > 0 }, humans = live.sumOf { it.humans }),
+    )
+}
+
+/**
+ * The same number as the event the Worker writes.
+ *
+ * Built here rather than in the shim so the shape of the point is decided in Kotlin, beside
+ * every other event — `AnalyticsExports.kt` turns it into a data point and nothing in
+ * JavaScript has to know what a room is.
+ */
+fun playersLiveEvent(registryJson: String, nowMs: Double): String {
+    val live = VintoJson.decodeFromString(PlayersLive.serializer(), liveNow(registryJson, nowMs))
+    return VintoJson.encodeToString(
+        AnalyticsEvent.serializer(),
+        AnalyticsEvent.PlayersLive(rooms = live.rooms, humans = live.humans),
+    )
+}

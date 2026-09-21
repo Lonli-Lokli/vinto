@@ -99,6 +99,34 @@ public sealed interface AnalyticsEvent {
         override val name: String get() = "round_end"
     }
 
+    /**
+     * How many people are playing at this moment, and in how many rooms.
+     *
+     * A **gauge**, which nothing else here is: every other event is a thing that happened, and
+     * this is a state of the world written down. It exists because "how many at once" cannot be
+     * derived from arrivals and departures in an append-only, sampled store — you would need a
+     * running total over rows the store is allowed to drop.
+     *
+     * Written by the registry when a room's population changes, never on a timer. A maximum is
+     * always attained at a change, so `max(humans)` over a window is exact; and a service with
+     * nobody on it writes nothing, rather than 1,440 rows a day saying so.
+     *
+     * **Online only, and that is the whole of what it can be.** Counting people playing alone
+     * would mean every device reporting in on a clock whether or not anything happened, which
+     * is the shape of the thing this game has refused to build. A solo round is counted when it
+     * ends and never while it runs.
+     *
+     * Written without `public`, unlike its nine neighbours: the modifier is redundant in a
+     * module with no explicit-API mode, detekt says so, and the others are grandfathered in
+     * `baseline-protocol.xml`. Adding a line there to make this one match would be the one use
+     * of a baseline that makes it a lie.
+     */
+    @Serializable
+    @SerialName("players_live")
+    data class PlayersLive(val rooms: Int, val humans: Int) : AnalyticsEvent {
+        override val name: String get() = "players_live"
+    }
+
     @Serializable
     @SerialName("session_ended")
     public data class SessionEnded(val reason: SessionEnding, val rounds: Int, val durationMs: Double) :
@@ -289,6 +317,13 @@ public fun AnalyticsEvent.toDataPoint(cost: Cost? = null, sampleRate: Double = 1
             tags += "reason" to reason.name
             measures += DURATION_MS to durationMs
             measures += "rounds" to rounds.toDouble()
+        }
+        // Measures, not tags: the question is "what was the most at once", which is a max over
+        // a number. As a tag it would be a distribution of populations, which is a different
+        // and much less useful chart.
+        is AnalyticsEvent.PlayersLive -> {
+            measures += "humans" to humans.toDouble()
+            measures += "rooms" to rooms.toDouble()
         }
         is AnalyticsEvent.SoloRound -> {
             tags += DIFFICULTY to difficulty.name

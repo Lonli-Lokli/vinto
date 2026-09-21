@@ -18,7 +18,8 @@
     { "label": "Rounds online", "event": "round_end", "agg": "count" },
     { "label": "Sessions", "event": "session_ended", "agg": "count" },
     { "label": "Rooms opened", "event": "room_created", "agg": "count" },
-    { "label": "Lessons taken", "event": "lesson", "agg": "count" }
+    { "label": "Lessons taken", "event": "lesson", "agg": "count" },
+    { "label": "Most at once", "event": "players_live", "agg": "max", "measure": "humans" }
   ],
 
   "panels": [
@@ -33,6 +34,24 @@
       "title": "Rounds played online, by day",
       "event": "round_end",
       "agg": "count",
+      "by": "day",
+      "chart": "line"
+    },
+    {
+      "title": "Most people playing at once",
+      "note": "online, by day \u2014 the registry's own count at each arrival and departure",
+      "event": "players_live",
+      "agg": "max",
+      "measure": "humans",
+      "by": "day",
+      "chart": "line"
+    },
+    {
+      "title": "Most rooms open at once",
+      "note": "by day",
+      "event": "players_live",
+      "agg": "max",
+      "measure": "rooms",
       "by": "day",
       "chart": "line"
     },
@@ -98,6 +117,24 @@
       "event": "round_end",
       "agg": "avg",
       "measure": "wall_ms",
+      "by": "day",
+      "chart": "line"
+    },
+    {
+      "title": "What the rooms cost in total",
+      "note": "Durable Object wall time per day, milliseconds \u2014 what Cloudflare bills by",
+      "event": "round_end",
+      "agg": "sum",
+      "measure": "wall_ms",
+      "by": "day",
+      "chart": "line"
+    },
+    {
+      "title": "Requests into the room",
+      "note": "per day, as the rooms themselves counted them",
+      "event": "round_end",
+      "agg": "sum",
+      "measure": "requests",
       "by": "day",
       "chart": "line"
     }

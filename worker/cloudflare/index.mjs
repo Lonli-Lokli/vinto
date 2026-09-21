@@ -29,7 +29,7 @@ import {
   roundRecording,
   newRegistry, mintRoomCode, resolveRoomCode, resolveRoomCodeFor, looksLikeRoomCode,
   listPublicRooms, forgetRoom,
-  registrySize, touchRoom,
+  registrySize, touchRoom, playersLiveEvent,
 } from '../build/compileSync/js/main/productionExecutable/kotlin/vinto-kmp-worker.mjs';
 
 /**
@@ -201,11 +201,18 @@ export class Registry {
 
     if (request.method === 'POST' && url.pathname === '/touch') {
       const body = await request.json();
-      await this.ctx.storage.put(
-        REGISTRY_KEY,
-        touchRoom(registryJson, body.code ?? '', body.humans ?? 0, body.seatsFilled ?? 0,
-          body.startsAtEpochMs ?? 0, Date.now()),
-      );
+      const now = Date.now();
+      const touched = touchRoom(registryJson, body.code ?? '', body.humans ?? 0,
+        body.seatsFilled ?? 0, body.startsAtEpochMs ?? 0, now);
+      await this.ctx.storage.put(REGISTRY_KEY, touched);
+
+      // How many people are on the service, written at the moment it changed.
+      //
+      // Every arrival and departure lands here, and a maximum is always attained at a change —
+      // so `max(humans)` over a window is exact without a timer waking a Durable Object 1,440
+      // times a day to report that nobody is playing. `clientEventPoint` is the same builder
+      // the public endpoint uses: one path from an event name to a data point.
+      emit(this.env, clientEventPoint(playersLiveEvent(touched, now)), this.ctx);
       return Response.json({ ok: true });
     }
 
