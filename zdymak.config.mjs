@@ -132,9 +132,27 @@ export default {
       // As with the iPhone: the promo is a `reel` entry from real footage, not a pan over stills.
       screenshots: [
         { target: 'play-phone', dir: 'play-phone-plain', style: 'bleed', caption: false, theme: { anchor: 'top' } },
-        { target: 'play-tablet', dir: 'play-tablet-plain', style: 'bleed', caption: false, theme: { anchor: 'top' } },
         { target: 'play-phone', style: 'premium' }, // the styled set, for the site
         { target: 'play-feature-graphic' }, // required by Play even with no video
+      ],
+    },
+
+    /**
+     * The Play tablet slot, from its own captures, because it is **landscape**.
+     *
+     * `play-tablet` is 2560x1440 — 16:9 the wide way, against a phone's 9:16. A still is
+     * cover-fitted into its target and these sets anchor to the top, which for that pair of
+     * aspects keeps the top THIRD of a phone screenshot: a status bar, the header, one row of
+     * cards and a field of green. Six of those were built, bridged and uploaded, and every one
+     * of them was a valid PNG of a real screen, so nothing downstream said a word.
+     *
+     * The app has a landscape arrangement (`TableLayout.forScreen`), and `StoreShotsTest` now
+     * renders this directory at 1280x720 dp so the slot gets the screen it is actually for.
+     */
+    androidTablet: {
+      capturesDir: './marketing/captures/android-tablet',
+      screenshots: [
+        { target: 'play-tablet', dir: 'play-tablet-plain', style: 'bleed', caption: false, theme: { anchor: 'top' } },
       ],
     },
 

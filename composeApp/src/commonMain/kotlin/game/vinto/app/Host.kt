@@ -1,5 +1,7 @@
 package game.vinto.app
 
+import androidx.compose.runtime.staticCompositionLocalOf
+
 /**
  * Which kind of machine this is, for the handful of decisions that genuinely differ by it.
  *
@@ -31,3 +33,19 @@ enum class Host {
  * varies with the window is the *shape*, which the header reads separately (`TableLayout`).
  */
 expect val host: Host
+
+/**
+ * The host a screen should draw itself for, which is [host] unless somebody says otherwise.
+ *
+ * The one caller that says otherwise is the store renderer. `StoreShotsTest` draws the app's own
+ * screens headless at a phone's pixels and a phone's density, which is the whole reason the shots
+ * cannot drift from the app — but the JVM's `actual` is [Host.DESKTOP], so the header drew its
+ * desktop shape into a 411 dp window and the wordmark was pushed off the left of six screenshots
+ * on their way to two stores. Every one of them a valid PNG of a real screen.
+ *
+ * Same seam and same reason as `LocalPacing`: a caller with nobody watching drops the dwells
+ * without the animation code knowing it is being hurried. Nothing else overrides it, and [host]
+ * remains the answer for anything asking which machine this actually *is* — a store rule, a back
+ * gesture, where a payment may be taken.
+ */
+val LocalHost = staticCompositionLocalOf { host }

@@ -1,6 +1,7 @@
 package game.vinto.app
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toComposeImageBitmap
@@ -56,33 +57,52 @@ class StoreShotsTest {
     fun theStoreScreens() {
         if (System.getProperty("vinto.storeShots") != "true") return
 
-        val out = File(OUT_DIR)
-        out.mkdirs()
+        // The scenes `zdymak.config.mjs` names, under its ids and in its captures directories,
+        // because that is how it finds them: a scene's source is `<capturesDir>/<id>.png` and
+        // nothing else. The app reaches each through the same `MarketingScene` handle a device
+        // capture uses (`CaptureHandleTest`), which is what stops these drifting from what a
+        // phone would actually show.
+        SLOTS.forEach { slot ->
+            File(slot.dir).mkdirs()
+            MarketingScene.entries.forEach { scene ->
+                shoot(scene.id, slot) {
+                    // A phone, not the desktop the JVM's own `actual` reports: the header is one
+                    // of three known shapes and picks its shape from the host, so drawing a
+                    // 411 dp window as a desktop gave every control its word and pushed the
+                    // wordmark off the left edge. Tablets are phones here too, which is what the
+                    // enum means by it — the landscape shots label themselves from their shape.
+                    CompositionLocalProvider(LocalHost provides Host.PHONE) {
+                        App(seeds = { MARKETING_SEED }, vault = MemoryVault(), marketing = scene.id)
+                    }
+                }
+            }
 
-        // The five scenes `zdymak.config.mjs` names, in its order, under its ids — so the
-        // captions it writes line up with the pictures it is given. The app reaches each through
-        // the same `MarketingScene` handle a device capture uses (`CaptureHandleTest`), which is
-        // what stops these drifting from what a phone would actually show.
-        MarketingScene.entries.forEachIndexed { i, scene ->
-            shoot("0${i + 1}-${scene.id}", WIDE, HIGH, DENSITY, OUT_DIR) {
-                App(seeds = { MARKETING_SEED }, vault = MemoryVault(), marketing = scene.id)
-            }
-            // The same scenes on an iPad, because the App Store asks for them separately and
-            // `TableLayout.forScreen` has a landscape arrangement written for exactly this shape.
-            // Rendering rather than capturing: a simulator's `score` scene plays a whole round
-            // through MCTS and was still on the shuffling splash after 75 s of settle, so what it
-            // photographed was a splash screen. This is the same code drawing the same state, and
-            // it takes seconds.
-            File(PAD_DIR).mkdirs()
-            shoot("0${i + 1}-${scene.id}", PAD_WIDE, PAD_HIGH, PAD_DENSITY, PAD_DIR) {
-                App(seeds = { MARKETING_SEED }, vault = MemoryVault(), marketing = scene.id)
-            }
+            val written = File(slot.dir).listFiles { f -> f.extension == "png" }.orEmpty()
+            assertTrue(
+                written.size >= EXPECTED,
+                "wrote only ${written.size} shots into ${slot.dir}",
+            )
+            println("${slot.name} -> ${slot.dir} (${written.size} files, ${slot.wide}x${slot.high})")
         }
-
-        val written = out.listFiles { f -> f.extension == "png" }.orEmpty()
-        assertTrue(written.size >= EXPECTED, "wrote only ${written.size} shots into $OUT_DIR")
-        println("store shots -> $OUT_DIR (${written.size} files, ${WIDE}x$HIGH)")
     }
+
+    /**
+     * One store slot's shape: the pixels it takes, and the dp that makes.
+     *
+     * **A slot each, rather than one shot scaled into all of them.** zdymak cover-fits a capture
+     * into its target and anchors the Play sets to the top, which is right for a small difference
+     * of aspect and catastrophic for a large one: a portrait phone capture fitted into the Play
+     * *tablet* slot, which is 16:9 **landscape**, kept its top third — six screenshots of a status
+     * bar, a header and a field of green felt, uploaded and live. The app has a landscape
+     * arrangement for exactly that shape; it simply was never asked for one.
+     */
+    private data class Slot(
+        val name: String,
+        val dir: String,
+        val wide: Int,
+        val high: Int,
+        val density: Float,
+    )
 
     /**
      * One screen, in the light scheme, at store resolution.
@@ -90,15 +110,12 @@ class StoreShotsTest {
      * Light only: a store listing wants one coherent set, and the dark screens are already
      * covered as goldens by [ScreenshotTest]. Swap the flag here if the listing ever wants them.
      */
-    private fun shoot(
-        name: String,
-        wide: Int,
-        high: Int,
-        density: Float,
-        dir: String,
-        content: @Composable () -> Unit,
-    ) {
-        ImageComposeScene(width = wide, height = high, density = Density(density)) {
+    private fun shoot(name: String, slot: Slot, content: @Composable () -> Unit) {
+        ImageComposeScene(
+            width = slot.wide,
+            height = slot.high,
+            density = Density(slot.density),
+        ) {
             VintoTheme(dark = false) { content() }
         }.use { scene ->
             // Fonts and card art arrive asynchronously, so the first frames are missing them.
@@ -109,9 +126,9 @@ class StoreShotsTest {
                 Thread.sleep(WARM_SLEEP_MS)
                 image = scene.render((it + 1) * WARM_STEP_NANOS)
             }
-            stillShuffling(image, name)
+            stillShuffling(image, "${slot.name}/$name")
             val png = image.encodeToData(EncodedImageFormat.PNG) ?: error("$name did not encode")
-            File(dir, "$name.png").writeBytes(png.bytes)
+            File(slot.dir, "$name.png").writeBytes(png.bytes)
         }
     }
 
@@ -161,27 +178,45 @@ class StoreShotsTest {
         /** How much of a shot may be a single colour before it is not a screen at all. */
         const val FLAT_ENOUGH = 0.9
 
-        /** App Store 6.9" — and well over Play's 1080px floor for a phone shot. */
-        const val WIDE = 1290
-        const val HIGH = 2796
-        const val DENSITY = 3f
-
-        const val OUT_DIR = "../marketing/captures/store"
-
-        /** App Store 13" iPad, portrait — the size Apple asks for and the one it scales from. */
-        const val PAD_WIDE = 2064
-        const val PAD_HIGH = 2752
-
         /**
-         * An iPad is @2x, and getting this wrong is not a rounding error.
+         * Every slot the two stores upload, each at its own shape.
          *
-         * At the phone's 3f, 2064x2752 is 688x917 dp — a large phone, so the app laid it out as
-         * one: the tablet card sizes never engaged and the type scale never engaged either, and
-         * the shot went to the store looking like a stretched phone. At 2f it is 1032x1376 dp,
-         * which is what an iPad Pro 13" actually reports.
+         * The directories are `zdymak.config.mjs`'s own `capturesDir`s, so these ARE the
+         * captures — the same files `zdymak capture` would write from a simulator or over adb,
+         * written by the app drawing itself instead. They used to go to a directory of their
+         * own, which nothing read: `zdymak screenshots` went on building the store's media from
+         * whatever a device had last been driven through, and the listings quietly carried a
+         * build that was three weeks old.
          */
-        const val PAD_DENSITY = 2f
-        const val PAD_DIR = "../marketing/captures/store-ipad"
+        val SLOTS = listOf(
+            // App Store 6.9" (iPhone 16 Pro Max), and well over Play's 1080px phone floor.
+            Slot("iphone", "../marketing/captures/ios", 1290, 2796, 3f),
+            /*
+             * App Store 13" iPad, portrait.
+             *
+             * An iPad is @2x, and getting this wrong is not a rounding error. At the phone's 3f,
+             * 2064x2752 is 688x917 dp — a large phone, so the app laid it out as one: the tablet
+             * card sizes never engaged and the type scale never engaged either, and the shot went
+             * to the store looking like a stretched phone. At 2f it is 1032x1376 dp, which is
+             * what an iPad Pro 13" actually reports.
+             */
+            Slot("ipad", "../marketing/captures/ios-ipad", 2064, 2752, 2f),
+            /*
+             * Play phone, 9:16.
+             *
+             * 2.625 rather than 3, which would make 1080x1920 a 360x640 dp screen — shorter than
+             * any phone sold. At 2.625 it is 411x731 dp, which is a Pixel, and a Pixel is what
+             * the hand layout was measured against (`CrowdedTableTest`).
+             */
+            Slot("android", "../marketing/captures/android", 1080, 1920, 2.625f),
+            /*
+             * Play tablet, and it is **landscape** 16:9 — which is why it needs its own render
+             * rather than a crop of the phone's. 2560x1440 at 2f is 1280x720 dp, and the table
+             * turns on its side there the way it does on a real tablet held that way.
+             */
+            Slot("android-tablet", "../marketing/captures/android-tablet", 2560, 1440, 2f),
+        )
+
         const val EXPECTED = 5
 
         /** The same pinned seed `MarketingState` deals from, so a shot is the same shot twice. */

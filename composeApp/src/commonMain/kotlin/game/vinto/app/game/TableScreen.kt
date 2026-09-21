@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.Host
+import game.vinto.app.LocalHost
 import game.vinto.app.Support
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
@@ -109,7 +110,6 @@ import game.vinto.app.art.table_toss_in_summary
 import game.vinto.app.art.table_toss_in_timed
 import game.vinto.app.art.table_tossed
 import game.vinto.app.art.table_you_are_with
-import game.vinto.app.host
 import game.vinto.app.openUrl
 import game.vinto.app.speakerName
 import game.vinto.app.supportOffer
@@ -1013,7 +1013,7 @@ internal fun TableHeader(
      */
     plan: PlanSummary? = null,
     onMove: (Move) -> Unit = {},
-    /** The window's shape. With [host] it is the whole of what decides this header. */
+    /** The window's shape. With [LocalHost] it is the whole of what decides this header. */
     landscape: Boolean = false,
     /**
      * What this header shows, defaulted from the two facts that decide it.
@@ -1022,7 +1022,7 @@ internal fun TableHeader(
      * otherwise be rendered anywhere it can be looked at, and the order of the controls beside it
      * is exactly what `HeaderOrderTest` is for.
      */
-    style: HeaderStyle = headerStyle(host, landscape),
+    style: HeaderStyle = headerStyle(LocalHost.current, landscape),
 ) {
     val settings = stringResource(Res.string.header_settings)
     val leave = stringResource(Res.string.header_leave)
