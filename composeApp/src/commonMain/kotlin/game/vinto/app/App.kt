@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.crash.CrashSurface
 import game.vinto.app.crash.Crashes
+import game.vinto.app.crash.SentryPlatform
 import game.vinto.app.game.GameScreen
 import game.vinto.app.game.RoomScreen
 import game.vinto.app.game.TeachScreen
@@ -482,6 +483,17 @@ expect fun freshSeed(): Long
  * anything real depends on it (storage and clocks will, per design D1).
  */
 expect fun platformName(): String
+
+/**
+ * The same machine, named the way Sentry names machines.
+ *
+ * Separate from [platformName] on purpose, and this is the distinction `Host` already spells
+ * out: that one is a sentence for a person — "Android 34" — and this is a value the receiving
+ * end switches on. Sending the sentence where the value belongs is what left a crash report
+ * filed as `other`, and therefore never run through the Java pipeline that applies an R8
+ * mapping (`ACrashCanBeReadTest`).
+ */
+expect val crashPlatform: SentryPlatform
 
 /**
  * Whether this build is one somebody could be playing, as opposed to one of ours.

@@ -14,3 +14,7 @@ actual fun freshSeed(): Long = kotlin.random.Random.Default.nextLong()
  */
 @OptIn(kotlin.experimental.ExperimentalNativeApi::class)
 actual fun isReleaseBuild(): Boolean = !kotlin.native.Platform.isDebugBinary
+
+/** Kotlin/Native on Apple: `cocoa` is the platform a dSYM is read under. */
+actual val crashPlatform: game.vinto.app.crash.SentryPlatform =
+    game.vinto.app.crash.SentryPlatform.COCOA

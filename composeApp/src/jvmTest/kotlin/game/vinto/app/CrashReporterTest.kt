@@ -2,6 +2,7 @@ package game.vinto.app
 
 import game.vinto.app.crash.CrashReporter
 import game.vinto.app.crash.CrashSurface
+import game.vinto.app.crash.SentryPlatform
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,7 +41,7 @@ class CrashReporterTest {
         },
     ) = CrashReporter(
         dsn = dsn,
-        platform = "java",
+        platform = SentryPlatform.JAVA, dist = "0", os = "JVM 17",
         release = "vinto@0.1.0",
         environment = "production",
         scope = scope,

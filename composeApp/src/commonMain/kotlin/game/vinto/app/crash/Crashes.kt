@@ -1,7 +1,9 @@
 package game.vinto.app.crash
 
+import game.vinto.app.BUILD_NUMBER
 import game.vinto.app.SENTRY_DSN
 import game.vinto.app.VERSION
+import game.vinto.app.crashPlatform
 import game.vinto.app.elapsedMs
 import game.vinto.app.net.postBeacon
 import game.vinto.app.nowIso
@@ -63,8 +65,10 @@ object Crashes {
 
         val crashes = CrashReporter(
             dsn = dsn,
-            platform = platformName(),
+            platform = crashPlatform,
             release = "vinto@$VERSION",
+            dist = BUILD_NUMBER,
+            os = platformName(),
             environment = sentryEnvironment(),
             scope = scope,
             now = ::elapsedMs,

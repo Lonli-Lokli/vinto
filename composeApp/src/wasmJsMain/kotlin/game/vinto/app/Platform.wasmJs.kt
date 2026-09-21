@@ -13,3 +13,7 @@ actual fun freshSeed(): Long = kotlin.random.Random.Default.nextLong()
  * preview deployment and a file opened off disk are all somewhere else, and all ours.
  */
 actual fun isReleaseBuild(): Boolean = window.location.hostname.equals(INVITE_HOST, ignoreCase = true)
+
+/** The browser. Wasm frames arrive through the same JS error shapes Sentry reads. */
+actual val crashPlatform: game.vinto.app.crash.SentryPlatform =
+    game.vinto.app.crash.SentryPlatform.JAVASCRIPT

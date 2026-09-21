@@ -13,3 +13,7 @@ actual fun freshSeed(): Long = java.security.SecureRandom().nextLong()
  * this same target is what the Compose suites run on — so every crash it can produce is ours.
  */
 actual fun isReleaseBuild(): Boolean = false
+
+/** The desktop app, on the same JVM stacks Android files. */
+actual val crashPlatform: game.vinto.app.crash.SentryPlatform =
+    game.vinto.app.crash.SentryPlatform.JAVA

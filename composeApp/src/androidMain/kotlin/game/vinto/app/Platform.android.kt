@@ -27,3 +27,7 @@ actual fun isReleaseBuild(): Boolean {
     val info = AndroidStorage.context?.applicationInfo ?: return false
     return info.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0
 }
+
+/** Android is a JVM to Sentry, and `java` is the word that gets the R8 mapping applied. */
+actual val crashPlatform: game.vinto.app.crash.SentryPlatform =
+    game.vinto.app.crash.SentryPlatform.JAVA

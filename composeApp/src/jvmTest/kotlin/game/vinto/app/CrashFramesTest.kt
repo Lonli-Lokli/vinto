@@ -2,6 +2,7 @@ package game.vinto.app
 
 import game.vinto.app.crash.CrashReport
 import game.vinto.app.crash.CrashSurface
+import game.vinto.app.crash.SentryPlatform
 import game.vinto.app.crash.crashEnvelope
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -47,7 +48,11 @@ class CrashFramesTest {
     fun aJvmFrameCarriesItsFileAndLine() {
         val body = envelopeWith("at game.vinto.app.game.Verdict.invoke(Standings.kt:171)")
 
-        assertTrue(body.contains(""""function":"game.vinto.app.game.Verdict.invoke""""), body)
+        // Split at the last dot: `module` is what an R8 mapping is keyed on, and this test used
+        // to assert the whole name in `function` — which is the shape that shipped, and the
+        // reason a minified stack stayed `ol0.d` with its mapping uploaded and named.
+        assertTrue(body.contains(""""module":"game.vinto.app.game.Verdict""""), body)
+        assertTrue(body.contains(""""function":"invoke""""), body)
         assertTrue(body.contains(""""filename":"Standings.kt""""), body)
         assertTrue(body.contains(""""lineno":171"""), body)
     }
@@ -57,7 +62,8 @@ class CrashFramesTest {
     fun aJvmFrameWithoutALineStillCarriesItsFunction() {
         val body = envelopeWith("at game.vinto.app.Foo.bar(Unknown Source)")
 
-        assertTrue(body.contains(""""function":"game.vinto.app.Foo.bar""""), body)
+        assertTrue(body.contains(""""module":"game.vinto.app.Foo""""), body)
+        assertTrue(body.contains(""""function":"bar""""), body)
         assertFalse(body.contains(""""lineno""""), "invented a line number: $body")
     }
 
@@ -181,8 +187,10 @@ class CrashFramesTest {
         eventId = "e1",
         sentAtIso = "2026-09-04T00:00:00Z",
         timestampSeconds = 1.0,
-        platform = "Android 36",
+        platform = SentryPlatform.JAVA,
         release = "vinto@1.0",
+        dist = "609",
+        os = "Android 36",
         environment = "production",
         surface = CrashSurface.MENU,
         type = "IllegalStateException",
@@ -196,8 +204,10 @@ class CrashFramesTest {
             eventId = "e1",
             sentAtIso = "2026-09-04T00:00:00Z",
             timestampSeconds = 1.0,
-            platform = "iOS 26.5",
+            platform = SentryPlatform.COCOA,
             release = "vinto@1.0",
+            dist = "609",
+            os = "iOS 26.5",
             environment = "production",
             surface = CrashSurface.MENU,
             type = "NoWhenBranchMatchedException",

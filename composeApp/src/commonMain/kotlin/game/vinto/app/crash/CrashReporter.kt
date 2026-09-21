@@ -48,8 +48,12 @@ expect fun awaitCrashReport(job: Job?)
  */
 class CrashReporter(
     dsn: String?,
-    private val platform: String,
+    private val platform: SentryPlatform,
     private val release: String,
+    /** Which build of [release] — the commit count, so two builds of `1.0` are tellable apart. */
+    private val dist: String,
+    /** The machine in words, carried as a tag because [platform] is not for reading. */
+    private val os: String,
     private val environment: String,
     private val scope: CoroutineScope,
     private val now: () -> Long,
@@ -93,6 +97,8 @@ class CrashReporter(
                 timestampSeconds = now() / MILLIS_PER_SECOND,
                 platform = platform,
                 release = release,
+                dist = dist,
+                os = os,
                 environment = environment,
                 surface = surface(),
                 type = error::class.simpleName ?: "Throwable",

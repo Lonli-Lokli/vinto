@@ -110,12 +110,45 @@ data class CrashPlace(
  * There is **no `user` object and no device id**, ever. Vinto has no accounts, a seat is not
  * a person, and a crash report is the pipe that quietly grows one if nobody says otherwise.
  */
+
+/**
+ * The platform identifiers Sentry actually knows, as a type rather than a string.
+ *
+ * Sentry's `platform` is a fixed vocabulary and it is not decoration: it is what selects the
+ * processing an event gets, and applying an R8 mapping or a dSYM is part of that processing.
+ * Anything outside the vocabulary is filed as `other`, which is accepted, indexed, and never
+ * symbolicated — so a wrong value here is invisible until somebody opens a report and finds
+ * `ol0.d` where a stack should be. Which is how it was found.
+ *
+ * An enum because the old field was a `String` holding `platformName()`, a sentence written for
+ * a person to read. A new target now has to pick one of these to compile.
+ */
+enum class SentryPlatform(val id: String) {
+    /** Android and the desktop JVM. The word that gets an R8 mapping applied. */
+    JAVA("java"),
+
+    /** Kotlin/Native on Apple: the platform a dSYM is read under. */
+    COCOA("cocoa"),
+
+    /** The browser, Wasm included — the frames arrive through the same JS error shapes. */
+    JAVASCRIPT("javascript"),
+}
+
 data class CrashReport(
     val eventId: String,
     val sentAtIso: String,
     val timestampSeconds: Double,
-    val platform: String,
+    val platform: SentryPlatform,
     val release: String,
+    /**
+     * Which build of [release] this is — the commit count, the same number the stores take.
+     *
+     * The marketing version is `1.0` and will be for a long time, so without this every report
+     * ever filed belongs to one release and no report can be told from one three weeks older.
+     */
+    val dist: String,
+    /** The machine in words — "Android 34", "iOS 26.5" — for a person, as a tag. */
+    val os: String,
     val environment: String,
     val surface: CrashSurface,
     val type: String,
@@ -135,11 +168,13 @@ data class CrashReport(
 fun crashEnvelope(report: CrashReport): String = with(report) {
     val body = buildString {
         append("""{"event_id":"""").append(eventId).append("""","timestamp":""").append(timestampSeconds)
-        append(""","platform":"""").append(platform).append('"')
+        append(""","platform":"""").append(platform.id).append('"')
         append(""","level":"error","logger":"vinto-app"""")
         append(""","release":"""").append(release).append('"')
+        append(""","dist":"""").append(dist).append('"')
         append(""","environment":"""").append(environment).append('"')
-        append(""","tags":{"surface":"""").append(surface.name).append(""""}""")
+        append(""","tags":{"surface":"""").append(surface.name)
+        append("""","os":""").append(json(os)).append('}')
         // Omitted entirely when there is nothing to say, rather than sent as three nulls: an
         // `extra` block that is always present teaches a reader to skim past it.
         if (!place.isEmpty) {
@@ -193,8 +228,14 @@ fun crashEnvelope(report: CrashReport): String = with(report) {
 private fun StringBuilder.appendFrame(frame: CrashFrame) {
     append('{')
     when (frame) {
+        // **Split at the last dot**, because that is how Sentry keys a mapping: `module` is the
+        // class and `function` is the method, and an R8 mapping rewrites both. The whole name
+        // used to go out as `function` with no `module`, so there was nothing for an uploaded
+        // mapping to match and a release stack stayed `ol0.d` however well the upload had gone.
         is CrashFrame.Jvm -> {
-            append(FUNCTION_KEY).append(json(frame.function))
+            val module = frame.function.substringBeforeLast('.', missingDelimiterValue = "")
+            if (module.isNotEmpty()) append(""""module":""").append(json(module)).append(',')
+            append(FUNCTION_KEY).append(json(frame.function.substringAfterLast('.')))
             append(""","filename":""").append(json(frame.file))
             frame.line?.let { append(""","lineno":""").append(it) }
         }
