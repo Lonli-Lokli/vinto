@@ -1636,15 +1636,7 @@ private fun tossInTable(view: PlayerView): Table? {
             val done = GameAction.PlayerTossInFinished(PlayerIdPayload(me))
             add(Choice(Label.Continue, Move.Send(done), Tone.PLAY))
 
-            // Vinto is declared at the *end* of your own turn, which is this window and not
-            // the one before you drew. The engine tolerates an early call, but taking it up
-            // leaves you still owing the turn you just declared the end of — so the button
-            // belongs where the rules put it, and where the web app puts it too.
-            val mine = view.players.getOrNull(toss.originalPlayerIndex)?.id == me
-            if (mine && view.vintoCallerId == null) {
-                val call = GameAction.CallVinto(PlayerIdPayload(me))
-                add(Choice(Label.CallVinto, Move.Send(call), Tone.STAKES))
-            }
+            addAll(vintoChoice(view, toss, me))
         },
     )
 }
@@ -1659,10 +1651,31 @@ private fun tossInTable(view: PlayerView): Table? {
  */
 private fun vintoChoice(view: PlayerView, toss: ActiveTossIn, me: String): List<Choice> {
     val mine = view.players.getOrNull(toss.originalPlayerIndex)?.id == me
-    if (!mine || view.vintoCallerId != null) return emptyList()
+    if (!mine || view.vintoCallerId != null || view.owesAThrow(me)) return emptyList()
 
     val call = GameAction.CallVinto(PlayerIdPayload(me))
     return listOf(Choice(Label.CallVinto, Move.Send(call), Tone.STAKES))
+}
+
+/**
+ * Whether this seat has thrown a card into the window that has not played yet.
+ *
+ * The same question `ActionValidator.requireOwnThrowsSpent` asks, because the answer has to be
+ * the same: a card you threw in is owed its action, a turn with an action owed is not over, and
+ * Vinto is declared at the end of a turn. The engine learnt that rule and this did not, so the
+ * button stayed on the screen and the tap did nothing — reported by the app itself, as
+ * `MOVE_REFUSED in SOLO`, which is the only way anybody ever hears about a refusal.
+ *
+ * Mirrored rather than asked, because the validator judges a `GameState` and a screen only ever
+ * has a `PlayerView`. `NothingOnOfferIsRefusedTest` is what stops the two drifting again: it runs
+ * every choice this file offers through the validator that will judge it.
+ */
+private fun PlayerView.owesAThrow(me: String): Boolean {
+    val queued = activeTossIn?.queuedActions.orEmpty()
+    if (queued.isEmpty()) return false
+    // A throw that is *being* played is still at the head of the queue, so the first test
+    // covers it — but a seat can also be mid-action with somebody else's throw behind it.
+    return queued.any { it.playerId == me } || pendingAction?.playerId == me
 }
 
 // ---------------------------------------------------------------------------- endings
