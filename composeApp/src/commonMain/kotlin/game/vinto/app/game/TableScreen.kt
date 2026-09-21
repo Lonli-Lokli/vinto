@@ -1301,7 +1301,11 @@ private fun TopSeat(
         horizontalArrangement = Arrangement.spacedBy(Gap, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Hand(seat, view, table, sizes.theirs, onMove, Modifier.weight(1f, fill = false))
+        // `fill = true`: the hand takes the whole width left to it whether or not its cards
+        // need it. With `fill = false` the hand shrank the moment it wrapped — seven cards on
+        // two rows are four cards wide, not six — and since the row is centred, the plate slid
+        // inwards with it. Reported from a phone as the avatars jumping to the centre.
+        Hand(seat, view, table, sizes.theirs, onMove, Modifier.weight(1f))
         Plate(seat, view, table, sizes, onMove)
     }
 }
@@ -1400,8 +1404,27 @@ private fun SideSeat(
         // table. It is not only decoration: turned, a card is wider than it is tall, so five
         // of them stack down the edge in the height a phone actually has, and the seat reads
         // as facing inwards rather than as a second copy of your own hand.
-        HandLine(vertical = true, modifier = Modifier.weight(1f, fill = false)) {
-            Cards(seat, view, table, sizes.side, onMove, turned = true)
+        //
+        // **And it wraps, like the hands above and below.** It used to overlap instead, on the
+        // grounds that a side seat's cards are counted rather than read and the felt's width is
+        // scarce. What that cost was visible the moment a hand grew: the overlap is floored at
+        // [MIN_SHOWING], so past about seven the column has a minimum length the seat does not
+        // have and it simply ran over its own plate — the name drawn through by cards. A second
+        // column costs width once; a column that overruns costs the plate every time.
+        // Crowded by the **count** rather than by measuring the room, which is the one thing a
+        // side seat cannot do without a `BoxWithConstraints` around its cards — and that box
+        // moves the geometry a lifted card is measured against, which `QueenAimTest` catches:
+        // the Queen's two cards stopped reading as having left their slots at all. The count is
+        // the honest question anyway. Five is the deal; more than five is a hand that has
+        // outgrown the edge it lies along.
+        // Both of these turn on the same fact, and only on it: a hand of more than the dealt
+        // five has outgrown the edge it lies along. The dealt five keeps the single column it
+        // has always had — it is what a seat opposite looks like, and wrapping it would put two
+        // short columns where every table has one.
+        val crowded = seat.cards.size > DEALT_ROW
+        val drawn = if (crowded) sizes.side.crowded() else sizes.side
+        HandLine(vertical = true, wrap = crowded, modifier = Modifier.weight(1f, fill = false)) {
+            Cards(seat, view, table, drawn, onMove, turned = true)
         }
 
         if (!plateFirst) Plate(seat, view, table, sizes, onMove)
@@ -1438,13 +1461,15 @@ private fun NearSeat(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Plate(seat, view, table, sizes, onMove)
+            // Filled, for the reason [TopSeat] gives: a hand that shrinks when it wraps drags
+            // the plate beside it out of place.
             Hand(
                 seat,
                 view,
                 table,
                 if (mine) sizes.mine else sizes.theirs,
                 onMove,
-                Modifier.weight(1f, fill = false),
+                Modifier.weight(1f),
             )
         }
     }
@@ -1479,7 +1504,7 @@ private fun Hand(
     onMove: (Move) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(modifier = modifier) {
+    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
         // The footprint, not the picture: `CardFace` reserves [TapTarget] whatever it draws,
         // so a hand of nine 44dp boxes needs 44dp nine times over however small the art is.
         val fits = fits(seat.cards.size, scale, maxWidth)
@@ -1494,7 +1519,9 @@ private fun Hand(
 /** Whether [count] cards at [scale] stand side by side in [room] without touching. */
 private fun fits(count: Int, scale: CardScale, room: Dp): Boolean {
     if (count <= 1) return true
-    val step = maxOf(scale.width, TapTarget)
+    // The scale's own floor, not [TapTarget]: a crowded hand reserves [CrowdedTap], and
+    // measuring it against the larger number is what made shrinking buy no room at all.
+    val step = maxOf(scale.width, scale.floor)
     return step * count + Tight * (count - 1) <= room
 }
 
@@ -1599,13 +1626,23 @@ private fun HandLine(
 
         // How many go on a line, and how many lines that makes. Evened out afterwards so the
         // last line is never left holding one card.
-        val lines = if (loose || !wrap) {
-            1
-        } else {
-            val perLine = ((room + gap) / (card + gap)).coerceAtLeast(1)
-            (cards.size + perLine - 1) / perLine
-        }
-        val perLine = (cards.size + lines - 1) / lines
+        val fitting = ((room + gap) / (card + gap)).coerceAtLeast(1)
+        val lines = if (loose || !wrap) 1 else (cards.size + fitting - 1) / fitting
+
+        // Lines are **filled**, not evened. Splitting the cards equally across the lines is
+        // tidier on paper and wastes the room it was given: nine cards in a line with space for
+        // eight came out five above four, a clump down the middle of a seat with a third of its
+        // width left green either side. Reported from a phone as exactly that.
+        //
+        // The one case worth rebalancing is a last line holding a single card, which reads as a
+        // mistake rather than as a wrap — so that line borrows one from the line above. And no
+        // line goes below a dealt hand's five while five would fit: a row narrower than the hand
+        // everybody starts with reads as the layout having given up.
+        val perLine = when {
+            lines <= 1 -> cards.size
+            cards.size % fitting == 1 -> fitting - 1
+            else -> fitting
+        }.coerceAtLeast(minOf(fitting, DEALT_ROW))
 
         val pitch = when {
             cards.size == 1 -> 0
@@ -1634,6 +1671,9 @@ private fun HandLine(
 
 /** How much of a card stays out from under the next one when a hand runs out of room. */
 private const val MIN_SHOWING = 0.55f
+
+/** The deal, and so the narrowest a wrapped line may be. See [HandLine]. */
+private const val DEALT_ROW = 5
 
 /**
  * Whether the table is being held up by this seat.

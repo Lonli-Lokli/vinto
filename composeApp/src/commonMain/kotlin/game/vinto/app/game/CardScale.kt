@@ -8,11 +8,29 @@ import androidx.compose.ui.unit.dp
  *
  * WCAG 2.2 AAA (SC 2.5.5), Apple's 44pt and Material's 48dp all land here or below it, and a
  * card game is played by tapping small things quickly. `CardFace` reserves this much footprint
- * even for a card drawn smaller, and `TouchTargetTest` measures it — so it is also the floor
- * the hand layout has to plan around: shrinking the picture past it buys no room at all, which
- * is why a crowded hand wraps rather than shrinking further.
+ * even for a card drawn smaller, and `TouchTargetTest` measures it.
+ *
+ * A hand that has run out of room is the one case that does not get it — see [CrowdedTap].
  */
 val TapTarget: Dp = 44.dp
+
+/**
+ * The floor for a hand that has run out of room and wrapped.
+ *
+ * WCAG 2.2 asks **24x24 at AA** (SC 2.5.8) and 44x44 at AAA (SC 2.5.5). Ordinary play is held
+ * to the AAA number and stays there; this is the exception, and it is a deliberate one.
+ *
+ * Holding every card to 44dp meant a crowded hand could not shrink at all: the picture was
+ * already smaller than the box — a seat opposite draws its cards at 36dp inside a 44dp
+ * footprint — so `crowded()` had nothing left to take. Two rows of full-size boxes is a seat
+ * half again as tall, and on a phone that height comes out of the felt the side seats are
+ * standing in. Reported from a phone as cards that should get smaller and did not.
+ *
+ * 32dp is a third above the AA minimum and still larger than Material's own dense target. It
+ * applies **only** while a hand is wrapped, which is the moment there is more to hit than room
+ * to hit it in, and `TouchTargetTest` knows about it by name rather than by a relaxed number.
+ */
+val CrowdedTap: Dp = 32.dp
 
 /**
  * The corner every card in the deck draws for itself, as a fraction of its width.
@@ -31,7 +49,19 @@ val TapTarget: Dp = 44.dp
 const val ART_CORNER: Float = 44f / 825f
 
 /** How large one card is drawn. */
-data class CardScale(val width: Dp, val height: Dp) {
+data class CardScale(
+    val width: Dp,
+    val height: Dp,
+    /**
+     * The footprint this card reserves however small its picture is: [TapTarget] ordinarily,
+     * and [CrowdedTap] once the hand has had to give way.
+     *
+     * Carried on the scale rather than passed beside it, because every place that knows how
+     * large a card is drawn also has to know how much room it takes — and the two going
+     * separate ways is how a crowded hand ended up with small pictures in full-size boxes.
+     */
+    val floor: Dp = TapTarget,
+) {
 
     /** The radius this card's own art rounds its corners to. See [ART_CORNER]. */
     val corner: Dp get() = width * ART_CORNER
@@ -47,7 +77,11 @@ data class CardScale(val width: Dp, val height: Dp) {
      * a card.
      */
     fun crowded(): CardScale =
-        if (width <= TapTarget) this else CardScale(TapTarget, height * (TapTarget / width))
+        if (width <= CrowdedTap) {
+            copy(floor = CrowdedTap)
+        } else {
+            CardScale(CrowdedTap, height * (CrowdedTap / width), floor = CrowdedTap)
+        }
 }
 
 /**

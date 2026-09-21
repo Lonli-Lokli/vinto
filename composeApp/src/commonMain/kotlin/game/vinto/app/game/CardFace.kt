@@ -182,8 +182,8 @@ fun CardFace(
             // size whether or not the card can be tapped at this moment — a card that grew
             // by four points when it became touchable would nudge the whole line.
             .size(
-                width = maxOf(scale.footprintWidth(state.turned), TapTarget),
-                height = maxOf(scale.footprintHeight(state.turned), TapTarget),
+                width = maxOf(scale.footprintWidth(state.turned), scale.floor),
+                height = maxOf(scale.footprintHeight(state.turned), scale.floor),
             )
             // The tap goes on the *footprint*, not on the picture. A card smaller than a
             // thumb reserves the space either way — see the size above — and hanging the
@@ -436,8 +436,8 @@ fun EmptySlot(
     // whose whole subject is cards reads as three cards of the wrong size.
     Box(
         modifier = modifier.size(
-            width = maxOf(scale.footprintWidth(turned), TapTarget),
-            height = maxOf(scale.footprintHeight(turned), TapTarget),
+            width = maxOf(scale.footprintWidth(turned), scale.floor),
+            height = maxOf(scale.footprintHeight(turned), scale.floor),
         ),
         contentAlignment = Alignment.Center,
     ) {

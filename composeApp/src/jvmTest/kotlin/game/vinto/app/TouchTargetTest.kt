@@ -54,6 +54,14 @@ import kotlin.test.assertTrue
  * small things quickly and the difference between 24 and 44 is the difference between playing
  * and aiming.
  *
+ * **One exception, and it is deliberate: `CrowdedTap`.** A hand that has outgrown its edge and
+ * wrapped draws its cards at 32dp — a third above the AA minimum, below the AAA one — because
+ * holding every card to 44dp meant a crowded hand could not shrink at all and two rows of
+ * full-size boxes take the height out of the felt the side seats stand in. Nothing here renders
+ * a crowded hand: these cases are the dealt five. A case that did would fail, and correctly so
+ * — it would be asking this test a question it does not answer. The size that applies is on the
+ * scale (`CardScale.floor`), not on the caller.
+ *
  * It reads the sizes out of the composition rather than trusting the modifiers, which is how
  * it caught the fourteen rank chips: a `heightIn` had been set and no `widthIn`, so a chip
  * offering "2" was 44dp tall and 27dp wide — legal at AA, and far too small to hit while
