@@ -21,6 +21,14 @@ import game.vinto.shapes.Difficulty as EngineDifficulty
  * The default counts nothing. A screen rendered in a test, a preview or a golden therefore
  * emits nothing without anybody remembering to switch it off — which is the right default for
  * a thing whose failure mode is sending data nobody asked to send.
+ *
+ * **Which means the app has to say otherwise, and for a long time it did not.** `App` built the
+ * sink, wrapped it as `count`, and then provided it nowhere: every screen read the default and
+ * not one client event ever left a device. Consent, the batch, the transport, the allow-list at
+ * `/e`, `writeDataPoint` and the dashboard's own config were all correct and all tested, and
+ * every one of them worked perfectly on nothing at all — so the dashboard read *"Nothing in this
+ * period"* on a phone that had played a great many rounds. Held by `TheAppActuallyCountsTest`,
+ * which lets the app send to something that records and asks whether anything arrived.
  */
 val LocalCounting = staticCompositionLocalOf { NoCounting }
 

@@ -149,7 +149,6 @@ fun App(
     val appScope = rememberCoroutineScope { Crashes.handler() }
 
     val sink = rememberSink(appScope)
-    val count = counting ?: remember(sink) { counting(sink) }
     ReportCrashes()
 
     fun enterRoom(code: String, nickname: String): Screen =
@@ -198,6 +197,10 @@ fun App(
                     LocalReducedMotion provides settings.motion.reduced(systemPrefersReducedMotion()),
                     LocalSounds provides rememberSounds(settings.sound),
                     LocalReachability provides reachability,
+                    // The line without which nothing is ever counted; see [LocalCounting]. Built
+                    // at its point of use, because the version that went missing was a `val` a
+                    // hundred lines up that nothing read, and a compiler will not say so.
+                    LocalCounting provides (counting ?: counting(sink)),
                 ) {
                     // Every phone has something drawn over its edges — a status bar, a gesture handle, a
                     // camera cut-out. The table is a fixed arrangement of cards rather than a scrolling
