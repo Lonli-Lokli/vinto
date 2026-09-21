@@ -1408,15 +1408,37 @@ private fun SideSeat(
     // below on the right, so the seat with its plate first is the left one.
     val onTheLeft = plateFirst
 
+    // The share this seat was given, and the seat itself inside it. The two are separate on
+    // purpose: the share has to reach `HandLine`, which caps its lines by the width it is told
+    // it has — but the caller's edge belongs round the **seat**, and drawn on the share it
+    // enclosed a rectangle of empty felt beside a hand of two cards.
+    Box(
+        modifier = modifier,
+        contentAlignment = if (onTheLeft) Alignment.CenterStart else Alignment.CenterEnd,
+    ) {
+        SideColumn(seat, view, table, sizes, onTheLeft, onMove)
+    }
+}
+
+/** The seat itself: its plate and its turned hand, inside the caller's edge if it called. */
+@Composable
+private fun SideColumn(
+    seat: PlayerSeatView,
+    view: PlayerView,
+    table: Table,
+    sizes: TableSizes,
+    onTheLeft: Boolean,
+    onMove: (Move) -> Unit,
+) {
     Column(
-        modifier = modifier.ringed(seat, view),
-        // Against its own rim rather than centred. Centred, the plate floated inward as soon as
-        // the cards beside it took more width than it did, which is the drift reported for the
-        // avatars — and it spent felt the side seats have least of.
+        modifier = Modifier.ringed(seat, view),
+        // Against its own rim rather than centred. Centred, the plate floated inward as
+        // soon as the cards beside it took more width than it did, which is the drift
+        // reported for the avatars — and it spent felt the side seats have least of.
         horizontalAlignment = if (onTheLeft) Alignment.Start else Alignment.End,
         verticalArrangement = Arrangement.spacedBy(Tight),
     ) {
-        if (plateFirst) Plate(seat, view, table, sizes, onMove)
+        if (onTheLeft) Plate(seat, view, table, sizes, onMove)
 
         // A quarter turn, the way cards lie in front of somebody sitting at the side of a
         // table. It is not only decoration: turned, a card is wider than it is tall, so five
@@ -1453,7 +1475,7 @@ private fun SideSeat(
             Cards(seat, view, table, drawn, onMove, turned = true)
         }
 
-        if (!plateFirst) Plate(seat, view, table, sizes, onMove)
+        if (!onTheLeft) Plate(seat, view, table, sizes, onMove)
     }
 }
 
