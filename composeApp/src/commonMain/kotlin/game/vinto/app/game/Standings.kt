@@ -52,6 +52,7 @@ import game.vinto.client.RoundResult
 import game.vinto.client.bestCoalitionHands
 import game.vinto.client.outcomeOf
 import game.vinto.client.totals
+import game.vinto.engine.STARTING_POINTS
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -79,8 +80,11 @@ fun StandingsSheet(
     onNextRound: () -> Unit,
     onQuit: () -> Unit,
 ) {
+    // A seat with nothing filed yet is on the start, not on nothing: the game this sheet
+    // summarises counts from STARTING_POINTS, and a first sheet that counted from zero read four
+    // below the second one.
     val after = (standings.keys + result.points.keys).associateWith { id ->
-        (standings[id] ?: 0) + (result.points[id] ?: 0)
+        (standings[id] ?: STARTING_POINTS) + (result.points[id] ?: 0)
     }
 
     VintoSheet(open = open, onDismiss = onNextRound) {

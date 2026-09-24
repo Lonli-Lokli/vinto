@@ -100,6 +100,7 @@ import game.vinto.client.Pace
 import game.vinto.client.RemoteGameSession
 import game.vinto.client.RemoteRoom
 import game.vinto.client.RoundResult
+import game.vinto.client.gameTotals
 import game.vinto.client.lobbyUi
 import game.vinto.client.roundPoints
 import game.vinto.engine.PlayerView
@@ -734,10 +735,7 @@ private fun RemoteGameScreen(
                 points = roundPoints(scores, view.vintoCallerId),
                 seats = view.players.map { it.id to it.nickname },
             ),
-            standings = earlier
-                .flatMap { it.points.entries }
-                .groupBy({ it.key }, { it.value })
-                .mapValues { (_, values) -> values.sum() },
+            standings = gameTotals(earlier.map { it.points }),
             onNextRound = {
                 scoreOpen = false
                 agreed = true

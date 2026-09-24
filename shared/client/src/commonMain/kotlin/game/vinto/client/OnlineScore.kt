@@ -1,5 +1,7 @@
 package game.vinto.client
 
+import game.vinto.engine.STARTING_POINTS
+
 /**
  * What the round paid, derived from public facts alone.
  *
@@ -33,6 +35,17 @@ fun roundPoints(scores: Map<String, Int>, callerId: String?): Map<String, Int> {
         }
     }
 }
+
+/**
+ * Where an online game stands after [rounds]: what each seat started on plus what every filed
+ * round paid it — the same sum `RoomCore` files, so the score sheet cannot read four below the
+ * room. Empty until a round has been filed, which the sheet reads as "everybody on the start".
+ */
+fun gameTotals(rounds: List<Map<String, Int>>): Map<String, Int> =
+    rounds
+        .flatMap { it.entries }
+        .groupBy({ it.key }, { it.value })
+        .mapValues { (_, values) -> STARTING_POINTS + values.sum() }
 
 private const val CALLER_WIN = 3
 

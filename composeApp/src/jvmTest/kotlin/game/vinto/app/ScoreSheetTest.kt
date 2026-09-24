@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
@@ -95,6 +97,21 @@ class ScoreSheetTest {
 
         onNodeWithText("Nobody called").assertIsDisplayed()
         onNodeWithText("Every hand counted, nothing paid").assertIsDisplayed()
+    }
+
+    /**
+     * Everybody starts a session on four, so the first sheet's game column is four plus the
+     * round — 7 for a caller who held, 3 for the others. It read 3 and −1: the sheet counted
+     * from nothing while the game it summarised counted from four, and the next round's sheet
+     * jumped every total by four with nothing on the table to explain it.
+     */
+    @Test
+    fun theFirstRoundCountsFromTheFourEverybodyStartsOn() = runComposeUiTest {
+        sheetFor(mapOf("p1" to 6, "p2" to 20, "p3" to 15, "p4" to 30), caller = "p1")
+
+        onNodeWithText("7").assertIsDisplayed()
+        onAllNodesWithText("-1").assertCountEquals(3)
+        onAllNodesWithText("3").assertCountEquals(3)
     }
 
     /** The round number survives: it is no longer the headline, and it is still needed. */
