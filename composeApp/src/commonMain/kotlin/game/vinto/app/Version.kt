@@ -12,4 +12,4 @@ package game.vinto.app
  * release. The build number is a separate, machine-monotonic thing that never appears here and
  * is never hand-edited; VERSIONING.md says which is which and why they are decoupled.
  */
-const val VERSION = "1.0"
+const val VERSION = "1.1"
