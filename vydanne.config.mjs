@@ -278,7 +278,7 @@ export default {
    * here: that app ships its own end-to-end encryption, which is the only reason it needs the
    * self-classification report. The team id is the studio's, the same one Palon files under.
    */
-  export: { encryption: 'exempt', appName: 'Vinto', version: '1.0', teamId: 'JNHFD8PCM8' },
+  export: { encryption: 'exempt', appName: 'Vinto', version: '1.1', teamId: 'JNHFD8PCM8' },
 
   // The signed .ipa for `npm run store:prerelease`; a directory takes its newest, matching how
   // google.aab works. The build number comes from the archive's own CFBundleVersion, so
