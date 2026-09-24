@@ -1,0 +1,13 @@
+Squid Game Style Beat (Choir x Vocal, Dark) — shifumi
+Pixabay track 288548 (file: squid-game-style-beat-choir-x-vocal-dark-shifumi-288548.mp3)
+
+Pixabay Content License. Commercial use permitted, no attribution required.
+Downloaded 2026-09-25.
+
+Used as the audio bed on the App Store Preview only (`zdymak.config.mjs` → the
+`appstore-preview` reel's `music`, from 17s in so the beat lands on the first cut).
+
+The Play promo cut stays SILENT on purpose: it is hosted on YouTube, and Content ID
+routinely claims Pixabay tracks regardless of the licence.
+
+This file exists because provenance outlives memory.

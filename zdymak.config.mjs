@@ -203,7 +203,21 @@ export default {
       sceneDur: 5.2, // 5 beats ≈ 26s: past Apple’s floor with room, and under its ceiling
       transition: 'dissolve',
       theme: { bleed: true, frame: false },
-      music: { path: './marketing/music/bed.mp3', volume: 0.75, fadeIn: 0.8, fadeOut: 1.5 },
+      // "Squid Game Style Beat (Choir x Vocal, Dark)" by shifumi, from Pixabay under the Pixabay
+      // Content License (commercial use, no attribution required) — provenance in
+      // licenses/pixabay-dark-beat-choir.txt, because "where did this audio come from" is asked
+      // years later when nobody remembers. It replaced an untagged `bed.mp3` nobody could source.
+      //
+      // `offset: 17`: the track builds for 19s, drops to near-silence for two and a half, and the
+      // beat lands at 22.0s. Starting at 17 puts that hit at 5.0s — the cut from the front door
+      // into the first live footage — instead of spending the whole reel on the intro.
+      music: {
+        path: './marketing/music/dark-beat-choir-288548.mp3',
+        offset: 17,
+        volume: 0.75,
+        fadeIn: 0.8,
+        fadeOut: 1.5,
+      },
       // A film with a shape, in five beats: the front door, a round the bots play out, the
       // final round with the coalition's board open, what it came to, and the way to a table
       // with friends on it. The two stills are deliberate bookends — zdymak gives an `image`
