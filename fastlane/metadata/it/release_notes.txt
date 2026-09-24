@@ -1,9 +1,13 @@
-Prima versione di Vinto.
+Il round finale si può giocare in squadra. Quando qualcuno chiama Vinto, i tre avversari possono leggere le carte che hanno visto e costruire insieme un piano — una frase a turno, solo su carte che qualcuno ha davvero visto. È una chiacchierata al tavolo, non un ordine: chi ha il turno gioca comunque le proprie carte come preferisce.
 
-Cinque carte, due che hai visto, e tre avversari che stanno calcolando le loro nello stesso momento. Dichiara Vinto quando pensi di avere il punteggio più basso — se hai ragione, ci guadagni; se sbagli, lo paghi.
+I tuoi avversari hanno un nome — Gale, Ember, Tide e Dune restano ai loro posti, ciascuno chiamato come il segno sul proprio ritratto, e ora buttano dentro la carta che un compagno ha nominato.
 
-Gioca in solitaria contro il computer a tre livelli di difficoltà, completamente offline. Oppure apri una stanza, invia sei caratteri, e chi li riceve è al tavolo — nessun account e nessuna registrazione, su telefono o nel browser.
+L'invito porta un codice da inquadrare, e chiede il permesso prima di occupare un posto.
 
-C'è un tutorial che ti fa giocare un round vero invece di spiegarti le regole, e puoi saltarlo.
+La carta che tocchi parte subito, e un comando occupato lo dice invece di ignorarti. Premi il mazzo per vedere quante carte restano. Una mano che supera le cinque carte diventa più piccola e si dispone su due righe, così nulla esce dal tavolo.
+
+Quando qualcuno si allontana, un bot prende il suo posto, e il tavolo viene avvisato. I tuoi quindici secondi sono tuoi: l'orologio non scorre più mentre giocano i bot.
+
+Regole: una carta buttata dentro prima della chiamata di Vinto viene comunque giocata, e il lancio di chi ha chiamato viene giocato per primo, prima che inizi il round finale. Una carta ottenuta con il Re viene giocata, invece di essere scartata.
 
 Grazie per aver giocato.

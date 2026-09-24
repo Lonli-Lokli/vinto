@@ -1,9 +1,13 @@
-Pierwsze wydanie Vinto.
+Ostatnią rundę można teraz rozegrać zespołowo. Gdy ktoś zawoła Vinto, troje przeciwników odczytuje to, co widzieli, i razem układa plan — jedno zdanie na turę, tylko o kartach, które ktoś naprawdę widział. To rozmowa przy stole, a nie rozkaz: kto ma turę, sam decyduje, co zrobić ze swoimi kartami.
 
-Pięć kart, dwie już poznane, i trzej przeciwnicy, którzy w tym samym czasie odgadują swoje. Vinto wywołuje się wtedy, gdy własna ręka wydaje się najniższa — trafiona decyzja się opłaca, chybiona kosztuje.
+Twoi przeciwnicy mają imiona — Gale, Ember, Tide i Dune zajmują te same miejsca, każde nazwane od znaku na swoim portrecie, i teraz dorzucają kartę, którą nazwał sojusznik z zespołu.
 
-Można grać solo przeciw komputerowi na trzech poziomach trudności, w pełni offline. Albo otworzyć stół i przesłać sześć znaków — kto je dostanie, siada przy stole. Bez konta i bez rejestracji, na telefonie lub w przeglądarce.
+Zaproszenie ma kod do zeskanowania, i pyta o zgodę, zanim zajmie miejsce.
 
-Samouczek rozdaje prawdziwą rundę zamiast czytać regulamin, i można go pominąć.
+Dotknięta karta rusza od razu, a zajęty przycisk mówi o tym, zamiast cię ignorować. Dotknij talii, aby zobaczyć, ile kart jeszcze w niej zostało. Ręka, która przekracza pięć kart, robi się mniejsza i układa się w dwóch rzędach, żeby nic nie wypadało ze stołu.
+
+Gdy ktoś odchodzi od stołu, jego miejsce przejmuje bot, a stół zostaje o tym poinformowany. Twoje piętnaście sekund należy do ciebie: zegar nie tyka, gdy grają boty.
+
+Zasady: karta dorzucona przed zawołaniem Vinto wciąż zostaje zagrana, a własny dorzut osoby wołającej rozgrywa się najpierw, przed rozpoczęciem ostatniej rundy. Karta wygrana Królem zostaje zagrana, a nie odrzucona.
 
 Dziękujemy za grę.

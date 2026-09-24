@@ -1,9 +1,13 @@
-Erste Version von Vinto.
+Die Schlussrunde lässt sich jetzt als Team spielen. Sobald jemand Vinto ruft, können sich die drei Gegner austauschen und gemeinsam einen Plan schmieden — Satz für Satz, über Karten, die tatsächlich gesehen wurden. Das ist Tischgespräch, kein Befehl: Wer am Zug ist, entscheidet weiterhin selbst über die eigenen Karten.
 
-Fünf Karten, zwei davon kennen Sie, und drei Gegner, die zur gleichen Zeit ihre eigenen einschätzen. Rufen Sie Vinto, wenn Sie glauben, die niedrigste Hand zu haben — liegen Sie richtig, zahlt es sich aus, liegen Sie falsch, kostet es Sie.
+Ihre Gegner haben Namen. Gale, Ember, Tide und Dune behalten dieselben Plätze, jeder benannt nach dem Zeichen auf seinem Porträt, und sie werfen jetzt eine Karte ein, die ein Teammitglied genannt hat.
 
-Spielen Sie solo gegen den Computer in drei Stärken, vollständig offline. Oder öffnen Sie einen Raum, schicken Sie sechs Zeichen los, und wer sie erhält, sitzt mit am Tisch — kein Konto und keine Anmeldung, auf dem Smartphone oder im Browser.
+Die Einladung trägt einen Code zum Scannen, und sie fragt nach, bevor sie einen Platz übernimmt.
 
-Es gibt ein Tutorial, das Ihnen eine echte Runde austeilt, statt Ihnen die Regeln vorzulesen, und Sie können es überspringen.
+Eine angetippte Karte setzt sich sofort in Bewegung, und ein Bedienelement, das gerade arbeitet, sagt es, statt Sie zu übergehen. Drücken Sie auf den Stapel, um zu sehen, wie viel davon noch übrig ist. Eine Hand, die über fünf Karten wächst, bekommt kleinere Karten und eine zweite Reihe, damit nichts vom Tisch fällt.
+
+Wenn jemand den Platz verlässt, übernimmt ein Bot den Sitz, und der Tisch wird informiert. Ihre fünfzehn Sekunden laufen nicht mehr ab, während die Bots spielen.
+
+Regeln: Eine Karte, die vor einem Vinto-Ruf eingeworfen wurde, wird weiterhin gespielt, und der eigene Einwurf der rufenden Person wird gespielt, bevor die Schlussrunde beginnt. Eine mit einem König gewonnene Karte wird gespielt statt weggeworfen.
 
 Danke fürs Spielen.

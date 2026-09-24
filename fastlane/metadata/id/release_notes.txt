@@ -1,9 +1,13 @@
-Rilis pertama Vinto!.
+Babak akhir kini bisa dimainkan sebagai tim. Begitu seseorang memanggil Vinto, ketiga lawannya bisa membaca dan menyusun rencana bersama — satu kalimat per giliran, tentang kartu yang benar-benar pernah dilihat seseorang. Ini obrolan meja, bukan perintah: siapa pun yang sedang giliran tetap mengambil kartunya sendiri.
 
-Lima kartu, dua di antaranya sudah Anda lihat, dan tiga lawan yang sedang menyimpulkan kartu mereka sendiri di saat yang sama. Klaim Vinto saat Anda merasa nilai Anda paling rendah — jika benar, itu menguntungkan; jika salah, itu merugikan.
+Lawan Anda punya nama. Gale, Ember, Tide, dan Dune selalu menempati kursi yang sama, masing-masing dinamai sesuai tanda di potretnya, dan kini mereka melempar masuk kartu yang telah disebutkan rekan setimnya.
 
-Bermain solo melawan komputer pada tiga tingkat kekuatan, sepenuhnya offline. Atau buka ruang permainan, kirim enam karakter, dan siapa pun yang menerimanya bergabung di meja — tanpa akun dan tanpa pendaftaran, di ponsel maupun lewat peramban.
+Undangan kini membawa kode untuk dipindai, dan meminta izin sebelum mengambil kursi.
 
-Ada tutorial yang menyajikan satu babak sungguhan alih-alih membacakan aturan, dan Anda bisa melewatkannya.
+Kartu yang Anda ketuk langsung bergerak, dan tombol yang sedang sibuk mengatakannya alih-alih mengabaikan Anda. Tekan dek untuk melihat berapa sisa kartunya. Tangan yang bertambah lebih dari lima kartu mendapat kartu yang lebih kecil dan baris kedua, agar tidak ada yang jatuh keluar meja.
 
-Terima kasih sudah bermain.
+Saat seseorang meninggalkan permainan, sebuah bot mengambil alih kursinya, dan meja diberi tahu. Lima belas detik itu milik Anda — waktu tidak lagi berjalan selama bot bermain.
+
+Aturan: kartu yang dilempar masuk sebelum panggilan Vinto tetap dimainkan, dan lemparan pemanggil sendiri dimainkan sebelum babak akhir dimulai. Kartu yang dimenangkan dengan King dimainkan, bukan dibuang.
+
+Terima kasih telah bermain.

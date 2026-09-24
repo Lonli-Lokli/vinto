@@ -1,9 +1,13 @@
-Première publication de Vinto.
+La manche finale peut désormais se jouer en équipe. Dès que quelqu'un appelle Vinto, les trois adversaires peuvent échanger ce qu'ils savent et construire un plan ensemble — une phrase par tour, à propos de cartes que quelqu'un a réellement vues. C'est une discussion de table, pas un ordre : la personne dont c'est le tour choisit toujours ses propres cartes.
 
-Cinq cartes, deux que vous avez vues, et trois adversaires qui déduisent les leurs en même temps. Appelez Vinto quand vous pensez avoir la main la plus basse — si vous avez raison, ça paie ; si vous avez tort, ça coûte.
+Vos adversaires ont des noms. Gale, Ember, Tide et Dune gardent les mêmes places, chacun nommé pour le signe sur son portrait, et ils ripostent désormais avec une carte qu'un coéquipier a nommée.
 
-Jouez en solo contre l'ordinateur à trois niveaux de difficulté, entièrement hors ligne. Ou ouvrez une table, envoyez six caractères, et quiconque les reçoit rejoint la partie — pas de compte, pas d'inscription, sur téléphone ou dans un navigateur.
+L'invitation porte un code à scanner, et elle demande la permission avant de prendre une place.
 
-Un tutoriel distribue une vraie manche au lieu de réciter les règles, et vous pouvez le passer.
+Une carte touchée part aussitôt, et une commande occupée le dit au lieu de vous ignorer. Appuyez sur la pioche pour voir combien il en reste. Une main qui dépasse cinq cartes reçoit des cartes plus petites et une seconde rangée, pour que rien ne dépasse de la table.
+
+Quand quelqu'un s'absente, un bot reprend sa place, et la table en est informée. Vos quinze secondes ne s'écoulent plus pendant que les bots jouent.
+
+Règles : une carte ripostée avant un appel de Vinto est tout de même jouée, et la riposte de la personne qui appelle est jouée avant le début de la manche finale. Une carte gagnée avec un Roi est jouée plutôt que jetée.
 
 Merci d'y jouer.

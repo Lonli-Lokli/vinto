@@ -1,9 +1,13 @@
-Primeira versão do Vinto.
+A rodada final agora pode ser jogada em equipe. Quando alguém chama Vinto, os três adversários podem juntar o que já viram e montar um plano juntos — uma frase por vez, só sobre cartas que alguém realmente já viu. É conversa de mesa, não uma ordem: quem estiver jogando decide por conta própria o que fazer com as próprias cartas.
 
-Cinco cartas, duas que você já viu, e três oponentes descobrindo as deles ao mesmo tempo. Chame Vinto quando achar que está com a menor mão — acertar compensa, errar custa caro.
+Seus adversários têm nomes — Gale, Ember, Tide e Dune mantêm os mesmos lugares, cada um batizado pela marca no seu retrato, e agora eles atiram a carta que um parceiro de equipe indicou.
 
-Jogue sozinho contra o computador em três níveis de dificuldade, totalmente offline. Ou abra uma sala, envie seis caracteres, e quem os receber está na mesa — sem conta e sem cadastro, no celular ou no navegador.
+O convite traz um código para escanear, e pede confirmação antes de ocupar o lugar.
 
-Há um tutorial que distribui uma rodada de verdade em vez de só explicar as regras, e você pode pular.
+A carta que você toca começa a se mover na hora, e um controle ocupado avisa em vez de ignorar você. Toque no monte para ver quantas cartas restam. Quando a mão passa de cinco cartas, elas ficam menores e se organizam em duas fileiras, para que nada saia da mesa.
+
+Quando alguém se afasta, um bot assume o lugar, e a mesa é avisada. Seus quinze segundos são seus: o relógio não corre mais enquanto os bots jogam.
+
+Regras: uma carta atirada antes da chamada de Vinto ainda é jogada, e a jogada de quem chamou é resolvida primeiro, antes de a rodada final começar. Uma carta ganha com o Rei é jogada, não descartada.
 
 Obrigado por jogar.

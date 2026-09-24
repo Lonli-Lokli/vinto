@@ -1,9 +1,13 @@
-Primera versión de Vinto.
+La ronda final ya se puede jugar en equipo. En cuanto alguien cante Vinto, los otros tres pueden compartir lo que saben y construir un plan juntos — una frase por turno, sobre cartas que alguien ha visto de verdad. Es charla de mesa, no una orden: quien tenga el turno sigue decidiendo sobre sus propias cartas.
 
-Cinco cartas, dos que ha visto, y tres rivales que están deduciendo las suyas al mismo tiempo. Cante Vinto cuando crea que tiene la más baja — si acierta, gana; si se equivoca, le cuesta.
+Sus rivales tienen nombre. Gale, Ember, Tide y Dune conservan los mismos asientos, cada uno llamado así por la marca de su retrato, y ahora lanzan una carta que un compañero de equipo ha nombrado.
 
-Juegue en solitario contra la máquina con tres niveles de fuerza, totalmente sin conexión. O abra una sala, envíe seis caracteres, y quien los reciba se sienta a la mesa — sin cuenta ni registro, desde el teléfono o el navegador.
+La invitación lleva un código para escanear, y pide permiso antes de ocupar un asiento.
 
-Hay un tutorial que reparte una ronda real en lugar de explicarle las reglas, y puede saltárselo.
+La carta que toca empieza a moverse al instante, y un control ocupado lo dice en vez de ignorarle. Pulse el mazo para ver cuánto queda. Una mano que crece más allá de cinco cartas recibe cartas más pequeñas y una segunda fila, para que nada se salga de la mesa.
+
+Cuando alguien se ausenta, un bot ocupa su asiento, y se avisa a la mesa. Sus quince segundos ya no corren mientras juegan los bots.
+
+Reglas: una carta lanzada antes de cantar Vinto se sigue jugando, y el lanzamiento de quien canta se juega antes de que empiece la ronda final. Una carta ganada con un Rey se juega en lugar de descartarse.
 
 Gracias por jugar.

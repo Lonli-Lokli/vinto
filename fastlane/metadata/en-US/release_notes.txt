@@ -1,9 +1,13 @@
-Vinto's first release.
+The final round can be played as a team. Once somebody calls Vinto, the three against them can read and build a plan together — a sentence a turn, about cards somebody has actually seen. It is table talk, not an order: whoever is on play still picks up their own cards.
 
-Five cards, two you have seen, and three opponents who are working out theirs at the same time. Call Vinto when you think you are lowest — be right and it pays, be wrong and it costs you.
+Your opponents have names. Gale, Ember, Tide and Dune keep the same seats, each named for the mark on its portrait, and they now throw in a card a teammate has named.
 
-Play solo against the computer at three strengths, fully offline. Or open a room, send six characters, and whoever gets them is at the table — no account and no sign-up, on a phone or in a browser.
+An invitation carries a code to scan, and it asks before it takes a seat.
 
-There is a tutorial that deals you a real round rather than reading you the rules, and you can skip it.
+A card you tap starts moving at once, and a busy control says so instead of ignoring you. Press the deck to see how much of it is left. A hand that grows past five cards gets smaller cards and a second row, so nothing runs off the table.
+
+When somebody steps away a bot covers their seat, and the table is told. Your fifteen seconds no longer run down while the bots play.
+
+Rules: a card thrown in before a Vinto call is still played, and the caller's own throw plays before the final round begins. A card won with a King is played rather than thrown away.
 
 Thank you for playing.
