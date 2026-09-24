@@ -206,6 +206,8 @@ fun SettingsScreen(
      * was missed when the home screen was fixed.
      */
     build: String = BUILD_NUMBER,
+    /** The marketing version above it, pinnable for the reason [HomeScreen] gives. */
+    version: String = appVersion(),
 ) {
     var pickingLanguage by remember { mutableStateOf(false) }
     var reporting by remember { mutableStateOf(false) }
@@ -257,7 +259,7 @@ fun SettingsScreen(
             // and the marketing version alone identifies twenty builds at once. One string for
             // both places, so the two can never disagree about what this build is called.
             Text(
-                text = stringResource(Res.string.home_version, VERSION, build),
+                text = stringResource(Res.string.home_version, version, build),
                 fontSize = FootnoteSize,
                 // Below the last panel, so on the felt rather than on paper. Centred, because a
                 // colophon left-aligned under a column of panels reads as one more setting that

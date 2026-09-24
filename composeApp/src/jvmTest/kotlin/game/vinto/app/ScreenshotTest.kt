@@ -57,6 +57,7 @@ class ScreenshotTest {
             // Pinned, because the real one is `git rev-list --count HEAD`: left to itself this
             // golden gained a wrong digit with every commit and could never be green twice.
             build = PINNED_BUILD,
+            version = PINNED_VERSION,
         )
     }
 
@@ -66,6 +67,7 @@ class ScreenshotTest {
             // Pinned for the same reason the home screen's is: this screen draws the build
             // number too, and reading the real one made this golden gain a digit per commit.
             build = PINNED_BUILD,
+            version = PINNED_VERSION,
             settings = Settings(),
             canForget = true,
             page = SettingsPage.ROOT,
@@ -191,6 +193,9 @@ class ScreenshotTest {
     private companion object {
         /** Three digits, like a real one, so the footer is laid out at its true width. */
         const val PINNED_BUILD = "000"
+
+        /** The version the goldens were drawn with; each store reads its own, and both move. */
+        const val PINNED_VERSION = "1.0"
 
         /** A plausible mid-round deck, so the sheet's live count reads like a real one. */
         const val DECK_LEFT = 21

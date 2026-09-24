@@ -1,6 +1,7 @@
 package game.vinto.app
 
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.os.Build
 
 actual fun platformName(): String = "Android ${Build.VERSION.SDK_INT}"
@@ -31,3 +32,21 @@ actual fun isReleaseBuild(): Boolean {
 /** Android is a JVM to Sentry, and `java` is the word that gets the R8 mapping applied. */
 actual val crashPlatform: game.vinto.app.crash.SentryPlatform =
     game.vinto.app.crash.SentryPlatform.JAVA
+
+/**
+ * `versionName` off the installed package — the number `androidApp` stamped and Play shows. Read
+ * rather than copied, because `composeApp` is a library and cannot see the application's
+ * `defaultConfig`. `?` before storage has handed over a context, which is before any screen.
+ */
+actual fun appVersion(): String {
+    val context = AndroidStorage.context ?: return UNKNOWN_VERSION
+    val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        context.packageManager.getPackageInfo(context.packageName, PackageManager.PackageInfoFlags.of(0))
+    } else {
+        @Suppress("DEPRECATION") // The flags overload above is API 33; below it this is the only one.
+        context.packageManager.getPackageInfo(context.packageName, 0)
+    }
+    return info.versionName ?: UNKNOWN_VERSION
+}
+
+private const val UNKNOWN_VERSION = "?"

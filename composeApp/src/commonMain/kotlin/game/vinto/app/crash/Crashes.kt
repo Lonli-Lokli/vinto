@@ -3,7 +3,7 @@ package game.vinto.app.crash
 import game.vinto.app.BUILD_COMMIT
 import game.vinto.app.BUILD_NUMBER
 import game.vinto.app.SENTRY_DSN
-import game.vinto.app.VERSION
+import game.vinto.app.appVersion
 import game.vinto.app.crashPlatform
 import game.vinto.app.elapsedMs
 import game.vinto.app.net.postBeacon
@@ -67,7 +67,7 @@ object Crashes {
         val crashes = CrashReporter(
             dsn = dsn,
             platform = crashPlatform,
-            release = "vinto@$VERSION",
+            release = "vinto@${appVersion()}",
             dist = BUILD_NUMBER,
             commit = BUILD_COMMIT,
             os = platformName(),

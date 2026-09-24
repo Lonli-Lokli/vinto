@@ -17,3 +17,6 @@ actual fun isReleaseBuild(): Boolean = false
 /** The desktop app, on the same JVM stacks Android files. */
 actual val crashPlatform: game.vinto.app.crash.SentryPlatform =
     game.vinto.app.crash.SentryPlatform.JAVA
+
+/** The desktop window has no store either; it says what the web does. */
+actual fun appVersion(): String = WEB_VERSION

@@ -6,56 +6,64 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The version on the screen is the version that shipped — on **both** stores.
+ * The version on the screen is the version that store shipped — each store its own.
  *
- * `VERSION` is written three times: here in common code, where the home screen and the settings
- * read it; in `androidApp/build.gradle.kts` as the `versionName` Play shows; and in
- * `iosApp/project.yml` as the `MARKETING_VERSION` the App Store shows. A Compose Multiplatform
- * common source set has no `BuildConfig` and Xcode reads neither of the others, so three copies
- * is the floor. This is what makes them stop being three copies and start being one, checked.
+ * **The two stores do not share a marketing version** (VERSIONING.md): iOS can be on 1.1 while
+ * Android is still 1.0. So the app no longer carries one `VERSION` for all of them — that
+ * constant, and the test that held it equal to both stores at once, forced exactly the lockstep
+ * VERSIONING.md rules out. Each store build reads its own number at runtime instead
+ * (`appVersion()`): iOS from its bundle, Android from its package. What is checked here is that
+ * those reads land on the numbers the stores are given, and what the two storeless builds say.
  *
  * **Read through one level of indirection on purpose.** The Android build named its version
  * inline until `b3c26e7` moved it into a `val` — at which point the old regex matched nothing,
- * `shipped` came back null, and the assertion failed with `expected:<null> but was:<1.0>`: a
- * message that reads like the *version* drifted when what drifted was this test's ability to
- * find it. Resolving a bare identifier through the `val` beside it covers both shapes, and
- * [versionIn] refuses rather than returning null when it recognises neither, so the next change
- * of shape says so in as many words.
+ * and the failure read like the *version* had drifted when what drifted was this test's ability
+ * to find it. [versionIn] follows the `val`, and refuses rather than returning null when it
+ * recognises neither shape.
  */
 class VersionTest {
 
+    /** The bundle read IS the App Store's number: Info.plist takes it from project.yml. */
     @Test
-    fun theVersionShownMatchesTheOnePlayShips() {
-        // Gradle runs a module's tests from the module's own directory. `../androidApp`, not
-        // this module: since AGP 9 the application half lives in its own module, because
-        // `com.android.application` may no longer share one with the Kotlin Multiplatform
-        // plugin. `versionName` went with it.
-        val script = File("../androidApp/build.gradle.kts")
-        assertTrue(script.exists(), "expected androidApp/build.gradle.kts beside composeApp")
-
-        assertEquals(
-            VERSION,
-            versionIn(script.readText(), "versionName"),
-            "the version on the home screen and the one in the .aab have drifted apart",
-        )
-    }
-
-    @Test
-    fun theVersionShownMatchesTheOneTheAppStoreShips() {
-        val project = File("../iosApp/project.yml")
-        assertTrue(project.exists(), "expected iosApp/project.yml beside composeApp")
-
-        val shipped = Regex("""MARKETING_VERSION:\s*"?([0-9][^"\s#]*)"?""")
-            .find(project.readText())
+    fun theIphoneReadsTheVersionTheAppStoreShips() {
+        val plist = File("../iosApp/iosApp/Info.plist").readText()
+        val shown = Regex("""<key>CFBundleShortVersionString</key>\s*<string>([^<]*)</string>""")
+            .find(plist)
             ?.groupValues
             ?.get(1)
 
-        assertEquals(
-            VERSION,
-            shipped,
-            "the version on the home screen and the one Xcode stamps have drifted apart",
-        )
+        assertEquals("\$(MARKETING_VERSION)", shown, "Info.plist stopped taking the version from project.yml")
     }
+
+    /**
+     * The web and the desktop window have no store, and ship from master — so they carry the
+     * newest version either store has, never a number neither of them has reached.
+     */
+    @Test
+    fun theStorelessBuildsCarryTheNewestStoreVersion() {
+        val newest = listOf(iosVersion(), androidVersion())
+            .maxWith(compareBy<String>({ it.part(0) }, { it.part(1) }, { it.part(2) }))
+
+        assertEquals(newest, WEB_VERSION, "WEB_VERSION is not the newer of the two store versions")
+    }
+
+    private fun iosVersion(): String {
+        val project = File("../iosApp/project.yml")
+        assertTrue(project.exists(), "expected iosApp/project.yml beside composeApp")
+        val shipped = Regex("""MARKETING_VERSION:\s*"?([0-9][^"\s#]*)"?""").find(project.readText())
+        assertTrue(shipped != null, "no MARKETING_VERSION in project.yml")
+        return shipped.groupValues[1]
+    }
+
+    // Gradle runs a module's tests from the module's own directory. `../androidApp`, not this
+    // module: since AGP 9 the application half lives in its own module, and `versionName` with it.
+    private fun androidVersion(): String {
+        val script = File("../androidApp/build.gradle.kts")
+        assertTrue(script.exists(), "expected androidApp/build.gradle.kts beside composeApp")
+        return versionIn(script.readText(), "versionName")
+    }
+
+    private fun String.part(i: Int): Int = split('.').getOrNull(i)?.toIntOrNull() ?: 0
 
     /**
      * The value assigned to [key], following it through a `val` when the assignment is a bare

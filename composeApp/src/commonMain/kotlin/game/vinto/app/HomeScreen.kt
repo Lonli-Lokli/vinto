@@ -108,6 +108,9 @@ fun HomeScreen(
     // home screen's golden fail by one more pixel-cluster per commit and never go green again.
     // A golden is there to measure the layout, and the layout is what stays still.
     build: String = BUILD_NUMBER,
+    // The marketing version, pinnable for the same reason: it moves at every release, and each
+    // store's build reads its own (`appVersion`), so a golden that read it would fail at a bump.
+    version: String = appVersion(),
 ) {
     // A column of two, not a box with something pinned over it. The footer used to be one short
     // line and could safely overlay the menu; with a link beside it, it is a 44 dp tap target,
@@ -172,7 +175,7 @@ fun HomeScreen(
             }
         }
 
-        Footer(build = build, modifier = Modifier.padding(bottom = Gap))
+        Footer(version = version, build = build, modifier = Modifier.padding(bottom = Gap))
     }
 }
 
@@ -185,7 +188,7 @@ fun HomeScreen(
  * weight — a button would compete with "New game", which is not what this is for.
  */
 @Composable
-private fun Footer(build: String, modifier: Modifier = Modifier) {
+private fun Footer(version: String, build: String, modifier: Modifier = Modifier) {
     val open = stringResource(Res.string.home_other_games_action)
     val quiet = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet)
     Row(
@@ -193,7 +196,7 @@ private fun Footer(build: String, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = stringResource(Res.string.home_version, VERSION, build),
+            text = stringResource(Res.string.home_version, version, build),
             fontSize = FootnoteSize,
             color = quiet,
         )

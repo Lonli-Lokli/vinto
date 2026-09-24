@@ -18,3 +18,15 @@ actual fun isReleaseBuild(): Boolean = !kotlin.native.Platform.isDebugBinary
 /** Kotlin/Native on Apple: `cocoa` is the platform a dSYM is read under. */
 actual val crashPlatform: game.vinto.app.crash.SentryPlatform =
     game.vinto.app.crash.SentryPlatform.COCOA
+
+/**
+ * `CFBundleShortVersionString`, which Info.plist takes from `MARKETING_VERSION` in `project.yml`
+ * — the number App Store Connect reads off the same binary. `?` only for a bundle with no
+ * Info.plist, which is not one that runs.
+ */
+actual fun appVersion(): String =
+    platform.Foundation.NSBundle.mainBundle
+        .objectForInfoDictionaryKey("CFBundleShortVersionString") as? String
+        ?: UNKNOWN_VERSION
+
+private const val UNKNOWN_VERSION = "?"

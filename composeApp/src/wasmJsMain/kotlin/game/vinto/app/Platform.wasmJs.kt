@@ -17,3 +17,6 @@ actual fun isReleaseBuild(): Boolean = window.location.hostname.equals(INVITE_HO
 /** The browser. Wasm frames arrive through the same JS error shapes Sentry reads. */
 actual val crashPlatform: game.vinto.app.crash.SentryPlatform =
     game.vinto.app.crash.SentryPlatform.JAVASCRIPT
+
+/** No store: the newest version either store has (`WEB_VERSION`). */
+actual fun appVersion(): String = WEB_VERSION
