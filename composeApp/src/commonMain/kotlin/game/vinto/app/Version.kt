@@ -1,5 +1,7 @@
 package game.vinto.app
 
+import androidx.compose.runtime.staticCompositionLocalOf
+
 /**
  * What version this is, for the corner of the home screen, the foot of the settings and the
  * release a crash report is filed under.
@@ -15,6 +17,17 @@ package game.vinto.app
  * here.
  */
 expect fun appVersion(): String
+
+/**
+ * The version and build the screens show — [appVersion] and [BUILD_NUMBER] everywhere a player
+ * looks. Locals rather than direct reads only so the store captures can pin both: the build moves
+ * with every commit and the version at every release, and a store screenshot that read either
+ * would change on every capture while the screen it shows had not.
+ */
+val LocalAppVersion = staticCompositionLocalOf { appVersion() }
+
+/** The build under the version; see [LocalAppVersion]. */
+val LocalAppBuild = staticCompositionLocalOf { BUILD_NUMBER }
 
 /**
  * The web and desktop builds' version: they have no store, ship from master, and so carry the

@@ -71,7 +71,11 @@ class StoreShotsTest {
                     // 411 dp window as a desktop gave every control its word and pushed the
                     // wordmark off the left edge. Tablets are phones here too, which is what the
                     // enum means by it — the landscape shots label themselves from their shape.
-                    CompositionLocalProvider(LocalHost provides Host.PHONE) {
+                    CompositionLocalProvider(
+                        LocalHost provides Host.PHONE,
+                        LocalAppVersion provides SHOWN_VERSION,
+                        LocalAppBuild provides SHOWN_BUILD,
+                    ) {
                         App(seeds = { MARKETING_SEED }, vault = MemoryVault(), marketing = scene.id)
                     }
                 }
@@ -218,6 +222,14 @@ class StoreShotsTest {
         )
 
         const val EXPECTED = 5
+
+        /**
+         * What the home screen's footer says in every store shot. Constants, like the goldens'
+         * pins: the real build moves with every commit and the version with every release, and a
+         * screenshot that read them would change at every capture while the screen had not.
+         */
+        const val SHOWN_VERSION = "1.0"
+        const val SHOWN_BUILD = "100"
 
         /** The same pinned seed `MarketingState` deals from, so a shot is the same shot twice. */
         const val MARKETING_SEED = 20_260_903L

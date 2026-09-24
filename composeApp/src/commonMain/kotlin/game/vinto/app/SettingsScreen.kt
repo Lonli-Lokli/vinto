@@ -205,9 +205,9 @@ fun SettingsScreen(
      * reads it gains a wrong digit with every commit and can never be green twice. This screen
      * was missed when the home screen was fixed.
      */
-    build: String = BUILD_NUMBER,
+    build: String = LocalAppBuild.current,
     /** The marketing version above it, pinnable for the reason [HomeScreen] gives. */
-    version: String = appVersion(),
+    version: String = LocalAppVersion.current,
 ) {
     var pickingLanguage by remember { mutableStateOf(false) }
     var reporting by remember { mutableStateOf(false) }

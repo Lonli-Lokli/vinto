@@ -107,10 +107,10 @@ fun HomeScreen(
     // *test* can pin it. It is the commit count, so it moves with every commit — which made the
     // home screen's golden fail by one more pixel-cluster per commit and never go green again.
     // A golden is there to measure the layout, and the layout is what stays still.
-    build: String = BUILD_NUMBER,
+    build: String = LocalAppBuild.current,
     // The marketing version, pinnable for the same reason: it moves at every release, and each
     // store's build reads its own (`appVersion`), so a golden that read it would fail at a bump.
-    version: String = appVersion(),
+    version: String = LocalAppVersion.current,
 ) {
     // A column of two, not a box with something pinned over it. The footer used to be one short
     // line and could safely overlay the menu; with a link beside it, it is a 44 dp tap target,
