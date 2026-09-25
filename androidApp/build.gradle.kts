@@ -252,9 +252,14 @@ android {
          * inside the minified .aab.
          *
          * **The check R8 needs and a build cannot give it is a device.** Its failures are runtime
-         * ones: the build stays green and the app dies on a screen. Nothing here has been run on a
-         * phone yet, so installing the release build once and walking a round is the outstanding
-         * step — ship-and-operate 3.3 was going to want that anyway.
+         * ones: the build stays green and the app dies on a screen. So the minified release was
+         * walked on an Android 16 emulator on 2026-09-25 (build 632): a solo game from the peek to a
+         * King declaring a card and that card played, leaving and **Continue** (the saved game,
+         * which is serialization), Settings with the tip jar, How to play, and the online menu —
+         * no crash and no ANR. A real phone is still ship-and-operate 3.3's to do.
+         *
+         * **And it cannot be switched off quietly.** `tools/check-minified.mjs` refuses a bundle R8
+         * did not process, before every Play upload and in CI, which builds this release bundle.
          */
         getByName("release") {
             isMinifyEnabled = true
