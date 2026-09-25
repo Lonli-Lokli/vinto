@@ -108,8 +108,11 @@ plan the coalition agrees to and cannot play. Model faults first, appearance sec
       in both themes. The staged plan scene turned out to set `vintoCallerId` on the view and
       **not** `isVintoCaller` on the seat, so it had been photographing a final round whose caller
       wore no crown either; fixed, so the picture is now of the thing it claims to be
-- [ ] 4.2 Stop drawing a declared King enlarged as though it had been played, and verify the
-      case from the reports renders the card in its seat
+- [x] 4.2 Stop drawing a declared King enlarged as though it had been played, and verify the
+      case from the reports renders the card in its seat. **Done** (3d8e0aea, ad7f2d0b): the
+      borrowed rank is gone; the named card pops out and is shown in its seat, the King is
+      answered on the pile, and a right card goes onto the pile (played, if it has an action)
+      while a wrong one goes back. Filmed on the simulator and checked frame by frame
 - [ ] 4.3 Stop the plate moving when its seat throws a card in: the thinking mark comes and goes
       and the plate is meant to hold still (`SteadyPlateTest`), so extend that test to a
       toss-in rather than writing a second one

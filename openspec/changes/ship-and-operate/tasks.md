@@ -14,7 +14,7 @@ The app half is built and tested; what is missing is two files on the website, e
 credential nothing here has. Until they exist the `https` links open the site instead of the
 app — which is why the `vinto://` scheme is there and works today.
 
-- [~] 1.1 `/.well-known/assetlinks.json` — **written**, carrying the upload key's SHA-256 now
+- [x] 1.1 `/.well-known/assetlinks.json` — **done** (d3cda562, "Play's own signing key, in the file that verifies the domain"): four fingerprints, Google's app-signing key beside the upload key, and the live file at vinto.kupalinka.app serves the same four (checked 2026-09-25). What follows is the history. Written, carrying the upload key's SHA-256 now
       that 2.1 exists. Still half done, knowingly: with Play App Signing the delivered app is
       signed by Google's key rather than ours, so Google's fingerprint has to go beside this one
       once the Play Console shows it. `docs/kotlin/APP-LINKS.md` has the steps and the verifier
@@ -33,7 +33,7 @@ app — which is why the `vinto://` scheme is there and works today.
       `keystore/vinto-upload.jks`, both files gitignored. `bundleRelease` produces a signed .aab
       (verified with `jarsigner`), and its fingerprint is what 1.1 carries. **It exists on one
       machine and nowhere else — back both files up** (was migrate 8.1)
-- [~] 2.2 A Play Console account and an internal track; an Apple developer account and
+- [x] 2.2 **Done — builds reach both stores.** iOS 1.0 (build 526) is on sale, and 1.1 build 631 is in TestFlight and attached to the 1.1 version; Play has 1.0 build 612 in production review and 631 on the closed track (2026-09-25). Archiving uses the App Store Connect API key (`-authenticationKeyPath`), not an Xcode sign-in. What follows is the history. A Play Console account and an internal track; an Apple developer account and
       TestFlight. **The accounts exist and are reachable by API**: Apple holds the app record
       (6803030533, 1.0 PREPARE_FOR_SUBMISSION) with its listing, categories, content rights and
       age rating all pushed, and Play holds `app.kupalinka.vinto` with its listing and icon. What
