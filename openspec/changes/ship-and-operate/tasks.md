@@ -43,7 +43,9 @@ app — which is why the `vinto://` scheme is there and works today.
       person at a keyboard (was migrate 8.1, 9.10)
 - [ ] 2.3 A release job on tags, publishing to both. The *versioning* it needs is in place now
       — `Scripts/build-number.sh`, VERSIONING.md, and both platforms reading it — so what is left
-      is the workflow. R8 is still off (was migrate 8.1)
+      is the workflow. R8 is ON for every release build and cannot be lost quietly: CI builds the
+      release bundle and `tools/check-minified.mjs` refuses one R8 did not process, and the same
+      check runs before every Play upload (was migrate 8.1)
 - [x] 2.4 The iOS privacy manifest and permissions review. `PrivacyInfo.xcprivacy` declares the
       five collected types (matching `vydanne.config.mjs`) and `NSUserDefaults` under CA92.1 —
       without which an upload is rejected with ITMS-91053. The app asks for no permissions at all

@@ -284,6 +284,24 @@ jobs:
           set -o pipefail
           ./gradlew --stacktrace :androidApp:assembleDebug 2>&1 | tee -a "${RUNNER_TEMP}/gradle.log"
 
+      # The release bundle, built the way a store build is — R8 on, resources shrunk — and then
+      # proved minified by the same check every Play upload runs (`tools/check-minified.mjs`).
+      # R8 is not optional for anything that reaches a store, and its failures are the kind a
+      # debug build cannot show: a keep rule gone missing, a class it cannot resolve. So a change
+      # that breaks R8, or quietly turns it off, fails a pull request rather than a release.
+      #
+      # Nothing is published and no mapping is uploaded: the job has no Sentry token, and the
+      # waiver says so on purpose — the build script refuses an unsymbolicated release unless it
+      # is told this one is not going anywhere. Signed with the debug key, since the upload key
+      # lives on one machine; R8 does not care which key signs.
+      - name: The release bundle, minified by R8
+        env:
+          VINTO_ALLOW_UNSYMBOLICATED: '1'
+        run: |
+          set -o pipefail
+          ./gradlew --stacktrace :androidApp:bundleRelease 2>&1 | tee -a "${RUNNER_TEMP}/gradle.log"
+          node tools/check-minified.mjs androidApp/build/outputs/bundle/release
+
       # Compiling the test sources is a separate step from running them on purpose. This
       # container cannot build composeApp at all — androidx is behind dl.google.com — so when
       # this job goes red the step name is the whole diagnosis available without a log:
