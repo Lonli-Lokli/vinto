@@ -136,6 +136,59 @@ class HandGapTest {
         assertEquals(settled, aboutTo, "a card about to leave and another about to arrive is one slot")
     }
 
+    /**
+     * And once the card has gone, the hand slides together rather than snapping shut.
+     *
+     * The gap used to vanish in one frame when the flight landed, and every card after it jumped
+     * sideways by a slot — the one movement on the table with no animation at all, found by a
+     * frame-by-frame scan of the App Store preview. The gap now closes over a few frames.
+     */
+    @Test
+    fun aHandSlidesTogetherOnceTheCardHasGone() = runComposeUiTest {
+        val whole = teachingSession().view.value
+        val me = whole.viewerId
+        val short = whole.copy(
+            players = whole.players.map { seat ->
+                if (seat.id == me) seat.copy(cards = seat.cards.filterIndexed { i, _ -> i != GONE }) else seat
+            },
+        )
+        val stage = leaving(me, GONE)
+        mainClock.autoAdvance = false
+        setContent {
+            VintoTheme {
+                CompositionLocalProvider(LocalStage provides stage) {
+                    Box(modifier = Modifier.size(PHONE_W, PHONE_H)) {
+                        TableScreen(
+                            state = TableState(short, tableFor(short), null, emptyList(), 1),
+                            layout = TableLayout.forScreen(PHONE_H),
+                            onMove = {},
+                            onHelp = {},
+                            onSettings = {},
+                        )
+                    }
+                }
+            }
+        }
+        mainClock.advanceTimeByFrame()
+        val open = mine()
+
+        stage.flying.clear()
+        val widths = listOf(open) + List(FRAMES_TO_CLOSE) {
+            mainClock.advanceTimeByFrame()
+            mine()
+        }
+        val closed = widths.last()
+        val biggestStep = widths.zipWithNext { a, b -> a - b }.max()
+
+        assertTrue(closed < open, "the hand never closed up: $widths")
+        assertTrue(biggestStep <= STEP_PX, "the hand snapped shut rather than sliding: $widths")
+    }
+
+    private fun ComposeUiTest.mine(): Int {
+        val cards = cards().filter { (label, _) -> label.startsWith(ME) }.map { it.second }
+        return if (cards.isEmpty()) 0 else (cards.maxOf { it.right } - cards.minOf { it.left }).toInt()
+    }
+
     /** A stage mid-swap: one card leaving a slot and another landing in the same one. */
     private fun swapping(playerId: String, position: Int) = Stage().apply {
         val seat = Anchor.Seat(playerId, position)
@@ -221,6 +274,10 @@ class HandGapTest {
     private companion object {
         const val ME = "You,"
         const val GONE = 2
+        const val FRAMES_TO_CLOSE = 40
+
+        /** A fifth of a slot: a frame that moves the hand further than this is a jump, not a slide. */
+        const val STEP_PX = 12
         val PHONE_W = 411.dp
         val PHONE_H = 740.dp
     }

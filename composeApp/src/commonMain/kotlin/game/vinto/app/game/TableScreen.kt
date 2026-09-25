@@ -1,5 +1,7 @@
 package game.vinto.app.game
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
@@ -40,11 +42,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
@@ -59,6 +63,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -163,6 +168,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
 /**
@@ -1632,9 +1638,29 @@ private fun Cards(
         }
         .toSet()
 
+    // A gap let go of — the card it was held for has gone — does not vanish in a frame, which
+    // jumped every card after it sideways by a slot. It closes: a place [HandLine] advances by less
+    // and less of a pitch until it is nothing, so the hand slides together. Decided in the same
+    // composition the gap disappears in, because a closing place that started a frame later was
+    // itself that jump.
+    val closing = remember(seat.id) { mutableStateMapOf<Int, Animatable<Float, AnimationVector1D>>() }
+    val held = remember(seat.id) { mutableListOf<Set<Int>>(emptySet()) }
+    (held[0] - gaps).forEach { released -> closing.getOrPut(released) { Animatable(1f) } }
+    held[0] = gaps
+    closing.forEach { (at, fraction) ->
+        LaunchedEffect(seat.id, at, fraction) {
+            fraction.animateTo(0f, tween(stage.travel(CLOSE_MS), easing = FastOutSlowInEasing))
+            closing.remove(at)
+        }
+    }
+
     var position = 0
     var card = 0
-    while (card < seat.cards.size || position in gaps) {
+    while (card < seat.cards.size || position in gaps || position in closing) {
+        closing[position]?.let { fraction ->
+            // Drawn before the card now at this position — the one that slides into the space.
+            EmptySlot(scale, "", Modifier.layoutId(Closing(fraction.value)).alpha(fraction.value), turned)
+        }
         if (position in gaps) {
             EmptySlot(
                 scale,
@@ -1642,13 +1668,19 @@ private fun Cards(
                 Modifier.anchoredAt(stage, Anchor.Seat(seat.id, position), scale),
                 turned,
             )
-        } else {
+        } else if (card < seat.cards.size) {
             SeatCard(seat, position, seat.cards[card], rendering, onMove, turned)
             card++
         }
         position++
     }
 }
+
+/** A hand's place that is closing up: it advances the line by [left] of a pitch. See [HandLine]. */
+private data class Closing(val left: Float)
+
+/** How long a hand takes to slide together once a card has left it. */
+private const val CLOSE_MS = 240
 
 /**
  * Cards laid along one axis, in a block whose length never exceeds the room it was given.
@@ -1718,17 +1750,31 @@ private fun HandLine(
             leastShowing = TapStrip.roundToPx(),
         )
 
+        // A closing place (a gap a card has just left) advances the line by only part of a pitch,
+        // so the cards after it slide together as it shrinks. On one line only: across a wrap a
+        // card would have to change lines part-way, so a wrapped hand closes as it always did.
+        val oneLine = lay.perLine >= cards.size
+        val shares = measurables.map { m ->
+            (m.layoutId as? Closing)?.left?.coerceIn(0f, 1f)?.takeIf { oneLine } ?: 1f
+        }
+        val steps = shares.runningFold(0f) { at, share -> at + share * lay.pitch }
+        val length = if (oneLine) {
+            cards.indices.maxOf { i -> (steps[i] + along(cards[i]) * shares[i]).roundToInt() }
+        } else {
+            lay.length
+        }
+
         layout(
-            width = if (vertical) lay.breadth else lay.length,
-            height = if (vertical) lay.length else lay.breadth,
+            width = if (vertical) lay.breadth else length,
+            height = if (vertical) length else lay.breadth,
         ) {
             cards.forEachIndexed { i, card ->
                 // In order, so a card that overlaps its neighbour is the later one — and in
                 // Compose the last placed is both the one drawn on top and the one a finger
                 // lands on, which is what makes the exposed strip belong to the right card.
-                val step = i % lay.perLine * lay.pitch
+                val step = if (oneLine) steps[i].roundToInt() else i % lay.perLine * lay.pitch
                 val line = i / lay.perLine * (thick + gap)
-                val onLine = if (countFromEnd) lay.length - along(card) - step else step
+                val onLine = if (countFromEnd) length - along(card) - step else step
                 val downLines = if (linesFromFarSide) lay.breadth - thick - line else line
                 if (vertical) card.place(downLines, onLine) else card.place(onLine, downLines)
             }
@@ -2353,24 +2399,44 @@ private fun Thrown(view: PlayerView, toss: ActiveTossIn) {
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onFelt(),
     )
+    // Every card here is a place a flight can land or leave (`Anchor.Thrown`), and each is drawn
+    // exactly once. A card still in the air on its way here keeps its space but is not drawn —
+    // the flight has it. And the first card, once its action starts, has already left the queue in
+    // the stepped view while it still lies here until its flight picks it up (`Stage.departing`),
+    // so it goes on being drawn in its place, alone, until then.
+    val stage = LocalStage.current
+    val leaving = (stage.heldAt(Anchor.Thrown(0)) as? CardView.Visible)?.card
+    val slots = if (leaving != null) {
+        listOf(Triple(leaving.rank, view.pendingAction?.playerId, 0))
+    } else {
+        thrown.mapIndexed { i, queued -> Triple(queued.rank, queued.playerId, i) }
+    }
+    val size = CardScale(ThrownWidth, ThrownHeight)
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(Tight),
         // A minimum, not a fix: the row reserves its space so nothing moves while a card
         // lands here, and still grows when a large system font makes the names taller.
         modifier = Modifier.heightIn(min = ThrownRow),
     ) {
-        thrown.forEach { throw_ ->
-            val who = view.players.firstOrNull { it.id == throw_.playerId }?.nickname ?: "—"
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        slots.forEach { (rank, playerId, index) ->
+            val who = view.players.firstOrNull { it.id == playerId }?.nickname ?: "—"
+            val anchor = Anchor.Thrown(index)
+            val arriving = stage.landingOn(anchor) != null
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.alpha(if (arriving) 0f else 1f),
+            ) {
                 Image(
-                    painter = painterResource(artFor(throw_.rank)),
+                    painter = painterResource(artFor(rank)),
                     contentDescription = stringResource(
                         Res.string.card_thrown_by,
                         who,
-                        throw_.rank.serialName,
+                        rank.serialName,
                     ),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
+                        .anchoredAt(stage, anchor, size)
                         .size(ThrownWidth, ThrownHeight)
                         .clip(RoundedCornerShape(2.dp)),
                 )

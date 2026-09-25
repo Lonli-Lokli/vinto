@@ -133,6 +133,8 @@ which is the fix for her first card lowering itself between taps, made executabl
 | Declare a King, wrong | deck → the declarer's row | as at a table: the named card **pops out and is shown** to every seat, the King's ring turns red, the card **goes back into the hand** face-down, and the penalty card follows | every seat, for the moment | the reveal first, then a red ring, then the penalty flight and flinch |
 | Aim an Ace | deck → the target's row | flies face down | nobody | the target's seat ringed — and still ringed when the card lands, because the naming and the flight are one moment — a line, the flight, a flinch |
 | Toss in, right | your row → pile | face up as it flies | every seat | one flight per thrown card, thrown together |
+| Toss in, right, an action card | your row → the Tossed row | face up as it flies, into its place in the queue under the pile — where the table draws a queued card; flown onto the pile it landed on a pile that did not have it | every seat | one flight per thrown card |
+| A queued throw's action starts | the Tossed row → pile | out of the queue and onto the pile, lit and swelling like a played card, then shown off there as its action begins | every seat | the flight, then a flourish on the pile |
 | Toss in, wrong | deck → your row | the attempt turns face up **where it lies**, then back down | every seat, for the moment | the reveal first, then the penalty flight, flinch, ring and line — the card before the fine for it |
 | A thrown action card starts | nothing — it flew when it was thrown | swells on the pile | every seat | a flourish on the pile |
 | Call Vinto | nothing | nothing | — | the caller's seat ringed gold, "Vinto!", then the turn ring moving on |

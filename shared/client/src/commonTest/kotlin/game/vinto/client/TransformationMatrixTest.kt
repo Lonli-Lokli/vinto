@@ -376,6 +376,22 @@ class TransformationMatrixTest {
             play.last()
         },
         Row(
+            // A thrown action card is queued, and the table draws the queue in the Tossed row
+            // under the pile — so that is where it lands. Flown onto the pile, it landed on a
+            // pile that did not have it and jumped to the Tossed row a frame later.
+            "PARTICIPATE_IN_TOSS_IN (right, action card)",
+            actorSees = "fly you[3]→thrown[0] face",
+            othersSee = "fly you[3]→thrown[0] face",
+        ) {
+            val play = Play()
+            val rank = play.supply(copies = 2, withAction = true, excluding = setOf(Rank.KING))
+            play.plant(play.me, 3, rank)
+            play.draw(rank)
+            play.act(GameAction.DiscardCard(PlayerIdPayload(play.me)))
+            play.act(GameAction.ParticipateInTossIn(ParticipateInTossInPayload(play.me, listOf(3))))
+            play.last()
+        },
+        Row(
             "PARTICIPATE_IN_TOSS_IN (wrong)",
             actorSees = "reveal you[3]; fly deck→you[5] + flinch you[5] + attend you penalty + say you",
             othersSee = "reveal you[3]; fly deck→you[5] + flinch you[5] + attend you penalty + say you",
@@ -390,8 +406,8 @@ class TransformationMatrixTest {
         },
         Row(
             "PLAYER_TOSS_IN_FINISHED (queue starts)",
-            actorSees = "flourish pile",
-            othersSee = "flourish pile",
+            actorSees = "fly thrown[0]→pile face lit; flourish pile",
+            othersSee = "fly thrown[0]→pile face lit; flourish pile",
         ) {
             val play = Play()
             val rank = play.supply(copies = 2, withAction = true, excluding = setOf(Rank.KING))
@@ -578,6 +594,7 @@ class TransformationMatrixTest {
         Anchor.Deck -> "deck"
         Anchor.Discard -> "pile"
         Anchor.Pending -> "drawn"
+        is Anchor.Thrown -> "thrown[${anchor.index}]"
         is Anchor.Seat -> "${name(anchor.playerId)}[${anchor.position}]"
     }
 

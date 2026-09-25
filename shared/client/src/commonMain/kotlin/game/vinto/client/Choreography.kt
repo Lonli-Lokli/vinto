@@ -28,6 +28,13 @@ sealed interface Anchor {
     data object Pending : Anchor
 
     data class Seat(val playerId: String, val position: Int) : Anchor
+
+    /**
+     * A card waiting in the toss-in queue, drawn in the Tossed row under the pile. A thrown action
+     * card lands here rather than on the pile, which does not have it yet, and leaves from here
+     * when its action is played.
+     */
+    data class Thrown(val index: Int) : Anchor
 }
 
 /**
@@ -427,11 +434,14 @@ fun List<Frame>.tossedTogether(): List<Frame> {
 fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List<Scene> {
     val penalty = penaltyScene(action, before, after)
 
-    // A right King is several scenes, not one — see [namedCardScenes]. The first is this action's
-    // main scene; the rest follow the verdict, because the table is told before the card moves.
-    val named = (action as? GameAction.DeclareKingAction)
-        ?.let { namedCardScenes(it.payload.declaredRank, before, after) }
-        .orEmpty()
+    // A right King is several scenes, not one — see [namedCardScenes] — and so is a queued throw
+    // setting off ([queueStartScenes]). The first is this action's main scene; the rest follow the
+    // verdict, because the table is told before the card moves.
+    val named = when (action) {
+        is GameAction.DeclareKingAction -> namedCardScenes(action.payload.declaredRank, before, after)
+        is GameAction.PlayerTossInFinished -> queueStartScenes(before, after)
+        else -> emptyList()
+    }
 
     val main: Scene = when (action) {
         // The deck to the space in front of you, face up — the rules have the drawn card
@@ -505,12 +515,7 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         // The moment a thrown card's action begins. The card is already on the pile — it flew
         // there when it was thrown — so nothing moves, but it is a card being *played* and the
         // table says so, exactly as it does for one played from the hand.
-        is GameAction.PlayerTossInFinished ->
-            listOfNotNull(
-                after.pendingCard()
-                    ?.takeIf { before.pendingAction == null && after.pendingAction != null }
-                    ?.let { Beat.Flourish(it, Anchor.Discard) },
-            )
+        is GameAction.PlayerTossInFinished -> named.firstOrNull().orEmpty()
 
         is GameAction.ConfirmPeek,
         is GameAction.SkipPeek,
@@ -765,9 +770,31 @@ private fun tossScene(
             ?.let { queued -> thrownCard(queued.playerId, queued.rank) }
         ?: before.activeTossIn?.ranks?.firstOrNull()?.let { rank -> thrownCard(who, rank) }
 
-    return action.payload.positions.take(thrown).map { position ->
-        Beat.Move(Anchor.Seat(who, position), Anchor.Discard, face)
+    // Where it lands is where the table draws it. A thrown action card is QUEUED, and the queue is
+    // drawn in the Tossed row under the pile — flown onto the pile, it landed on a pile that did
+    // not have it, and jumped to the Tossed row a frame later.
+    val queuedBefore = before.activeTossIn?.queuedActions?.size ?: 0
+    val queuedNow = after.activeTossIn?.queuedActions.orEmpty()
+    val queued = queuedNow.size - queuedBefore >= thrown && queuedNow.lastOrNull()?.playerId == who
+
+    return action.payload.positions.take(thrown).mapIndexed { i, position ->
+        val to = if (queued) Anchor.Thrown(queuedBefore + i) else Anchor.Discard
+        Beat.Move(Anchor.Seat(who, position), to, face)
     }
+}
+
+/**
+ * The first queued throw setting off: out of the Tossed row and onto the pile, lit, as a played
+ * card goes — then shown off there as its action begins, the way a card taken from the pile is.
+ * Only when the queue has actually started, which is the moment a card is in play again.
+ */
+private fun queueStartScenes(before: PlayerView, after: PlayerView): List<Scene> {
+    val card = after.pendingCard() ?: return emptyList()
+    if (before.pendingAction != null || after.pendingAction == null) return emptyList()
+    return listOf(
+        listOf(Beat.Move(Anchor.Thrown(0), Anchor.Discard, card, shown = true)),
+        listOf(Beat.Flourish(card, Anchor.Discard)),
+    )
 }
 
 /** A stand-in for a thrown card the view cannot name: right rank, synthetic identity. */

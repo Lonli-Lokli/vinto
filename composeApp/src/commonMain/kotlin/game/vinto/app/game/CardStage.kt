@@ -840,6 +840,7 @@ fun Anchor.key(): String = when (this) {
     Anchor.Deck -> "deck"
     Anchor.Discard -> "discard"
     Anchor.Pending -> "pending"
+    is Anchor.Thrown -> "thrown:$index"
     is Anchor.Seat -> "card:$playerId:$position"
 }
 

@@ -282,6 +282,7 @@ class AnimationMapTest {
         Anchor.Deck -> "deck"
         Anchor.Discard -> "discard"
         Anchor.Pending -> "drawn slot"
+        is Anchor.Thrown -> "the Tossed row"
         is Anchor.Seat -> if (anchor.playerId == me) "your hand" else "their hand"
     }
 
