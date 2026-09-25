@@ -46,10 +46,10 @@
  */
 const REEL_SEGMENTS = [
   { image: './marketing/captures/ios/home.png', dur: 2.0 },
-  { clip: './marketing/clips/demo-long.mov', from: 4, speed: 2, dur: 4.0 }, // an Ace, and a toss-in
-  { clip: './marketing/clips/king.mov', from: 9.8, speed: 1.25, dur: 4.2 }, // a King names your 2; it joins the name
-  { clip: './marketing/clips/queen.mov', from: 8, speed: 1.25, dur: 4.2 }, // a Queen looks at two, and swaps them
-  { clip: './marketing/clips/call.mov', from: 28.3, dur: 3.2 }, // Dune calls Vinto
+  { clip: './marketing/clips/demo.mov', from: 1.0, speed: 2, dur: 4.0 }, // an Ace, and a toss-in
+  { clip: './marketing/clips/king.mov', from: 9.2, speed: 1.25, dur: 4.0 }, // a King: your 2 shown, judged, played
+  { clip: './marketing/clips/queen.mov', from: 7.3, speed: 1.25, dur: 4.0 }, // a Queen looks at two, and swaps them
+  { clip: './marketing/clips/call.mov', from: 9.9, dur: 3.0 }, // Dune calls Vinto
   { clip: './marketing/clips/plan.mov', dur: 4.0 },
   { clip: './marketing/clips/score.mov', dur: 3.2 },
   { image: './marketing/captures/ios/lobby.png', dur: 2.4 },
