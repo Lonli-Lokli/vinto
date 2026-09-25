@@ -850,6 +850,7 @@ fun Anchor.key(): String = when (this) {
     Anchor.Deck -> "deck"
     Anchor.Discard -> "discard"
     Anchor.Pending -> "pending"
+    Anchor.Borrowed -> "borrowed"
     is Anchor.Seat -> "card:$playerId:$position"
 }
 
@@ -1401,7 +1402,7 @@ fun CardStage(
         // Whose turn of the plan is about to play, over the felt, for a beat.
         stage.banner?.let { TurnBanner(it, behind.value ?: live, sizes) }
 
-        stage.borrowed?.let { Borrowed(it, sizes, stage.tableCentre(), stage.travel(STAGE_GROW_MS)) }
+        stage.borrowed?.let { Borrowed(it, sizes, stage, stage.travel(STAGE_GROW_MS)) }
         // The sweep is pure movement; under reduced motion the count still shows for the
         // scene's dwell, but nothing crosses the table.
         if (stage.refilling > 0 && !stage.reducedMotion) Reshuffling(stage.refilling, sizes, stage)
@@ -1474,6 +1475,10 @@ private suspend fun Stage.playScenes(frame: Frame, firstId: Long): Long {
         next = play(scene, next)
         delay(paced(Pacing.BETWEEN_SCENES_MS))
     }
+    // The King's named rank outlives the scene that raised it: the card it named flies into it in
+    // the NEXT scene, and a name cleared at its own scene's end left that card flying to an empty
+    // place. It goes when the joined card leaves it (`fly`), or here, when the frame is over.
+    borrowed = null
     return next
 }
 
@@ -1538,7 +1543,6 @@ private suspend fun Stage.play(scene: Scene, firstId: Long): Long {
     flourish = null
     flinching.clear()
     verdicts.clear()
-    borrowed = null
     refilling = 0
     if (saying.isNotEmpty()) {
         delay(ms(SAY_MS).toLong())
@@ -1732,6 +1736,9 @@ private fun Stage.fly(beat: Beat.Move, nextId: () -> Long): Int {
     // Queen's swap crosses her two lifted cards from their lifted places, not from the slots
     // they rose out of. One drawing owns the card at every moment.
     expecting.remove(beat.to)
+    // The King's named rank, leaving with the card that just joined it: from here the flight is
+    // the one drawing of that rank, so the name stops being drawn beside the King.
+    if (beat.from == Anchor.Borrowed) borrowed = null
     val wasLifted = peeking.remove(beat.from) != null
     if (wasLifted) settling.remove(beat.from)
 
@@ -1775,14 +1782,22 @@ private fun Stage.lift(at: Anchor, card: CardView, holdMs: Int): Int {
 
 /** The card a King is pretending to be, held up beside the King itself. */
 @Composable
-private fun Borrowed(rank: Rank, sizes: TableSizes, centre: Offset, growMs: Int) {
+private fun Borrowed(rank: Rank, sizes: TableSizes, stage: Stage, growMs: Int) {
+    val centre = stage.tableCentre()
     val shown = remember(rank) { CardView.Visible(cardFor(rank)) }
+    // A place as well as a picture ([Anchor.Borrowed]): the card the King named flies INTO it,
+    // so it is recorded at the size it is drawn — the hand's card, grown by [STAGE_SCALE]. Read
+    // before the scale is applied, which grows about the centre, so the centre is the real one.
+    val drawn = with(LocalDensity.current) {
+        Size(sizes.mine.width.toPx() * STAGE_SCALE, sizes.mine.height.toPx() * STAGE_SCALE)
+    }
     val grow = remember { Animatable(START_SCALE) }
     LaunchedEffect(rank) { grow.animateTo(1f, tween(growMs, easing = FastOutSlowInEasing)) }
 
     Box(
         modifier = Modifier
             .offset { IntOffset((centre.x + BESIDE_PX).roundToInt(), centre.y.roundToInt()) }
+            .onGloballyPositioned { stage.place(Anchor.Borrowed, it, drawn) }
             .graphicsLayer {
                 scaleX = grow.value * STAGE_SCALE
                 scaleY = grow.value * STAGE_SCALE

@@ -330,8 +330,8 @@ class TransformationMatrixTest {
         },
         Row(
             "DECLARE_KING_ACTION (right, plain card)",
-            actorSees = "borrowed + reveal you[3] + fly you[3]→pile face lit; verdict green",
-            othersSee = "borrowed + reveal you[3] + fly you[3]→pile face lit; verdict green",
+            actorSees = "borrowed + reveal you[3]; fly you[3]→named face lit; fly named→pile face lit; verdict green",
+            othersSee = "borrowed + reveal you[3]; fly you[3]→named face lit; fly named→pile face lit; verdict green",
         ) {
             val play = Play().kingAimedAtPlanted(withAction = false)
             play.act(GameAction.DeclareKingAction(DeclareKingActionPayload(play.me, play.planted)))
@@ -339,8 +339,8 @@ class TransformationMatrixTest {
         },
         Row(
             "DECLARE_KING_ACTION (right, action card)",
-            actorSees = "borrowed + reveal you[3] + fly you[3]→pile face lit; verdict green",
-            othersSee = "borrowed + reveal you[3] + fly you[3]→pile face lit; verdict green",
+            actorSees = "borrowed + reveal you[3]; fly you[3]→named face lit; fly named→pile face lit; verdict green",
+            othersSee = "borrowed + reveal you[3]; fly you[3]→named face lit; fly named→pile face lit; verdict green",
         ) {
             val play = Play().kingAimedAtPlanted(withAction = true)
             play.act(GameAction.DeclareKingAction(DeclareKingActionPayload(play.me, play.planted)))
@@ -581,6 +581,7 @@ class TransformationMatrixTest {
         Anchor.Deck -> "deck"
         Anchor.Discard -> "pile"
         Anchor.Pending -> "drawn"
+        Anchor.Borrowed -> "named"
         is Anchor.Seat -> "${name(anchor.playerId)}[${anchor.position}]"
     }
 

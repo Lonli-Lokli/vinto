@@ -27,6 +27,12 @@ sealed interface Anchor {
     data object Pending : Anchor
 
     data class Seat(val playerId: String, val position: Int) : Anchor
+
+    /**
+     * The rank a King has named, held up beside the King ([Beat.Borrowed]). A place only while
+     * that rank is showing: the card it was about flies into it, and the two leave as one.
+     */
+    data object Borrowed : Anchor
 }
 
 /**
@@ -432,6 +438,12 @@ fun List<Frame>.tossedTogether(): List<Frame> {
 fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List<Scene> {
     val penalty = penaltyScene(action, before, after)
 
+    // A right King is three scenes, not one — see [namedCardScenes]. The first is this action's
+    // main scene; the other two follow it before anything else the action set off.
+    val named = (action as? GameAction.DeclareKingAction)
+        ?.let { namedCardScenes(it.payload.declaredRank, before, after) }
+        .orEmpty()
+
     val main: Scene = when (action) {
         // The deck to the space in front of you, face up — the rules have the drawn card
         // revealed publicly, and it is the single most informative moment of somebody else's
@@ -533,7 +545,7 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         //
         // A wrong name leaves the card where it is, revealed, and costs a card: nothing moves
         // but the penalty, which the penalty scene animates.
-        is GameAction.DeclareKingAction -> namedCardScene(action.payload.declaredRank, before, after)
+        is GameAction.DeclareKingAction -> named.firstOrNull().orEmpty()
 
         // The two swaps that happen inside an action rather than as a move of their own, so
         // their endpoints come from the targets the action was aimed at.
@@ -558,7 +570,8 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
 
     // The reveal rides the round-ending frame as trailing scenes, so the hands turn over
     // seat by seat after whatever the last move showed — see [scoringScenes].
-    return listOfNotNull(main.takeIf { it.isNotEmpty() }, played, verdict, penalty, table) +
+    return listOfNotNull(main.takeIf { it.isNotEmpty() }) + named.drop(1) +
+        listOfNotNull(played, verdict, penalty, table) +
         scoringScenes(before, after)
 }
 
@@ -694,11 +707,22 @@ private fun discardScene(): Scene = emptyList()
  * The flight picks it up out of the air — the hand-off `Stage.fly` already makes, releasing a
  * lifted card in the same call that starts the flight and setting off from where it hovers.
  *
+ * **And it goes to the name, not past it.** The King's declared rank is held up beside the King
+ * while the real card is held up at its seat, so a right call used to put the rank on the table
+ * twice — a large one stranded at the side while a small one crossed to the pile. Seen in the App
+ * Store preview. The card now flies into the declared rank, and the two go to the pile as one: the
+ * name the King said, proved by the card it was about.
+ *
+ * **Three scenes, in order**, because a stage starts every beat of one scene at the same moment: a
+ * flight into the name that shared the name's scene set off before the name was drawn anywhere,
+ * found nowhere to land, and the card simply appeared on the pile. So the name and the lifted card
+ * come up together, then the card flies into the name, then the one card goes to the pile.
+ *
  * **A wrong name stages nothing at all**, borrowed rank included. The card stays in the hand, so
  * anything played here would be showing a card leaving that did not; what the table is owed is
  * the reveal, and `revealScene` carries that on its own.
  */
-private fun namedCardScene(declared: Rank, before: PlayerView, after: PlayerView): Scene {
+private fun namedCardScenes(declared: Rank, before: PlayerView, after: PlayerView): List<Scene> {
     val target = before.pendingAction?.targets?.firstOrNull() ?: return emptyList()
     val had = before.players.firstOrNull { it.id == target.playerId }?.cards?.size
     val has = after.players.firstOrNull { it.id == target.playerId }?.cards?.size
@@ -706,10 +730,10 @@ private fun namedCardScene(declared: Rank, before: PlayerView, after: PlayerView
 
     val named = after.pendingCard() ?: after.discardTop
     val seat = Anchor.Seat(target.playerId, target.position)
-    return listOfNotNull(
-        Beat.Borrowed(declared),
-        named?.let { Beat.Reveal(seat, it) },
-        Beat.Move(seat, Anchor.Discard, named, shown = true),
+    return listOf(
+        listOfNotNull(Beat.Borrowed(declared), named?.let { Beat.Reveal(seat, it) }),
+        listOf(Beat.Move(seat, Anchor.Borrowed, named, shown = true)),
+        listOf(Beat.Move(Anchor.Borrowed, Anchor.Discard, named, shown = true)),
     )
 }
 
