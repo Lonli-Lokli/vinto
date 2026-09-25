@@ -2,7 +2,10 @@ package game.vinto.app
 
 import game.vinto.client.LocalGame
 import game.vinto.client.Vault
+import game.vinto.client.rememberAvatar
+import game.vinto.client.rememberNickname
 import game.vinto.engine.CardView
+import game.vinto.protocol.AvatarKind
 import game.vinto.shapes.DeclareKingActionPayload
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
@@ -462,3 +465,29 @@ private const val FILM_BEAT_MS = 1_100L
 
 /** A Queen's look: both cards up long enough to read before they cross. */
 private const val FILM_LOOK_MS = 1_800L
+
+/**
+ * Who sits down in [MarketingScene.LOBBY]: a chosen face rather than whichever one the capture's
+ * seed happened to mint.
+ *
+ * The minted one frowned — a face is eyes, a brow and a mouth drawn from the seed, and this seed
+ * drew the mouth turned down — and it was the last thing the App Store preview showed before its
+ * end card. So the scene stages its identity the way the others stage a deal: the same minted name
+ * it always showed, and a Face whose mouth is up and whose brow is level, found by searching the
+ * seeds rather than drawn by hand. Every piece of it is something a player can pick in the picker.
+ */
+internal fun stageTheLobby(vault: Vault) {
+    vault.rememberNickname(LOBBY_NAME)
+    vault.rememberAvatar(AvatarKind.FACE.ordinal, LOBBY_FACE_SEED, LOBBY_GROUND)
+}
+
+private const val LOBBY_NAME = "Silver Anchor"
+
+/** `mintAvatar(FACE, 135)`: round eyes, level brow, a smile. */
+private const val LOBBY_FACE_SEED = 135L
+
+/**
+ * Slate blue, the eighth of `AvatarGrounds` — the ground the lobby already showed, which an
+ * unchosen ground takes from the guest id. Pinned with the face, so the smile is the one change.
+ */
+private const val LOBBY_GROUND = 7

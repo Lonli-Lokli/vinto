@@ -160,7 +160,7 @@ sealed interface AvatarTraits {
         val spacing: Int,
         /** -1, 0 or 1: the brow's angle, which is most of the expression. */
         val brow: Int,
-        /** 0..3: the mouth's curve, from down through flat to up. */
+        /** 0..3: the mouth — a frown, flat, a smile, or open in an O (`drawFace`). */
         val mouth: Int,
     ) : AvatarTraits {
         override val kind: AvatarKind get() = AvatarKind.FACE

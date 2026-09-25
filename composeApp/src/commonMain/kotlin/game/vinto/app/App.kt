@@ -808,7 +808,7 @@ private suspend fun stagedScreen(scene: MarketingScene, vault: Vault): Screen = 
     MarketingScene.TEACH -> Screen.Teaching
     MarketingScene.TABLE -> Screen.Playing(stagedGame(vault, toTheEnd = false))
     MarketingScene.SCORE -> Screen.Playing(stagedGame(vault, toTheEnd = true))
-    MarketingScene.LOBBY -> Screen.Online
+    MarketingScene.LOBBY -> Screen.Online.also { stageTheLobby(vault) }
     MarketingScene.PLAN -> Screen.Playing(coalitionGame(vault), opening = Question.ThePlan())
     MarketingScene.DEMO -> Screen.Playing(demoGame(vault), live = ::playOn)
     MarketingScene.KING -> kingFilm(vault).let { Screen.Playing(it.game, live = it.live) }
