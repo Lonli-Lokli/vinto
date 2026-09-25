@@ -396,10 +396,11 @@ private sealed interface Screen {
         val game: LocalGame,
         val opening: Question = Question.None,
         /**
-         * The round plays itself, for a capture that is being filmed rather than photographed.
-         * Only `MarketingScene.DEMO` sets it; a player never reaches a table that moves on its own.
+         * What plays on its own once the table is up, for a capture that is being filmed rather
+         * than photographed: the DEMO's endless round, or a filmed scene's one moment. Only
+         * marketing scenes set it; a player never reaches a table that moves on its own.
          */
-        val autoplay: Boolean = false,
+        val live: (suspend (LocalGame) -> Unit)? = null,
     ) : Screen
 
     /** The front door: a name, and which of the three things you came to do. */
@@ -740,7 +741,7 @@ private fun InvitationsWhileRunning(screen: Screen, invited: (String) -> Screen,
  */
 @Composable
 private fun AtTheTable(here: Screen.Playing, pace: Pace, onSettings: () -> Unit, onQuit: () -> Unit) {
-    if (here.autoplay) LaunchedEffect(here.game) { playOn(here.game) }
+    here.live?.let { live -> LaunchedEffect(here.game) { live(here.game) } }
 
     GameScreen(
         game = here.game,
@@ -809,7 +810,10 @@ private suspend fun stagedScreen(scene: MarketingScene, vault: Vault): Screen = 
     MarketingScene.SCORE -> Screen.Playing(stagedGame(vault, toTheEnd = true))
     MarketingScene.LOBBY -> Screen.Online
     MarketingScene.PLAN -> Screen.Playing(coalitionGame(vault), opening = Question.ThePlan())
-    MarketingScene.DEMO -> Screen.Playing(demoGame(vault), autoplay = true)
+    MarketingScene.DEMO -> Screen.Playing(demoGame(vault), live = ::playOn)
+    MarketingScene.KING -> kingFilm(vault).let { Screen.Playing(it.game, live = it.live) }
+    MarketingScene.QUEEN -> queenFilm(vault).let { Screen.Playing(it.game, live = it.live) }
+    MarketingScene.CALL -> callFilm(vault).let { Screen.Playing(it.game, live = it.live) }
 }
 
 /**

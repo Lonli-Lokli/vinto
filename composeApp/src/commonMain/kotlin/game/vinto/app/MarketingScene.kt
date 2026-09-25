@@ -2,11 +2,17 @@ package game.vinto.app
 
 import game.vinto.client.LocalGame
 import game.vinto.client.Vault
+import game.vinto.engine.CardView
+import game.vinto.shapes.DeclareKingActionPayload
 import game.vinto.shapes.Difficulty
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GameSubPhase
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
+import game.vinto.shapes.Rank
+import game.vinto.shapes.RankPayload
+import game.vinto.shapes.SelectActionTargetPayload
+import game.vinto.shapes.hasAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -85,6 +91,23 @@ enum class MarketingScene(val id: String) {
      * ones through the ordinary validator rather than a puppet show.
      */
     DEMO("demo"),
+
+    /**
+     * A King naming a card, filmed. Your turn draws a King and names one of the two cards you
+     * peeked at the deal — correctly, because you saw it — so the camera catches the whole
+     * declaration: the name held up beside the King, the card lifted where it lay, the card flying
+     * into the name, and the two going to the pile as one.
+     */
+    KING("king"),
+
+    /** A Queen, filmed: your turn draws one, looks at a card on each side of the table, and swaps them. */
+    QUEEN("queen"),
+
+    /**
+     * A Vinto call, filmed: [PLAN]'s deal played up to a few moves before a bot calls, and the
+     * rest at a player's pace, so the camera sees the call land and the coalition being told.
+     */
+    CALL("call"),
 
     ;
 
@@ -187,19 +210,7 @@ internal suspend fun coalitionGame(vault: Vault): LocalGame {
     // acting is what closes the coalition's window.
     var acted = 0
     while (game.session.view.value.vintoCallerId == null && acted < MAX_ACTIONS) {
-        val view = game.session.view.value
-        val mine = view.players.getOrNull(view.currentPlayerIndex)?.id == me
-        when {
-            view.subPhase == GameSubPhase.TOSS_QUEUE_ACTIVE ->
-                game.session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(me)))
-
-            view.pendingAction?.playerId == me ->
-                game.session.dispatch(GameAction.DiscardCard(PlayerIdPayload(me)))
-
-            mine -> game.session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
-
-            else -> game.session.dispatch(GameAction.ProcessAiTurn(PlayerIdPayload(me)))
-        }
+        stepTowardTheCall(game)
         acted++
     }
 
@@ -217,6 +228,27 @@ internal suspend fun coalitionGame(vault: Vault): LocalGame {
         settling++
     }
     return game
+}
+
+/**
+ * One action of [coalitionGame]'s deal: the human's turn spent — draw, put it down — or the table's.
+ * Shared with [CALL][MarketingScene.CALL], which has to reach the same call by the same road.
+ */
+private suspend fun stepTowardTheCall(game: LocalGame) {
+    val me = game.playerId
+    val view = game.session.view.value
+    val mine = view.players.getOrNull(view.currentPlayerIndex)?.id == me
+    when {
+        view.subPhase == GameSubPhase.TOSS_QUEUE_ACTIVE ->
+            game.session.dispatch(GameAction.PlayerTossInFinished(PlayerIdPayload(me)))
+
+        view.pendingAction?.playerId == me ->
+            game.session.dispatch(GameAction.DiscardCard(PlayerIdPayload(me)))
+
+        mine -> game.session.dispatch(GameAction.DrawCard(PlayerIdPayload(me)))
+
+        else -> game.session.dispatch(GameAction.ProcessAiTurn(PlayerIdPayload(me)))
+    }
 }
 
 /** The deal this scene is staged from. Fixed, so the picture is the same one every time. */
@@ -314,3 +346,119 @@ private const val DEMO_SEED = 20_260_081L
 
 /** One beat per move: long enough for the card to cross the felt, short enough to feel played. */
 private const val DEMO_BEAT_MS = 900L
+
+/**
+ * The filmed action scenes ([MarketingScene.KING], [MarketingScene.QUEEN], [MarketingScene.CALL]).
+ *
+ * A game is staged here the way the photographed scenes are — a fixed deal, the bots on the calling
+ * thread, so it is the same table every run — and the *moment* is played live afterwards, a beat at
+ * a time, once the screen is up and the camera rolling. Played during staging it would already be
+ * over when the first frame is drawn.
+ *
+ * **Chosen, not rigged.** The one arrangement is [GameAction.SetNextDrawCard], the session's own
+ * way to put a card on top of the deck, so the turn draws the card being shown. Everything after it
+ * is an ordinary move through the ordinary validator, and the King names a card the player really
+ * saw — which is the only way a player can name one right.
+ */
+internal class Filmed(val game: LocalGame, val live: suspend (LocalGame) -> Unit)
+
+/** Dealt, and the two peeks spent — reading what they showed while the deal still shows it. */
+private suspend fun dealtAndPeeked(vault: Vault, seed: Long): Pair<LocalGame, List<Rank?>> {
+    val game = LocalGame.start(vault, seed, Difficulty.EASY, botDispatcher = null)
+    val me = game.playerId
+    game.session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+    game.session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+    // Your own cards are face up to you only during the deal; after it you remember them or not.
+    val seen = game.session.view.value.players.first { it.id == me }.cards.take(2)
+        .map { (it as? CardView.Visible)?.card?.rank }
+    game.session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+    return game to seen
+}
+
+private suspend fun drawAndUse(game: LocalGame, rank: Rank) {
+    val me = PlayerIdPayload(game.playerId)
+    delay(FILM_OPENING_MS)
+    game.session.dispatch(GameAction.SetNextDrawCard(RankPayload(rank)))
+    game.session.dispatch(GameAction.DrawCard(me))
+    delay(FILM_BEAT_MS)
+    game.session.dispatch(GameAction.UseCardAction(me))
+    delay(FILM_BEAT_MS)
+}
+
+internal suspend fun kingFilm(vault: Vault): Filmed {
+    val (game, seen) = dealtAndPeeked(vault, MARKETING_SEED)
+    // A card with no action of its own, so a right name sends it to the pile and the turn ends
+    // there. A named seven would go into play and wait for a decision nobody is there to make.
+    val position = seen.indexOfFirst { it != null && !hasAction(it) }.takeIf { it >= 0 } ?: 0
+    val rank = checkNotNull(seen[position]) { "the deal showed no card at $position" }
+    return Filmed(game) { g ->
+        val me = g.playerId
+        drawAndUse(g, Rank.KING)
+        val own = SelectActionTargetPayload.Positional(me, me, position)
+        g.session.dispatch(GameAction.SelectActionTarget(own))
+        delay(FILM_BEAT_MS)
+        g.session.dispatch(GameAction.DeclareKingAction(DeclareKingActionPayload(me, rank)))
+    }
+}
+
+internal suspend fun queenFilm(vault: Vault): Filmed {
+    val (game, _) = dealtAndPeeked(vault, MARKETING_SEED)
+    return Filmed(game) { g ->
+        val me = g.playerId
+        // The seats either side of you, so the two cards cross the whole table.
+        val players = g.session.view.value.players
+        val left = players[1].id
+        val right = players[players.size - 1].id
+        drawAndUse(g, Rank.QUEEN)
+        g.session.dispatch(GameAction.SelectActionTarget(SelectActionTargetPayload.Positional(me, left, 0)))
+        delay(FILM_BEAT_MS)
+        g.session.dispatch(GameAction.SelectActionTarget(SelectActionTargetPayload.Positional(me, right, 0)))
+        delay(FILM_LOOK_MS)
+        g.session.dispatch(GameAction.ExecuteQueenSwap(PlayerIdPayload(me)))
+    }
+}
+
+/**
+ * [coalitionGame]'s deal, stopped [FILM_LEAD] actions short of the call. Counted by playing it once
+ * — the road is the same every time — so the live part starts where the caller's turn begins.
+ */
+internal suspend fun callFilm(vault: Vault): Filmed {
+    suspend fun fresh(): LocalGame {
+        val g = LocalGame.start(vault, COALITION_SEED, Difficulty.EASY, botDispatcher = Dispatchers.Default)
+        val me = g.playerId
+        g.session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 0)))
+        g.session.dispatch(GameAction.PeekSetupCard(PositionPayload(me, 1)))
+        g.session.dispatch(GameAction.FinishSetup(PlayerIdPayload(me)))
+        return g
+    }
+
+    val rehearsal = fresh()
+    var toTheCall = 0
+    while (rehearsal.session.view.value.vintoCallerId == null && toTheCall < MAX_ACTIONS) {
+        stepTowardTheCall(rehearsal)
+        toTheCall++
+    }
+    check(rehearsal.session.view.value.vintoCallerId != null) { "no call in $MAX_ACTIONS moves" }
+
+    val game = fresh()
+    repeat((toTheCall - FILM_LEAD).coerceAtLeast(0)) { stepTowardTheCall(game) }
+    return Filmed(game) { g ->
+        delay(FILM_OPENING_MS)
+        while (g.session.view.value.vintoCallerId == null) {
+            stepTowardTheCall(g)
+            delay(FILM_BEAT_MS)
+        }
+    }
+}
+
+/** How many of the table's actions the camera sees before the call: about the caller's turn. */
+private const val FILM_LEAD = 4
+
+/** Long enough for the screen to settle before anything moves. */
+private const val FILM_OPENING_MS = 1_200L
+
+/** Between the moves of one turn: time for the card to arrive before the next thing happens. */
+private const val FILM_BEAT_MS = 1_100L
+
+/** A Queen's look: both cards up long enough to read before they cross. */
+private const val FILM_LOOK_MS = 1_800L
