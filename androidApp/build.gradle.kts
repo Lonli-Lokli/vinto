@@ -68,6 +68,9 @@ dependencies {
     // engine and the bots; this module adds an Activity and nothing else.
     implementation(project(":composeApp"))
     implementation(libs.androidx.activity.compose)
+    // The launch screen, the same on every Android the game runs on: the icon's V on the felt
+    // (`Theme.Vinto.Launch` in res/values/themes.xml).
+    implementation(libs.androidx.core.splashscreen)
 
     // Play's SDK report flagged `androidx.fragment:fragment` on build 526: it resolves to 1.1.0,
     // which is six years old. Nothing here uses a Fragment — this is one Activity and Compose —

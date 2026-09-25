@@ -48,7 +48,27 @@ desktop window to the cap and the centring.
 `Theme.Material.Light.NoActionBar`, which meant dark status-bar icons over a dark rail and a
 white flash before the first composition. `Theme.Vinto` is dark Material with the rail as its
 window background, so the bars carry the light icon set by inheritance rather than by
-overriding a per-API flag, and the cold-start frames are the colour of the app.
+overriding a per-API flag, and the cold-start frames are the colour of the app. (Since the
+launch screen below, that window background is the felt rather than the rail.)
+
+**A launch screen of its own** (2026-09-25). Android built one from the adaptive icon — the
+felt tile cropped into a circle on grey, which the owner called a "strange logo inside border"
+— and iOS showed a blank screen. Both now show the icon's own V standing whole, with no disk
+and no frame, on the icon's own felt: `#1B5E43` and the orange V on a light phone, the dark
+icon's `#0E3428` and lifted `#FF9040` on a dark one. Those are also the greens the first
+screen's felt is drawn in, so the launch screen, the window behind the first frame and the
+first screen are one colour in either phone theme; a player whose in-app theme disagrees with
+the phone sees one felt step to the other, never paper or slate. The V is 2.6:1 against the
+light felt (the app icon's own pairing) and 6.1:1 against the dark.
+
+Nothing is drawn by hand: `node tools/make-launch-screen.mjs` reads `brand/vinto-icon.svg`
+and znachok's dark swap and writes `brand/vinto-launch.svg`, Android's
+`drawable/launch_mark.xml` and `values{,-night}/launch.xml`, and the iOS `LaunchMark` (250 pt,
+1–3x, light and dark) and `LaunchFelt` assets. It scales the V so its furthest point, a serif
+tip, sits at 92% of the circle Android keeps of a launch icon (two thirds of the canvas). Re-run
+it after the icon or `znachok.config.mjs` changes. Android uses AndroidX `core-splashscreen`
+(`Theme.Vinto.Launch`, installed first thing in `MainActivity.onCreate`), so every version from
+API 24 shows the same screen; `Info.plist`'s `UILaunchScreen` names the iOS pair.
 
 **A release variant that assembles anywhere.** `assembleRelease` signs with the upload key
 named by `keystore.properties` when that file exists, and with the debug key when it does

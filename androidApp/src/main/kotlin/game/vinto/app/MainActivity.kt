@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import game.vinto.app.crash.Crashes
 import game.vinto.app.crash.appReportingScope
 import game.vinto.app.link.offerOpenedLink
@@ -18,6 +19,10 @@ class MainActivity : ComponentActivity() {
     private val reporting = appReportingScope()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // The launch screen (`Theme.Vinto.Launch`): the icon's V on the felt, the same on every
+        // Android. Before `super.onCreate`, so the window is built with the theme it hands over
+        // to rather than the launch theme.
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         // Storage first, and only because the reporter needs it: a crash is written to the
         // vault on the way down and sent by the next launch, since a POST started as Android

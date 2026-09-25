@@ -18,3 +18,6 @@ Re-run both generators if it ever changes:
 python3 tools/make-launcher-icons.py
 python3 tools/make-web-icons.py
 ```
+
+The launch screen is read from the icon master instead, `brand/vinto-icon.svg`:
+`node tools/make-launch-screen.mjs` (see `docs/kotlin/UI.md` §6f).
