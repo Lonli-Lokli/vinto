@@ -30,7 +30,7 @@ composeMaterial3 = "1.9.0"
 # with the KMP plugin. It wants Gradle 9, and the argument that used to sit here for staying on
 # 8.x — that detekt's 1.x line would break — was settled by moving detekt to its 2.x line below
 # rather than by holding the toolchain still.
-agp = "9.3.2"
+agp = "9.4.1"
 androidxActivityCompose = "1.13.0"
 # The launch screen (`Theme.Vinto.Launch`): one API for the system splash on Android 12+ and the
 # same screen drawn by the library before it. The version Hronka ships with.
