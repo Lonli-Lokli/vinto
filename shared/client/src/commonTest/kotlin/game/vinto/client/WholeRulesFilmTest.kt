@@ -223,15 +223,7 @@ class WholeRulesFilmTest {
         )
         val film = rehearsal(withPile(Rank.KING), plan)
         val frame = assertNotNull(film.frames[0], "a pointed King drew nothing")
-        // A named card goes to the pile by way of the name the King said: into it, then on as one.
-        val intoTheName = frame.scenes.flatten().filterIsInstance<Beat.Move>()
-            .filter { it.to == Anchor.Borrowed && it.from is Anchor.Seat }
-            .map { (it.from as Anchor.Seat).playerId }
-        assertEquals(listOf(me), intoTheName, "the pointed-at card did not leave its hand for the King's name")
-        assertTrue(
-            frame.scenes.flatten().any { it is Beat.Move && it.from == Anchor.Borrowed && it.to == Anchor.Discard },
-            "the named card never went on to the pile",
-        )
+        assertEquals(listOf(me), thrownFrom(frame), "the pointed-at card did not leave for the pile")
 
         val after = film.tables[1]
         assertEquals(2, hand(after, me).size, "the pointed-at Jack did not leave my hand")

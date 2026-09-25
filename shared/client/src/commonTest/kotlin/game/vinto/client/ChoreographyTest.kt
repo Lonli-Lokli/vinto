@@ -406,7 +406,7 @@ class ChoreographyTest {
      * pass either way, because the borrowed rank was shown before anyone knew if it was right.
      */
     @Test
-    fun aKingNamesWhatItBorrowed() = runTest {
+    fun aKingsNamedCardIsShownToTheTable() = runTest {
         val session = aiming(Rank.KING)
         session.dispatch((session.table().taps.values.first() as Move.Send).action)
 
@@ -419,8 +419,9 @@ class ChoreographyTest {
         session.dispatch((called.move as Move.Send).action)
         runCurrent()
 
-        val borrowed = scenes.flatten().flatten().filterIsInstance<Beat.Borrowed>()
-        assertEquals(real, borrowed.singleOrNull()?.rank, "it said which: $borrowed")
+        // At a table the card answers the King's claim: it pops out and everybody sees it.
+        val shown = scenes.flatten().flatten().filterIsInstance<Beat.Reveal>()
+        assertEquals(real, shown.singleOrNull()?.card?.rank, "the table was not shown the named card: $shown")
     }
 
     // ------------------------------------------------------------------ the deal

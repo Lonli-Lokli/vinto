@@ -330,8 +330,8 @@ class TransformationMatrixTest {
         },
         Row(
             "DECLARE_KING_ACTION (right, plain card)",
-            actorSees = "borrowed + reveal you[3]; fly you[3]→named face lit; fly named→pile face lit; verdict green",
-            othersSee = "borrowed + reveal you[3]; fly you[3]→named face lit; fly named→pile face lit; verdict green",
+            actorSees = "reveal you[3]; verdict green; fly you[3]→pile face",
+            othersSee = "reveal you[3]; verdict green; fly you[3]→pile face",
         ) {
             val play = Play().kingAimedAtPlanted(withAction = false)
             play.act(GameAction.DeclareKingAction(DeclareKingActionPayload(play.me, play.planted)))
@@ -339,8 +339,8 @@ class TransformationMatrixTest {
         },
         Row(
             "DECLARE_KING_ACTION (right, action card)",
-            actorSees = "borrowed + reveal you[3]; fly you[3]→named face lit; fly named→pile face lit; verdict green",
-            othersSee = "borrowed + reveal you[3]; fly you[3]→named face lit; fly named→pile face lit; verdict green",
+            actorSees = "reveal you[3]; verdict green; flourish you[3]; fly you[3]→pile face lit",
+            othersSee = "reveal you[3]; verdict green; flourish you[3]; fly you[3]→pile face lit",
         ) {
             val play = Play().kingAimedAtPlanted(withAction = true)
             play.act(GameAction.DeclareKingAction(DeclareKingActionPayload(play.me, play.planted)))
@@ -348,10 +348,8 @@ class TransformationMatrixTest {
         },
         Row(
             "DECLARE_KING_ACTION (wrong)",
-            actorSees = "verdict red; " +
-                "fly deck→you[5] + flinch you[5] + attend you penalty; reveal you[3]",
-            othersSee = "verdict red; " +
-                "fly deck→you[5] + flinch you[5] + attend you penalty; reveal you[3]",
+            actorSees = "reveal you[3]; verdict red; fly deck→you[5] + flinch you[5] + attend you penalty",
+            othersSee = "reveal you[3]; verdict red; fly deck→you[5] + flinch you[5] + attend you penalty",
         ) {
             val play = Play().kingAimedAtPlanted(withAction = false)
             play.act(
@@ -379,8 +377,8 @@ class TransformationMatrixTest {
         },
         Row(
             "PARTICIPATE_IN_TOSS_IN (wrong)",
-            actorSees = "fly deck→you[5] + flinch you[5] + attend you penalty + say you; reveal you[3]",
-            othersSee = "fly deck→you[5] + flinch you[5] + attend you penalty + say you; reveal you[3]",
+            actorSees = "reveal you[3]; fly deck→you[5] + flinch you[5] + attend you penalty + say you",
+            othersSee = "reveal you[3]; fly deck→you[5] + flinch you[5] + attend you penalty + say you",
         ) {
             val play = Play()
             val planted = play.supply(copies = 1, withAction = false)
@@ -546,7 +544,7 @@ class TransformationMatrixTest {
     private fun script(staged: Staged, viewer: String): String {
         val before = projectView(staged.before, viewer)
         val after = projectView(staged.after, viewer)
-        val scenes = choreograph(staged.action, before, after) + revealScene(staged.revealed)
+        val scenes = scenesFor(staged.action, before, after, staged.revealed)
 
         val played = scenes.joinToString("; ") { scene ->
             scene.joinToString(" + ") { describe(it) }
@@ -574,14 +572,12 @@ class TransformationMatrixTest {
         is Beat.Attend -> "attend ${name(beat.playerId)} ${beat.kind.name.lowercase()}"
         is Beat.Say -> "say ${name(beat.playerId)}"
         is Beat.Reshuffle -> "reshuffle ${beat.cards}"
-        is Beat.Borrowed -> "borrowed"
     }
 
     private fun place(anchor: Anchor): String = when (anchor) {
         Anchor.Deck -> "deck"
         Anchor.Discard -> "pile"
         Anchor.Pending -> "drawn"
-        Anchor.Borrowed -> "named"
         is Anchor.Seat -> "${name(anchor.playerId)}[${anchor.position}]"
     }
 

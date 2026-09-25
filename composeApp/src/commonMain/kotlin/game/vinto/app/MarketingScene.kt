@@ -95,8 +95,8 @@ enum class MarketingScene(val id: String) {
     /**
      * A King naming a card, filmed. Your turn draws a King and names one of the two cards you
      * peeked at the deal — correctly, because you saw it — so the camera catches the whole
-     * declaration: the name held up beside the King, the card lifted where it lay, the card flying
-     * into the name, and the two going to the pile as one.
+     * declaration as it goes at a table: the King on the pile, the named card popping out of the
+     * hand and shown, the King's ring turning green, and the card going onto the pile.
      */
     KING("king"),
 

@@ -10,6 +10,7 @@ import game.vinto.shapes.Rank
 import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.actorId
 import game.vinto.shapes.getCardValue
+import game.vinto.shapes.hasAction
 
 /**
  * A place on the table a card can be.
@@ -27,12 +28,6 @@ sealed interface Anchor {
     data object Pending : Anchor
 
     data class Seat(val playerId: String, val position: Int) : Anchor
-
-    /**
-     * The rank a King has named, held up beside the King ([Beat.Borrowed]). A place only while
-     * that rank is showing: the card it was about flies into it, and the two leave as one.
-     */
-    data object Borrowed : Anchor
 }
 
 /**
@@ -124,16 +119,6 @@ sealed interface Beat {
      * sweep rather than as one card moving the wrong way.
      */
     data class Reshuffle(val cards: Int) : Beat
-
-    /**
-     * The King's borrowed action.
-     *
-     * A King declares another rank and performs *that* card's action, which means the next
-     * thing the table is asked for belongs to a card nobody played. Naming it is the
-     * difference between "why is it asking me to pick two cards" and "ah, it declared a
-     * Queen".
-     */
-    data class Borrowed(val rank: Rank) : Beat
 
     /**
      * The answer to a declaration: green for right, red for wrong.
@@ -283,7 +268,11 @@ fun scenesFor(
 
     val failedToss = action is GameAction.ParticipateInTossIn &&
         handSize(after, action.payload.playerId) > handSize(before, action.payload.playerId)
-    return if (failedToss) reveal + scenes else scenes + reveal
+    // A wrong King is the other: as at a table, the named card pops out and is shown first, and
+    // only then is the King answered — red, the card back in the hand, the penalty card.
+    val wrongKing = action is GameAction.DeclareKingAction &&
+        handSize(after, action.payload.playerId) > handSize(before, action.payload.playerId)
+    return if (failedToss || wrongKing) reveal + scenes else scenes + reveal
 }
 
 private fun handSize(view: PlayerView, playerId: String): Int =
@@ -438,8 +427,8 @@ fun List<Frame>.tossedTogether(): List<Frame> {
 fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List<Scene> {
     val penalty = penaltyScene(action, before, after)
 
-    // A right King is three scenes, not one — see [namedCardScenes]. The first is this action's
-    // main scene; the other two follow it before anything else the action set off.
+    // A right King is several scenes, not one — see [namedCardScenes]. The first is this action's
+    // main scene; the rest follow the verdict, because the table is told before the card moves.
     val named = (action as? GameAction.DeclareKingAction)
         ?.let { namedCardScenes(it.payload.declaredRank, before, after) }
         .orEmpty()
@@ -570,8 +559,8 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
 
     // The reveal rides the round-ending frame as trailing scenes, so the hands turn over
     // seat by seat after whatever the last move showed — see [scoringScenes].
-    return listOfNotNull(main.takeIf { it.isNotEmpty() }) + named.drop(1) +
-        listOfNotNull(played, verdict, penalty, table) +
+    return listOfNotNull(main.takeIf { it.isNotEmpty() }, played, verdict) + named.drop(1) +
+        listOfNotNull(penalty, table) +
         scoringScenes(before, after)
 }
 
@@ -691,36 +680,22 @@ private fun peekScene(after: PlayerView, payload: SelectActionTargetPayload.Posi
 private fun discardScene(): Scene = emptyList()
 
 /**
- * The card a King named: held up where it lay, then on its way out of the hand it was named in.
+ * The card a King named, as it goes at a table.
  *
- * Only when the name was right, which is read from the hand rather than from the rank: a
- * correct name takes the card out — to the pile, or into play from the pile if it has its own
- * action — and a wrong one leaves it where it is.
+ * The King is played, so it lies on the pile. The card it names **pops out of its hand and is
+ * shown** to everybody — this scene — and the verdict follows as a scene of its own, on the King.
+ * Then, only when the name was right (read from the hand shrinking, not from the rank), the card
+ * goes onto the pile: plainly, for a card with no action; and **played like a card from the hand**
+ * for one with an action of its own — shown off where it lies, then lit and swelling on the way,
+ * which is the same two beats [GameAction.UseCardAction] makes.
  *
- * **Shown before it travels.** It used only to fly, and `InFlight` swells a `shown` flight as
- * it goes — but that swell peaks at the *midpoint*, and for a seat at the side of the table the
- * midpoint is still over by that seat. Reported from a phone as the card growing off to one side
- * and only then setting off, which is not what it was doing and not what a table does either: at
- * a table the card is held up where it was taken from, so everybody can see which card it was
- * and whose, and then it goes on the pile.
+ * A wrong name stages nothing here. The card goes back into its hand, and what the table is owed
+ * — the card face up where it lay, before the verdict — is the reveal `scenesFor` puts first.
  *
- * The flight picks it up out of the air — the hand-off `Stage.fly` already makes, releasing a
- * lifted card in the same call that starts the flight and setting off from where it hovers.
- *
- * **And it goes to the name, not past it.** The King's declared rank is held up beside the King
- * while the real card is held up at its seat, so a right call used to put the rank on the table
- * twice — a large one stranded at the side while a small one crossed to the pile. Seen in the App
- * Store preview. The card now flies into the declared rank, and the two go to the pile as one: the
- * name the King said, proved by the card it was about.
- *
- * **Three scenes, in order**, because a stage starts every beat of one scene at the same moment: a
- * flight into the name that shared the name's scene set off before the name was drawn anywhere,
- * found nowhere to land, and the card simply appeared on the pile. So the name and the lifted card
- * come up together, then the card flies into the name, then the one card goes to the pile.
- *
- * **A wrong name stages nothing at all**, borrowed rank included. The card stays in the hand, so
- * anything played here would be showing a card leaving that did not; what the table is owed is
- * the reveal, and `revealScene` carries that on its own.
+ * Reported from a phone, twice. First: *"this enlargement happened directly on side … it should
+ * start move from pulled space, to let everyone see it first."* Then, of a version that held the
+ * declared rank up as a second card beside the King: *"we should have exactly like in real
+ * life"* — and at a table there is no second card.
  */
 private fun namedCardScenes(declared: Rank, before: PlayerView, after: PlayerView): List<Scene> {
     val target = before.pendingAction?.targets?.firstOrNull() ?: return emptyList()
@@ -730,10 +705,11 @@ private fun namedCardScenes(declared: Rank, before: PlayerView, after: PlayerVie
 
     val named = after.pendingCard() ?: after.discardTop
     val seat = Anchor.Seat(target.playerId, target.position)
-    return listOf(
-        listOfNotNull(Beat.Borrowed(declared), named?.let { Beat.Reveal(seat, it) }),
-        listOf(Beat.Move(seat, Anchor.Borrowed, named, shown = true)),
-        listOf(Beat.Move(Anchor.Borrowed, Anchor.Discard, named, shown = true)),
+    val played = hasAction(named?.rank ?: declared)
+    return listOfNotNull(
+        listOfNotNull(named?.let { Beat.Reveal(seat, it) }),
+        named?.takeIf { played }?.let { listOf(Beat.Flourish(it, seat)) },
+        listOf(Beat.Move(seat, Anchor.Discard, named, shown = played)),
     )
 }
 

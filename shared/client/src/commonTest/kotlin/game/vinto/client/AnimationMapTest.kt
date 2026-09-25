@@ -180,10 +180,10 @@ class AnimationMapTest {
                 "the defect this system was rebuilt around",
         )
         assertEquals(
-            "your hand → the named rank (lit), the named rank → discard (lit)",
+            "your hand → discard (lit)",
             map.getValue("Name a rank with a King").flights,
-            "a King names a card and takes it out of the hand into the name it said, and the two " +
-                "go to the pile as one card",
+            "a King names a card and takes it out of the hand onto the pile — played, like a card " +
+                "from the hand, since this one has an action of its own",
         )
         assertEquals("nothing moves", map.getValue("Finish looking").flights)
         assertEquals(
@@ -275,7 +275,6 @@ class AnimationMapTest {
         is Beat.Flinch -> "the hand flinches"
         is Beat.Attend -> if (beat.playerId == me) "your seat rings" else "their seat rings"
         is Beat.Reshuffle -> "the pile sweeps back into the deck"
-        is Beat.Borrowed -> "the borrowed rank is held up"
         is Beat.Say -> "the seat says a line"
     }
 
@@ -283,7 +282,6 @@ class AnimationMapTest {
         Anchor.Deck -> "deck"
         Anchor.Discard -> "discard"
         Anchor.Pending -> "drawn slot"
-        Anchor.Borrowed -> "the named rank"
         is Anchor.Seat -> if (anchor.playerId == me) "your hand" else "their hand"
     }
 
