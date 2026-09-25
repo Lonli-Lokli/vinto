@@ -28,6 +28,33 @@
  * further down this file still do — they are prose, not configuration, and the scene list is the
  * thing to read.)
  */
+/**
+ * The film, in eight beats: the front door, a round being played, an action card or two, the call,
+ * the final round with the coalition's board open, what it came to, and the way to a table with
+ * friends on it. The stills are bookends — zdymak gives an `image` a slow push-in, so neither
+ * freezes — and everything between them is real recorded motion.
+ *
+ * **One long take, cut by zdymak.** `demo-long.mov` is `zdymak capture --record --states demo
+ * --duration 170`: the DEMO scene playing a real round with the MCTS bots until one of them calls.
+ * `from` picks each beat out of it and `speed` hurries the footage, never the app — a round sped up
+ * in the app would film its own choreography being skipped. The times are this seed's round:
+ * Ember's 9 peeks at 35s, Dune's King declares a 4 at 47s, Dune calls at 53s. Re-record the take
+ * and they must be re-read, which is why they are here and not in a script.
+ *
+ * The front door is **two seconds**, not a full beat: it is a title card, and at the shared length it
+ * was the longest shot in the film.
+ */
+const REEL_SEGMENTS = [
+  { image: './marketing/captures/ios/home.png', dur: 2.0 },
+  { clip: './marketing/clips/demo-long.mov', from: 4, speed: 2, dur: 4.5 }, // an Ace, and a toss-in
+  { clip: './marketing/clips/demo-long.mov', from: 35.3, dur: 2.5 }, // a 9 peeks
+  { clip: './marketing/clips/demo-long.mov', from: 47.3, dur: 3.2 }, // a King declares a 4
+  { clip: './marketing/clips/demo-long.mov', from: 52.7, dur: 3.4 }, // Dune calls Vinto
+  { clip: './marketing/clips/plan.mov', dur: 4.2 },
+  { clip: './marketing/clips/score.mov', dur: 3.5 },
+  { image: './marketing/captures/ios/lobby.png', dur: 2.5 },
+];
+
 export default {
   // The table's own palette, from `composeApp/.../theme/VintoTheme.kt` rather than picked to
   // match it — a caption scrim in a different green than the felt is the tell that marketing
@@ -208,30 +235,17 @@ export default {
       // licenses/pixabay-dark-beat-choir.txt, because "where did this audio come from" is asked
       // years later when nobody remembers. It replaced an untagged `bed.mp3` nobody could source.
       //
-      // `offset: 17`: the track builds for 19s, drops to near-silence for two and a half, and the
-      // beat lands at 22.0s. Starting at 17 puts that hit at 5.0s — the cut from the front door
+      // `offset: 20`: the track builds for 19s, drops to near-silence for two and a half, and the
+      // beat lands at 22.0s. Starting at 20 puts that hit at 2.0s — the cut from the front door
       // into the first live footage — instead of spending the whole reel on the intro.
       music: {
         path: './marketing/music/dark-beat-choir-288548.mp3',
-        offset: 17,
+        offset: 20,
         volume: 0.75,
         fadeIn: 0.8,
         fadeOut: 1.5,
       },
-      // A film with a shape, in five beats: the front door, a round the bots play out, the
-      // final round with the coalition's board open, what it came to, and the way to a table
-      // with friends on it. The two stills are deliberate bookends — zdymak gives an `image`
-      // segment a slow push-in, so neither of them freezes — and everything between them is
-      // real recorded motion. `demo.mov` is the DEMO capture at double speed: the app plays at
-      // the pace a player sees and the FOOTAGE is what hurries, because a round sped up in the
-      // app would film its own choreography being skipped.
-      segments: [
-        { image: './marketing/captures/ios/home.png' },
-        { clip: './marketing/clips/demo.mov' },
-        { clip: './marketing/clips/plan.mov' },
-        { clip: './marketing/clips/score.mov' },
-        { image: './marketing/captures/ios/lobby.png' },
-      ],
+      segments: REEL_SEGMENTS,
     },
     {
       // Play's listing video is a YouTube link rather than a file, so this one is uploaded by
@@ -242,13 +256,7 @@ export default {
       sceneDur: 5.2,
       transition: 'dissolve',
       theme: { bleed: true, frame: false },
-      segments: [
-        { image: './marketing/captures/ios/home.png' },
-        { clip: './marketing/clips/demo.mov' },
-        { clip: './marketing/clips/plan.mov' },
-        { clip: './marketing/clips/score.mov' },
-        { image: './marketing/captures/ios/lobby.png' },
-      ],
+      segments: REEL_SEGMENTS,
     },
   ],
 
