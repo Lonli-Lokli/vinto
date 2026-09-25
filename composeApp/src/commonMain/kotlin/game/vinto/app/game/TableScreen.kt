@@ -1617,7 +1617,15 @@ private fun Cards(
     // "Arriving" has two tenses, and both matter: a declared swap's outgoing flight is the
     // slower one, so the incoming card *has landed* while the old one is still in the air —
     // the slot is drawn and needs no gap, which is what [Stage.hasLanded] remembers.
-    val gaps = stage.leaving[seat.id].orEmpty()
+    //
+    // And "left" has two tenses as well: a card still **about to** leave holds its place too. A
+    // King's named card is shown where it lies and the King answered before it flies, and a hand
+    // that closed up at the step slid sideways under the card being shown ([Stage.departing]).
+    val about = stage.departing.keys
+        .filterIsInstance<Anchor.Seat>()
+        .filter { it.playerId == seat.id && it !in stage.expecting }
+        .map { it.position }
+    val gaps = (stage.leaving[seat.id].orEmpty() + about)
         .filterNot {
             val anchor = Anchor.Seat(seat.id, it)
             stage.isInFlight(anchor) || stage.hasLanded(anchor)
@@ -2606,6 +2614,9 @@ private fun Discard(
         previous = latest
         latest = view.discardTop
     }
+    // What the pile last DREW, which is not always its last top: a card in play lies here without
+    // being the top — a King whose declaration is being made is — and the card it names lands on it.
+    var lastShown by remember { mutableStateOf<Card?>(null) }
 
     // And the card underneath the one arriving is only the *previous* top when the arriving
     // card is the top already — which is what happens when the engine has recorded the
@@ -2613,7 +2624,7 @@ private fun Discard(
     // the pile still holds the card it held before, and showing the one before *that* left the
     // pile blank, or showing a card two moves old.
     val arrivingIsTheTop = arriving is CardView.Visible && arriving.card.id == view.discardTop?.id
-    val covered = if (arrivingIsTheTop) previous else view.cardInPlay ?: view.discardTop
+    val covered = underTheArrival(arrivingIsTheTop, lastShown, previous, view.cardInPlay, view.discardTop)
 
     val face = pileFace(
         top = view.discardTop,
@@ -2621,6 +2632,9 @@ private fun Discard(
         inPlay = view.cardInPlay,
         landing = arriving != null || flourishing,
     )
+
+    val settled = arriving == null && !flourishing
+    SideEffect { if (settled) lastShown = face }
 
     if (face == null) {
         EmptySlot(sizes.theirs, "—", pile)
@@ -2666,6 +2680,20 @@ private fun Discard(
  * from a hand is being played over it. Nothing, only when there was nothing there to begin
  * with.
  */
+
+/**
+ * The card a landing card covers: what the pile last drew, when the card arriving is already the
+ * top — so a King in play, which lies here without being the top, stays under the card it named
+ * rather than vanishing. The last top stands in when the pile has drawn nothing yet.
+ */
+internal fun underTheArrival(
+    arrivingIsTheTop: Boolean,
+    lastShown: Card?,
+    previousTop: Card?,
+    inPlay: Card?,
+    top: Card?,
+): Card? = if (arrivingIsTheTop) lastShown ?: previousTop else inPlay ?: top
+
 internal fun pileFace(top: Card?, covered: Card?, inPlay: Card?, landing: Boolean): Card? = when {
     landing -> if (inPlay != null) top else covered
     inPlay != null -> inPlay

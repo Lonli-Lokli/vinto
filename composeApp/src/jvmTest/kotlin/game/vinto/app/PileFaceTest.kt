@@ -1,6 +1,7 @@
 package game.vinto.app
 
 import game.vinto.app.game.pileFace
+import game.vinto.app.game.underTheArrival
 import game.vinto.shapes.Card
 import game.vinto.shapes.Rank
 import kotlin.test.Test
@@ -85,5 +86,38 @@ class PileFaceTest {
 
         assertEquals(queen, shown, "the pile shows what the arriving card will cover")
         assertTrue(shown != arriving, "and never the card that is still in the air")
+    }
+
+    /**
+     * A King played is on the pile, and the card it names lands on it.
+     *
+     * The King is on the pile only as the card IN PLAY while its declaration is made — the pile's
+     * own top is whatever was there before, and at the start of a round that is nothing. So a
+     * pile that remembered its last TOP showed nothing under the arriving card: the King vanished
+     * the moment its named card popped out, and its green or red ring lit an empty place. Seen in
+     * the App Store preview. What the pile last DREW is the King, and that is what gets covered.
+     */
+    @Test
+    fun theNamedCardLandsOnTheKingThatNamedIt() {
+        val two = card(Rank.TWO, "two")
+        val under = underTheArrival(
+            arrivingIsTheTop = true,
+            lastShown = king,
+            previousTop = null,
+            inPlay = null,
+            top = two,
+        )
+
+        assertEquals(king, under, "the King left the pile while its named card was on the way")
+        assertEquals(king, pileFace(top = two, covered = under, inPlay = null, landing = true))
+    }
+
+    /** And where the pile drew its own top, that is the same card either way. */
+    @Test
+    fun anOrdinaryDiscardStillLandsOnThePreviousTop() {
+        assertEquals(
+            queen,
+            underTheArrival(arrivingIsTheTop = true, lastShown = queen, previousTop = queen, inPlay = null, top = king),
+        )
     }
 }

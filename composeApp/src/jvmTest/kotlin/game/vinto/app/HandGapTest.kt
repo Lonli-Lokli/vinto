@@ -91,6 +91,51 @@ class HandGapTest {
         assertEquals(settled, swapping, "a card leaving and another arriving is one slot, not two")
     }
 
+    /**
+     * And while it is only ABOUT to leave — shown where it lies, before any flight.
+     *
+     * A King's named card pops out and is shown, and the King is answered, before the card goes
+     * anywhere: several scenes in which the table has already stepped to a hand a card short and
+     * nothing is flying yet. The gap used to be held only by a flight, so the hand closed up the
+     * instant the table stepped and the held-up card, measured against its old place, caught up a
+     * frame later — the whole hand hopping sideways under it. Seen, frame by frame, in the App
+     * Store preview.
+     */
+    @Test
+    fun aHandKeepsItsShapeWhileACardWaitsToLeaveIt() = runComposeUiTest {
+        val whole = teachingSession().view.value
+        val me = whole.viewerId
+        val short = whole.copy(
+            players = whole.players.map { seat ->
+                if (seat.id == me) seat.copy(cards = seat.cards.filterIndexed { i, _ -> i != GONE }) else seat
+            },
+        )
+
+        val settled = handWidth(whole, Stage())
+        val waiting = handWidth(short, Stage().apply { departing[Anchor.Seat(me, GONE)] = CardView.Hidden })
+
+        assertEquals(settled, waiting, "the hand closed up before the card had left it")
+    }
+
+    /** The same promise for a swap still makes one slot, not two: a card is arriving there too. */
+    @Test
+    fun aSwapAboutToHappenDoesNotWidenTheHand() = runComposeUiTest {
+        val whole = teachingSession().view.value
+        val me = whole.viewerId
+        val seat = Anchor.Seat(me, GONE)
+
+        val settled = handWidth(whole, Stage())
+        val aboutTo = handWidth(
+            whole,
+            Stage().apply {
+                departing[seat] = CardView.Hidden
+                expecting[seat] = CardView.Hidden
+            },
+        )
+
+        assertEquals(settled, aboutTo, "a card about to leave and another about to arrive is one slot")
+    }
+
     /** A stage mid-swap: one card leaving a slot and another landing in the same one. */
     private fun swapping(playerId: String, position: Int) = Stage().apply {
         val seat = Anchor.Seat(playerId, position)
