@@ -43,12 +43,19 @@
         the greens the first screen's felt is drawn in. The icon background is the felt too, so
         nothing outlines the mark.
 
+        On Android 12+ the V is written in, one pen stroke down the left arm and up the right
+        (`drawable/launch_mark_animated.xml`, generated beside the still). `@drawable/launch_icon`
+        chooses (`values{,-v31}/launch_animation.xml`): older Android and the compat library show
+        an animated vector's first frame, an empty felt, so they keep the still. The duration is
+        the animation's own length, which `MainActivity` holds the screen for.
+
         The felt is dark green on a light phone as well, so the bars carry the light icon set in
         both themes; the library's DayNight parent would draw dark icons on it by day.
     -->
     <style name="Theme.Vinto.Launch" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/launch_felt</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/launch_mark</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/launch_icon</item>
+        <item name="windowSplashScreenAnimationDuration">@integer/launch_animation_ms</item>
         <item name="windowSplashScreenIconBackgroundColor">@color/launch_felt</item>
         <item name="postSplashScreenTheme">@style/Theme.Vinto</item>
         <item name="android:windowLightStatusBar">false</item>

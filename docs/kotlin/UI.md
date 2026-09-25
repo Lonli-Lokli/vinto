@@ -70,6 +70,20 @@ it after the icon or `znachok.config.mjs` changes. Android uses AndroidX `core-s
 (`Theme.Vinto.Launch`, installed first thing in `MainActivity.onCreate`), so every version from
 API 24 shows the same screen; `Info.plist`'s `UILaunchScreen` names the iOS pair.
 
+**Written in, on Android 12+** (the owner: "animated icons on supported phones"). The V is
+inked in one pen stroke: down the thick left arm from its serif to the point, then up the thin
+right arm into its serif, 700 ms in all. The same script writes it beside the still, from the
+same outline: two clip paths, one per arm, each a front square to its arm, meeting on the line
+from the point through the notch. The left front accelerates and the right one decelerates,
+with the time split by the distance each travels, so the pen keeps its speed through the point.
+Both fronts end clear of the V, so the last frame is the still pixel for pixel. `values-v31`
+alone picks the animation (`@drawable/launch_icon`): older Android and the compat library show
+an animated vector's first frame, which here is empty felt. `MainActivity` holds the screen to
+the animation's end, measured on the wall clock the platform stamps it with, fades it over
+200 ms and puts the app's own bar icons back (Android 12 and 12L re-apply the theme's). With
+the system's animations off, the V stands whole and the fade is a cut. iOS launch screens
+cannot animate, so iOS keeps the still.
+
 **A release variant that assembles anywhere.** `assembleRelease` signs with the upload key
 named by `keystore.properties` when that file exists, and with the debug key when it does
 not. The fallback is the point: a release build that fails on a missing secret is one that goes

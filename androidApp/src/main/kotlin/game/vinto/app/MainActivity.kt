@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.splashscreen.SplashScreenViewProvider
 import game.vinto.app.crash.Crashes
 import game.vinto.app.crash.appReportingScope
 import game.vinto.app.link.offerOpenedLink
@@ -22,7 +23,7 @@ class MainActivity : ComponentActivity() {
         // The launch screen (`Theme.Vinto.Launch`): the icon's V on the felt, the same on every
         // Android. Before `super.onCreate`, so the window is built with the theme it hands over
         // to rather than the launch theme.
-        installSplashScreen()
+        installSplashScreen().setOnExitAnimationListener { fadeOutLaunchScreen(it) }
         super.onCreate(savedInstanceState)
         // Storage first, and only because the reporter needs it: a crash is written to the
         // vault on the way down and sent by the next launch, since a POST started as Android
@@ -78,4 +79,41 @@ class MainActivity : ComponentActivity() {
 
         super.onDestroy()
     }
+
+    /**
+     * The launch screen's way out.
+     *
+     * On Android 12+ its V is written in (`drawable/launch_mark_animated.xml`), and the game is
+     * often ready before the pen reaches the right serif — so the screen stays until the
+     * animation's own end and then fades. Nothing waits past that, and on a phone slower than the
+     * animation nothing waits at all. With the system's animations off, the V stands whole and the
+     * fade is a cut. Before 12 the animation's start and length are both zero: the still fades.
+     */
+    private fun fadeOutLaunchScreen(launch: SplashScreenViewProvider) {
+        // Android 12 and 12L re-apply the window theme's bars just before this runs, and again on
+        // `remove()`, over the icons the app chose from its own theme setting (`SystemBars`; this
+        // app styles its bars from Compose rather than with `enableEdgeToEdge`). Put them back at
+        // both points.
+        reassertSystemBars(this)
+        // The platform stamps the start with the WALL clock, so the wait is measured against
+        // `System.currentTimeMillis()`. Against uptime, as Hronka first had it, it comes out as
+        // decades and the launch screen never leaves. And never longer than the animation itself.
+        val end = launch.iconAnimationStartMillis + launch.iconAnimationDurationMillis
+        val remaining = (end - System.currentTimeMillis()).coerceIn(0L, launch.iconAnimationDurationMillis)
+        launch.view.animate()
+            .alpha(0f)
+            .setStartDelay(remaining)
+            .setDuration(LAUNCH_FADE_MS)
+            .withEndAction {
+                launch.remove()
+                reassertSystemBars(this)
+            }
+            .start()
+    }
 }
+
+/**
+ * The launch screen's fade into the game. The system animation scale shortens it; with the
+ * system's animations off it is a cut.
+ */
+private const val LAUNCH_FADE_MS = 200L
