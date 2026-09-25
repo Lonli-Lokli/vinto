@@ -29,30 +29,30 @@
  * thing to read.)
  */
 /**
- * The film, in eight beats: the front door, a round being played, an action card or two, the call,
- * the final round with the coalition's board open, what it came to, and the way to a table with
+ * The film, in eight beats: the front door, a round being played, a King, a Queen, the call, the
+ * final round with the coalition's board open, what it came to, and the way to a table with
  * friends on it. The stills are bookends — zdymak gives an `image` a slow push-in, so neither
  * freezes — and everything between them is real recorded motion.
  *
- * **One long take, cut by zdymak.** `demo-long.mov` is `zdymak capture --record --states demo
- * --duration 170`: the DEMO scene playing a real round with the MCTS bots until one of them calls.
- * `from` picks each beat out of it and `speed` hurries the footage, never the app — a round sped up
- * in the app would film its own choreography being skipped. The times are this seed's round:
- * Ember's 9 peeks at 35s, Dune's King declares a 4 at 47s, Dune calls at 53s. Re-record the take
- * and they must be re-read, which is why they are here and not in a script.
+ * **Each moment is its own staged scene, filmed.** `king`, `queen` and `call` are marketing
+ * scenes (`MarketingScene.kt`) that deal a fixed game and then play one moment live for the camera:
+ * `zdymak capture --record --states king,queen --settle 1 --duration 20`, and `call` with a long
+ * take (`--settle 12 --duration 50`), because staging it plays the coalition's deal twice. The self-
+ * playing DEMO round is a different game every take — its bots think on another thread — so it is
+ * only trusted for the opening beat, a round in progress. `from` picks each moment out of its take
+ * and `speed` hurries the footage, never the app. Re-record a take and its `from` must be re-read.
  *
- * The front door is **two seconds**, not a full beat: it is a title card, and at the shared length it
- * was the longest shot in the film.
+ * The front door is **two seconds**, not a full beat: it is a title card.
  */
 const REEL_SEGMENTS = [
   { image: './marketing/captures/ios/home.png', dur: 2.0 },
-  { clip: './marketing/clips/demo-long.mov', from: 4, speed: 2, dur: 4.5 }, // an Ace, and a toss-in
-  { clip: './marketing/clips/demo-long.mov', from: 35.3, dur: 2.5 }, // a 9 peeks
-  { clip: './marketing/clips/demo-long.mov', from: 47.3, dur: 3.2 }, // a King declares a 4
-  { clip: './marketing/clips/demo-long.mov', from: 52.7, dur: 3.4 }, // Dune calls Vinto
-  { clip: './marketing/clips/plan.mov', dur: 4.2 },
-  { clip: './marketing/clips/score.mov', dur: 3.5 },
-  { image: './marketing/captures/ios/lobby.png', dur: 2.5 },
+  { clip: './marketing/clips/demo-long.mov', from: 4, speed: 2, dur: 4.0 }, // an Ace, and a toss-in
+  { clip: './marketing/clips/king.mov', from: 9.8, speed: 1.25, dur: 4.2 }, // a King names your 2; it joins the name
+  { clip: './marketing/clips/queen.mov', from: 8, speed: 1.25, dur: 4.2 }, // a Queen looks at two, and swaps them
+  { clip: './marketing/clips/call.mov', from: 28.3, dur: 3.2 }, // Dune calls Vinto
+  { clip: './marketing/clips/plan.mov', dur: 4.0 },
+  { clip: './marketing/clips/score.mov', dur: 3.2 },
+  { image: './marketing/captures/ios/lobby.png', dur: 2.4 },
 ];
 
 export default {
