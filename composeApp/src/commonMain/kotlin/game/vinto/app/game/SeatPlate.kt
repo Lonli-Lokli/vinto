@@ -15,12 +15,14 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,12 +43,17 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import game.vinto.app.LocalReducedMotion
 import game.vinto.app.art.Res
 import game.vinto.app.art.avatar_dune
@@ -68,6 +75,7 @@ import game.vinto.app.art.seat_pointed_vinto
 import game.vinto.app.theme.GeneratedAvatar
 import game.vinto.app.theme.Signal
 import game.vinto.app.theme.Slate
+import game.vinto.app.theme.WholeWords
 import game.vinto.app.theme.onFelt
 import game.vinto.client.Attention
 import org.jetbrains.compose.resources.DrawableResource
@@ -79,28 +87,30 @@ import kotlin.math.cos
 import kotlin.math.floor
 
 private val PlatePad = 4.dp
-private val PlateGap = 8.dp
-private val NamePad = 10.dp
+private val PlateGap = 2.dp
 
 /**
- * How much width a name gets, which grows with the table it is on.
+ * How wide a plate is: fixed by the portrait it carries, and by nothing it says.
  *
- * It was a flat 76 points, sized for a phone, and every online player was introduced as
- * "Clever H…" on a desktop with half a metre of empty felt beside them. A minted nickname is two
- * words and the room guarantees they differ — but only if you can read enough of them to tell,
- * and an ellipsis after eight characters is where "Clever Hedgehog" and "Clever Heron" become
- * the same player.
+ * The plate used to be a pill — portrait, then the name beside it in a slot capped at 76 points
+ * on a phone — and the pill was the widest thing in every seat. On a phone about 400 points
+ * across, your own five cards and that pill did not fit one row, so the hand wrapped two over
+ * three and took a card's height out of the middle of the felt; the side columns, which live in
+ * that middle, then laid five cards in four cards' room. And the name was cut anyway: "Dusty
+ * Pebb…". Reported together from a phone, and they were one fault.
  *
- * Tied to the portrait rather than to the screen, because that is what already steps with the
- * felt, and floored at the old value so a phone's plate is exactly what it was: on a phone the
- * cap is real, and a plate that grows there pushes the player's own hand onto a second row.
+ * So the face sits above the name, which gets two lines and shrinks before it is cut, and the
+ * plate is about two portraits wide. **Fixed, not capped**: a plate as wide as its widest row is
+ * a plate that changes width when a name or a mark does, and the hand beside it re-pitches from
+ * exactly that number (`SteadyPlateTest`). Tied to the portrait because that is what already
+ * steps with the felt, so a desktop's plate grows with its cards.
  */
-private fun nameRoom(portrait: Dp): Dp = (portrait * NAME_SHARE).coerceIn(NameMax, NameWidest)
+internal fun plateWidth(portrait: Dp): Dp = portrait * PLATE_SHARE
 
-private const val NAME_SHARE = 2.5f
+private const val PLATE_SHARE = 2.2f
 
-private val NameMax = 76.dp
-private val NameWidest = 180.dp
+/** Rounder than a card's corner, so a plate is never mistaken for one lying beside it. */
+private val PlateCorner = 14.dp
 private val Hairline = 1.dp
 private val Ring = 2.dp
 
@@ -160,7 +170,7 @@ private fun Attention.spoken(): StringResource = when (this) {
  * The seat's face, and the thought cloud when the table is waiting on it.
  *
  * **The cloud is on the portrait rather than in the marks row, and that is a layout fix as much
- * as a picture.** It was a badge under the name, in a column capped at [nameRoom] — a *max*, so
+ * as a picture.** It was a badge under the name, in a column that was only capped — a *max*, so
  * the column was as wide as its widest row and a mark that arrived widened the plate. That mark
  * is the only one that comes and goes every turn (`badgesFor` gives it to whoever's turn it is),
  * and a plate sits in a `Row` with the hand at `weight(1f, fill = false)`: the width the plate
@@ -213,6 +223,13 @@ private fun Portrait(name: String, size: Dp, thinking: Boolean) {
 }
 
 /**
+ * A seat's face on its own, as the felt draws it: the one its owner chose, or the bot's emblem.
+ * For the lobby, which shows who is sitting before there is a table to seat them at.
+ */
+@Composable
+internal fun FaceOf(name: String, size: Dp) = Portrait(name = name, size = size, thinking = false)
+
+/**
  * The breath on the seat whose turn it is.
  *
  * Its own composable so it is *only* composed by the branch that uses it. It was read
@@ -245,13 +262,22 @@ private fun seatGlow(): State<Float> {
     )
 }
 
-/** The marks and the score, under the name, in the order they are worth reading. */
+/**
+ * The marks and the score, under the name, in the order they are worth reading.
+ *
+ * Wrapping rather than one line: the plate's width is fixed, and a coalition member who has
+ * nodded, will shed and is a bot carries four marks — more than one line of a phone's plate. A
+ * second line costs the plate height; a wider line would cost it width, which is what the hand
+ * beside it is pitched from.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun BadgeRow(badges: List<SeatBadge>, marks: String?, portrait: Dp) {
     if (badges.isEmpty() && marks == null) return
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(BadgeGap),
+    FlowRow(
+        verticalArrangement = Arrangement.spacedBy(BadgeGap),
+        horizontalArrangement = Arrangement.spacedBy(BadgeGap, Alignment.CenterHorizontally),
+        itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         badges.forEach { SeatMark(it, portrait) }
         marks?.let {
@@ -785,11 +811,11 @@ private fun ringFor(pointed: Attention?, active: Boolean, clickable: Boolean): D
 }
 
 /**
- * A player: portrait and name in one pill, as on the web table.
+ * A player: the face, and the name under it, on one plate.
  *
- * The two together rather than a portrait with a caption under it — it is a name plate, it
- * reads as one object, and it takes half the vertical room, which on a phone with four hands
- * to fit is the difference between a table and a list.
+ * It was a pill with the name beside the face, which is the widest shape a plate can take — and
+ * width is what a phone's felt has least of. See [plateWidth] for what that cost, and [NameRun]
+ * for the two seats whose name runs along the edge instead.
  *
  * The seat whose turn it is glows. On a table where three of the four players are bots taking
  * their turns in under a second, a static highlight is easy to miss, and the player loses
@@ -817,6 +843,8 @@ fun SeatPlate(
      * plate that can be pressed and says only a name is a button a screen reader cannot explain.
      */
     described: String? = null,
+    /** Which way the name runs: across for the seats above and below, along the rim at the sides. */
+    run: NameRun = NameRun.ACROSS,
 ) {
     val scheme = MaterialTheme.colorScheme
 
@@ -831,33 +859,49 @@ fun SeatPlate(
 
     val said = pointed?.let { stringResource(it.spoken(), name) } ?: described
 
+    val shape = RoundedCornerShape(PlateCorner)
     Box(modifier = modifier) {
         Surface(
             // A plate is a target — a Nine looks at one of these, a Jack swaps into one — so it
             // is at least a thumb tall even when the portrait inside it is not.
             modifier = Modifier
+                .width(if (run == NameRun.ACROSS) plateWidth(size) else edgeWidth(size))
                 .heightIn(min = PlateTap)
                 .semantics { said?.let { contentDescription = it } },
-            shape = CircleShape,
+            shape = shape,
             color = Slate.fill.copy(alpha = PLATE_ALPHA),
             border = BorderStroke(ringFor(pointed, active, onClick != null || lit), edge),
             onClick = onClick ?: {},
             enabled = onClick != null,
         ) {
-            Row(
+            // The face, then who it is, then what they are: read top to bottom, the way a
+            // place card at a table is.
+            Column(
                 modifier = Modifier.padding(PlatePad),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(PlateGap),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(PlateGap),
             ) {
-                Portrait(name = name, size = size, thinking = thinking)
-                // Capped, and the name gives way before the marks do. A plate that grows with
-                // "Vinto · 12" is a plate that pushes the player's own hand onto a second row,
-                // which is the one hand that has to stay in one piece.
-                Column(
-                    modifier = Modifier.padding(end = NamePad).widthIn(max = nameRoom(size)),
-                ) {
-                    PlateName(name, active)
-                    BadgeRow(badges, marks, size)
+                // A turned name starts at the face: the right seat's reads down from it, and the
+                // left seat's reads up from it — so there the face is at the foot and the marks,
+                // which come after the name, at the head.
+                when (run) {
+                    NameRun.ACROSS -> {
+                        Portrait(name = name, size = size, thinking = thinking)
+                        PlateName(name, active)
+                        BadgeRow(badges, marks, size)
+                    }
+
+                    NameRun.DOWN -> {
+                        Portrait(name = name, size = size, thinking = thinking)
+                        EdgeName(name, active, clockwise = true)
+                        BadgeColumn(badges, marks, size)
+                    }
+
+                    NameRun.UP -> {
+                        BadgeColumn(badges, marks, size)
+                        EdgeName(name, active, clockwise = false)
+                        Portrait(name = name, size = size, thinking = thinking)
+                    }
                 }
             }
         }
@@ -874,24 +918,122 @@ fun SeatPlate(
                 modifier = Modifier
                     .matchParentSize()
                     .graphicsLayer { alpha = glow.value }
-                    .border(Ring, Signal.turn, CircleShape),
+                    .border(Ring, Signal.turn, shape),
             )
         }
     }
 }
 
-/** The name on the plate: gold and bold for the seat whose turn it is, so the felt says so on its own. */
+/**
+ * Which way a plate's name runs.
+ *
+ * The two side seats' cards lie a quarter turned, the way cards lie in front of somebody sitting
+ * at the side of a table — and their names do too, which was the player's own suggestion. Turned,
+ * a name costs the plate one line of width however long it is, and a side seat is short of width
+ * and long in height: the plate stands beside the column of cards, as tall as it needs to be and
+ * a thumb wide. Both read from the middle of the table, looking out at the seat — the left one
+ * from the bottom up, the right one from the top down — which is how the player asked for them.
+ */
+enum class NameRun {
+    /** Across the plate, under the face: the seats above and below the felt. */
+    ACROSS,
+
+    /** Down the plate, a quarter turn clockwise: the seat on the right. */
+    DOWN,
+
+    /** Up the plate, a quarter turn the other way, from a face at its foot: the seat on the left. */
+    UP,
+}
+
+/**
+ * How wide a side seat's plate is: the portrait and its margin, and never under a thumb. Fixed
+ * for the same reason [plateWidth] is — the cards beside it are laid in what it leaves.
+ */
+internal fun edgeWidth(portrait: Dp): Dp = maxOf(portrait + PlatePad * 2, PlateTap)
+
+/**
+ * A side seat's name, turned to run along the rim. One line — however long, it costs the plate
+ * only the height it has plenty of — and it shrinks before it is cut, for a name longer than the
+ * column it stands beside.
+ */
 @Composable
-private fun PlateName(name: String, active: Boolean) {
+private fun EdgeName(name: String, active: Boolean, clockwise: Boolean) {
+    val style = MaterialTheme.typography.titleSmall
     Text(
         text = name,
-        style = MaterialTheme.typography.titleSmall,
+        style = style,
         fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
         color = if (active) Slate.gold else Slate.ink,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
+        autoSize = WholeWords(least = NameLeast, most = style.fontSize),
+        modifier = Modifier.quarterTurn(clockwise),
     )
 }
+
+/**
+ * Lays a line out along the other axis: measured as a line of the height it is given, and placed
+ * a quarter turn round about its own middle. A rotation alone is drawn rather than laid out, so a
+ * plain `rotate` would leave the name's unrotated width in the plate — the very width this saves.
+ */
+private fun Modifier.quarterTurn(clockwise: Boolean): Modifier = layout { measurable, constraints ->
+    val line = measurable.measure(
+        Constraints(maxWidth = constraints.maxHeight, maxHeight = constraints.maxWidth),
+    )
+    layout(line.height, line.width) {
+        line.placeWithLayer(x = (line.height - line.width) / 2, y = (line.width - line.height) / 2) {
+            rotationZ = if (clockwise) QUARTER else -QUARTER
+        }
+    }
+}
+
+private const val QUARTER = 90f
+
+/** A side plate's marks, one under another, since the plate is one mark wide. */
+@Composable
+private fun BadgeColumn(badges: List<SeatBadge>, marks: String?, portrait: Dp) {
+    if (badges.isEmpty() && marks == null) return
+    Column(
+        verticalArrangement = Arrangement.spacedBy(BadgeGap),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        badges.forEach { SeatMark(it, portrait) }
+        marks?.let {
+            Text(text = it, style = MaterialTheme.typography.labelSmall, color = Slate.gold, maxLines = 1)
+        }
+    }
+}
+
+/**
+ * The name on the plate: gold and bold for the seat whose turn it is, so the felt says so on its
+ * own.
+ *
+ * Two lines, because a minted name is two words and the plate is narrow; and it gets smaller
+ * before it is cut ([WholeWords]), because a name is how two players are told apart. Tight
+ * leading, since the two lines are one name rather than a paragraph.
+ */
+@Composable
+private fun PlateName(name: String, active: Boolean) {
+    val style = MaterialTheme.typography.titleSmall
+    Text(
+        text = name,
+        style = style.copy(lineHeight = NameLeading, textAlign = TextAlign.Center),
+        fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+        color = if (active) Slate.gold else Slate.ink,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        autoSize = WholeWords(least = NameLeast, most = style.fontSize),
+    )
+}
+
+/** Leading barely past the letters: two lines of a name are one name. */
+private val NameLeading = 1.1.em
+
+/**
+ * The smallest a name is drawn, which is the size of the marks' own captions. The longest minted
+ * words are seven letters, and a phone's plate fits them well above it.
+ */
+private val NameLeast = 10.sp
 
 /**
  * The portrait for a seat, where the seat has one.

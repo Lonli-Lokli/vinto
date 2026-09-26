@@ -39,6 +39,30 @@ class RemoteVersionTest {
         wire.room.leave()
     }
 
+    /**
+     * The room says "too old" twice at its door: as a notice, which every build with a notice
+     * dialog already shows with the way to the store, and then as the refusal. A build that
+     * knows the code takes the first as the refusal itself — there is no "not now" to a room
+     * that will not seat you, and a dialog offering one over a lobby saying the same thing is
+     * the sentence said twice.
+     */
+    @Test
+    fun aTooOldNoticeIsTheRefusalRatherThanADialog() = runTest {
+        val wire = Wire(this)
+        wire.settle()
+        wire.deliver(ServerMessage.Notice(UPDATE_NEEDED_CODE, "too old", NoticeSeverity.WARNING))
+        wire.settle()
+        assertNull(wire.room.notice.value, "a refusal was offered as advice with a way to carry on")
+        val closed = assertIs<ConnectionState.Closed>(wire.room.connection.value, "the refusal was not final")
+        assertEquals(RoomTrouble.UPDATE_NEEDED, closed.trouble)
+
+        // And the error that follows it changes nothing.
+        wire.deliver(ServerMessage.Error(message = "too old", code = UPDATE_NEEDED_CODE))
+        wire.settle()
+        assertEquals(RoomTrouble.UPDATE_NEEDED, assertIs<ConnectionState.Closed>(wire.room.connection.value).trouble)
+        wire.room.leave()
+    }
+
     @Test
     fun aNoticeIsHeldUntilTheScreenHasSaidIt() = runTest {
         val wire = Wire(this)

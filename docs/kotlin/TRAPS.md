@@ -267,6 +267,12 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
 - **Backticked test names with spaces are JVM-only.** Kotlin rejects them for JS and Native,
   so anything in `commonTest` must use camelCase names. This is why `PrngVectorsTest` reads
   `reproducesEveryPublishedShuffle` and not `` `reproduces every published shuffle` ``.
+- **`runComposeUiTest`'s window is 1024×768, and a taller screen is quietly given 768.** A
+  `Box` sized to an 860-point phone inside it is measured at 768 with no warning, so a test
+  "on an iPhone 17 Pro Max" is testing a shorter phone than it says — it failed on the big
+  phone and passed on smaller ones, the wrong way round. `runDesktopComposeUiTest(width,
+  height)` takes a window of your size; `TheDealLiesFlatTest` uses it. `CrowdedTableTest`
+  stays under 768 on purpose and says so.
 - `gradlew` **must stay LF** or it fails on Linux/CI with "bad interpreter". Pinned in
   `.gitattributes`; don't undo it.
 - Kotlin/JS **tree-shakes to the exported surface** — a library build with nothing

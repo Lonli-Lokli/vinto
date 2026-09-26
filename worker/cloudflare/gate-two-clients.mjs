@@ -21,7 +21,7 @@
 // string, and the events a client receives are the actions the room accepted — its own and
 // the bots' that followed.
 
-import { PROTOCOL_VERSION as PROTOCOL } from './protocol-version.mjs';
+import { MIN_PROTOCOL, PROTOCOL_VERSION as PROTOCOL } from './protocol-version.mjs';
 
 const BASE = process.env.GATE_URL ?? 'http://localhost:8787';
 
@@ -282,6 +282,20 @@ const refused = await impostor.next((m) => m.type === 'error' || m.type === 'joi
 check('a nickname does not reclaim a seat', refused.type, 'error');
 check('and the reason is the table, not the name', refused.message, 'the game has already started');
 impostor.close();
+
+// A build below the floor is told twice, and the order is what a shipped build needs: the notice
+// first, which it shows as "Update your app" with the room's own sentence and a store button, and
+// then the refusal, which it turns into a closed lobby. `ProtocolFloorTest` words them; this is
+// the shim sending them as worded.
+const stale = open('stale');
+await stale.ready;
+stale.send({ type: 'join', protocol: MIN_PROTOCOL - 1, nickname: 'Old' });
+const firstWord = await stale.next();
+const secondWord = await stale.next();
+check('an old build is told in a notice first', [firstWord.type, firstWord.code], ['notice', 'update-needed']);
+check('and then refused', [secondWord.type, secondWord.code], ['error', 'update-needed']);
+check('in the same words', firstWord.message, secondWord.message);
+stale.close();
 
 // One action is enough to prove the cursor: ask for everything after the first and get the
 // tail. Sized from the log rather than hard-coded, since how many actions a turn produces is

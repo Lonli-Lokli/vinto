@@ -39,6 +39,24 @@ so a desktop table keeps a table's shape on the app's dark surround instead of s
 seats to opposite horizons. A rotated phone has no width to spare, so there the felt still
 takes everything beside the rail.
 
+**A plate is a face above a name** (`SeatPlate`), and the side seats' names run along the rim.
+It was a pill — portrait, then the name beside it — and the pill was the widest thing in every
+seat. Reported from a phone as three faults that were one: your own name cut to "Dusty Pebb…";
+your five dealt cards wrapped two over three, because five cards and that pill did not fit a
+row about 400 points across; and the side players' cards lying on each other, because the
+second row took a card's height from the middle of the felt, where the side columns live — and
+online the room's toss-in clock keeps a row under the felt that a solo game does not. So the
+face sits above the name, which gets two lines and shrinks before it is cut (`WholeWords`, which
+also refuses to break inside a word); the plate is a fixed width tied to the portrait, so no
+name or mark can re-pitch the hand beside it. The two side seats' names are turned a quarter,
+the way their cards lie, and read from the middle of the table — the left one from the bottom
+up, the right one from the top down, each starting at the face — so
+their plates are a thumb wide and stand *beside* the column of cards rather than above or below
+it, and the column gets the middle's whole height. The player's own idea, and it is what makes
+a dealt table lie flat on a 360-point phone. Held by `TheDealLiesFlatTest`: at the deal, on
+the phones people hold and with the clock's row under the felt, no seat's cards lie on each
+other, your hand is one row, and every name is drawn whole.
+
 The Android manifest no longer locks orientation; iOS always allowed rotation (it squeezed the
 portrait design until this landed) and the browser was always free. `LandscapeTableTest` holds
 the rotated phone to the same bar `CrowdedTableTest` holds the upright one to, and holds the
@@ -144,8 +162,8 @@ three of them about the gap between touching something and it having happened:
   the heading, and only a first load of the public list takes the middle of the screen — a
   refresh keeps the list and puts a small one beside the title, because taking a list away
   from somebody reading it is the rudest thing a lobby can do.
-- **An invite, not a code to transcribe.** The lobby shows the code monospaced and spaced out,
-  with Share and Copy over the `shareText`/`copyToClipboard` seam — which now has real
+- **An invite, not a code to transcribe.** The lobby shows the code monospaced and spaced out
+  in its title, with Share and Copy over the `shareText`/`copyToClipboard` seam — which now has real
   implementations on the desktop clipboard, the browser's Web Share and clipboard, and iOS's
   pasteboard, where three of the four used to answer `false`. Where a platform can do neither,
   the code is still on the screen and a line says to read it out.
@@ -757,8 +775,17 @@ response is capped at 50 rooms.
 ### An invitation worth sending
 
 The lobby shows the code monospaced and letterspaced — it is the one string in this app
-somebody reads aloud down a telephone — with Share and Copy under it, and the line that says
-it can simply be read out.
+somebody reads aloud down a telephone — in its title, once. The invitation card under the seats
+carries Share and Copy, the QR code beside them for the person opposite, and the line that says
+the code can simply be read out.
+
+**The whole lobby fits a phone without scrolling** (`LobbyScreenTest`, down to an iPhone SE).
+It did not: four full-width seat rows, an invitation a third of the screen tall with its QR code
+centred on a line of its own, and between them room for half of the "Add a bot" button. The
+seats are four tiles two to a row, each a face and a name; the first open seat *is* the "Add a
+bot" button, since that is the chair the bot lands in; a bot's tile carries a ✕ a thumb wide
+where a button used to say "Remove the bot in seat 3". A build the room will not seat is told
+so, with an Update button, rather than "Could not reach that room" and a Retry.
 
 `shareText` is platform code, because a share *sheet* genuinely is a platform thing: Android's
 chooser, the browser's Web Share. Where a platform has none it returns false and the button

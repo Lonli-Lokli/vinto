@@ -439,24 +439,37 @@ class RemoteRoom(
                 socket?.close()
             }
 
-            is ServerMessage.Notice -> _notice.value = RoomNotice(
-                code = message.code,
-                message = message.message,
-                warning = message.severity == NoticeSeverity.WARNING,
-            )
+            // The room says "too old" as a notice before it says it as a refusal, for the builds
+            // that can show only the first (`ProtocolFloorTest`). This one can show the second
+            // properly, and a dialog offering "not now" to a room that will not seat it would be
+            // the one sentence twice with a false choice in it — so the notice *is* the refusal.
+            is ServerMessage.Notice -> if (message.code == UPDATE_NEEDED_CODE) {
+                tooOld(message.message)
+            } else {
+                _notice.value = RoomNotice(
+                    code = message.code,
+                    message = message.message,
+                    warning = message.severity == NoticeSeverity.WARNING,
+                )
+            }
 
             is ServerMessage.Error -> {
                 // The one refusal no retry can answer: the room's floor is above this build.
                 // Final, and said as a trouble the screen acts on rather than a line it shows.
                 if (message.code == UPDATE_NEEDED_CODE) {
-                    _connection.value = ConnectionState.Closed(message.message, RoomTrouble.UPDATE_NEEDED)
-                    socket?.close()
+                    tooOld(message.message)
                     return
                 }
                 val handled = _session.value?.refused(message.message) == true
                 if (!handled) _notices.tryEmit(message.message)
             }
         }
+    }
+
+    /** The room will not seat this build: final, and a trouble the screen answers with the store. */
+    private fun tooOld(said: String) {
+        _connection.value = ConnectionState.Closed(said, RoomTrouble.UPDATE_NEEDED)
+        socket?.close()
     }
 
     private fun joined(message: ServerMessage.Joined) {

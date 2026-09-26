@@ -1,12 +1,16 @@
 package game.vinto.room
 
 import game.vinto.protocol.MIN_PROTOCOL
+import game.vinto.protocol.NoticeSeverity
 import game.vinto.protocol.PROTOCOL_VERSION
+import game.vinto.protocol.ProtocolJson
+import game.vinto.protocol.ServerMessage
 import game.vinto.protocol.UPDATE_AVAILABLE_CODE
 import game.vinto.protocol.UPDATE_NEEDED_CODE
 import game.vinto.shapes.VintoJson
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -39,6 +43,36 @@ class ProtocolFloorTest {
         assertEquals(-1, old.seat, "an old build was seated")
         assertEquals(UPDATE_NEEDED_CODE, old.code)
         assertTrue(assertNotNull(old.error).contains("update", ignoreCase = true), old.error)
+    }
+
+    /**
+     * What an old build is sent at the door, and in which order: a notice, then the refusal.
+     *
+     * The refusal alone reached nobody. Every build in the stores turns `update-needed` into a
+     * closed connection with a trouble, and its lobby reads any trouble as "Could not reach that
+     * room. Check the code, or your connection." with a Retry that fails again. What those builds
+     * *do* put in front of a player is a `notice`: a dialog titled "Update your app", with the
+     * room's own sentence as its text and a button to the store. So the room says it that way
+     * first. A build that knows the code takes the notice as the refusal (`RemoteVersionTest`),
+     * and a build older than notices skips it and still has the error.
+     */
+    @Test
+    fun anOldBuildIsToldInTheWordsEveryShippedBuildShows() {
+        val old = join(fresh(), "tok-a", protocol = MIN_PROTOCOL - 1)
+        val said = old.refusal.map { ProtocolJson.decodeFromString(ServerMessage.serializer(), it) }
+        assertEquals(2, said.size, "the door said ${said.size} things: $said")
+
+        val notice = assertIs<ServerMessage.Notice>(said[0], "the dialog has to be up before the lobby closes")
+        assertEquals(UPDATE_NEEDED_CODE, notice.code)
+        assertEquals(NoticeSeverity.WARNING, notice.severity)
+        assertEquals(old.error, notice.message, "the dialog and the refusal said different things")
+
+        val error = assertIs<ServerMessage.Error>(said[1])
+        assertEquals(UPDATE_NEEDED_CODE, error.code)
+        assertEquals(old.error, error.message)
+
+        // A build that is seated is sent nothing of the kind.
+        assertTrue(join(fresh(), "tok-b", PROTOCOL_VERSION).refusal.isEmpty())
     }
 
     @Test

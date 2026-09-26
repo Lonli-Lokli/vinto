@@ -9,7 +9,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
-import game.vinto.app.game.SeatRow
+import game.vinto.app.game.SeatTile
 import game.vinto.app.game.WaitingSeat
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.LobbySeatUi
@@ -57,7 +57,7 @@ class LobbySkeletonTest {
         )
         val waiting = heightOf { WaitingSeat() }
         arriving.forEach { seat ->
-            val real = heightOf { SeatRow(seat, changing = false) {} }
+            val real = heightOf { SeatTile(seat, changing = false, onRemove = {}) }
             assertEquals(
                 real,
                 waiting,
@@ -96,6 +96,8 @@ class LobbySkeletonTest {
     private companion object {
         val PHONE_W = 411.dp
         val PHONE_H = 740.dp
-        val ROW_W = 360.dp
+
+        // Half a phone, less the gap: a tile is one of two to a row.
+        val ROW_W = 176.dp
     }
 }

@@ -147,10 +147,16 @@ A message type is never removed while any client sends it, and a change that can
 additively is a new message type, not a new shape for an old one.
 
 **The client sends its number with every `join`; the room keeps a floor.** Below
-`MIN_PROTOCOL` the join is refused at the door with `error` carrying
-`code: "update-needed"` — an `error` because every build ever shipped understands one, and
-a code because a build that has it renders "update the app" with the way to the store rather
-than a sentence. Between the floor and the current number the client is seated and sent a
+`MIN_PROTOCOL` the join is refused at the door, and it is said **twice, in this order**: a
+`notice` with `code: "update-needed"`, then an `error` with the same code and the same
+sentence. The error is the refusal — every build ever shipped understands one. The notice is
+there because the error alone reached nobody: builds up to and including those in the stores on
+2026-09-26 turn `update-needed` into a closed connection, and their lobby read *any* closed
+connection with a trouble as "Could not reach that room" with a Retry that is refused again.
+What those builds do put in front of a player is a notice — a dialog, "Update your app", with the
+room's own sentence and a button to the store — so the room says it that way first. A build that
+knows the code takes the notice as the refusal itself, with no "Not now", and its lobby says the
+build is too old with an Update button in place of Retry (`LobbyScreenTest`). Between the floor and the current number the client is seated and sent a
 `notice` (`code: "update-available"`) once, which the screen shows with *Update* and *Not
 now*: a person mid-game finishes the game. A join with no number is version 1, which is every
 build shipped before the number existed. A room never refuses a client for being *ahead* of it.

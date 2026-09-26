@@ -95,7 +95,11 @@ class TheCallersEdgeHugsTheSeatTest {
     }
 
     /**
-     * The widest thing the seat actually draws: its cards, and the plate carrying its name.
+     * How wide the seat actually is: from the left of whatever it draws to the right of it — its
+     * cards, and the plate carrying its name.
+     *
+     * The span rather than the widest part. While a side seat's plate stood above its cards the
+     * two were the same number; now the plate stands beside them, and the seat is both.
      *
      * The plate is found as the smallest pressable thing around the name — a seat plate is a
      * target, because a Nine looks at one and a Jack swaps into one, so it is the one part of
@@ -117,7 +121,8 @@ class TheCallersEdgeHugsTheSeatTest {
                 .minByOrNull { it.width }
                 ?: error("$name's plate is drawn but is not a target")
 
-            widest = (cards + plate).maxOf { it.width }
+            val drawn = cards + plate
+            widest = drawn.maxOf { it.right } - drawn.minOf { it.left }
         }
         return widest.toInt()
     }

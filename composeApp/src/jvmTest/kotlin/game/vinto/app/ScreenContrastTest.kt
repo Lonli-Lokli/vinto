@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import game.vinto.app.game.HelpSheet
 import game.vinto.app.game.LocalStage
+import game.vinto.app.game.RoomScreen
 import game.vinto.app.game.Stage
 import game.vinto.app.game.StandingsSheet
 import game.vinto.app.game.TableLayout
@@ -40,6 +41,7 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.CreatedRoom
 import game.vinto.client.MemoryVault
+import game.vinto.client.Pace
 import game.vinto.client.Question
 import game.vinto.client.RoomAnswer
 import game.vinto.client.RoomConnector
@@ -142,6 +144,22 @@ class ScreenContrastTest {
         } + shown(dark, "the public rooms, unreachable") {
             DiscoverScreen(connector = unreachable(), onJoin = {}, onBack = {})
         }
+        judged(scheme, found)
+    }
+
+    /**
+     * The lobby: four kinds of seat, the invitation, and the connection beside the title.
+     *
+     * Never measured until an iPhone screenshot showed its "Connected" as a grey word on green
+     * cloth — ink chosen for the rail, drawn on the felt.
+     */
+    @Test
+    fun theLobbyCanBeRead() = eachScheme { dark, scheme ->
+        val room = stagedRoom(busyLobby())
+        val found = shown(dark, "the lobby") {
+            RoomScreen(room, Pace.STEADY, onSettings = {}, onLeft = {})
+        }
+        room.leave()
         judged(scheme, found)
     }
 

@@ -802,6 +802,12 @@ export class Room {
           ),
         );
         if (result.error) {
+          // A refusal the core worded as wire messages — the floor's, which is a notice and then
+          // the error, in that order — is sent as it stands. Every other refusal is one error.
+          if (result.refusal?.length) {
+            for (const said of result.refusal) ws.send(said);
+            return;
+          }
           const refusal = { type: 'error', message: result.error };
           if (result.code) refusal.code = result.code;
           return ws.send(JSON.stringify(refusal));

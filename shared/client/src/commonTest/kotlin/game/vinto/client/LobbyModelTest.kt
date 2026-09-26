@@ -46,6 +46,27 @@ class LobbyModelTest {
     }
 
     /**
+     * A room that will not seat this build is not a room that could not be reached.
+     *
+     * Both are a `Closed` with a trouble, and the lobby read them as one: "Could not reach that
+     * room. Check the code, or your connection." with a Retry under it — to a player whose code
+     * and connection were both fine, and for whom retrying is the one thing certain to fail
+     * again. What they need is the store.
+     */
+    @Test
+    fun aBuildTheRoomWillNotSeatIsToldToUpdateNotToRetry() {
+        val refused = lobbyUi(null, ConnectionState.Closed("too old", RoomTrouble.UPDATE_NEEDED), null)
+        assertEquals(LobbyWord.UPDATE_NEEDED, refused.word)
+        assertFalse(refused.canRetry, "a build below the floor was offered another go")
+        assertFalse(refused.canAddBot)
+
+        // Every other trouble is still the one worth another go.
+        val lost = lobbyUi(null, ConnectionState.Closed("no signal", RoomTrouble.OFFLINE), null)
+        assertEquals(LobbyWord.UNREACHABLE, lost.word)
+        assertTrue(lost.canRetry)
+    }
+
+    /**
      * A countdown the room started says so; one a person started does not.
      *
      * They are the same state — `STARTING`, with a deadline — and a different event, which is

@@ -1,7 +1,9 @@
 package game.vinto.app.game
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -31,19 +34,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.CountConnectionTrouble
 import game.vinto.app.CountRefusals
 import game.vinto.app.UpdateNoticeDialog
+import game.vinto.app.UpdateTheApp
 import game.vinto.app.art.Res
 import game.vinto.app.art.invite_body
 import game.vinto.app.art.invite_copied
@@ -78,6 +88,7 @@ import game.vinto.app.art.table_next_round_waiting
 import game.vinto.app.art.table_see_score
 import game.vinto.app.art.toss_clock_moves_on
 import game.vinto.app.art.toss_more_time
+import game.vinto.app.art.trouble_update_needed
 import game.vinto.app.link.inviteLink
 import game.vinto.app.openUrl
 import game.vinto.app.share.CodeToShare
@@ -91,6 +102,7 @@ import game.vinto.app.theme.Rail
 import game.vinto.app.theme.SeatSize
 import game.vinto.app.theme.Signal
 import game.vinto.app.theme.VintoSpinner
+import game.vinto.app.theme.WholeWords
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
 import game.vinto.client.ConnectionState
@@ -99,6 +111,7 @@ import game.vinto.client.LobbyWord
 import game.vinto.client.Pace
 import game.vinto.client.RemoteGameSession
 import game.vinto.client.RemoteRoom
+import game.vinto.client.RoomTrouble
 import game.vinto.client.RoundResult
 import game.vinto.client.gameTotals
 import game.vinto.client.lobbyUi
@@ -207,14 +220,13 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(Gap),
             ) {
-                Text(
-                    text = stringResource(Res.string.lobby_title, room.code),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onFelt(),
-                )
-                ConnectionBadge(connection)
+                RoomTitle(room.code, Modifier.weight(1f))
+                // On the felt here, so in the felt's ink. It was drawn in the rail's dim ink —
+                // right under the table, where the badge sits on the rail — and on green cloth
+                // that measured 1.1:1: a word nobody could read, beside the title.
+                ConnectionBadge(connection, ink = MaterialTheme.colorScheme.onFelt())
             }
 
             Column(
@@ -224,13 +236,17 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(Gap),
             ) {
-                if (ui.seats.isEmpty() && !ui.canRetry) {
+                if (ui.seats.isEmpty() && ui.word == LobbyWord.CONNECTING) {
                     WaitingSeats()
                 }
 
-                ui.seats.forEach { seat ->
-                    SeatRow(seat, changing = seat.index in pending) { room.removeBot(seat.index) }
-                }
+                SeatGrid(
+                    seats = ui.seats,
+                    pending = pending,
+                    canAddBot = ui.canAddBot,
+                    onAdd = room::addBot,
+                    onRemove = room::removeBot,
+                )
 
                 LobbyLine(ui.word, ui.msUntilStart)
                 Notice(notice)
@@ -247,21 +263,14 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
                     )
                 }
 
-                if (ui.canAddBot) {
-                    GameButton(
-                        label = stringResource(Res.string.lobby_add_bot),
-                        tone = ButtonTone.PLAY,
-                        onClick = room::addBot,
-                        // Busy while any seat is mid-change: the room fills the first free seat,
-                        // so two quick taps are two bots, and the second was asked for by
-                        // somebody who had no way of knowing the first had landed.
-                        busy = pending.isNotEmpty(),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                // And a room that will not seat this build has one answer, which is not another
+                // go: every retry is refused at the same door.
+                if (ui.word == LobbyWord.UPDATE_NEEDED) {
+                    UpdateTheApp(RoomTrouble.UPDATE_NEEDED, onUpdate = { openUrl(storeListingUrl()) })
                 }
             }
 
-            InviteRow(room.code)
+            InviteCard(room.code)
             GameButton(
                 label = stringResource(Res.string.lobby_leave),
                 tone = ButtonTone.NEUTRAL,
@@ -278,29 +287,93 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
 }
 
 /**
- * One seat: who is in it, and whichever of the two things it currently has to say.
+ * The four seats, two to a row.
  *
- * The spinner sits on the seat that is changing rather than across the screen, because the
- * wait belongs to this row — somebody who tapped "remove" wants to see *that* seat thinking
- * about it, not the whole lobby greying out.
+ * They were four full-width rows, each a line of text in a box as wide as the phone, and with
+ * the "add a bot" button under them and the invitation under that, the scrolling middle of an
+ * iPhone 17 Pro had room for half of that button — the one control that starts a game with
+ * fewer than four people, cut off at the top of the invitation. Two to a row is the same four
+ * seats in half the height, and a seat is a face and a name, which is what a tile is for.
+ *
+ * **The open seat is the button.** "Add a bot" fills the first free seat, so it is drawn *in*
+ * that seat — the tap lands where the bot will sit — and only there: a second open seat saying
+ * the same thing would be a button that fills a different chair from the one it is on.
  */
 @Composable
-internal fun SeatRow(seat: LobbySeatUi, changing: Boolean, onRemove: () -> Unit) {
-    Surface(shape = MaterialTheme.shapes.medium, color = Rail.fill) {
+internal fun SeatGrid(
+    seats: List<LobbySeatUi>,
+    pending: Set<Int>,
+    canAddBot: Boolean,
+    onAdd: () -> Unit,
+    onRemove: (Int) -> Unit,
+) {
+    val firstOpen = seats.firstOrNull { !it.occupied }?.index
+    Column(verticalArrangement = Arrangement.spacedBy(Gap)) {
+        seats.chunked(PER_ROW).forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(Gap)) {
+                pair.forEach { seat ->
+                    val tile = Modifier.weight(1f)
+                    if (canAddBot && seat.index == firstOpen && seat.index !in pending) {
+                        AddBotTile(
+                            onAdd = onAdd,
+                            // Busy while any seat is mid-change: the room fills the first free
+                            // seat, so two quick taps are two bots, and the second was asked for
+                            // by somebody who had no way of knowing the first had landed.
+                            busy = pending.isNotEmpty(),
+                            modifier = tile,
+                        )
+                    } else {
+                        SeatTile(
+                            seat = seat,
+                            changing = seat.index in pending,
+                            onRemove = { onRemove(seat.index) },
+                            modifier = tile,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * One seat: a face, a name, and whichever of the two things it currently has to say.
+ *
+ * The spinner sits on the seat that is changing rather than across the screen, because the
+ * wait belongs to this seat — somebody who tapped "remove" wants to see *that* seat thinking
+ * about it, not the whole lobby greying out.
+ *
+ * The name gets two lines and shrinks before it is cut ([WholeWords]): a tile is half a phone
+ * wide, and "Dusty Rowan — you" beside a face is most of that.
+ */
+@Composable
+internal fun SeatTile(
+    seat: LobbySeatUi,
+    changing: Boolean,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(shape = MaterialTheme.shapes.medium, color = Rail.fill, modifier = modifier) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(Gap),
+            modifier = Modifier.heightIn(min = TileHeight).padding(horizontal = TilePad),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(TileGap),
         ) {
+            val name = seat.nickname.orEmpty()
+            if (seat.occupied) FaceOf(name, TileFace) else EmptyChair()
+            val style = MaterialTheme.typography.bodyMedium
             Text(
                 text = when {
                     !seat.occupied -> stringResource(Res.string.lobby_seat_open)
-                    seat.isMine ->
-                        stringResource(Res.string.lobby_seat_you, seat.nickname.orEmpty())
-
-                    else -> seat.nickname.orEmpty()
+                    seat.isMine -> stringResource(Res.string.lobby_seat_you, name)
+                    else -> name
                 },
+                style = style,
                 color = if (seat.occupied) Rail.ink else Rail.inkDim,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                autoSize = WholeWords(least = TileNameLeast, most = style.fontSize),
+                modifier = Modifier.weight(1f),
             )
             when {
                 changing -> VintoSpinner(
@@ -309,15 +382,61 @@ internal fun SeatRow(seat: LobbySeatUi, changing: Boolean, onRemove: () -> Unit)
                     description = stringResource(Res.string.lobby_seat_working),
                 )
 
-                seat.removable -> GameButton(
-                    label = stringResource(Res.string.lobby_remove_bot, seat.index + 1),
-                    tone = ButtonTone.NEUTRAL,
-                    onClick = onRemove,
-                    compact = true,
-                )
+                seat.removable ->
+                    RemoveBot(stringResource(Res.string.lobby_remove_bot, seat.index + 1), onRemove)
             }
         }
     }
+}
+
+/** The first open seat, as the button that fills it. */
+@Composable
+private fun AddBotTile(onAdd: () -> Unit, busy: Boolean, modifier: Modifier = Modifier) {
+    GameButton(
+        label = stringResource(Res.string.lobby_add_bot),
+        tone = ButtonTone.PLAY,
+        onClick = onAdd,
+        leading = "+",
+        busy = busy,
+        compact = true,
+        modifier = modifier.heightIn(min = TileHeight),
+    )
+}
+
+/**
+ * The cross that takes a bot back out: a thumb wide, and said in full.
+ *
+ * It was a button reading "REMOVE THE BOT IN SEAT 3", which took half the row from the name it
+ * was about. A cross beside the bot's own face says the same thing to anybody looking, and the
+ * sentence is still what a screen reader hears.
+ */
+@Composable
+private fun RemoveBot(said: String, onRemove: () -> Unit) {
+    val ink = Rail.ink
+    Surface(
+        onClick = onRemove,
+        shape = CircleShape,
+        color = Color.Transparent,
+        modifier = Modifier
+            .size(RemoveTap)
+            .semantics { contentDescription = said },
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize().padding(RemoveInset)) {
+            val pen = RemovePen.toPx()
+            drawLine(ink, Offset.Zero, Offset(size.width, size.height), pen, StrokeCap.Round)
+            drawLine(ink, Offset(size.width, 0f), Offset(0f, size.height), pen, StrokeCap.Round)
+        }
+    }
+}
+
+/** Where a face will be: the outline of one, faint, so an open seat reads as a chair. */
+@Composable
+private fun EmptyChair() {
+    Box(
+        modifier = Modifier
+            .size(TileFace)
+            .border(ChairRing, Rail.inkDim.copy(alpha = Ghost), CircleShape),
+    )
 }
 
 /**
@@ -333,11 +452,11 @@ internal fun SeatRow(seat: LobbySeatUi, changing: Boolean, onRemove: () -> Unit)
  * for 190 dp of seats meant that at the moment the room answered, the title, the invitation
  * and the leave button all jumped a couple of hundred pixels — the one instant the player is
  * reading the screen hardest. Four placeholders, sized by the same type in the same padding
- * as the rows that replace them, so nothing moves when the answer arrives.
+ * as the tiles that replace them, so nothing moves when the answer arrives.
  *
  * Four is not a guess: a Vinto room deals exactly four seats (`RoomCore.SEAT_COUNT`), and at
- * this moment none of them can carry a remove button yet, so the rows they become are the
- * plain text-only kind these match.
+ * this moment none of them can carry a remove button yet, so the tiles they become are the
+ * plain face-and-name kind these match.
  */
 @Composable
 private fun WaitingSeats() {
@@ -348,33 +467,67 @@ private fun WaitingSeats() {
         verticalArrangement = Arrangement.spacedBy(Gap),
         modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
     ) {
-        repeat(SEATS) { WaitingSeat() }
+        repeat(SEATS / PER_ROW) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Gap)) {
+                repeat(PER_ROW) { WaitingSeat(Modifier.weight(1f)) }
+            }
+        }
     }
 }
 
 @Composable
-internal fun WaitingSeat() {
-    Surface(shape = MaterialTheme.shapes.medium, color = Rail.fill) {
+internal fun WaitingSeat(modifier: Modifier = Modifier) {
+    Surface(shape = MaterialTheme.shapes.medium, color = Rail.fill, modifier = modifier) {
+        // The same frame as the `SeatTile` it stands in for — its height, its padding, a
+        // face-sized circle — with a bar around a blank line of the tile's own type. Measured
+        // against the real tile by `LobbySkeletonTest`, because a placeholder is only as good
+        // as the day nobody edited one of the two.
         Row(
-            modifier = Modifier.fillMaxWidth().padding(Gap),
+            modifier = Modifier.heightIn(min = TileHeight).padding(horizontal = TilePad),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(TileGap),
         ) {
-            // The bar wraps a blank line of the row's own type rather than taking a height
-            // in dp. That is what makes this exactly as tall as the `SeatRow` it stands in
-            // for — a hard-coded height is a guess that drifts the next time the type does.
+            EmptyChair()
             Box(
                 modifier = Modifier
                     .fillMaxWidth(WaitingBar)
                     .background(Rail.inkDim.copy(alpha = Ghost), MaterialTheme.shapes.small),
             ) {
-                Text(" ")
+                Text(" ", style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
 }
 
 /**
- * The code, and the two ways to get it to somebody else.
+ * The title, with the room's code in it set for reading aloud.
+ *
+ * The code used to be said twice — "Room G7V8EF" here, and again in large spaced type in the
+ * invitation — and the second one cost the invitation a line of its own. Once is enough if the
+ * once is readable, so the code inside the title is the one in the typeface built for reading a
+ * character at a time. Found inside whatever the language made of the title rather than placed
+ * after it, since not every translation puts the code last.
+ */
+@Composable
+private fun RoomTitle(code: String, modifier: Modifier = Modifier) {
+    val title = stringResource(Res.string.lobby_title, code)
+    val at = title.indexOf(code)
+    Text(
+        text = buildAnnotatedString {
+            append(title)
+            if (at >= 0) {
+                val spoken = SpanStyle(fontFamily = FontFamily.Monospace, letterSpacing = CodeTracking)
+                addStyle(spoken, at, at + code.length)
+            }
+        },
+        style = MaterialTheme.typography.headlineSmall,
+        color = MaterialTheme.colorScheme.onFelt(),
+        modifier = modifier,
+    )
+}
+
+/**
+ * The two ways to get the code to somebody else, and the picture of it for the person opposite.
  *
  * A room code is useless in the room — it is only ever wanted by the person *not* in it — so
  * this is a share sheet first and a clipboard second, in that order, because the difference
@@ -382,12 +535,13 @@ internal fun WaitingSeat() {
  * with no share sheet the first button quietly becomes the second, rather than doing nothing
  * a player can see.
  *
- * And under both, the code itself, in a typeface built for reading a character at a time —
- * because the oldest way of passing six characters to somebody in the same room is to say
- * them out loud, and it needs no platform at all.
+ * **Side by side with the code, not under it.** The QR code sat on a line of its own, centred
+ * in the width of the phone, with the code in large type above it and the buttons below; the
+ * card was a third of an iPhone's screen, and what paid for it was the seats above. Beside the
+ * two buttons the picture costs no height the buttons were not already taking.
  */
 @Composable
-private fun InviteRow(code: String) {
+private fun InviteCard(code: String) {
     var copied by remember { mutableStateOf(false) }
     val subject = stringResource(Res.string.invite_subject)
     val body = stringResource(Res.string.invite_body, inviteLink(code), code)
@@ -418,68 +572,71 @@ private fun InviteRow(code: String) {
             modifier = Modifier.fillMaxWidth().padding(Gap),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
-            Text(
-                text = stringResource(Res.string.invite_title),
-                style = MaterialTheme.typography.labelMedium,
-                color = Rail.inkDim,
-            )
-            Text(
-                // Monospaced and spaced out: this is the one string in the app somebody
-                // reads aloud down a telephone.
-                text = code,
-                style = MaterialTheme.typography.headlineSmall,
-                fontFamily = FontFamily.Monospace,
-                letterSpacing = CodeTracking,
-                color = Rail.ink,
-            )
-            // The code as a picture, for the person sitting opposite with a camera. It carries
-            // the same link the share sheet sends — one destination, so a room reached by
-            // scanning and a room reached by tapping are the same room.
-            QrChip(
-                url = inviteLink(code),
-                logo = VintoQr.ringedMark(),
-                label = stringResource(Res.string.invite_scan),
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-            Text(
-                text = stringResource(Res.string.invite_scan),
-                style = MaterialTheme.typography.bodySmall,
-                color = Rail.inkDim,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(Gap)) {
-                // The code travels twice: as the link in the text, and as the picture beside
-                // it. Whoever receives the message taps it; whoever is standing next to them
-                // scans it off their screen — and the picture is the half that survives being
-                // screenshotted into a group chat, which is how an invitation actually spreads.
-                CodeToShare(
-                    url = inviteLink(code),
-                    caption = code,
-                    subject = subject,
-                    body = body,
-                    onNoSheet = { copy() },
+            Row(horizontalArrangement = Arrangement.spacedBy(Gap), verticalAlignment = Alignment.Top) {
+                Column(
                     modifier = Modifier.weight(1f),
-                ) { send ->
+                    verticalArrangement = Arrangement.spacedBy(Gap),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.invite_title),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Rail.inkDim,
+                    )
+                    // The code travels twice: as the link in the text, and as the picture beside
+                    // it. Whoever receives the message taps it; whoever is standing next to them
+                    // scans it off their screen — and the picture is the half that survives being
+                    // screenshotted into a group chat, which is how an invitation actually spreads.
+                    CodeToShare(
+                        url = inviteLink(code),
+                        caption = code,
+                        subject = subject,
+                        body = body,
+                        onNoSheet = { copy() },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { send ->
+                        GameButton(
+                            label = stringResource(Res.string.invite_share),
+                            tone = ButtonTone.KEEP,
+                            onClick = send,
+                            compact = true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                     GameButton(
-                        label = stringResource(Res.string.invite_share),
-                        tone = ButtonTone.KEEP,
-                        onClick = send,
+                        label = if (copied) {
+                            stringResource(Res.string.invite_copied)
+                        } else {
+                            stringResource(Res.string.invite_copy)
+                        },
+                        tone = ButtonTone.NEUTRAL,
+                        onClick = { copy() },
                         compact = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                GameButton(
-                    label = if (copied) {
-                        stringResource(Res.string.invite_copied)
-                    } else {
-                        stringResource(Res.string.invite_copy)
-                    },
-                    tone = ButtonTone.NEUTRAL,
-                    onClick = { copy() },
-                    compact = true,
-                    modifier = Modifier.weight(1f),
-                )
+                // The code as a picture, for the person sitting opposite with a camera. It
+                // carries the same link the share sheet sends — one destination, so a room
+                // reached by scanning and a room reached by tapping are the same room.
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(CaptionGap),
+                ) {
+                    QrChip(
+                        url = inviteLink(code),
+                        logo = VintoQr.ringedMark(),
+                        label = stringResource(Res.string.invite_scan),
+                    )
+                    Text(
+                        text = stringResource(Res.string.invite_scan),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Rail.inkDim,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.widthIn(max = QrWide),
+                    )
+                }
             }
+            // The oldest way of passing six characters to somebody in the same room is to say
+            // them out loud, and it needs no platform at all. The code itself is in the title.
             Text(
                 text = stringResource(Res.string.invite_read_it_out),
                 style = MaterialTheme.typography.bodySmall,
@@ -512,6 +669,7 @@ private fun LobbyLine(word: LobbyWord, msUntilStart: Double?) {
         LobbyWord.OFFERED_BOTS -> stringResource(Res.string.lobby_offered_bots, seconds ?: 0)
         LobbyWord.OVER -> stringResource(Res.string.lobby_over)
         LobbyWord.UNREACHABLE -> stringResource(Res.string.lobby_unreachable)
+        LobbyWord.UPDATE_NEEDED -> stringResource(Res.string.trouble_update_needed)
     }
     Text(line, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onFelt())
 }
@@ -594,9 +752,15 @@ private fun Notice(said: String?) {
     }
 }
 
-/** The connection, as a dot and a word — beside the lobby title, and over a remote table. */
+/**
+ * The connection, as a dot and a word — beside the lobby title, and over a remote table.
+ *
+ * [ink] is whatever the badge is standing on: the rail's dim ink under the table, the felt's own
+ * beside the lobby's title. One colour for both was a word readable in one place and 1.1:1 in
+ * the other.
+ */
 @Composable
-fun ConnectionBadge(connection: ConnectionState) {
+fun ConnectionBadge(connection: ConnectionState, ink: Color = Rail.inkDim) {
     val (label, colour) = when (connection) {
         is ConnectionState.Connected -> stringResource(Res.string.net_connected) to LiveGreen
         is ConnectionState.Connecting -> stringResource(Res.string.net_connecting) to WaitAmber
@@ -617,7 +781,7 @@ fun ConnectionBadge(connection: ConnectionState) {
         } else {
             Surface(shape = CircleShape, color = colour, modifier = Modifier.size(Dot)) {}
         }
-        Text(label, style = MaterialTheme.typography.labelMedium, color = Rail.inkDim)
+        Text(label, style = MaterialTheme.typography.labelMedium, color = ink)
     }
 }
 
@@ -932,6 +1096,31 @@ private val StripMax = 420.dp
 /** A Vinto room is always four seats — see `RoomCore.SEAT_COUNT`, which is a design
  * constant rather than a setting. */
 private const val SEATS = 4
+
+/** Two seats to a row: four seats in half the height of a list. */
+private const val PER_ROW = 2
+
+/**
+ * A seat tile's own height, which a placeholder shares so nothing moves when the room answers.
+ * A face and a margin, and room for a name on two lines at the lobby's type.
+ */
+private val TileHeight = 60.dp
+private val TilePad = 10.dp
+private val TileGap = 8.dp
+private val TileFace = 36.dp
+
+/** The smallest a seat's name is drawn before it is allowed to be cut. */
+private val TileNameLeast = 12.sp
+
+/** The cross that removes a bot: a thumb's target around a small mark. */
+private val RemoveTap = 44.dp
+private val RemoveInset = 15.dp
+private val RemovePen = 2.dp
+private val ChairRing = 1.5.dp
+
+/** The QR code's own width, so its caption wraps under it rather than widening the column. */
+private val QrWide = 112.dp
+private val CaptionGap = 4.dp
 
 /** How much of a waiting row the placeholder bar fills, and how faint it is. */
 private const val WaitingBar = 0.45f

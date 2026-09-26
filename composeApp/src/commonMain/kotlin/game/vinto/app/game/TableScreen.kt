@@ -63,6 +63,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -77,6 +78,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import game.vinto.app.Host
 import game.vinto.app.LocalHost
 import game.vinto.app.Support
@@ -1394,8 +1396,8 @@ private fun MiddleRow(
 }
 
 /**
- * A seat down one edge: a column of cards, with the plate at the end nearest the rim — above
- * on the left, below on the right, so neither plate lands in the middle of the felt.
+ * A seat down one edge: a column of cards, with the plate beside it against the rim — at the
+ * top on the left, at the foot on the right, so neither plate lands in the middle of the felt.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -1410,8 +1412,8 @@ private fun SideSeat(
 ) {
     if (seat == null) return
 
-    // `plateFirst` is also which side of the felt this is: the plate sits above on the left and
-    // below on the right, so the seat with its plate first is the left one.
+    // `plateFirst` is also which side of the felt this is: the plate comes before the cards on
+    // the left and after them on the right, so the seat with its plate first is the left one.
     val onTheLeft = plateFirst
 
     // The share this seat was given, and the seat itself inside it. The two are separate on
@@ -1426,7 +1428,20 @@ private fun SideSeat(
     }
 }
 
-/** The seat itself: its plate and its turned hand, inside the caller's edge if it called. */
+/**
+ * The seat itself: its plate and its turned hand, inside the caller's edge if it called.
+ *
+ * **Side by side, not stacked.** The plate used to sit above the column on the left and below
+ * it on the right, which put a plate's height and five tap targets in one column — and that is
+ * more than the middle of a phone's felt has once a room keeps its toss-in clock under it. The
+ * cards slid onto each other, which is what a dealt hand must never have to do. A plate with
+ * its face above its name is narrow enough to stand beside the cards instead, in width the side
+ * seats have to spare, and the column gets the middle's whole height.
+ *
+ * The plate stays at the end its first card is at — the top on the left, the foot on the right —
+ * because a seat's cards are counted from its own plate (`countFromEnd`), and so neither plate
+ * lands level with the piles.
+ */
 @Composable
 private fun SideColumn(
     seat: PlayerSeatView,
@@ -1436,15 +1451,12 @@ private fun SideColumn(
     onTheLeft: Boolean,
     onMove: (Move) -> Unit,
 ) {
-    Column(
+    Row(
         modifier = Modifier.ringed(seat, view),
-        // Against its own rim rather than centred. Centred, the plate floated inward as
-        // soon as the cards beside it took more width than it did, which is the drift
-        // reported for the avatars — and it spent felt the side seats have least of.
-        horizontalAlignment = if (onTheLeft) Alignment.Start else Alignment.End,
-        verticalArrangement = Arrangement.spacedBy(Tight),
+        verticalAlignment = if (onTheLeft) Alignment.Top else Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(Tight),
     ) {
-        if (onTheLeft) Plate(seat, view, table, sizes, onMove)
+        if (onTheLeft) Plate(seat, view, table, sizes, onMove, NameRun.UP)
 
         // A quarter turn, the way cards lie in front of somebody sitting at the side of a
         // table. It is not only decoration: turned, a card is wider than it is tall, so five
@@ -1455,8 +1467,8 @@ private fun SideColumn(
         // grounds that a side seat's cards are counted rather than read and the felt's width is
         // scarce. What that cost was visible the moment a hand grew: the overlap is floored at
         // [TapStrip], so past about seven the column has a minimum length the seat does not
-        // have and it simply ran over its own plate — the name drawn through by cards. A second
-        // column costs width once; a column that overruns costs the plate every time.
+        // have, and when the plate still stood above it the cards ran over the name. A second
+        // column costs width once; a column that overruns costs the whole seat every time.
         // **The same cards as the seat opposite.** `sizes.side` was a size of its own, a step
         // under `theirs`, so three opponents holding the same number of cards were drawn at two
         // different sizes — reported as the side players' cards being smaller. It bought
@@ -1481,7 +1493,7 @@ private fun SideColumn(
             Cards(seat, view, table, drawn, onMove, turned = true)
         }
 
-        if (!onTheLeft) Plate(seat, view, table, sizes, onMove)
+        if (!onTheLeft) Plate(seat, view, table, sizes, onMove, NameRun.DOWN)
     }
 }
 
@@ -1954,6 +1966,7 @@ private fun Plate(
     table: Table,
     sizes: TableSizes,
     onMove: (Move) -> Unit,
+    run: NameRun = NameRun.ACROSS,
 ) {
     val active = view.turnHolderId == seat.id
 
@@ -1983,7 +1996,18 @@ private fun Plate(
         stringResource(Res.string.seat_plan_their_turn, seat.nickname)
     }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    // A side plate is a thumb wide and its quip is a sentence, so the quip overhangs rather than
+    // widening the plate — which would take the width the cards beside it are laid in — and is
+    // drawn over them for the second it is there. It hangs inward from the plate's rim edge.
+    val side = run != NameRun.ACROSS
+    Column(
+        horizontalAlignment = when (run) {
+            NameRun.ACROSS -> Alignment.CenterHorizontally
+            NameRun.UP -> Alignment.Start
+            NameRun.DOWN -> Alignment.End
+        },
+        modifier = if (side) Modifier.zIndex(1f) else Modifier,
+    ) {
         // Three bots that only ever move cards are furniture. A line at the right moment —
         // announcing a Vinto, wincing at a penalty — is what makes the other seats read as
         // opponents, and it costs one string.
@@ -1991,7 +2015,9 @@ private fun Plate(
             Surface(
                 shape = RoundedCornerShape(FeltCorner),
                 color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(bottom = 2.dp),
+                modifier = Modifier
+                    .padding(bottom = 2.dp)
+                    .then(if (side) Modifier.overhang(run == NameRun.UP) else Modifier),
             ) {
                 Text(
                     it,
@@ -2017,9 +2043,22 @@ private fun Plate(
             onClick = tap?.let { { onMove(it) } },
             lit = composing,
             described = described,
+            run = run,
         )
     }
 }
+
+/**
+ * Takes no width in the layout, and draws its whole self from where it was put — rightwards from
+ * a start edge, leftwards from an end one. For a side plate's quip, which is wider than the plate.
+ */
+private fun Modifier.overhang(fromStart: Boolean): Modifier = layout { measurable, constraints ->
+    val said = measurable.measure(constraints.copy(minWidth = 0, maxWidth = QuipMost.roundToPx()))
+    layout(0, said.height) { said.place(if (fromStart) 0 else -said.width, 0) }
+}
+
+/** The widest a side seat's quip is drawn before it wraps: most of the way to the piles. */
+private val QuipMost = 180.dp
 
 @Composable
 private fun SeatCard(

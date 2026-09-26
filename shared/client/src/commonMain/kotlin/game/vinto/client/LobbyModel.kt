@@ -69,6 +69,13 @@ enum class LobbyWord {
      * identically in the state — both are `Closed` — until the trouble is carried with it.
      */
     UNREACHABLE,
+
+    /**
+     * The room will not seat this build: it is older than the room's floor. Distinct from
+     * [UNREACHABLE] because the answer is the opposite one — not another go, which is certain to
+     * be refused again, but the store.
+     */
+    UPDATE_NEEDED,
 }
 
 /** Digests what the room reports into what the lobby screen draws. */
@@ -86,6 +93,8 @@ fun lobbyUi(lobby: LobbyView?, connection: ConnectionState, mySeat: Int?): Lobby
 
     val connected = connection is ConnectionState.Connected
     val word = when {
+        connection is ConnectionState.Closed && connection.trouble == RoomTrouble.UPDATE_NEEDED ->
+            LobbyWord.UPDATE_NEEDED
         connection is ConnectionState.Closed && connection.trouble != null -> LobbyWord.UNREACHABLE
         connection is ConnectionState.Closed -> LobbyWord.OVER
         !connected || lobby == null -> LobbyWord.CONNECTING

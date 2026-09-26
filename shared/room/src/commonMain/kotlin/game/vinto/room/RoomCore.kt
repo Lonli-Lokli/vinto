@@ -17,10 +17,13 @@ import game.vinto.protocol.LobbySeat
 import game.vinto.protocol.LobbyView
 import game.vinto.protocol.LoggedAction
 import game.vinto.protocol.MIN_PROTOCOL
+import game.vinto.protocol.NoticeSeverity
 import game.vinto.protocol.PROTOCOL_VERSION
 import game.vinto.protocol.PlayerProfile
+import game.vinto.protocol.ProtocolJson
 import game.vinto.protocol.RoomPhase
 import game.vinto.protocol.RoundResult
+import game.vinto.protocol.ServerMessage
 import game.vinto.protocol.UPDATE_AVAILABLE_CODE
 import game.vinto.protocol.UPDATE_NEEDED_CODE
 import game.vinto.protocol.botName
@@ -111,6 +114,13 @@ private const val SEAT_GRACE_MS = 30_000.0
  * invitation used to hold a seat.
  */
 private const val LOBBY_SEAT_GRACE_MS = 120_000.0
+
+/**
+ * What a build below the floor is told, in English because the builds it is for have no string
+ * of their own for it: they show the room's sentence as it arrives.
+ */
+private const val TOO_OLD =
+    "This version of the app is too old for online play. Please update it from the store."
 
 /**
  * How long a running session survives with fewer than two humans connected.
@@ -689,6 +699,8 @@ internal data class JoinResult(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val advice: String? = null,
     /** Set on a reconnect where a bot took a turn in the meantime; see [Seat.botPlayedWhileAway]. */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val botPlayedWhileAway: Boolean = false,
+    /** The exact wire messages a refused socket is sent, in order. Empty for a seated one. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val refusal: List<String> = emptyList(),
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -801,14 +813,23 @@ fun joinRoom(
     // it would let the first message it cannot read freeze its table, which is worse than
     // a refusal with the way to the store on it. The sentence is for builds older than the
     // code that rides beside it, which show the message as it is.
+    //
+    // Said twice, and the order is the point. The `notice` is what every build since protocol 2
+    // puts in front of a player — a dialog, "Update your app", with this sentence and a button to
+    // the store — while the `error` is what those same builds turn into a lobby that says "could
+    // not reach that room" with a Retry. So the notice goes first, and whatever the build makes
+    // of the error it has already been told the true thing. `ProtocolFloorTest` holds both.
     if (protocol < floor) {
         return VintoJson.encodeToString(
             JoinResult(
                 state,
                 -1,
-                error = "This version of the app is too old for online play. " +
-                    "Please update it from the store.",
+                error = TOO_OLD,
                 code = UPDATE_NEEDED_CODE,
+                refusal = listOf(
+                    ServerMessage.Notice(UPDATE_NEEDED_CODE, TOO_OLD, NoticeSeverity.WARNING),
+                    ServerMessage.Error(message = TOO_OLD, code = UPDATE_NEEDED_CODE),
+                ).map { ProtocolJson.encodeToString(ServerMessage.serializer(), it) },
             ),
         )
     }
