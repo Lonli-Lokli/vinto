@@ -232,7 +232,6 @@
     <string name="seat_is_a_bot">бот</string>
     <string name="seat_badge_waiting">стіл чекає на це місце</string>
     <string name="seat_badge_vinto">заявка на Вінто</string>
-    <string name="seat_badge_coalition">у коаліції</string>
     <string name="seat_badge_away">не за столом</string>
     <string name="seat_badge_barred">більше не може підкидати</string>
     <string name="seat_badge_agreed">згода з планом</string>

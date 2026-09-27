@@ -232,7 +232,6 @@
     <string name="seat_is_a_bot">un bot</string>
     <string name="seat_badge_waiting">la mesa espera a este asiento</string>
     <string name="seat_badge_vinto">cantó Vinto</string>
-    <string name="seat_badge_coalition">en la coalición</string>
     <string name="seat_badge_away">ausente de la mesa</string>
     <string name="seat_badge_barred">no puede volver a tirar</string>
     <string name="seat_badge_agreed">de acuerdo con el plan</string>

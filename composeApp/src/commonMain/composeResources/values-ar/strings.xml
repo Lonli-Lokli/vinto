@@ -226,7 +226,6 @@
     <string name="seat_is_a_bot">روبوت</string>
     <string name="seat_badge_waiting">الطاولة تنتظر هذا المقعد</string>
     <string name="seat_badge_vinto">نداء Vinto</string>
-    <string name="seat_badge_coalition">في التحالف</string>
     <string name="seat_badge_away">غياب عن الطاولة</string>
     <string name="seat_badge_barred">ممنوع الرمي مجدداً</string>
     <string name="seat_badge_agreed">موافق على الخطة</string>

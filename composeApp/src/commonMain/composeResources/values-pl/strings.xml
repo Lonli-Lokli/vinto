@@ -214,7 +214,6 @@
     <string name="seat_is_a_bot">bot</string>
     <string name="seat_badge_waiting">stół czeka na to miejsce</string>
     <string name="seat_badge_vinto">ogłosił Vinto</string>
-    <string name="seat_badge_coalition">w koalicji</string>
     <string name="seat_badge_away">poza stołem</string>
     <string name="seat_badge_barred">nie może już dorzucić</string>
     <string name="seat_badge_agreed">zgoda na plan</string>

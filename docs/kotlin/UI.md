@@ -57,6 +57,31 @@ a dealt table lie flat on a 360-point phone. Held by `TheDealLiesFlatTest`: at t
 the phones people hold and with the clock's row under the felt, no seat's cards lie on each
 other, your hand is one row, and every name is drawn whole.
 
+**A plate's marks have one home each** (`Homes` in `SeatPlate`), in room the plate already
+leaves empty. They were a list — a row under the name, a column at the sides — and a list grows
+as marks arrive, so the final round made plates taller exactly when the table was fullest and
+the side cards paid for it. Four homes instead, the same on every plate: *who plays* (a bot, or a
+person away with a bot covering — one mark that says both), *part in the round* (the crown, or a
+nod to the plan; the caller never nods), *the throw-in* (planned, or barred — a barred seat
+cannot throw — or the hand's total once the round is scored), and *now* (the thought cloud,
+which no longer covers the face). Above and below the felt they sit two either side of the face,
+and two stacked are one face tall; at the sides they run beside the turned name on the table
+side, in that order from the face. There is no coalition mark: with four seats every seat but
+the caller's is in the coalition, and the caller wears the crown and the gold edge. Held by
+`PlateHomesTest`: a plate is one size whatever it wears, and every mark is in its home.
+
+**A hand that grows keeps its dealt five.** A line holds five, the dealt five first, and a sixth
+card starts the next — your five along the bottom and the extras above, the seat opposite's
+extras below its five, a side seat's in a second column further in. It used to fill a line as
+far as it would go, which laid eight as six and two and rebuilt the row every time the hand grew.
+Every hand past five steps down a size; the side seats then fit their cards to their share of the
+middle row (`sideScale`), and where two columns need more than a 360-point phone has, the drawn
+card shrinks while its target stays 24 points — WCAG 2.2 AA (SC 2.5.8) is about the target, and
+the pictures never touch. Held by `GrowingHandsTest` on every phone with at least 740 points for
+the app. An iPhone SE (667, discontinued) is the one screen that cannot: online its felt is 331
+points, two plates take 81 each and five side targets need 146, so a second row anywhere leaves
+the side seats sliding.
+
 The Android manifest no longer locks orientation; iOS always allowed rotation (it squeezed the
 portrait design until this landed) and the browser was always free. `LandscapeTableTest` holds
 the rotated phone to the same bar `CrowdedTableTest` holds the upright one to, and holds the

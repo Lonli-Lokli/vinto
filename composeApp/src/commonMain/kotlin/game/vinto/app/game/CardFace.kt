@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -215,7 +216,10 @@ fun CardFace(
                     rotationZ = if (state.turned) QUARTER_TURN else 0f
                     translationX = shake.value * SHAKE_PX * density.density
                     cameraDistance = CAMERA * density.density
-                },
+                }
+                // Tagged inside the turn, so a test measures the card as drawn — lying on its side
+                // at a side seat — within the footprint it reserves.
+                .testTag(CARD_PICTURE),
         ) {
             Surface(
                 modifier = Modifier.matchParentSize().clip(shape),
@@ -252,6 +256,9 @@ fun CardFace(
         }
     }
 }
+
+/** How a test finds a card's picture inside its footprint. */
+internal const val CARD_PICTURE = "card-picture"
 
 /**
  * What a card that is not on the table yet wears: the turn it arrives on in one corner, and a

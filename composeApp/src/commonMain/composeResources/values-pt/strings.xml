@@ -223,7 +223,6 @@
     <string name="seat_is_a_bot">um bot</string>
     <string name="seat_badge_waiting">a mesa espera por este lugar</string>
     <string name="seat_badge_vinto">chamou Vinto</string>
-    <string name="seat_badge_coalition">na coligação</string>
     <string name="seat_badge_away">ausente da mesa</string>
     <string name="seat_badge_barred">já não pode descartar</string>
     <string name="seat_badge_agreed">concordou com o plano</string>

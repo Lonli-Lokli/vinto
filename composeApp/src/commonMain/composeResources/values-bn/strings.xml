@@ -214,7 +214,6 @@
     <string name="seat_is_a_bot">একটি বট</string>
     <string name="seat_badge_waiting">টেবিল এই আসনের জন্য অপেক্ষা করছে</string>
     <string name="seat_badge_vinto">ভিন্টো ডেকেছে</string>
-    <string name="seat_badge_coalition">জোটে আছে</string>
     <string name="seat_badge_away">টেবিল থেকে দূরে</string>
     <string name="seat_badge_barred">আর টস-ইন করতে পারবে না</string>
     <string name="seat_badge_agreed">পরিকল্পনায় সম্মত</string>

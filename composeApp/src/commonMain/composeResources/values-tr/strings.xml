@@ -226,7 +226,6 @@
     <string name="seat_is_a_bot">bir bot</string>
     <string name="seat_badge_waiting">masa bu koltuğu bekliyor</string>
     <string name="seat_badge_vinto">Vinto dedi</string>
-    <string name="seat_badge_coalition">koalisyonda</string>
     <string name="seat_badge_away">masadan uzakta</string>
     <string name="seat_badge_barred">bir daha atamaz</string>
     <string name="seat_badge_agreed">planı kabul etti</string>

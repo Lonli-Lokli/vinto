@@ -15,8 +15,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
@@ -24,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,7 +45,9 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -65,7 +67,6 @@ import game.vinto.app.art.avatar_tide
 import game.vinto.app.art.seat_badge_agreed
 import game.vinto.app.art.seat_badge_away
 import game.vinto.app.art.seat_badge_barred
-import game.vinto.app.art.seat_badge_coalition
 import game.vinto.app.art.seat_badge_vinto
 import game.vinto.app.art.seat_badge_waiting
 import game.vinto.app.art.seat_badge_will_shed
@@ -169,24 +170,14 @@ private fun Attention.spoken(): StringResource = when (this) {
 }
 
 /**
- * The seat's face, and the thought cloud when the table is waiting on it.
+ * The seat's face: the one its owner chose, or a bot's emblem.
  *
- * **The cloud is on the portrait rather than in the marks row, and that is a layout fix as much
- * as a picture.** It was a badge under the name, in a column that was only capped — a *max*, so
- * the column was as wide as its widest row and a mark that arrived widened the plate. That mark
- * is the only one that comes and goes every turn (`badgesFor` gives it to whoever's turn it is),
- * and a plate sits in a `Row` with the hand at `weight(1f, fill = false)`: the width the plate
- * takes is width the hand does not get, and `HandLine` pitches the cards from exactly that
- * number. So the pill grew by nine to twenty-eight points on every turn hand-off, and the cards
- * beside it re-pitched — reported from a phone as the avatar changing size. Drawn over the
- * portrait it costs no width at all, and `SteadyPlateTest` measures that at every table size.
- *
- * It is also where a thought cloud belongs. The durable marks say what a seat *is* and read
- * under the name like a caption; this one says the seat is working **now**, and a bubble over
- * the head is the drawing everyone already knows for that.
+ * Nothing is drawn on it. The thought cloud used to sit on its corner, which kept the cloud from
+ * widening the plate but covered part of the face every turn; it has a home of its own beside
+ * the face now ([Homes]), where it costs no room either.
  */
 @Composable
-private fun Portrait(name: String, size: Dp, thinking: Boolean) {
+private fun Portrait(name: String, size: Dp) {
     val chosen = chosenFace(name)
     // Its own size whatever the plate has left, because the face is who is sitting there and is
     // the one part of a plate that never gives way — and because a face squeezed to no height
@@ -212,19 +203,6 @@ private fun Portrait(name: String, size: Dp, thinking: Boolean) {
                 modifier = Modifier.size(size).clip(CircleShape),
             )
         }
-
-        // On the corner, and on a ground of its own. Ink puffs laid straight onto an emblem
-        // are ink on whichever of eight grounds this seat happens to wear, at a size where the
-        // silhouette is the whole of what the mark has — so it carries the plate's own fill
-        // under it and the deck's ink ring around it, and reads on any face. `TopEnd` rather
-        // than `TopRight`: five of the nineteen languages lay the plate out the other way
-        // round, and a thought belongs on the same side as the name it is thinking beside.
-        if (thinking) {
-            Thought(
-                size = maxOf(size * BadgeShare, BadgeLeast),
-                modifier = Modifier.align(Alignment.TopEnd),
-            )
-        }
     }
 }
 
@@ -233,7 +211,7 @@ private fun Portrait(name: String, size: Dp, thinking: Boolean) {
  * For the lobby, which shows who is sitting before there is a table to seat them at.
  */
 @Composable
-internal fun FaceOf(name: String, size: Dp) = Portrait(name = name, size = size, thinking = false)
+internal fun FaceOf(name: String, size: Dp) = Portrait(name = name, size = size)
 
 /** How a test finds [name]'s face on the felt. */
 internal fun faceTag(name: String): String = "face:$name"
@@ -272,34 +250,134 @@ private fun seatGlow(): State<Float> {
 }
 
 /**
- * The marks and the score, under the name, in the order they are worth reading.
+ * What a plate's four homes are holding: one mark each, or nothing.
  *
- * Wrapping rather than one line: the plate's width is fixed, and a coalition member who has
- * nodded, will shed and is a bot carries four marks — more than one line of a phone's plate. A
- * second line costs the plate height; a wider line would cost it width, which is what the hand
- * beside it is pitched from.
+ * The marks used to be a list under the name, and a list grows as marks arrive — so the final
+ * round, when a seat calls and the rest start agreeing to a plan, made plates taller exactly when
+ * the table was fullest, and the side seats' cards paid for it by sliding onto each other. Four
+ * homes instead, each in space the plate already leaves empty, each always in the same place:
+ * a mark appears and disappears in its home, and nothing else on the plate moves.
+ *
+ * Seven marks and a score fit four homes because the marks that share one can never be seen
+ * together.
  */
-@OptIn(ExperimentalLayoutApi::class)
+internal data class Homes(
+    /** Who plays the seat: a bot, or a person away with a bot covering. Away already means a bot. */
+    val who: SeatBadge?,
+    /** The seat's part in the round: the crown, or a nod to the plan. The caller never nods. */
+    val part: SeatBadge?,
+    /** The throw-in: planned, or barred — a barred seat cannot throw. Null once a [score] is shown. */
+    val toss: SeatBadge?,
+    /** The hand's total once the round is scored, in the throw-in's home: nothing is left to throw. */
+    val score: String?,
+    /** The table is waiting on this seat. */
+    val now: Boolean,
+)
+
+internal fun homesFor(badges: List<SeatBadge>, score: String?, thinking: Boolean): Homes = Homes(
+    who = when {
+        SeatBadge.AWAY in badges -> SeatBadge.AWAY
+        SeatBadge.BOT in badges -> SeatBadge.BOT
+        else -> null
+    },
+    part = when {
+        SeatBadge.VINTO in badges -> SeatBadge.VINTO
+        SeatBadge.AGREED in badges -> SeatBadge.AGREED
+        else -> null
+    },
+    toss = when {
+        score != null -> null
+        SeatBadge.BARRED in badges -> SeatBadge.BARRED
+        SeatBadge.WILL_SHED in badges -> SeatBadge.WILL_SHED
+        else -> null
+    },
+    score = score,
+    now = thinking,
+)
+
+/**
+ * How large a home is: half the face less half a gap, so two of them stacked are exactly one
+ * face tall and the four homes beside it cost the plate no height at all.
+ */
+private fun homeSize(portrait: Dp): Dp = (portrait - PlateGap) / 2
+
+/**
+ * The face with its four homes, two either side: the plates above and below the felt.
+ *
+ * The plate is as wide as a two-word name needs, so the face has room either side of it that
+ * was only ever empty. Part in the round and who plays on the left, now and the throw-in on the
+ * right: the crown high beside the head, the thought cloud where a thought bubble rises from.
+ */
 @Composable
-private fun BadgeRow(badges: List<SeatBadge>, marks: String?, portrait: Dp) {
-    if (badges.isEmpty() && marks == null) return
-    FlowRow(
-        verticalArrangement = Arrangement.spacedBy(BadgeGap),
-        horizontalArrangement = Arrangement.spacedBy(BadgeGap, Alignment.CenterHorizontally),
-        itemVerticalAlignment = Alignment.CenterVertically,
-    ) {
-        badges.forEach { SeatMark(it, portrait) }
-        marks?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.labelSmall,
-                color = Slate.gold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+private fun FaceWithHomes(name: String, portrait: Dp, homes: Homes) {
+    val home = homeSize(portrait)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(verticalArrangement = Arrangement.spacedBy(PlateGap)) {
+            HomeOf(homes.part, home)
+            HomeOf(homes.who, home)
+        }
+        Portrait(name = name, size = portrait)
+        Column(verticalArrangement = Arrangement.spacedBy(PlateGap)) {
+            NowHome(homes.now, home)
+            TossHome(homes, home)
         }
     }
 }
+
+/**
+ * The four homes in a line beside a side seat's turned name, on the table side of it, in order
+ * from the face: now, part in the round, who plays, the throw-in. [fromTop] is whether the face
+ * is above them — the right-hand seat's is, the left-hand seat's is at the foot.
+ */
+@Composable
+private fun EdgeHomes(portrait: Dp, homes: Homes, fromTop: Boolean) {
+    val home = homeSize(portrait)
+    val inOrder: List<@Composable () -> Unit> = listOf(
+        { NowHome(homes.now, home) },
+        { HomeOf(homes.part, home) },
+        { HomeOf(homes.who, home) },
+        { TossHome(homes, home) },
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(PlateGap)) {
+        (if (fromTop) inOrder else inOrder.reversed()).forEach { it() }
+    }
+}
+
+/** One home: its mark, or the same room left empty so nothing beside it moves. */
+@Composable
+private fun HomeOf(badge: SeatBadge?, size: Dp) {
+    Box(modifier = Modifier.size(size), contentAlignment = Alignment.Center) {
+        badge?.let { SeatMark(it, size = size) }
+    }
+}
+
+@Composable
+private fun NowHome(now: Boolean, size: Dp) {
+    Box(modifier = Modifier.size(size), contentAlignment = Alignment.Center) {
+        if (now) Thought(size = size, modifier = Modifier, bare = true)
+    }
+}
+
+/** The throw-in's home, which holds the hand's total instead once the round is scored. */
+@Composable
+private fun TossHome(homes: Homes, size: Dp) {
+    val score = homes.score ?: return HomeOf(homes.toss, size)
+    Box(modifier = Modifier.size(size), contentAlignment = Alignment.Center) {
+        val style = MaterialTheme.typography.labelSmall
+        Text(
+            text = score,
+            style = style,
+            fontWeight = FontWeight.Bold,
+            color = Slate.gold,
+            maxLines = 1,
+            softWrap = false,
+            autoSize = TextAutoSize.StepBased(minFontSize = ScoreLeast, maxFontSize = style.fontSize),
+        )
+    }
+}
+
+/** The smallest a score is drawn in its home, for the rare hand that totals three digits' width. */
+private val ScoreLeast = 7.sp
 
 /**
  * What a seat is, said in marks rather than in colour.
@@ -312,11 +390,14 @@ private fun BadgeRow(badges: List<SeatBadge>, marks: String?, portrait: Dp) {
  * Each of these carries its own words for a screen reader, because a mark nobody can see is
  * exactly the failure the ring already had.
  *
- * **Every one of them is durable**, and that is what this list is now for. Whether the table is
- * *waiting* on a seat used to be in here too, and it is the one thing about a seat that changes
- * every turn — so a row sized to hold it was a row that changed width every turn, and a plate
- * that changed width pushed the hand beside it. It is drawn on the portrait instead ([Thought]),
- * where it costs no width and reads as the seat thinking rather than as another caption.
+ * **Every one of them is durable.** Whether the table is *waiting* on a seat is the one thing
+ * about a seat that changes every turn, so it is not one of these: it is the thought cloud
+ * ([Thought]), in a home of its own ([Homes]).
+ *
+ * **There is no coalition mark.** There was a link, and three seats wore it for the whole final
+ * round: in a four-seat game every seat but the caller's is in the coalition, and the caller
+ * already wears the crown and the gold edge. It said nothing the crown had not, and it was half of
+ * what made the final round's plates taller.
  */
 enum class SeatBadge {
     /** A machine plays this seat. */
@@ -324,9 +405,6 @@ enum class SeatBadge {
 
     /** This seat called Vinto. */
     VINTO,
-
-    /** This seat is in the coalition playing against the caller. */
-    COALITION,
 
     /** Nobody is behind this seat at the moment. */
     AWAY,
@@ -360,17 +438,22 @@ enum class SeatBadge {
 }
 
 /**
- * One mark, drawn at a size that follows the portrait beside it.
+ * One mark, drawn at [size] — its home's, on a plate.
  *
  * Internal because the help sheet's legend draws the **same** composable rather than a picture
  * of it: a legend that redraws a mark is a legend that can come to disagree with the table.
  */
 @Composable
-internal fun SeatMark(badge: SeatBadge, portrait: Dp) {
-    val said = stringResource(badge.spoken())
+internal fun SeatMark(badge: SeatBadge, size: Dp) {
+    // The away mark is the one that stands for two facts — nobody is there, and a bot is playing
+    // for them — so it says both, where the table used to draw two marks to say them.
+    val said = if (badge == SeatBadge.AWAY) {
+        listOf(stringResource(Res.string.seat_is_a_bot), stringResource(badge.spoken()))
+    } else {
+        listOf(stringResource(badge.spoken()))
+    }
     val ink = when (badge) {
         SeatBadge.VINTO -> Slate.gold
-        SeatBadge.COALITION -> Signal.coalition
         SeatBadge.AWAY -> Slate.ink.copy(alpha = QUIET)
         SeatBadge.BOT -> Slate.ink.copy(alpha = QUIET)
         SeatBadge.BARRED -> Signal.penalty
@@ -378,15 +461,14 @@ internal fun SeatMark(badge: SeatBadge, portrait: Dp) {
         SeatBadge.WILL_SHED -> Signal.coalition
     }
     val marked = Modifier
-        .size(maxOf(portrait * BadgeShare, BadgeLeast))
-        .semantics { contentDescription = said }
+        .size(size)
+        .semantics { this[SemanticsProperties.ContentDescription] = said }
 
     // One branch per mark rather than one Canvas over a `when`, so a mark that ever needs to
     // move can be a composable rather than a drawing — which is what [Thought] became.
     when (badge) {
         SeatBadge.BOT -> Canvas(marked) { drawRobot(ink) }
         SeatBadge.VINTO -> Canvas(marked) { drawCrown(ink) }
-        SeatBadge.COALITION -> Canvas(marked) { drawLink(ink) }
         SeatBadge.AWAY -> Canvas(marked) { drawAway(ink) }
         SeatBadge.BARRED -> Canvas(marked) { drawBarred(ink) }
         SeatBadge.AGREED -> Canvas(marked) { drawNod(ink) }
@@ -419,14 +501,14 @@ internal fun SeatMark(badge: SeatBadge, portrait: Dp) {
  * plate around it — which is the whole of what [seatGlow] used to do.
  */
 @Composable
-private fun Thought(size: Dp, modifier: Modifier) {
+private fun Thought(size: Dp, modifier: Modifier, bare: Boolean = false) {
     val said = stringResource(Res.string.seat_badge_waiting)
     val marked = modifier.size(size).semantics { contentDescription = said }
 
     // No movement, same information — and the still cloud is the *whole* cloud at full
     // strength rather than one frame of the wave, exactly as `VintoSpinner` stands still.
     if (LocalReducedMotion.current) {
-        Canvas(marked) { drawThoughtBadge(phase = null) }
+        Canvas(marked) { if (bare) drawThought(Slate.ink, phase = null) else drawThoughtBadge(phase = null) }
         return
     }
 
@@ -442,7 +524,7 @@ private fun Thought(size: Dp, modifier: Modifier) {
         ),
         label = "puffs",
     )
-    Canvas(marked) { drawThoughtBadge(phase) }
+    Canvas(marked) { if (bare) drawThought(Slate.ink, phase) else drawThoughtBadge(phase) }
 }
 
 /**
@@ -472,7 +554,6 @@ private const val CLOUD_INSET = 0.8f
 internal fun SeatBadge.spoken(): StringResource = when (this) {
     SeatBadge.BOT -> Res.string.seat_is_a_bot
     SeatBadge.VINTO -> Res.string.seat_badge_vinto
-    SeatBadge.COALITION -> Res.string.seat_badge_coalition
     SeatBadge.AWAY -> Res.string.seat_badge_away
     SeatBadge.BARRED -> Res.string.seat_badge_barred
     SeatBadge.AGREED -> Res.string.seat_badge_agreed
@@ -584,15 +665,6 @@ private fun DrawScope.drawCrown(ink: Color) {
     drawPath(crown, color = ink, style = pen)
 }
 
-/** Two links: this seat and the others are one hand. */
-private fun DrawScope.drawLink(ink: Color) {
-    val w = size.minDimension
-    val pen = Stroke(width = w * BADGE_PEN)
-    listOf(LINK_LEFT_X, LINK_RIGHT_X).forEach {
-        drawCircle(ink, radius = w * LINK_R, center = Offset(w * it, w * MIDDLE), style = pen)
-    }
-}
-
 /** A tick: this seat has said yes to the plan as it stands. */
 private fun DrawScope.drawNod(ink: Color) {
     val w = size.minDimension
@@ -694,10 +766,6 @@ private const val CROWN_DIP_RIGHT = 0.60f
 private const val CROWN_DIP = 0.54f
 private const val CROWN_PEAK = 0.24f
 
-private const val LINK_LEFT_X = 0.36f
-private const val LINK_RIGHT_X = 0.64f
-private const val LINK_R = 0.20f
-
 private const val BARRED_R = 0.30f
 private const val BARRED_FROM = 0.28f
 private const val BARRED_TO = 0.72f
@@ -706,19 +774,6 @@ private const val AWAY_FROM = 40f
 private const val AWAY_SWEEP = 280f
 private const val AWAY_INSET = 0.22f
 private const val AWAY_SIZE = 0.56f
-
-private val BadgeGap = 3.dp
-
-/**
- * How large a mark is drawn: half the portrait beside it, and never under [BadgeLeast].
- *
- * It was a little over a third, which on a phone's 30-point portrait is eleven points — smaller
- * than any glyph can carry meaning at, and the thinking mark in particular was a smudge. The
- * floor is what stops the smallest table having the least legible marks, which is exactly
- * backwards: a phone is where they are hardest to read and where there is least else to go on.
- */
-private const val BadgeShare = 0.5f
-private val BadgeLeast = 17.dp
 
 /**
  * The badge that says a seat is played by the machine.
@@ -874,7 +929,7 @@ fun SeatPlate(
             // A plate is a target — a Nine looks at one of these, a Jack swaps into one — so it
             // is at least a thumb tall even when the portrait inside it is not.
             modifier = Modifier
-                .width(if (run == NameRun.ACROSS) plateWidth(size) else edgeWidth(size))
+                .width(if (run == NameRun.ACROSS) plateWidth(size) else edgeWidth(size, nameLine()))
                 .heightIn(min = PlateTap)
                 .semantics { said?.let { contentDescription = it } },
             shape = shape,
@@ -893,26 +948,36 @@ fun SeatPlate(
                 // A turned name starts at the face: the right seat's reads down from it, and the
                 // left seat's reads up from it — so there the face is at the foot and the marks,
                 // which come after the name, at the head.
+                val homes = homesFor(badges, marks, thinking)
                 when (run) {
                     NameRun.ACROSS -> {
-                        Portrait(name = name, size = size, thinking = thinking)
+                        FaceWithHomes(name, size, homes)
                         PlateName(name, active)
-                        BadgeRow(badges, marks, size)
                     }
 
-                    // The name is weighted so it is measured last and takes only what the face and
-                    // the marks leave: a turned name is as tall as it is long, and measured in
-                    // turn it took a sideways phone's whole column and left the face none.
+                    // The line of name and homes is weighted, so it is measured after the face
+                    // and takes what is left; the name hugs the rim and the homes face the table.
                     NameRun.DOWN -> {
-                        Portrait(name = name, size = size, thinking = thinking)
-                        EdgeName(name, active, clockwise = true, Modifier.weight(1f, fill = false))
-                        BadgeColumn(badges, marks, size)
+                        Portrait(name = name, size = size)
+                        Row(
+                            modifier = Modifier.weight(1f, fill = false),
+                            horizontalArrangement = Arrangement.spacedBy(PlateGap),
+                        ) {
+                            EdgeHomes(size, homes, fromTop = true)
+                            EdgeName(name, active, clockwise = true)
+                        }
                     }
 
                     NameRun.UP -> {
-                        BadgeColumn(badges, marks, size)
-                        EdgeName(name, active, clockwise = false, Modifier.weight(1f, fill = false))
-                        Portrait(name = name, size = size, thinking = thinking)
+                        Row(
+                            modifier = Modifier.weight(1f, fill = false),
+                            horizontalArrangement = Arrangement.spacedBy(PlateGap),
+                            verticalAlignment = Alignment.Bottom,
+                        ) {
+                            EdgeName(name, active, clockwise = false)
+                            EdgeHomes(size, homes, fromTop = false)
+                        }
+                        Portrait(name = name, size = size)
                     }
                 }
             }
@@ -924,7 +989,14 @@ fun SeatPlate(
         // layer's alpha: the plate keeps its composition, and the portrait, the name and the
         // marks under it are not touched. Composed only while it is wanted, so no seat holds a
         // frame clock open for a ring nobody is looking at.
-        if (breathing) {
+        //
+        // Still under reduced motion: the ring at full strength says whose turn it is as clearly
+        // as the breath does, the way the thought cloud and the spinner stand still. It used to
+        // breathe regardless, which nobody saw from a test until the cloud's home came to sit
+        // beside the plate's rounded corner.
+        if (breathing && LocalReducedMotion.current) {
+            Box(modifier = Modifier.matchParentSize().border(Ring, Signal.turn, shape))
+        } else if (breathing) {
             val glow = seatGlow()
             Box(
                 modifier = Modifier
@@ -958,10 +1030,17 @@ enum class NameRun {
 }
 
 /**
- * How wide a side seat's plate is: the portrait and its margin, and never under a thumb. Fixed
- * for the same reason [plateWidth] is — the cards beside it are laid in what it leaves.
+ * How wide a side seat's plate is: the face, or the line of homes and the turned name side by
+ * side, whichever is wider — and never under a thumb. [line] is the name's thickness, one line of
+ * its type at its largest. Fixed for the same reason [plateWidth] is: the cards beside it are laid
+ * in what it leaves, and a name that shrinks to fit must not take the plate in with it.
  */
-internal fun edgeWidth(portrait: Dp): Dp = maxOf(portrait + PlatePad * 2, PlateTap)
+internal fun edgeWidth(portrait: Dp, line: Dp): Dp =
+    maxOf(maxOf(portrait, homeSize(portrait) + PlateGap + line) + PlatePad * 2, PlateTap)
+
+/** How wide a side seat's plate is drawn at this table's portrait size — see [edgeWidth]. */
+@Composable
+internal fun sidePlateWidth(portrait: Dp): Dp = edgeWidth(portrait, nameLine())
 
 /**
  * A side seat's name, turned to run along the rim. One line — however long, it costs the plate
@@ -973,7 +1052,7 @@ private fun EdgeName(name: String, active: Boolean, clockwise: Boolean, modifier
     val style = MaterialTheme.typography.titleSmall
     Text(
         text = name,
-        style = style,
+        style = style.copy(lineHeight = NameLeading),
         fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
         color = if (active) Slate.gold else Slate.ink,
         maxLines = 1,
@@ -1001,21 +1080,6 @@ private fun Modifier.quarterTurn(clockwise: Boolean): Modifier = layout { measur
 
 private const val QUARTER = 90f
 
-/** A side plate's marks, one under another, since the plate is one mark wide. */
-@Composable
-private fun BadgeColumn(badges: List<SeatBadge>, marks: String?, portrait: Dp) {
-    if (badges.isEmpty() && marks == null) return
-    Column(
-        verticalArrangement = Arrangement.spacedBy(BadgeGap),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        badges.forEach { SeatMark(it, portrait) }
-        marks?.let {
-            Text(text = it, style = MaterialTheme.typography.labelSmall, color = Slate.gold, maxLines = 1)
-        }
-    }
-}
-
 /**
  * The name on the plate: gold and bold for the seat whose turn it is, so the felt says so on its
  * own.
@@ -1036,6 +1100,12 @@ private fun PlateName(name: String, active: Boolean) {
         overflow = TextOverflow.Ellipsis,
         autoSize = WholeWords(least = NameLeast, most = style.fontSize),
     )
+}
+
+/** One line of a plate's name at its largest, as thick as it is drawn: what a turned name costs a plate. */
+@Composable
+private fun nameLine(): Dp = with(LocalDensity.current) {
+    (MaterialTheme.typography.titleSmall.fontSize * NameLeading.value).toDp()
 }
 
 /** Leading barely past the letters: two lines of a name are one name. */

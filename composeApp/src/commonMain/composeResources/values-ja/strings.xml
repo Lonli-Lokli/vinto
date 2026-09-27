@@ -228,7 +228,6 @@
     <string name="seat_is_a_bot">ボット</string>
     <string name="seat_badge_waiting">この席を待っています</string>
     <string name="seat_badge_vinto">ヴィントを宣言</string>
-    <string name="seat_badge_coalition">連合の一員</string>
     <string name="seat_badge_away">席を外している</string>
     <string name="seat_badge_barred">もうトスインできません</string>
     <string name="seat_badge_agreed">計画に同意</string>

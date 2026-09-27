@@ -214,7 +214,6 @@
     <string name="seat_is_a_bot">봇</string>
     <string name="seat_badge_waiting">이 자리를 기다리는 중</string>
     <string name="seat_badge_vinto">빈토를 선언함</string>
-    <string name="seat_badge_coalition">연합에 속함</string>
     <string name="seat_badge_away">자리를 비움</string>
     <string name="seat_badge_barred">더는 토스인할 수 없음</string>
     <string name="seat_badge_agreed">계획에 동의함</string>

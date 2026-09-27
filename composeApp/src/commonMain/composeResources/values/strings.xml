@@ -280,7 +280,6 @@
     <string name="seat_is_a_bot">a bot</string>
     <string name="seat_badge_waiting">the table is waiting on this seat</string>
     <string name="seat_badge_vinto">called Vinto</string>
-    <string name="seat_badge_coalition">in the coalition</string>
     <string name="seat_badge_away">away from the table</string>
     <string name="seat_badge_barred">cannot toss in again</string>
     <!-- The coalition's plan, as it stands against a seat rather than against a turn
