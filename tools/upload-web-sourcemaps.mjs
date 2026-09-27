@@ -29,9 +29,9 @@
  *
  * **Absent credentials are a failure.** A deploy nobody can read a stack trace from is worse than
  * a deploy that did not happen: the build goes out, people play it, it crashes, and every report
- * is unreadable — with a green pipeline behind it saying nothing went wrong.
- * `VINTO_ALLOW_UNSYMBOLICATED=1` waives it, and has to be typed. The Android and iOS halves
- * follow the same rule.
+ * is unreadable — with a green pipeline behind it saying nothing went wrong. **There is no
+ * waiver**: a client build whose symbols cannot reach Sentry fails, whatever the reason, and the
+ * Android and iOS halves follow the same rule.
  *
  * ## Upload it under the name that will actually be served
  *
@@ -87,23 +87,14 @@ if (!existsSync(map)) {
   process.exit(1);
 }
 
-const waived = !!process.env.VINTO_ALLOW_UNSYMBOLICATED;
 if (spawnSync('sentry-cli', ['--version'], { stdio: 'ignore' }).status !== 0) {
-  if (waived) {
-    console.warn('warning: VINTO_ALLOW_UNSYMBOLICATED is set and sentry-cli is absent — not uploaded');
-    process.exit(0);
-  }
   console.error('sentry-cli is not installed, so this bundle\'s JavaScript frames would stay minified.');
-  console.error('Install it (npm i -g @sentry/cli), or set VINTO_ALLOW_UNSYMBOLICATED=1 to skip on purpose.');
+  console.error('Install it (npm i -g @sentry/cli).');
   process.exit(1);
 }
 if (!process.env.SENTRY_AUTH_TOKEN && !existsSync(join(homedir(), '.sentryclirc'))) {
-  if (waived) {
-    console.warn('warning: VINTO_ALLOW_UNSYMBOLICATED is set and there are no credentials — not uploaded');
-    process.exit(0);
-  }
   console.error('No SENTRY_AUTH_TOKEN and no ~/.sentryclirc, so the source map cannot reach Sentry.');
-  console.error('Set one of them, or set VINTO_ALLOW_UNSYMBOLICATED=1 to skip symbolication on purpose.');
+  console.error('Set one of them.');
   process.exit(1);
 }
 

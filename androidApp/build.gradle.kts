@@ -427,32 +427,28 @@ sentry {
  * it finds, so this checks for the same two and nothing else — one mechanism for a laptop and a
  * runner, the same rule the iOS phase and the web upload follow.
  *
- * `VINTO_ALLOW_UNSYMBOLICATED=1` is the way out, for a contributor with no Sentry access who
- * wants a release build anyway. It has to be typed, which is the point: the default is to fail,
- * and skipping symbolication becomes something somebody chose rather than something that
- * happened to them.
+ * **There is no way out, by rule:** a client build whose mapping cannot reach Sentry fails,
+ * whatever the reason. `VINTO_ALLOW_UNSYMBOLICATED=1` used to waive this, and all it ever did
+ * was get past the check: the upload ran anyway, and whether the build passed was sentry-cli's
+ * call — on a runner it failed, on a laptop it passed because sentry-cli also finds a
+ * `.sentryclirc` in the parents of a checkout under the home folder. CI's release bundle
+ * uploads with the real token instead of being excused.
  */
 private val sentryAuthToken = providers.environmentVariable("SENTRY_AUTH_TOKEN")
 private val sentryRcPresent = providers.systemProperty("user.home")
     .map { File(it, ".sentryclirc").isFile }
     .orElse(false)
-private val unsymbolicatedWaiver = providers.environmentVariable("VINTO_ALLOW_UNSYMBOLICATED")
 
 tasks.matching { it.name.startsWith("uploadSentryProguardMappings") }.configureEach {
-    // Read here, at configuration time, so the task action closes over two booleans and not over
+    // Read here, at configuration time, so the task action closes over a boolean and not over
     // this script — the configuration cache cannot serialize a reference to a build script, and
     // capturing one turns this guard into a build failure of its own.
     val haveCredentials = sentryAuthToken.orNull?.isNotBlank() == true || sentryRcPresent.get()
-    val waived = unsymbolicatedWaiver.orNull?.isNotBlank() == true
 
     doFirst {
-        check(haveCredentials || waived) {
+        check(haveCredentials) {
             "No SENTRY_AUTH_TOKEN and no ~/.sentryclirc, so the R8 mapping for this release would " +
-                "not reach Sentry and every crash in it would read as `a.b.c`. Set one of them, or " +
-                "set VINTO_ALLOW_UNSYMBOLICATED=1 to build without symbolication on purpose."
-        }
-        if (!haveCredentials) {
-            logger.warn("warning: VINTO_ALLOW_UNSYMBOLICATED is set — this release will not symbolicate")
+                "not reach Sentry and every crash in it would read as `a.b.c`. Set one of them."
         }
     }
 }

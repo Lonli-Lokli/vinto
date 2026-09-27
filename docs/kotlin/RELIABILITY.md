@@ -149,8 +149,11 @@ the web upload runs **after** the deploy renames the script to `composeApp.<hash
 on when credentials were missing, so that somebody without Sentry access could still build. What
 that actually buys is a shipped release whose every crash is unreadable, behind a green pipeline
 saying nothing went wrong — which is worse than the release not existing. So each of them now
-fails instead, and `VINTO_ALLOW_UNSYMBOLICATED=1` is the single waiver across all three; it has
-to be typed, which makes skipping symbols a choice rather than an accident.
+fails instead, and **there is no waiver**: any client build whose symbols cannot reach Sentry
+fails, whatever the reason. `VINTO_ALLOW_UNSYMBOLICATED=1` used to be one, and on Android all it
+ever did was get past the check before the upload ran anyway — so it passed on a laptop, where
+sentry-cli finds a `.sentryclirc` in the parents of a checkout under the home folder, and failed
+every CI release bundle from 26 September. CI's release bundle uploads with the real token now.
 
 Android is worth a note. `autoUploadProguardMapping` sounds like it guarantees the upload and
 does not: measured by running the task directly, an *invalid* token fails the build loudly, but
