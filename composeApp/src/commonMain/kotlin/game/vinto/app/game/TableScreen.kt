@@ -1313,11 +1313,13 @@ private fun TopSeat(
         // drifts into is room the middle of the table needed.
         verticalAlignment = Alignment.Top,
     ) {
-        // `fill = true`: the hand takes the whole width left to it whether or not its cards
-        // need it. With `fill = false` the hand shrank the moment it wrapped — seven cards on
-        // two rows are four cards wide, not six — and since the row is centred, the plate slid
-        // inwards with it. Reported from a phone as the avatars jumping to the centre.
-        Hand(seat, view, table, sizes.theirs, onMove, Modifier.weight(1f))
+        // `fill = false`, so the plate stands beside the cards rather than at the rim. Filled, the
+        // hand took the whole width and centred its cards in it, and on a desktop the plate sat
+        // 400 points from the hand it belongs to. What `fill = true` was guarding against — the
+        // hand narrowing as it wrapped, and the plate sliding inwards with it, reported from a
+        // phone as the avatars jumping to the centre — is held by the hand itself now: it is
+        // never narrower than its dealt five ([Hand]).
+        Hand(seat, view, table, sizes.theirs, onMove, Modifier.weight(1f, fill = false))
         Plate(seat, view, table, sizes, onMove)
     }
 }
@@ -1607,15 +1609,15 @@ private fun NearSeat(
             verticalAlignment = Alignment.Bottom,
         ) {
             Plate(seat, view, table, sizes, onMove)
-            // Filled, for the reason [TopSeat] gives: a hand that shrinks when it wraps drags
-            // the plate beside it out of place.
+            // Beside its plate and never narrower than its dealt five, for the reasons [TopSeat]
+            // gives.
             Hand(
                 seat,
                 view,
                 table,
                 if (mine) sizes.mine else sizes.theirs,
                 onMove,
-                Modifier.weight(1f),
+                Modifier.weight(1f, fill = false),
                 // Your first row is the **lower** one: six along the bottom of the felt and the
                 // three that will not fit above them, which is where a person would put them.
                 firstRowBelow = true,
@@ -1656,6 +1658,10 @@ private fun Hand(
     firstRowBelow: Boolean = false,
 ) {
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+        // Never narrower than the dealt five at their own size, so a hand that wraps onto a
+        // second row of smaller cards does not narrow and pull the plate beside it inwards.
+        val step = maxOf(scale.width, scale.floor)
+        val dealtRow = (step * DEALT_ROW + Tight * (DEALT_ROW - 1)).coerceAtMost(maxWidth)
         // **One row at its own size while it fits; past that, five to a row a step smaller.** A
         // desktop has the width for eight in a row at the size they were dealt at, and two rows
         // of small cards there was a table that had forgotten how big it was. A phone does not,
@@ -1669,8 +1675,10 @@ private fun Hand(
         val oneRow = count <= DEALT_ROW || fits(count, scale, maxWidth)
         val drawn = if (oneRow) scale else scale.crowded()
 
-        HandLine(vertical = false, wrap = !oneRow, linesFromFarSide = firstRowBelow) {
-            Cards(seat, view, table, drawn, onMove, turned = false)
+        Box(modifier = Modifier.widthIn(min = dealtRow), contentAlignment = Alignment.Center) {
+            HandLine(vertical = false, wrap = !oneRow, linesFromFarSide = firstRowBelow) {
+                Cards(seat, view, table, drawn, onMove, turned = false)
+            }
         }
     }
 }
