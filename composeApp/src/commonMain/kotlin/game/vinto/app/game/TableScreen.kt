@@ -190,8 +190,15 @@ private const val MiddleShare = 0.66f
  * groups on that row barely fit in the whole of it — which `TouchTargetTest` caught at once, as
  * a bot's badge shrinking under a thumb. So the floor sits above any phone's felt, where it can
  * only ever be slack, and the share takes over on the screens that actually have room to spread.
+ *
+ * **Above a portrait tablet's felt too**, for the same reason one size up. At 460 the share took
+ * over at 700 points, so a portrait iPad's 808-point felt kept a third of its width as bare cloth
+ * outside the side seats — and a side seat holding eight had to draw its two columns of cards a
+ * third smaller to fit the rest: two columns of small cards on a big screen, which is the one
+ * thing a big screen must not draw (`GrowingHandsTest`). A desktop's felt is wide enough that its
+ * share is above this anyway, so its seats sit exactly where they did.
  */
-private val MiddleLeast = 460.dp
+private val MiddleLeast = 840.dp
 
 private val Gap = 6.dp
 private val Tight = 4.dp

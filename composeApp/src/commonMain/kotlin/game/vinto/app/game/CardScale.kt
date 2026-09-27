@@ -141,14 +141,14 @@ data class CardState(
  *
  * Four hands, two piles and four portraits have to fit whatever is left once the control
  * panel has taken what it needs — and what it needs varies a lot, from one button to fourteen
- * rank chips. Rather than let the bottom of the table slide off the screen, the whole table
- * steps down a size. Steps, not a continuum: a smoothly scaling card table ends up with
- * cards that are a different size every turn, which is worse to read than a small one.
+ * rank chips. Rather than let the bottom of the table slide off the screen, the size is decided
+ * from the screen, once, and never from what the panel happens to hold this turn: a card table
+ * whose cards changed size every turn would be worse to read than a small one.
  *
- * Three steps, one per kind of screen: **Tight** for a short phone, **Roomy** for a tall one,
- * **Grand** for the felt heights only a tablet or a desktop window has — where phone-sized
- * cards read as a miniature floating in cloth. Which step applies is decided by the felt's
- * height alone, so a portrait tablet and a landscape one land on the same cards.
+ * **Tight** for a phone; above a phone's felt, **Roomy** grown with the felt up to a desktop's
+ * size ([forHeight]), because phone-sized cards on a tablet read as a miniature floating in
+ * cloth. Decided by the felt's height alone, so a portrait tablet and a landscape one of the
+ * same felt land on the same cards.
  *
  * The tap target stays 44dp regardless (see [CardFace]); what changes is the picture, not the
  * area a thumb has to find.
@@ -187,46 +187,38 @@ data class TableSizes(
             avatarMine = 34.dp,
         )
 
-        /** Roomy scaled up by roughly a third, keeping every card's aspect. */
-        private val Grand = TableSizes(
-            mine = CardScale(76.dp, 106.dp),
-            theirs = CardScale(56.dp, 78.dp),
-            side = CardScale(50.dp, 70.dp),
-            avatar = 50.dp,
-            avatarMine = 56.dp,
-        )
-
-        /**
-         * Grand again by a third, for the felt a desktop window actually has.
-         *
-         * The steps stopped at a tablet's height, so every screen above that drew a tablet's
-         * cards on a much larger cloth — and once the felt was allowed to fill the window, that
-         * is exactly the "miniature floating in cloth" [GRAND_FLOOR] exists to prevent, one
-         * size further up. A card table is read at arm's length whatever it is standing on.
-         */
-        private val Vast = TableSizes(
-            mine = CardScale(100.dp, 139.dp),
-            theirs = CardScale(74.dp, 103.dp),
-            side = CardScale(66.dp, 92.dp),
-            avatar = 66.dp,
-            avatarMine = 74.dp,
-        )
-
         /** Below this the roomy table cannot fit four hands and two piles without clipping. */
         private val ROOMY_FLOOR = 560.dp
 
-        /** Above this the roomy table starts to read as a miniature; the cards step up. */
-        private val GRAND_FLOOR = 720.dp
+        /**
+         * The most a table grows past [Roomy]: the cards a desktop window's felt is dealt, and no
+         * further — a card table is read at arm's length whatever it is standing on.
+         */
+        private const val MOST = 1.76f
 
-        /** And above this the grand one does, which is a desktop window and nothing smaller. */
-        private val VAST_FLOOR = 900.dp
+        /**
+         * A phone's table below [ROOMY_FLOOR]; above it, the roomy table grown with the felt.
+         *
+         * **Continuous above a phone, not in steps.** There were three steps above this one, at
+         * 720 and 900 points, and between them a felt grew and its cards did not: a Galaxy Tab on
+         * its side, at 708 points, was dealt the cards of a 560-point felt — a phone's table on a
+         * tablet's cloth, reported from a layout review — and a window one point past 720 was dealt
+         * cards a third bigger. Grown in proportion, a table's cards are about a tenth of its felt,
+         * which is what a phone's are ([CardsGrowWithTheFeltTest]). It is still decided once, from
+         * the screen ([forScreen]), so it never changes from one turn to the next.
+         */
+        fun forHeight(height: Dp): TableSizes =
+            if (height < ROOMY_FLOOR) Tight else Roomy.grownBy(minOf(height / ROOMY_FLOOR, MOST))
 
-        fun forHeight(height: Dp): TableSizes = when {
-            height >= VAST_FLOOR -> Vast
-            height >= GRAND_FLOOR -> Grand
-            height >= ROOMY_FLOOR -> Roomy
-            else -> Tight
-        }
+        private fun TableSizes.grownBy(k: Float) = TableSizes(
+            mine = mine.grownBy(k),
+            theirs = theirs.grownBy(k),
+            side = side.grownBy(k),
+            avatar = avatar * k,
+            avatarMine = avatarMine * k,
+        )
+
+        private fun CardScale.grownBy(k: Float) = copy(width = width * k, height = height * k)
 
         /**
          * The size to draw at, decided from the **screen** rather than from the felt.
