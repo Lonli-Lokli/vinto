@@ -1429,13 +1429,13 @@ private fun SideSeat(
         contentAlignment = if (onTheLeft) Alignment.CenterStart else Alignment.CenterEnd,
     ) {
         val edge = (CallerRing + CallerPad) * 2
-        val drawn = sideScale(
+        val hand = sideHand(
             count = seat.cards.size,
             theirs = sizes.theirs,
             across = maxWidth - sidePlateWidth(sizes.avatar) - Tight - edge,
             along = maxHeight - edge,
         )
-        SideColumn(seat, view, table, sizes, onTheLeft, onMove, drawn)
+        SideColumn(seat, view, table, sizes, onTheLeft, onMove, hand)
     }
 }
 
@@ -1456,6 +1456,27 @@ private fun SideSeat(
  *
  * Turned, a card's height lies across the seat and its width along the column.
  */
+
+/** How a side seat lays its hand: the cards' size, and whether they take a second column. */
+internal data class SideHand(val scale: CardScale, val twoColumns: Boolean)
+
+/**
+ * A side seat's hand, largest first: one column at its own size if the felt is tall enough, then
+ * two columns at its own size — the dealt five beside the plate — and only then smaller cards
+ * ([sideScale]). The same order the seats above and below use: a big screen never draws two
+ * columns of small cards where it had room for them at their own size.
+ */
+internal fun sideHand(count: Int, theirs: CardScale, across: Dp, along: Dp): SideHand {
+    if (count <= DEALT_ROW) return SideHand(sideScale(count, theirs, across, along), twoColumns = false)
+    val step = maxOf(theirs.width, theirs.floor)
+    val oneColumn = step * count + Tight * (count - 1) <= along && theirs.height <= across
+    if (oneColumn) return SideHand(theirs, twoColumns = false)
+    val lines = (count + DEALT_ROW - 1) / DEALT_ROW
+    val bothAtSize = step * DEALT_ROW + Tight * (DEALT_ROW - 1) <= along &&
+        theirs.height * lines + Tight * (lines - 1) <= across - Slack
+    return SideHand(if (bothAtSize) theirs else sideScale(count, theirs, across, along), twoColumns = true)
+}
+
 internal fun sideScale(count: Int, theirs: CardScale, across: Dp, along: Dp): CardScale {
     val start = if (count > DEALT_ROW) theirs.crowded() else theirs
     val lines = ((count + DEALT_ROW - 1) / DEALT_ROW).coerceAtLeast(1)
@@ -1510,8 +1531,8 @@ private fun SideColumn(
     sizes: TableSizes,
     onTheLeft: Boolean,
     onMove: (Move) -> Unit,
-    /** The seat's cards as drawn, sized to its share by [sideScale]. */
-    drawn: CardScale,
+    /** The seat's cards as drawn, sized to its share by [sideHand]. */
+    hand: SideHand,
 ) {
     Row(
         modifier = Modifier.ringed(seat, view),
@@ -1539,18 +1560,16 @@ private fun SideColumn(
         // share has room; only a grown hand in a narrow share is drawn smaller, and then because
         // its second column needs the width, which a size of its own never bought.
         //
-        // Crowded by the count first, like every seat, and then fitted to the share — see
-        // [sideScale]. Five is the deal; more than five is a hand that has outgrown the edge it
-        // lies along, and it both shrinks and wraps into a second column.
-        val crowded = seat.cards.size > DEALT_ROW
+        // One column while it fits at its own size, then a second — see [sideHand]. Five is the
+        // deal; more than five is a hand that may have outgrown the edge it lies along.
         HandLine(
             vertical = true,
-            wrap = crowded,
+            wrap = hand.twoColumns,
             countFromEnd = !onTheLeft,
             linesFromFarSide = !onTheLeft,
             modifier = Modifier.weight(1f, fill = false),
         ) {
-            Cards(seat, view, table, drawn, onMove, turned = true)
+            Cards(seat, view, table, hand.scale, onMove, turned = true)
         }
 
         if (!onTheLeft) Plate(seat, view, table, sizes, onMove, NameRun.DOWN)
@@ -1636,19 +1655,21 @@ private fun Hand(
     /** Whether this hand's first row is the lower one — see [HandLine.linesFromFarSide]. */
     firstRowBelow: Boolean = false,
 ) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        // Crowded by the **count**, the same question the side seats ask, so three opponents
-        // holding the same number of cards are drawn at the same size whichever edge they sit
-        // at. Measuring the room instead made that depend on how much width a seat happened to
-        // have: at six cards the seat opposite kept its full size and the two at the sides did
-        // not, which is what was reported.
+    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+        // **One row at its own size while it fits; past that, five to a row a step smaller.** A
+        // desktop has the width for eight in a row at the size they were dealt at, and two rows
+        // of small cards there was a table that had forgotten how big it was. A phone does not,
+        // so there a grown hand keeps its dealt five in the row nearest its rim and steps down a
+        // size ([CardScale.crowded]) so the second row costs the felt's middle as little as it can.
         //
         // Your own hand is still a third larger than anybody else's, at every count — that is
         // the one hierarchy the table has, and [CardScale.crowded] steps rather than collapsing
         // so a crowded table keeps saying it.
-        val drawn = if (seat.cards.size > DEALT_ROW) scale.crowded() else scale
+        val count = seat.cards.size
+        val oneRow = count <= DEALT_ROW || fits(count, scale, maxWidth)
+        val drawn = if (oneRow) scale else scale.crowded()
 
-        HandLine(vertical = false, wrap = true, linesFromFarSide = firstRowBelow) {
+        HandLine(vertical = false, wrap = !oneRow, linesFromFarSide = firstRowBelow) {
             Cards(seat, view, table, drawn, onMove, turned = false)
         }
     }

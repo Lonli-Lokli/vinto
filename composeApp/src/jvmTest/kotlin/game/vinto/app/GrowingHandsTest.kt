@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeUiTest
@@ -50,38 +51,38 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalTestApi::class)
 class GrowingHandsTest {
 
+    /**
+     * A hand that fits one row at its own size stays one row; past that the dealt five keep the
+     * row nearest the seat's rim and the rest start the next. Never six and two.
+     */
     @Test
     fun theDealtFiveKeepTheFirstRowAndTheRestStartTheNext() = eachTable { phone, held, hands ->
         hands.forEach { (who, cards) ->
-            val turned = cards.first().turned
-            val line = { card: Card -> if (turned) card.box.center.x else card.box.center.y }
-            val dealt = cards.filter { it.number <= DEALT }
-            val extra = cards.filter { it.number > DEALT }
-            assertEquals(
-                1,
-                dealt.map { line(it).toInt() }.distinct().size,
-                "on a $phone holding $held, $who's dealt five are not one row",
-            )
-            assertEquals(
-                1,
-                extra.map { line(it).toInt() }.distinct().size,
-                "on a $phone holding $held, $who's extra cards are not one row",
-            )
-            // The dealt row is the one nearest the seat's own rim, so the extras sit further in.
-            val inward = line(extra.first()) - line(dealt.first())
-            val rimward = rimSide(cards, phone)
-            assertTrue(
-                inward * rimward < 0,
-                "on a $phone holding $held, $who's extra cards went on the rim side of the dealt five",
-            )
-            // And the dealt five are in their dealt order along it, counted from the seat's plate.
-            val along = { card: Card -> if (turned) card.box.center.y else card.box.center.x }
-            val order = dealt.sortedBy { it.number }.map(along)
-            assertTrue(
-                order == order.sorted() || order == order.sortedDescending(),
-                "on a $phone $who's dealt five are out of order",
-            )
+            val where = "on a $phone holding $held, $who's"
+            if (cards.map { it.lineKey() }.distinct().size == 1) {
+                assertInOrder(cards, "$where one row is out of order")
+            } else {
+                assertDealtFiveFirst(cards, rimSide(cards, phone), where)
+            }
         }
+    }
+
+    /** The dealt five in the row nearest the rim, the rest in the next, the five in dealt order. */
+    private fun assertDealtFiveFirst(cards: List<Card>, rimward: Int, where: String) {
+        val dealt = cards.filter { it.number <= DEALT }
+        val extra = cards.filter { it.number > DEALT }
+        assertEquals(1, dealt.map { it.lineKey() }.distinct().size, "$where dealt five are not one row")
+        assertEquals(1, extra.map { it.lineKey() }.distinct().size, "$where extra cards are not one row")
+        // The dealt row is the one nearest the seat's own rim, so the extras sit further in.
+        val inward = extra.first().lineKey() - dealt.first().lineKey()
+        assertTrue(inward * rimward < 0, "$where extra cards went on the rim side of the dealt five")
+        assertInOrder(dealt, "$where dealt five are out of order")
+    }
+
+    /** In their dealt order along the row, counted from the seat's plate. */
+    private fun assertInOrder(cards: List<Card>, said: String) {
+        val order = cards.sortedBy { it.number }.map { it.along() }
+        assertTrue(order == order.sorted() || order == order.sortedDescending(), said)
     }
 
     @Test
@@ -128,6 +129,54 @@ class GrowingHandsTest {
                 }
             }
         }
+    }
+
+    /**
+     * A big screen never draws two rows of small cards.
+     *
+     * A desktop has the width for a grown hand in one row at the size it was dealt at, so that is
+     * how the seats above and below draw it — and wherever a hand does need a second row, a side
+     * seat on a laptop's shorter felt, it keeps its own size in both. Shrinking is for phones,
+     * where the room runs out.
+     */
+    @Test
+    fun aBigScreenNeverDrawsTwoRowsOfSmallCards() {
+        BIG.forEach { (screen, size) ->
+            val dealt = picturesAt(size, DEALT)
+            HELD.forEach { held ->
+                val hands = handsAt(size, held)
+                hands.forEach { (who, cards) ->
+                    val rows = cards.map { it.lineKey() }.distinct().size
+                    // The seats above and below have a desktop's width; the sides may take two
+                    // columns, at full size, where the felt is not tall enough for one.
+                    if (screen in WIDE_OPEN && who !in SIDES) {
+                        assertEquals(1, rows, "on a $screen $who's $held cards are on $rows rows")
+                    }
+                    val was = dealt.getValue(who)
+                    cards.forEach { card ->
+                        assertTrue(
+                            card.picture.width >= was.width - 1 && card.picture.height >= was.height - 1,
+                            "on a $screen holding $held, $who's card ${card.number} is drawn at " +
+                                "${card.picture.size}, smaller than the $was it was dealt at",
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun picturesAt(size: Pair<Dp, Dp>, held: Int): Map<String, Size> =
+        handsAt(size, held).mapValues { (_, cards) -> cards.first().picture.size }
+
+    private fun handsAt(size: Pair<Dp, Dp>, held: Int): Map<String, List<Card>> {
+        var hands: Map<String, List<Card>> = emptyMap()
+        runDesktopComposeUiTest(BIG_W, BIG_H) {
+            show(holding(named(teachingSession().view.value), held), size.first, size.second)
+            hands = cards().groupBy { it.who }.mapValues { (who, list) ->
+                list.map { Card(it.number, it.box, turned = who in SIDES, it.drawn) }
+            }
+        }
+        return hands
     }
 
     // ------------------------------------------------------------------ the fixtures
@@ -264,6 +313,22 @@ class GrowingHandsTest {
          * and below take 81 each, and five side targets need 146 — so it is held to the dealt
          * table (`TheDealLiesFlatTest`) and not to this.
          */
+
+        /** Tablets and desktops, each window as the app gets it. */
+        val BIG = mapOf(
+            "Desktop window" to (1920.dp to 1040.dp),
+            "Laptop browser" to (1440.dp to 800.dp),
+            "iPad Pro 13, landscape" to (1376.dp to 988.dp),
+            "Galaxy Tab S9, landscape" to (1280.dp to 752.dp),
+            "iPad Air 11, portrait" to (820.dp to 1136.dp),
+        )
+
+        /** Where every grown hand has the width for one row at its own size. */
+        val WIDE_OPEN = setOf("Desktop window", "Laptop browser")
+
+        const val BIG_W = 2000
+        const val BIG_H = 1200
+
         val PHONES = mapOf(
             "Pixel 7" to (412.dp to 805.dp),
             "iPhone 17 Pro" to (402.dp to 778.dp),
