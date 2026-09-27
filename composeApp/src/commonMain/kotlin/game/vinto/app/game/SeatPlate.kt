@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -44,6 +45,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -186,7 +188,11 @@ private fun Attention.spoken(): StringResource = when (this) {
 @Composable
 private fun Portrait(name: String, size: Dp, thinking: Boolean) {
     val chosen = chosenFace(name)
-    Box {
+    // Its own size whatever the plate has left, because the face is who is sitting there and is
+    // the one part of a plate that never gives way — and because a face squeezed to no height
+    // took the whole process down with a native trap (`SidewaysPhoneTest`). Tagged so a test can
+    // find it and measure it: a face has no words of its own to be found by.
+    Box(modifier = Modifier.requiredSize(size).testTag(faceTag(name))) {
         // The face its owner picked, when there is one. A bot has no profile and keeps its
         // element's emblem, which is the better answer than a mark it never chose.
         //
@@ -228,6 +234,9 @@ private fun Portrait(name: String, size: Dp, thinking: Boolean) {
  */
 @Composable
 internal fun FaceOf(name: String, size: Dp) = Portrait(name = name, size = size, thinking = false)
+
+/** How a test finds [name]'s face on the felt. */
+internal fun faceTag(name: String): String = "face:$name"
 
 /**
  * The breath on the seat whose turn it is.
@@ -891,15 +900,18 @@ fun SeatPlate(
                         BadgeRow(badges, marks, size)
                     }
 
+                    // The name is weighted so it is measured last and takes only what the face and
+                    // the marks leave: a turned name is as tall as it is long, and measured in
+                    // turn it took a sideways phone's whole column and left the face none.
                     NameRun.DOWN -> {
                         Portrait(name = name, size = size, thinking = thinking)
-                        EdgeName(name, active, clockwise = true)
+                        EdgeName(name, active, clockwise = true, Modifier.weight(1f, fill = false))
                         BadgeColumn(badges, marks, size)
                     }
 
                     NameRun.UP -> {
                         BadgeColumn(badges, marks, size)
-                        EdgeName(name, active, clockwise = false)
+                        EdgeName(name, active, clockwise = false, Modifier.weight(1f, fill = false))
                         Portrait(name = name, size = size, thinking = thinking)
                     }
                 }
@@ -957,7 +969,7 @@ internal fun edgeWidth(portrait: Dp): Dp = maxOf(portrait + PlatePad * 2, PlateT
  * column it stands beside.
  */
 @Composable
-private fun EdgeName(name: String, active: Boolean, clockwise: Boolean) {
+private fun EdgeName(name: String, active: Boolean, clockwise: Boolean, modifier: Modifier = Modifier) {
     val style = MaterialTheme.typography.titleSmall
     Text(
         text = name,
@@ -967,7 +979,7 @@ private fun EdgeName(name: String, active: Boolean, clockwise: Boolean) {
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         autoSize = WholeWords(least = NameLeast, most = style.fontSize),
-        modifier = Modifier.quarterTurn(clockwise),
+        modifier = modifier.quarterTurn(clockwise),
     )
 }
 
