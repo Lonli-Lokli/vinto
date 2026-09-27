@@ -935,6 +935,15 @@ you were away.
 
 Nothing above the felt is spent on the plan: an earlier band there took a strip of the four
 hands' height on a phone, and a rail that listed all three turns at once could not be read
-without scrolling. Held by `PlanAsTalkTest` and `PlanAsTalkScreenTest`, `TurnBuilderTest`,
+without scrolling.
+
+**The stops scroll, and say so.** ▶ and ▶▶ are thumbs and never give up width, and the lit stop
+spells a minted name, so on a phone the stops run on past what the buttons leave them. A layout
+review found the last one cut in half against ▶, which reads as broken, and the lit stop on the
+last page half out of sight. Now the strip fades into the rail at whichever edge it runs on
+past, and scrolls the lit stop clear of that fade whenever the page changes — still, under
+reduced motion (`PlanStopsTest`).
+
+Held by `PlanAsTalkTest` and `PlanAsTalkScreenTest`, `TurnBuilderTest`, `PlanStopsTest`,
 `TransportTest`, `PlanBuilderTest`, `PlanOnTheFeltTest`, `CoalitionScreenTest`,
 `ContrastTest` and the `plan-light`/`plan-dark` goldens.

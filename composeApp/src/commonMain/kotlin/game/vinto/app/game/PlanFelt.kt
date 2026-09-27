@@ -2,6 +2,7 @@ package game.vinto.app.game
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -10,6 +11,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,7 +32,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +45,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -46,6 +53,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -60,6 +71,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import game.vinto.app.LocalReducedMotion
 import game.vinto.app.art.Res
 import game.vinto.app.art.board_arrival
 import game.vinto.app.art.board_broken
@@ -117,6 +129,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
 
 /**
  * The coalition's plan, on the table (design D1), as the rail draws it: **five rows that never
@@ -151,6 +164,9 @@ private val LabelSize = 10.sp
 
 /** Every row under the page is this tall, and so is every row inside it: one height, aligned. */
 private val RowHigh = 44.dp
+
+/** How far the stops fade into the rail at an edge they run on past. */
+private val RunsOnWide = 24.dp
 
 /** Slow enough to read a sentence off, which is the whole point of moving it at all. */
 private val HintCreep = 18.dp
@@ -527,16 +543,7 @@ internal fun PlanStops(transport: Transport, onMove: (Move) -> Unit) {
         // of width takes it out of its last child, so ▶ measured 24dp under that name with the
         // stops sharing the row. The stops take what the buttons leave and scroll inside it; the
         // buttons are thumbs and never give any of it back (`TouchTargetTest`).
-        Row(
-            modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(Half),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            transport.stops.forEachIndexed { index, stop ->
-                if (index > 0) ThenArrow()
-                StopChip(stop, transport, onMove)
-            }
-        }
+        StopStrip(transport, onMove, modifier = Modifier.weight(1f))
         val here = transport.stops.firstOrNull { it.here }
         val replay = stringResource(Res.string.label_plan_replay)
         TransportButton(replay, here?.replay, "plan:replay", onMove) { ink -> drawPlay(ink) }
@@ -552,12 +559,92 @@ internal fun PlanStops(transport: Transport, onMove: (Move) -> Unit) {
 }
 
 /**
+ * The stops, in a strip that scrolls inside what the two buttons leave it.
+ *
+ * **A strip that scrolls has to say so, and has to show the stop being read.** A layout review
+ * found neither: on a phone the last stop was cut in half against ▶, which reads as broken rather
+ * than as more, and landing on the last page left the lit stop half out of sight
+ * (`PlanStopsTest`).
+ */
+@Composable
+private fun StopStrip(transport: Transport, onMove: (Move) -> Unit, modifier: Modifier) {
+    val scroll = rememberScrollState()
+    var lit by remember { mutableStateOf<ClosedFloatingPointRange<Float>?>(null) }
+    Box(modifier = modifier, contentAlignment = Alignment.CenterStart) {
+        Row(
+            modifier = Modifier.horizontalScroll(scroll),
+            horizontalArrangement = Arrangement.spacedBy(Half),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            transport.stops.forEachIndexed { index, stop ->
+                if (index > 0) ThenArrow()
+                val placed = if (stop.here) {
+                    Modifier.onPlaced { at ->
+                        val left = at.positionInParent().x
+                        lit = left..left + at.size.width
+                    }
+                } else {
+                    Modifier
+                }
+                StopChip(stop, transport, onMove, placed)
+            }
+        }
+        if (scroll.canScrollBackward) RunsOn(Alignment.CenterStart)
+        if (scroll.canScrollForward) RunsOn(Alignment.CenterEnd)
+    }
+    KeepInView(scroll, lit)
+}
+
+/**
+ * Scrolls the strip until the lit stop is clear of both fades — not merely inside the strip,
+ * since a fade drawn over the stop being read would dim the one stop that is lit.
+ */
+@Composable
+private fun KeepInView(scroll: ScrollState, lit: ClosedFloatingPointRange<Float>?) {
+    val margin = with(LocalDensity.current) { RunsOnWide.toPx() }
+    val still = LocalReducedMotion.current
+    LaunchedEffect(lit, scroll.viewportSize) {
+        val span = lit ?: return@LaunchedEffect
+        val first = scroll.value
+        val last = first + scroll.viewportSize
+        val target = when {
+            span.start - margin < first -> span.start - margin
+            span.endInclusive + margin > last -> span.endInclusive + margin - scroll.viewportSize
+            else -> return@LaunchedEffect
+        }.roundToInt().coerceIn(0, scroll.maxValue)
+        if (still) scroll.scrollTo(target) else scroll.animateScrollTo(target)
+    }
+}
+
+/**
+ * The strip's edge where it runs on: the stops fade into the rail, so a stop cut short reads as
+ * one of more rather than as one drawn wrong. Drawn only — a finger on it reaches the stop under it.
+ */
+@Composable
+private fun BoxScope.RunsOn(edge: Alignment) {
+    val fill = Rail.fill
+    val clear = fill.copy(alpha = 0f)
+    val ramp = if (edge == Alignment.CenterStart) listOf(fill, clear) else listOf(clear, fill)
+    Box(
+        modifier = Modifier
+            .align(edge)
+            .width(RunsOnWide)
+            .fillMaxHeight()
+            .testTag(PLAN_STOPS_MORE)
+            .background(Brush.horizontalGradient(ramp)),
+    )
+}
+
+/** How a test finds the fade that says the strip of stops runs on past its edge. */
+internal const val PLAN_STOPS_MORE = "plan:stops:more"
+
+/**
  * One stop: the turn's number and the seat's face, and the seat's name on the one lit — or
  * "lands" for the last page. A tab, because that is what a row of pages with one of them
  * current is, and the current one says so to a screen reader.
  */
 @Composable
-private fun StopChip(stop: Stop, transport: Transport, onMove: (Move) -> Unit) {
+private fun StopChip(stop: Stop, transport: Transport, onMove: (Move) -> Unit, modifier: Modifier) {
     val stage = LocalStage.current
     val words = stopWords(stop, transport)
     val go = stop.go
@@ -569,7 +656,7 @@ private fun StopChip(stop: Stop, transport: Transport, onMove: (Move) -> Unit) {
         else -> Rail.ink
     }
     Row(
-        modifier = Modifier
+        modifier = modifier
             .sizeIn(minWidth = TapTarget, minHeight = TapTarget)
             .markedAs(stage, "plan:stop:${stop.at}")
             .then(if (go == null) Modifier else Modifier.clickable { onMove(go) })
