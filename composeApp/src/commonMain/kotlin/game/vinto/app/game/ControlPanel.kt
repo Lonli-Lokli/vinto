@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -114,6 +116,13 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 private val PanelPad = 12.dp
+
+/**
+ * The widest the rail's controls are laid out, however wide the rail: about a phone and a half.
+ * Under a portrait tablet's felt the rail is the screen's whole width, and spreading a phone's
+ * prompt, card and two buttons across 820 points read as a phone app blown up.
+ */
+private val RailMost = 600.dp
 
 /** One row of buttons: the room the foot keeps whether or not there is anything to press. */
 private val FootRow = 50.dp
@@ -301,7 +310,7 @@ fun ControlPanel(
                 // Padded at the sides only. The rail is 240 dp and every point of it is spoken
                 // for — the turns, the transport and the buttons all have to be *there*, so the
                 // margin above and below is the first thing to give up.
-                modifier = Modifier.fillMaxSize().padding(horizontal = PanelPad),
+                modifier = Modifier.fillMaxSize().padding(horizontal = PanelPad).widthIn(max = RailMost),
             )
         } else {
             RailBody(state, table, inPlay, recent, crowded, promptLine, twoLines, side, onMove)
@@ -323,7 +332,11 @@ private fun RailBody(
     side: Boolean,
     onMove: (Move) -> Unit,
 ) {
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(PanelPad)) {
+    // Never wider than [RailMost], centred: under a portrait tablet's felt the whole width was the
+    // phone's controls stretched — two buttons each wider than a phone.
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth().wrapContentWidth().widthIn(max = RailMost).padding(PanelPad),
+    ) {
         val rail = maxHeight
         // What the group actually gets, which on a tall rail is [TallRail] rather than the
         // window: the foot's cap is a share of the room the choices really have.
@@ -698,7 +711,8 @@ private fun Choices(table: Table, side: Boolean, onMove: (Move) -> Unit) {
     // felt the scarcity is the other way round, and stacking is the answer rather than the
     // problem. So the arrangement follows the rail's own shape, and the measurement below only
     // decides whether the side rail needs it.
-    val room = roomForLabels(choices.map { labelled(it.label) })
+    // Beside the felt, whole labels: there is height to stack into, so a label is never broken.
+    val room = roomForLabels(choices.map { labelled(it.label) }, whole = side)
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val each = (maxWidth - Half * (choices.size - 1)) / choices.size
         if (!side || each >= room) {

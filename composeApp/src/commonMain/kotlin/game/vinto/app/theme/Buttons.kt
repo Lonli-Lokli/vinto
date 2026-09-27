@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -227,15 +228,20 @@ fun GameButton(
  * Callers compare this against the width each button would actually get. It is deliberately the
  * *button's* own arithmetic — its type, its tracking, its padding — so it cannot drift from the
  * thing it is measuring.
+ *
+ * [whole] asks about the whole label instead, for a rail with height to spare: beside a tablet's
+ * felt, "SWAP CARDS" on two lines with most of the rail empty below it is a button squeezed for
+ * no reason, and the answer there is to stack the buttons rather than break the words.
  */
 @Composable
-fun roomForLabels(labels: List<String>): Dp {
+fun roomForLabels(labels: List<String>, whole: Boolean = false): Dp {
     val measurer = rememberTextMeasurer()
-    val style = remember {
-        TextStyle(fontSize = LabelSize, fontWeight = FontWeight.Bold, letterSpacing = Tracking)
-    }
+    val style = LocalTextStyle.current.merge(
+        TextStyle(fontSize = LabelSize, fontWeight = FontWeight.Bold, letterSpacing = Tracking),
+    )
     val widest = labels
-        .flatMap { it.uppercase().split(' ', '\n', '\t') }
+        .map { it.uppercase() }
+        .flatMap { label -> if (whole) listOf(label) else label.split(' ', '\n', '\t') }
         .filter { it.isNotBlank() }
         .maxOfOrNull { measurer.measure(AnnotatedString(it), style).size.width }
         ?: 0
