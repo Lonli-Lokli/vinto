@@ -33,4 +33,4 @@ val LocalAppBuild = staticCompositionLocalOf { BUILD_NUMBER }
  * The web and desktop builds' version: they have no store, ship from master, and so carry the
  * newest version either store has. `VersionTest` holds it to that.
  */
-internal const val WEB_VERSION = "1.1"
+internal const val WEB_VERSION = "1.2"

@@ -44,8 +44,8 @@
  * step, not before it.**
  *
  * A happy consequence: because the deployed name carries a content hash, two builds of the same
- * release cannot collide even though the release string (`vinto@1.0`, a constant in
- * `Version.kt`) never changes. Uploading from a local dist, where the file is still plain
+ * release cannot collide, though they share a release string (`vinto@` and `WEB_VERSION` in
+ * `Version.kt`, which moves only at a release). Uploading from a local dist, where the file is still plain
  * `composeApp.js`, does overwrite the previous local upload — which is what you want there.
  */
 
@@ -58,13 +58,21 @@ const DIST = process.argv[2] ?? 'composeApp/build/dist/wasmJs/productionExecutab
 const ORG = 'echo-xl';
 const PROJECT = 'vinto';
 
-/** Must equal `Version.kt`'s `VERSION`, which is what `Crashes.install` sends as the release. */
+/**
+ * Must equal what `Crashes` sends as the release from a browser: `vinto@${appVersion()}`, and on
+ * the web `appVersion()` is `WEB_VERSION`. It was one `VERSION` for every build until each store
+ * got its own number; this went on reading the old name, and every deploy stopped here.
+ */
 function release() {
   const kt = readFileSync('composeApp/src/commonMain/kotlin/game/vinto/app/Version.kt', 'utf8');
-  const m = kt.match(/const\s+val\s+VERSION\s*=\s*"([^"]+)"/);
-  if (!m) throw new Error('Version.kt no longer declares VERSION — the release name is a guess without it');
+  const m = kt.match(/const\s+val\s+WEB_VERSION\s*=\s*"([^"]+)"/);
+  if (!m) throw new Error('Version.kt no longer declares WEB_VERSION — the release name is a guess without it');
   return `vinto@${m[1]}`;
 }
+
+// First, before the bundle is looked at or stamped: a release name that cannot be read is a
+// failure of this script and not of the build, and it should not leave the bundle half-injected.
+const RELEASE = release();
 
 // `composeApp.js` locally, `composeApp.<hash>.js` once the deploy has content-addressed it.
 const scripts = readdirSync(DIST).filter((f) => /^composeApp\..*js$/.test(f) && !f.endsWith('.map'));
@@ -118,7 +126,7 @@ const args = [
   'sourcemaps', 'upload',
   '--org', ORG,
   '--project', PROJECT,
-  '--release', release(),
+  '--release', RELEASE,
   '--url-prefix', '~/',
   bundle, map,
 ];
