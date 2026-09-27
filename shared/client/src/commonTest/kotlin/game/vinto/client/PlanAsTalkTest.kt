@@ -540,6 +540,22 @@ class PlanAsTalkTest {
         )
     }
 
+    /**
+     * A seat barred for the round is never offered a throw.
+     *
+     * In the final round a wrong guess bars the seat for the rest of the round, and the plan is
+     * about that round. The throw picker offered every coalition card whatever the bar said, so
+     * the plan could have a barred seat throw — a sentence the rules forbid, which the plan must
+     * never be able to say. Found by a layout review that staged a barred seat with a planned throw.
+     */
+    @Test
+    fun aSeatBarredForTheRoundIsNotOfferedAThrow() {
+        val plan = CoalitionPlan(lanes = listOf(Lane(nina, Step.PutDown(CardAt(nina, 0)))))
+        val barred = view().copy(barredFromTossIn = listOf(nina))
+        val throwing = tableFor(barred, Question.Throwing(nina, ninasPage, index = 0), plan = plan)
+        assertEquals(setOf(CardRef(me, 1)), throwing.taps.keys, "a barred seat's card was on offer to throw")
+    }
+
     @Test
     fun aVouchedThrowLightsItsCardInGoldAndReadsAsItsRank() {
         // Don's turn lands a six if he puts his down; Nina's five is no match, and my Jack is

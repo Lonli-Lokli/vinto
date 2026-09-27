@@ -217,7 +217,10 @@ private fun throwComposer(start: Start, seat: String, lane: Lane?, index: Int): 
             standing + tossIn
         }
 
-    val offered = coalitionCards(there).filter { it != gone }.mapNotNull { ref ->
+    // A seat barred for the round cannot throw, so none of its cards is offered: the plan may
+    // only say what the rules allow.
+    val throwable = coalitionCards(there).filter { it != gone && it.playerId !in there.barredFromTossIn }
+    val offered = throwable.mapNotNull { ref ->
         val known = knownRankOf(there, CardAt(ref.playerId, ref.position))
         when {
             known == null -> ref to null
