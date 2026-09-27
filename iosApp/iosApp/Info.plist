@@ -47,19 +47,17 @@
         <string>arm64</string>
     </array>
 
-    <!-- FREE TO ROTATE, on both device families, and that matches Android rather than merely
-         resembling it: `AndroidManifest.xml` dropped its portrait lock for the same reason, and
-         cites the same code. The table has a real landscape arrangement — the control rail
-         stands beside the felt instead of under it (`TableLayout` in `CardScale.kt`) — so a
-         turned device gets a layout that was designed, not a stretched one.
+    <!-- AN IPHONE IS UPRIGHT; AN IPAD TURNS EVERY WAY. The same rule Android applies from the
+         screen's short side (`phoneHeldUpright` in `App.kt`, held by `PhonesStayUprightTest`).
+         A phone on its side has a felt 276 points tall once the header and the room's clock are
+         taken, and no arrangement of four hands, two piles and four plates fits there; a tablet's
+         landscape is a real table (`TableLayout` in `CardScale.kt`), so it keeps it.
 
          Upside-down is iPad-only. A phone held upside down puts the earpiece at the bottom and
          is almost always an accident; a tablet has no wrong way up. -->
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
     <key>UISupportedInterfaceOrientations~ipad</key>
     <array>

@@ -32,10 +32,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Vinto">
         <!--
-            Free to rotate. The table has a landscape arrangement of its own — the control
-            rail stands beside the felt instead of under it (`TableLayout` in `CardScale.kt`)
-            — so the portrait lock that used to sit here is gone. `configChanges` keeps the
-            activity alive across the rotation: the layout re-decides itself inside
+            No orientation here, because it depends on the screen: a phone is held upright and a
+            tablet or an opened fold turns every way, and a manifest cannot tell them apart.
+            `MainActivity` asks from the screen's smallest width (`phoneHeldUpright`), and
+            asks again when a fold opens or closes. `configChanges` keeps the activity alive
+            across a rotation or a fold: the layout re-decides itself inside
             `BoxWithConstraints`, and recreating the activity would cost the game's
             in-memory state for a change Compose absorbs in one recomposition.
 

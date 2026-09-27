@@ -1,6 +1,8 @@
 package game.vinto.app
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,6 +27,7 @@ class MainActivity : ComponentActivity() {
         // to rather than the launch theme.
         installSplashScreen().setOnExitAnimationListener { fadeOutLaunchScreen(it) }
         super.onCreate(savedInstanceState)
+        holdPhonesUpright()
         // Storage first, and only because the reporter needs it: a crash is written to the
         // vault on the way down and sent by the next launch, since a POST started as Android
         // tears the process down does not finish. `attach` is one assignment and cannot
@@ -72,6 +75,25 @@ class MainActivity : ComponentActivity() {
         // how a run once produced six pictures of the same board. `captureScene` returns null
         // from the release source set, so the shipped binary never reaches `recreate`.
         if (captureScene(intent) != null) recreate()
+    }
+
+    /**
+     * Upright on a phone, free on a tablet — see `phoneHeldUpright`. A phone on its side has no
+     * room for the table; a tablet's landscape is a real one. Asked again on every configuration
+     * change, because the manifest keeps this activity through a fold opening or closing and the
+     * same activity then stands on a different screen.
+     */
+    private fun holdPhonesUpright() {
+        requestedOrientation = if (phoneHeldUpright(resources.configuration.smallestScreenWidthDp)) {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        holdPhonesUpright()
     }
 
     override fun onDestroy() {

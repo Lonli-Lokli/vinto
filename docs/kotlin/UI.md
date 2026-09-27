@@ -82,10 +82,15 @@ the app. An iPhone SE (667, discontinued) is the one screen that cannot: online 
 points, two plates take 81 each and five side targets need 146, so a second row anywhere leaves
 the side seats sliding.
 
-The Android manifest no longer locks orientation; iOS always allowed rotation (it squeezed the
-portrait design until this landed) and the browser was always free. `LandscapeTableTest` holds
-the rotated phone to the same bar `CrowdedTableTest` holds the upright one to, and holds the
-desktop window to the cap and the centring.
+**A phone is held upright; a tablet turns every way** (`phoneHeldUpright`, held by
+`PhonesStayUprightTest`). The landscape arrangement stays for tablets, the open fold, the desktop
+and the browser, and phones no longer use it: a layout review found an iPhone 16 on its side has a
+felt 276 points tall once the header and the room's clock are taken, and no arrangement of four
+hands, two piles and four plates fits there. iOS says it per device family in the Info.plist;
+Android has no family to say it by, so `MainActivity` asks from the screen's smallest width and
+asks again when a fold opens or closes. A phone's browser cannot be held upright by a page, so
+the web still gets the sideways layout on a turned phone — `SidewaysPhoneTest` keeps it from
+breaking there. `LandscapeTableTest` holds the desktop window to the cap and the centring.
 
 **A window theme of its own** (`values/themes.xml`). It was inheriting
 `Theme.Material.Light.NoActionBar`, which meant dark status-bar icons over a dark rail and a

@@ -116,6 +116,13 @@ internal fun typeScaleFor(shortest: Dp): Float = when {
     else -> 1f + (MaxTypeScale - 1f) * ((shortest - TabletFrom) / (TabletFull - TabletFrom))
 }
 
+/**
+ * Whether a screen this size is a phone, which is held upright: portrait only, on every platform
+ * that can say so. Measured on the short side like [typeScaleFor], so a phone turned on its side is
+ * still a phone, and a tablet or an opened fold is free to turn.
+ */
+fun phoneHeldUpright(shortestSideDp: Int): Boolean = shortestSideDp < TabletFrom.value
+
 private val TabletFrom = 600.dp
 private val TabletFull = 1000.dp
 private const val MaxTypeScale = 1.25f
