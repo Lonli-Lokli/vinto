@@ -1435,8 +1435,26 @@ private fun declareTable(view: PlayerView, pending: PendingActionView): Table =
     }
 
 /** An Ace in the final round can only cost the coalition, the caller being untouchable. */
-private fun aceIsATrap(view: PlayerView): Boolean =
+private fun aceIsATrap(view: PlayerView): Boolean = callerIsOffLimits(view)
+
+/**
+ * Whether the Vinto caller's hand is out of this seat's reach: the final round, and somebody
+ * else called. `ActionValidator` refuses any action a coalition member aims at the caller, so
+ * every question that offers seats or cards to aim at leaves that one out.
+ */
+private fun callerIsOffLimits(view: PlayerView): Boolean =
     view.phase == GamePhase.FINAL && view.vintoCallerId != null && view.viewerId != view.vintoCallerId
+
+/**
+ * The seats an action may be aimed at, before any rule of the action's own.
+ *
+ * Not the caller's, in the final round, to anyone but the caller. The Ace said so in its own
+ * words and offered the caller anyway, and the 9, 10, Jack and Queen never asked: every one of
+ * the caller's cards was a tap the engine refused — reported from the web as
+ * `MOVE_REFUSED in SOLO`, and found by `AWholeGameOffersNothingRefusedTest`.
+ */
+private fun aimable(view: PlayerView): List<PlayerSeatView> =
+    if (callerIsOffLimits(view)) view.players.filter { it.id != view.vintoCallerId } else view.players
 
 /**
  * The only action that names a player rather than a card.
@@ -1449,7 +1467,7 @@ private fun aceIsATrap(view: PlayerView): Boolean =
  */
 private fun forceDrawTable(view: PlayerView): Table = Table(
     prompt = Ask.WhoDrawsACard,
-    taps = view.players
+    taps = aimable(view)
         .filter { it.id != view.viewerId }
         .flatMap { seat ->
             val name = GameAction.SelectActionTarget(
@@ -1472,7 +1490,7 @@ private fun forceDrawTable(view: PlayerView): Table = Table(
     // Putting it down leads, for the same reason. Every legal target stays on offer: the rule
     // is the player's to break if they want it.
     choices = listOf(giveUp(view.viewerId)),
-    seats = view.players.filter { it.id != view.viewerId }.map { seat ->
+    seats = aimable(view).filter { it.id != view.viewerId }.map { seat ->
         SeatChoice(
             id = seat.id,
             nickname = seat.nickname,
@@ -1495,7 +1513,7 @@ private fun ownTaps(view: PlayerView): Map<CardRef, Move> {
 
 private fun opponentTaps(view: PlayerView): Map<CardRef, Move> {
     val me = view.viewerId
-    return view.players.filter { it.id != me }.flatMap { seat ->
+    return aimable(view).filter { it.id != me }.flatMap { seat ->
         seat.cards.indices.map { position ->
             CardRef(seat.id, position) to positional(me, seat.id, position)
         }
@@ -1516,7 +1534,7 @@ private fun anyTaps(view: PlayerView, pending: PendingActionView): Map<CardRef, 
     val twoPlayerAction = pending.targetType == TargetType.SWAP_CARDS ||
         pending.targetType == TargetType.PEEK_THEN_SWAP
 
-    return view.players
+    return aimable(view)
         .filterNot { twoPlayerAction && it.id in claimed }
         .flatMap { seat ->
             seat.cards.indices.map { position ->
