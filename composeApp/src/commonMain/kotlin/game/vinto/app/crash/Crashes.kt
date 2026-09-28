@@ -111,6 +111,9 @@ object Crashes {
         surface = where
     }
 
+    /** For tests: where a report made now would say the app is. */
+    internal fun where(): CrashSurface = surface()
+
     /**
      * Reports something that went wrong without ending the process.
      *

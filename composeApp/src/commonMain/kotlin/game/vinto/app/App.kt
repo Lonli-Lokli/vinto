@@ -156,7 +156,6 @@ fun App(
 
     val sink = rememberSink(appScope)
     val door = rememberDoorway(connector, vault, appScope, seeds)
-    ReportCrashes()
 
     Startup(vault, sink, marketing, door.invited) { loaded, where ->
         settings = loaded
@@ -527,6 +526,10 @@ private fun ReportCrashes() {
     //
     // What is left is the half that only a composition knows: *where* the app is, read live at
     // the moment of a crash, so one on the table is not filed as one in the menu.
+    //
+    // **Called inside [OnThisScreen]**, which is what provides the surface. It was called in
+    // `App`, one level above, so it read the local's default — and every report the app ever
+    // sent said MENU, a refusal at the solo table included (`AReportSaysWhereItHappenedTest`).
     val surface = rememberUpdatedState(LocalSurface.current)
     LaunchedEffect(Unit) { Crashes.watching { surface.value.asCrashSurface() } }
 }
@@ -777,8 +780,10 @@ private fun OnThisScreen(settings: Settings, screen: Screen, vault: Vault, conte
     CompositionLocalProvider(
         LocalSurface provides surfaceOf(screen),
         LocalVault provides vault,
-        content = content,
-    )
+    ) {
+        ReportCrashes()
+        content()
+    }
 }
 
 /**
