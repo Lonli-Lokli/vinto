@@ -1,15 +1,7 @@
-Stół dopasowuje się do ekranu, na którym jest. Na iPadzie karty rosną razem z suknem, każde imię widnieje obok własnych kart, a przyciski są skrojone na tablet, a nie rozciągnięte z telefonu. Na iPhonie Vinto pozostaje teraz w pionie; iPad nadal obraca się tak, jak go trzymasz.
+Stół czuje się teraz jak u siebie na każdym ekranie. Na iPadzie rozkłada się szerzej, a karty rosną razem z nim.
 
-Ręka, która przekracza pięć kart, zachowuje w pierwszym rzędzie pięć kart z rozdania, a dla pozostałych zaczyna drugi rząd. Karty graczy po bokach już na siebie nie nachodzą.
+Duże ręce zostają czytelne, długie nazwy się mieszczą, a pokój online mieści się na jednym ekranie.
 
-Długie imiona się mieszczą. Imię najpierw maleje, a dopiero potem przechodzi do nowej linii. Gracze po bokach mają imiona biegnące wzdłuż krawędzi stołu, a oznaczenia przy miejscu — korona osoby wołającej Vinto, zgoda na plan, bot grający za kogoś, kto jest poza stołem — mają każde swoją stałą pozycję, więc nic się nie przesuwa, gdy któreś się pojawi.
+I nowy ekran powitalny na dzień dobry.
 
-Pokój online przed rozdaniem mieści się na jednym ekranie: cztery miejsca w dwóch rzędach, a kod do zeskanowania obok przycisków „Udostępnij kod” i „Skopiuj kod”. Gdyby pokój potrzebował kiedyś nowszej wersji niż twoja, aplikacja teraz o tym powie i przeniesie cię do App Store.
-
-W planie nikt, kto nie może już dorzucić, nie dostaje propozycji dorzutu, a rząd tur pokazuje, kiedy ciągnie się dalej.
-
-Przy włączonej opcji „Ogranicz ruch” pierścień wokół osoby, której jest tura, pozostaje nieruchomy.
-
-Nowy ekran startowy: V z ikony, na suknie.
-
-Dziękujemy za grę.
+Dziękujemy za grę!

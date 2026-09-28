@@ -1,15 +1,7 @@
-La table s'adapte à l'écran qui l'affiche. Sur iPad, les cartes grandissent avec le tapis, chaque nom se place à côté de ses propres cartes, et les boutons sont dimensionnés pour une tablette plutôt qu'étirés depuis un téléphone. Sur iPhone, Vinto reste désormais en portrait ; un iPad pivote toujours, quel que soit le sens dans lequel vous le tenez.
+La table se sent maintenant chez elle sur tous les écrans. Sur iPad, elle s'étale, et les cartes grandissent avec elle.
 
-Une main qui dépasse cinq cartes garde les cinq cartes distribuées dans la première rangée et en entame une seconde pour les autres. Les cartes des places sur les côtés ne se chevauchent plus.
+Les grandes mains restent bien rangées, les noms longs tiennent, et la salle en ligne tient sur un seul écran.
 
-Les noms longs tiennent. Un nom rapetisse avant d'être coupé, celui des places sur les côtés court le long du bord de la table, et les marques d'une place — la couronne de la personne qui a appelé Vinto, un oui au plan, un bot qui remplace quelqu'un qui s'absente — ont chacune leur propre emplacement, si bien que rien ne bouge quand l'une d'elles apparaît.
+Et un nouvel écran de lancement pour vous accueillir.
 
-La salle en ligne tient sur un seul écran : quatre places sur deux rangées, et le code à scanner à côté des boutons qui le partagent et le copient. Si une salle demande un jour une version plus récente que la vôtre, l'application le dit désormais et vous emmène sur l'App Store.
-
-Le plan ne propose plus de riposte à qui n'a plus le droit de riposter, et la rangée des tours indique quand elle se prolonge.
-
-Lorsque Réduire les animations est activé, l'anneau autour de la personne dont c'est le tour reste immobile.
-
-Un nouvel écran de lancement : le V de l'icône, sur le tapis.
-
-Merci d'y jouer.
+Merci d'y jouer !

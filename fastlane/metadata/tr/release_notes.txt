@@ -1,15 +1,7 @@
-Masa, hangi ekrandaysa ona uyuyor. iPad'de kartlar keçeyle birlikte büyüyor, her isim kendi kartlarının yanında duruyor ve düğmeler telefondan esnetilmiş değil, tablete göre boyutlanmış. iPhone'da Vinto artık dik kalıyor; iPad ise nasıl tutarsanız o yöne dönmeyi sürdürüyor.
+Masa artık her ekranda kendini evinde hissediyor. iPad'de daha geniş yayılıyor, kartlar da onunla büyüyor.
 
-Beş kartı aşan bir el, dağıtılan beş kartını ilk sırada tutuyor ve geri kalanlar için ikinci bir sıra açıyor. Yanlardaki oyuncuların kartları artık üst üste binmiyor.
+Kalabalık eller düzenli kalıyor, uzun isimler sığıyor ve çevrimiçi oda tek ekrana sığıyor.
 
-Uzun isimler sığıyor. Bir isim iki satıra bölünmeden önce küçülüyor, yanlardaki oyuncuların isimleri masanın kenarı boyunca uzanıyor ve bir koltuktaki işaretlerin — çağıranın tacı, plana verilen bir evet, masadan uzaklaşan birinin koltuğunu oynayan bir bot — her birinin kendi yeri var; böylece biri belirdiğinde hiçbir şey kaymıyor.
+Ve seni karşılayan yepyeni bir açılış ekranı.
 
-Çevrimiçi lobi tek ekrana sığıyor: iki sırada dört koltuk, taranacak kod da onu paylaşan ve kopyalayan düğmelerin yanında. Olur da bir oda sizinkinden daha yeni bir sürüm isterse, uygulama artık bunu söylüyor ve sizi App Store'a götürüyor.
-
-Planda, artık atarak katılamayan kimseye kart atması önerilmiyor ve turları gösteren şerit, devamı olduğunda bunu belli ediyor.
-
-Hareketi Azalt açıkken, sırası gelen oyuncunun çevresindeki halka sabit duruyor.
-
-Yeni bir açılış ekranı: simgedeki V, keçenin üzerinde.
-
-Oynadığınız için teşekkürler.
+Oynadığın için teşekkürler!

@@ -1,15 +1,7 @@
-Meja kini pas dengan layar tempatnya berada. Di iPad, kartu ikut membesar bersama kain meja, setiap nama berada di samping kartunya sendiri, dan tombol berukuran untuk tablet, bukan tombol ponsel yang direntangkan. Di iPhone, Vinto kini tetap tegak; iPad masih berputar ke arah mana pun Anda memegangnya.
+Meja sekarang terasa nyaman di layar mana pun. Di iPad, meja melebar, dan kartu-kartu ikut membesar.
 
-Tangan yang bertambah lebih dari lima kartu menyimpan lima kartu yang dibagikan di baris pertama dan memulai baris kedua untuk sisanya. Kartu para pemain di sisi meja tidak lagi tumpang tindih.
+Tangan yang penuh tetap rapi, nama panjang muat, dan ruangan online muat dalam satu layar.
 
-Nama panjang kini muat. Nama mengecil dulu sebelum pindah baris, nama para pemain di sisi meja membentang di sepanjang tepinya, dan tanda di kursi — mahkota pemanggil, persetujuan pada rencana, bot yang mengisi kursi seseorang yang sedang pergi — masing-masing punya tempat sendiri, sehingga tidak ada yang bergeser saat salah satunya muncul.
+Dan ada layar pembuka baru untuk menyambut Anda.
 
-Ruangan online kini muat dalam satu layar: empat kursi dalam dua baris, dan kode untuk dipindai ada di samping tombol yang membagikan dan menyalinnya. Jika suatu saat ruangan membutuhkan versi yang lebih baru dari versi Anda, aplikasi kini memberi tahu Anda dan membawa Anda ke App Store.
-
-Dalam rencana, pemain yang dilarang melempar masuk tidak ditawari lemparan, dan deretan giliran menunjukkan saat masih ada lanjutannya.
-
-Saat Kurangi Gerakan aktif, cincin di sekitar pemain yang sedang mendapat giliran tetap diam.
-
-Layar pembuka baru: huruf V dari ikon, di atas kain meja.
-
-Terima kasih telah bermain.
+Terima kasih sudah bermain!

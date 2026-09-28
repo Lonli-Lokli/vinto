@@ -1,15 +1,7 @@
-A mesa cabe na tela em que está. No iPad as cartas crescem junto com o feltro, cada nome fica ao lado das próprias cartas, e os botões têm tamanho de tablet, em vez de serem os do celular esticados. No iPhone o Vinto agora fica sempre na vertical; o iPad ainda gira em qualquer posição em que você o segure.
+A mesa agora se sente em casa em qualquer tela. No iPad, ela se espalha, e as cartas crescem junto.
 
-Uma mão que passa de cinco cartas mantém na primeira fileira as cinco distribuídas e começa uma segunda fileira para as demais. Nas laterais da mesa, as cartas não se sobrepõem mais.
+Mãos cheias ficam organizadas, nomes longos cabem, e a sala online cabe numa única tela.
 
-Nomes longos cabem. Um nome diminui antes de ser cortado, nas laterais ele corre ao longo da borda da mesa, e as marcas de um lugar — a coroa de quem chamou Vinto, um sim ao plano, um bot cobrindo quem se afastou — têm cada uma seu próprio espaço, então nada se mexe quando uma aparece.
+E uma tela de abertura novinha para dar as boas-vindas.
 
-A sala online cabe em uma só tela: quatro lugares em duas fileiras, e o código para ler ao lado dos botões que o compartilham e o copiam. Se uma sala precisar de uma versão mais nova que a sua, o app agora avisa e leva você à App Store.
-
-No plano, ninguém que esteja impedido de atirar recebe a opção de atirar, e a faixa de jogadas mostra quando há mais adiante.
-
-Com Reduzir Movimento ativado, o anel em volta de quem tem a vez fica parado.
-
-Uma nova tela de abertura: o V do ícone, sobre o feltro.
-
-Obrigado por jogar.
+Agradecemos por jogar!
