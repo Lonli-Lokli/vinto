@@ -279,15 +279,22 @@ jobs:
           HOST: ${{ steps.site.outputs.host }}
         run: |
           site="https://$HOST"
+          script_code=""
           for attempt in $(seq 1 40); do
             body=$(curl -sS --max-time 15 "$site/?cb=$RANDOM$attempt" || true)
             if printf '%s' "$body" | grep -q "$SCRIPT"; then
-              echo "attempt $attempt: serving $SCRIPT"
-
               # The script it names is really there — the check that would have caught the
-              # stale-name failure this whole workflow is built to prevent.
-              code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$site/$SCRIPT?cb=$RANDOM")
-              [ "$code" = "200" ] || { echo "::error::the page names $SCRIPT and the edge answers $code for it"; exit 1; }
+              # stale-name failure this whole workflow is built to prevent. Retried like the
+              # page, not asked once: the page can reach an edge a moment before the script
+              # does, and on 2026-09-28 the one ask came a second after the deploy, answered 404,
+              # and failed a deploy whose script the edge was serving a minute later.
+              script_code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$site/$SCRIPT?cb=$RANDOM" || true)
+              if [ "$script_code" != "200" ]; then
+                echo "attempt $attempt: the page names $SCRIPT, the edge answers $script_code for it — not yet"
+                sleep 15
+                continue
+              fi
+              echo "attempt $attempt: serving $SCRIPT"
 
               # A missing path must be a 404 rather than the shell with a 200 on it. That is
               # `not_found_handling: "404-page"` plus the committed `404.html`; on Pages this
@@ -319,5 +326,9 @@ jobs:
             echo "attempt $attempt: not yet"
             sleep 15
           done
-          echo "::error::$site never served $SCRIPT. The upload itself may have succeeded — check the deploy step. On a first deploy this can also be DNS or the certificate still being issued for $HOST."
+          if [ -n "$script_code" ]; then
+            echo "::error::the page names $SCRIPT and the edge still answers $script_code for it after ten minutes"
+          else
+            echo "::error::$site never served $SCRIPT. The upload itself may have succeeded — check the deploy step. On a first deploy this can also be DNS or the certificate still being issued for $HOST."
+          fi
           exit 1
