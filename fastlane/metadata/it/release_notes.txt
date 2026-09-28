@@ -1,13 +1,15 @@
-Il round finale si può giocare in squadra. Quando qualcuno chiama Vinto, i tre avversari possono leggere le carte che hanno visto e costruire insieme un piano — una frase a turno, solo su carte che qualcuno ha davvero visto. È una chiacchierata al tavolo, non un ordine: chi ha il turno gioca comunque le proprie carte come preferisce.
+Il tavolo si adatta allo schermo su cui si trova. Su iPad le carte crescono insieme al panno, ogni nome sta accanto alle proprie carte e i pulsanti sono pensati per un tablet, non presi da un telefono e allargati. Su iPhone Vinto ora resta in verticale; su iPad continua a girare in qualsiasi verso tu lo tenga.
 
-I tuoi avversari hanno un nome — Gale, Ember, Tide e Dune restano ai loro posti, ciascuno chiamato come il segno sul proprio ritratto, e ora buttano dentro la carta che un compagno ha nominato.
+Una mano che supera le cinque carte tiene nella prima riga le cinque distribuite e apre una seconda riga per le altre. Le carte di chi siede ai lati non si sovrappongono più.
 
-L'invito porta un codice da inquadrare, e chiede il permesso prima di occupare un posto.
+I nomi lunghi ci stanno. Un nome si rimpicciolisce prima di andare a capo, chi siede ai lati ha il nome che corre lungo il bordo del tavolo, e i segni di un posto — la corona di chi ha chiamato Vinto, un sì al piano, un bot che prende il posto di chi si allontana — hanno ciascuno uno spazio tutto suo, così niente si sposta quando ne compare uno.
 
-La carta che tocchi parte subito, e un comando occupato lo dice invece di ignorarti. Premi il mazzo per vedere quante carte restano. Una mano che supera le cinque carte diventa più piccola e si dispone su due righe, così nulla esce dal tavolo.
+La stanza online entra in una sola schermata: quattro posti su due righe, e il codice da scansionare accanto ai pulsanti per condividerlo e copiarlo. Se una stanza richiede una versione più recente della tua, ora l'app lo dice e ti porta all'App Store.
 
-Quando qualcuno si allontana, un bot prende il suo posto, e il tavolo viene avvisato. I tuoi quindici secondi sono tuoi: l'orologio non scorre più mentre giocano i bot.
+Nel piano, a chi non può più buttare dentro non viene proposto nessun lancio, e la fila dei turni mostra quando ce ne sono altri.
 
-Regole: una carta buttata dentro prima della chiamata di Vinto viene comunque giocata, e il lancio di chi ha chiamato viene giocato per primo, prima che inizi il round finale. Una carta ottenuta con il Re viene giocata, invece di essere scartata.
+Con Riduci movimento attivo, l'anello intorno a chi ha il turno resta fermo.
+
+Una nuova schermata di avvio: la V dell'icona, sul panno.
 
 Grazie per aver giocato.

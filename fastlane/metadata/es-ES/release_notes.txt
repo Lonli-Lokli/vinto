@@ -1,13 +1,15 @@
-La ronda final ya se puede jugar en equipo. En cuanto alguien cante Vinto, los otros tres pueden compartir lo que saben y construir un plan juntos — una frase por turno, sobre cartas que alguien ha visto de verdad. Es charla de mesa, no una orden: quien tenga el turno sigue decidiendo sobre sus propias cartas.
+La mesa se ajusta a la pantalla en la que está. En un iPad las cartas crecen con el tapete, cada nombre se sitúa junto a sus propias cartas, y los botones tienen el tamaño de una tableta en lugar de estirarse desde los de un móvil. En un iPhone, Vinto ahora se queda en vertical; un iPad sigue girando, lo sostenga como lo sostenga.
 
-Sus rivales tienen nombre. Gale, Ember, Tide y Dune conservan los mismos asientos, cada uno llamado así por la marca de su retrato, y ahora lanzan una carta que un compañero de equipo ha nombrado.
+Una mano que crece más allá de cinco cartas conserva en la primera fila las cinco que se repartieron y empieza una segunda fila para el resto. Las cartas de quienes se sientan a los lados ya no se superponen.
 
-La invitación lleva un código para escanear, y pide permiso antes de ocupar un asiento.
+Los nombres largos caben. Un nombre se encoge antes de partirse, quienes se sientan a los lados lo llevan a lo largo del borde de la mesa, y las marcas de un asiento — la corona de quien canta Vinto, un sí al plan, un bot que cubre a quien se ha ausentado — tienen cada una su propio sitio, así que nada se mueve cuando aparece una.
 
-La carta que toca empieza a moverse al instante, y un control ocupado lo dice en vez de ignorarle. Pulse el mazo para ver cuánto queda. Una mano que crece más allá de cinco cartas recibe cartas más pequeñas y una segunda fila, para que nada se salga de la mesa.
+La sala en línea cabe en una sola pantalla: cuatro asientos en dos filas, y el código para escanear junto a los botones que lo comparten y lo copian. Si alguna vez una sala necesita una versión más reciente que la suya, la app ahora se lo dice y le lleva al App Store.
 
-Cuando alguien se ausenta, un bot ocupa su asiento, y se avisa a la mesa. Sus quince segundos ya no corren mientras juegan los bots.
+En el plan, a quien no puede volver a tirar ya no se le propone ningún lanzamiento, y la fila de turnos avisa cuando hay más.
 
-Reglas: una carta lanzada antes de cantar Vinto se sigue jugando, y el lanzamiento de quien canta se juega antes de que empiece la ronda final. Una carta ganada con un Rey se juega en lugar de descartarse.
+Con Reducir movimiento activado, el aro alrededor de quien tiene el turno se queda quieto.
+
+Una nueva pantalla de arranque: la V del icono, sobre el fieltro.
 
 Gracias por jugar.

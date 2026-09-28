@@ -1,0 +1,9 @@
+Meja pas di tiap layar: di tablet kartu ikut membesar dan nama ada di samping kartunya. Di ponsel, tampilan tetap tegak.
+
+Tangan lebih dari lima kartu menyimpan lima kartu awal di baris pertama, kartu pemain di sisi meja tak lagi tumpang tindih, dan nama panjang kini muat.
+
+Ruangan online muat di satu layar, dan ruangan yang butuh versi lebih baru memberi tahu.
+
+Layar pembuka baru: V dari ikon, ditulis di kain meja.
+
+Terima kasih telah bermain.

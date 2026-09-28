@@ -1,0 +1,9 @@
+Stół mieści się na każdym ekranie: na tablecie karty rosną razem z nim, a imiona są obok swoich kart. Na telefonie gra zostaje w pionie.
+
+Ręka ponad pięć kart trzyma pięć kart z rozdania w pierwszym rzędzie, karty graczy po bokach już się nie nakładają, a długie imiona się mieszczą.
+
+Pokój online mieści się na jednym ekranie i mówi, gdy wymaga nowszej wersji aplikacji.
+
+Nowy ekran startowy: V z ikony, nakreślone na suknie.
+
+Dziękujemy za grę.

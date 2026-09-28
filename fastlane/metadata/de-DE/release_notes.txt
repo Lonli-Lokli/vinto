@@ -1,13 +1,15 @@
-Die Schlussrunde lässt sich jetzt als Team spielen. Sobald jemand Vinto ruft, können sich die drei Gegner austauschen und gemeinsam einen Plan schmieden — Satz für Satz, über Karten, die tatsächlich gesehen wurden. Das ist Tischgespräch, kein Befehl: Wer am Zug ist, entscheidet weiterhin selbst über die eigenen Karten.
+Der Tisch passt sich dem Bildschirm an, auf dem gespielt wird. Auf dem iPad wachsen die Karten mit dem Filz, jeder Name steht neben den eigenen Karten, und die Schaltflächen sind für ein Tablet bemessen, statt vom Handy her in die Breite gezogen. Auf dem iPhone bleibt Vinto jetzt im Hochformat; das iPad dreht sich weiterhin mit, wie auch immer Sie es halten.
 
-Ihre Gegner haben Namen. Gale, Ember, Tide und Dune behalten dieselben Plätze, jeder benannt nach dem Zeichen auf seinem Porträt, und sie werfen jetzt eine Karte ein, die ein Teammitglied genannt hat.
+Eine Hand, die über fünf Karten wächst, behält die fünf ausgeteilten in der ersten Reihe und beginnt für den Rest eine zweite. An den seitlichen Plätzen überlappen sich die Karten nicht mehr.
 
-Die Einladung trägt einen Code zum Scannen, und sie fragt nach, bevor sie einen Platz übernimmt.
+Lange Namen passen. Ein Name wird kleiner, bevor er umbricht, an den seitlichen Plätzen läuft er am Tischrand entlang, und die Markierungen an einem Platz — die Krone der rufenden Person, ein Ja zum Plan, ein Bot, der den Platz spielt, während jemand weg ist — haben jeweils ihren eigenen Ort, sodass nichts verrutscht, wenn eine erscheint.
 
-Eine angetippte Karte setzt sich sofort in Bewegung, und ein Bedienelement, das gerade arbeitet, sagt es, statt Sie zu übergehen. Drücken Sie auf den Stapel, um zu sehen, wie viel davon noch übrig ist. Eine Hand, die über fünf Karten wächst, bekommt kleinere Karten und eine zweite Reihe, damit nichts vom Tisch fällt.
+Der Online-Warteraum passt auf einen Bildschirm: vier Plätze in zwei Reihen, und der Code zum Scannen neben „Code teilen“ und „Code kopieren“. Braucht ein Raum einmal eine neuere Version als Ihre, sagt die App das jetzt und bringt Sie zum App Store.
 
-Wenn jemand den Platz verlässt, übernimmt ein Bot den Sitz, und der Tisch wird informiert. Ihre fünfzehn Sekunden laufen nicht mehr ab, während die Bots spielen.
+Wer nicht mehr einwerfen darf, bekommt im Plan auch keinen Einwurf mehr angeboten, und die Leiste der Züge zeigt an, wenn sie weitergeht.
 
-Regeln: Eine Karte, die vor einem Vinto-Ruf eingeworfen wurde, wird weiterhin gespielt, und der eigene Einwurf der rufenden Person wird gespielt, bevor die Schlussrunde beginnt. Eine mit einem König gewonnene Karte wird gespielt statt weggeworfen.
+Ist „Bewegung reduzieren“ eingeschaltet, steht der Ring um die Person, die am Zug ist, still.
+
+Ein neuer Startbildschirm: das V aus dem App-Symbol, auf dem Filz.
 
 Danke fürs Spielen.

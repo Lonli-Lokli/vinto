@@ -1,13 +1,15 @@
-Son tur artık takım halinde oynanabilir. Biri Vinto dediği anda, ona karşı olan üç kişi kartları okur ve birlikte bir plan kurar — her turda bir cümle, ve yalnızca kendi gözleriyle gördükleri kartlar hakkında. Bu masa sohbetidir, emir değil: kartını herkes kendi sırasında kendi oynar.
+Masa, hangi ekrandaysa ona uyuyor. iPad'de kartlar keçeyle birlikte büyüyor, her isim kendi kartlarının yanında duruyor ve düğmeler telefondan esnetilmiş değil, tablete göre boyutlanmış. iPhone'da Vinto artık dik kalıyor; iPad ise nasıl tutarsanız o yöne dönmeyi sürdürüyor.
 
-Rakiplerinizin adı var — Gale, Ember, Tide ve Dune her zaman aynı koltukta oturur, her biri portresindeki işaretle adlandırılmıştır, ve artık bir takım arkadaşının söylediği kartı atarlar.
+Beş kartı aşan bir el, dağıtılan beş kartını ilk sırada tutuyor ve geri kalanlar için ikinci bir sıra açıyor. Yanlardaki oyuncuların kartları artık üst üste binmiyor.
 
-Davet artık taranacak bir kod taşıyor: altı karakteri okumak yerine telefonu tutmanız yeter. Masaya oturmadan önce izin ister.
+Uzun isimler sığıyor. Bir isim iki satıra bölünmeden önce küçülüyor, yanlardaki oyuncuların isimleri masanın kenarı boyunca uzanıyor ve bir koltuktaki işaretlerin — çağıranın tacı, plana verilen bir evet, masadan uzaklaşan birinin koltuğunu oynayan bir bot — her birinin kendi yeri var; böylece biri belirdiğinde hiçbir şey kaymıyor.
 
-Dokunduğunuz kart hemen yola çıkar; meşgul bir denetim ise sizi yok saymak yerine bunu söyler. Kaç kart kaldığını görmek için desteye dokunun. Beş karttan büyüyen bir el daha küçük kartlar ve ikinci bir sıra alır, böylece hiçbir şey masadan taşmaz.
+Çevrimiçi lobi tek ekrana sığıyor: iki sırada dört koltuk, taranacak kod da onu paylaşan ve kopyalayan düğmelerin yanında. Olur da bir oda sizinkinden daha yeni bir sürüm isterse, uygulama artık bunu söylüyor ve sizi App Store'a götürüyor.
 
-Biri masadan ayrıldığında yerini bir bot alır, ve masaya bu bildirilir. On beş saniyeniz artık botlar oynarken işlemiyor.
+Planda, artık atarak katılamayan kimseye kart atması önerilmiyor ve turları gösteren şerit, devamı olduğunda bunu belli ediyor.
 
-Kurallar: Vinto çağrısından önce atılan bir kart yine de oynanır, ve çağıranın kendi attığı kart, son tur başlamadan önce oynanır. Papaz'la kazanılan bir kart artık atılmak yerine oynanır.
+Hareketi Azalt açıkken, sırası gelen oyuncunun çevresindeki halka sabit duruyor.
+
+Yeni bir açılış ekranı: simgedeki V, keçenin üzerinde.
 
 Oynadığınız için teşekkürler.

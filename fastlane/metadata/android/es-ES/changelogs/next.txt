@@ -1,0 +1,9 @@
+La mesa cabe en cualquier pantalla: en una tableta las cartas crecen con ella y cada nombre va junto a sus cartas. En el móvil, queda en vertical.
+
+Una mano de más de cinco deja las cinco repartidas en la primera fila, las cartas laterales ya no se solapan y los nombres largos caben.
+
+La sala en línea cabe en una pantalla y avisa si hace falta actualizar.
+
+Nueva pantalla de arranque: la V del icono, escrita sobre el fieltro.
+
+Gracias por jugar.

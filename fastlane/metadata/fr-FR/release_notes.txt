@@ -1,13 +1,15 @@
-La manche finale peut désormais se jouer en équipe. Dès que quelqu'un appelle Vinto, les trois adversaires peuvent échanger ce qu'ils savent et construire un plan ensemble — une phrase par tour, à propos de cartes que quelqu'un a réellement vues. C'est une discussion de table, pas un ordre : la personne dont c'est le tour choisit toujours ses propres cartes.
+La table s'adapte à l'écran qui l'affiche. Sur iPad, les cartes grandissent avec le tapis, chaque nom se place à côté de ses propres cartes, et les boutons sont dimensionnés pour une tablette plutôt qu'étirés depuis un téléphone. Sur iPhone, Vinto reste désormais en portrait ; un iPad pivote toujours, quel que soit le sens dans lequel vous le tenez.
 
-Vos adversaires ont des noms. Gale, Ember, Tide et Dune gardent les mêmes places, chacun nommé pour le signe sur son portrait, et ils ripostent désormais avec une carte qu'un coéquipier a nommée.
+Une main qui dépasse cinq cartes garde les cinq cartes distribuées dans la première rangée et en entame une seconde pour les autres. Les cartes des places sur les côtés ne se chevauchent plus.
 
-L'invitation porte un code à scanner, et elle demande la permission avant de prendre une place.
+Les noms longs tiennent. Un nom rapetisse avant d'être coupé, celui des places sur les côtés court le long du bord de la table, et les marques d'une place — la couronne de la personne qui a appelé Vinto, un oui au plan, un bot qui remplace quelqu'un qui s'absente — ont chacune leur propre emplacement, si bien que rien ne bouge quand l'une d'elles apparaît.
 
-Une carte touchée part aussitôt, et une commande occupée le dit au lieu de vous ignorer. Appuyez sur la pioche pour voir combien il en reste. Une main qui dépasse cinq cartes reçoit des cartes plus petites et une seconde rangée, pour que rien ne dépasse de la table.
+La salle en ligne tient sur un seul écran : quatre places sur deux rangées, et le code à scanner à côté des boutons qui le partagent et le copient. Si une salle demande un jour une version plus récente que la vôtre, l'application le dit désormais et vous emmène sur l'App Store.
 
-Quand quelqu'un s'absente, un bot reprend sa place, et la table en est informée. Vos quinze secondes ne s'écoulent plus pendant que les bots jouent.
+Le plan ne propose plus de riposte à qui n'a plus le droit de riposter, et la rangée des tours indique quand elle se prolonge.
 
-Règles : une carte ripostée avant un appel de Vinto est tout de même jouée, et la riposte de la personne qui appelle est jouée avant le début de la manche finale. Une carte gagnée avec un Roi est jouée plutôt que jetée.
+Lorsque Réduire les animations est activé, l'anneau autour de la personne dont c'est le tour reste immobile.
+
+Un nouvel écran de lancement : le V de l'icône, sur le tapis.
 
 Merci d'y jouer.

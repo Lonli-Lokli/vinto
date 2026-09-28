@@ -1,13 +1,15 @@
-The final round can be played as a team. Once somebody calls Vinto, the three against them can read and build a plan together — a sentence a turn, about cards somebody has actually seen. It is table talk, not an order: whoever is on play still picks up their own cards.
+The table fits the screen it is on. On an iPad the cards grow with the cloth, each name sits beside its own cards, and the buttons are sized for a tablet rather than stretched from a phone. On an iPhone Vinto now stays upright; an iPad still turns any way you hold it.
 
-Your opponents have names. Gale, Ember, Tide and Dune keep the same seats, each named for the mark on its portrait, and they now throw in a card a teammate has named.
+A hand that grows past five keeps its dealt five in the first row and starts a second row for the rest. The players at the sides no longer have overlapping cards.
 
-An invitation carries a code to scan, and it asks before it takes a seat.
+Long names fit. A name gets smaller before it breaks, the players at the sides have theirs running along the edge of the table, and the marks on a seat — the caller's crown, a yes to the plan, a bot covering somebody who stepped away — each have a place of their own, so nothing moves when one appears.
 
-A card you tap starts moving at once, and a busy control says so instead of ignoring you. Press the deck to see how much of it is left. A hand that grows past five cards gets smaller cards and a second row, so nothing runs off the table.
+The online lobby fits on one screen: four seats in two rows, and the code to scan beside the buttons that share and copy it. If a room ever needs a newer version than yours, the app now says so and takes you to the App Store.
 
-When somebody steps away a bot covers their seat, and the table is told. Your fifteen seconds no longer run down while the bots play.
+In the plan, nobody barred from throwing in is offered a throw, and the row of turns shows when there is more of it.
 
-Rules: a card thrown in before a Vinto call is still played, and the caller's own throw plays before the final round begins. A card won with a King is played rather than thrown away.
+With Reduce Motion on, the ring around the player whose turn it is holds still.
+
+A new launch screen: the V from the icon, on the felt.
 
 Thank you for playing.

@@ -1,13 +1,15 @@
-A rodada final agora pode ser jogada em equipe. Quando alguém chama Vinto, os três adversários podem juntar o que já viram e montar um plano juntos — uma frase por vez, só sobre cartas que alguém realmente já viu. É conversa de mesa, não uma ordem: quem estiver jogando decide por conta própria o que fazer com as próprias cartas.
+A mesa cabe na tela em que está. No iPad as cartas crescem junto com o feltro, cada nome fica ao lado das próprias cartas, e os botões têm tamanho de tablet, em vez de serem os do celular esticados. No iPhone o Vinto agora fica sempre na vertical; o iPad ainda gira em qualquer posição em que você o segure.
 
-Seus adversários têm nomes — Gale, Ember, Tide e Dune mantêm os mesmos lugares, cada um batizado pela marca no seu retrato, e agora eles atiram a carta que um parceiro de equipe indicou.
+Uma mão que passa de cinco cartas mantém na primeira fileira as cinco distribuídas e começa uma segunda fileira para as demais. Nas laterais da mesa, as cartas não se sobrepõem mais.
 
-O convite traz um código para escanear, e pede confirmação antes de ocupar o lugar.
+Nomes longos cabem. Um nome diminui antes de ser cortado, nas laterais ele corre ao longo da borda da mesa, e as marcas de um lugar — a coroa de quem chamou Vinto, um sim ao plano, um bot cobrindo quem se afastou — têm cada uma seu próprio espaço, então nada se mexe quando uma aparece.
 
-A carta que você toca começa a se mover na hora, e um controle ocupado avisa em vez de ignorar você. Toque no monte para ver quantas cartas restam. Quando a mão passa de cinco cartas, elas ficam menores e se organizam em duas fileiras, para que nada saia da mesa.
+A sala online cabe em uma só tela: quatro lugares em duas fileiras, e o código para ler ao lado dos botões que o compartilham e o copiam. Se uma sala precisar de uma versão mais nova que a sua, o app agora avisa e leva você à App Store.
 
-Quando alguém se afasta, um bot assume o lugar, e a mesa é avisada. Seus quinze segundos são seus: o relógio não corre mais enquanto os bots jogam.
+No plano, ninguém que esteja impedido de atirar recebe a opção de atirar, e a faixa de jogadas mostra quando há mais adiante.
 
-Regras: uma carta atirada antes da chamada de Vinto ainda é jogada, e a jogada de quem chamou é resolvida primeiro, antes de a rodada final começar. Uma carta ganha com o Rei é jogada, não descartada.
+Com Reduzir Movimento ativado, o anel em volta de quem tem a vez fica parado.
+
+Uma nova tela de abertura: o V do ícone, sobre o feltro.
 
 Obrigado por jogar.
