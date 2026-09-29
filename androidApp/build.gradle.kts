@@ -140,7 +140,7 @@ val buildNumber: Int = (project.findProperty("versionCode") as String?)?.toIntOr
     }
 
 /** The human semver, bumped by hand at a release. `VersionTest` holds it to `Version.kt`. */
-val MARKETING_VERSION = "1.0"
+val MARKETING_VERSION = "1.1"
 
 /**
  * What the AAB is actually CALLED.
