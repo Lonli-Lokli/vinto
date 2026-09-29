@@ -73,7 +73,7 @@ class StoreShotsTest {
                     // enum means by it — the landscape shots label themselves from their shape.
                     CompositionLocalProvider(
                         LocalHost provides Host.PHONE,
-                        LocalAppVersion provides SHOWN_VERSION,
+                        LocalAppVersion provides slot.shown,
                         LocalAppBuild provides SHOWN_BUILD,
                     ) {
                         App(seeds = { MARKETING_SEED }, vault = MemoryVault(), marketing = scene.id)
@@ -106,6 +106,8 @@ class StoreShotsTest {
         val wide: Int,
         val high: Int,
         val density: Float,
+        /** The version the home screen's footer says: the one this slot's store is selling. */
+        val shown: String,
     )
 
     /**
@@ -194,7 +196,7 @@ class StoreShotsTest {
          */
         val SLOTS = listOf(
             // App Store 6.9" (iPhone 16 Pro Max), and well over Play's 1080px phone floor.
-            Slot("iphone", "../marketing/captures/ios", 1290, 2796, 3f),
+            Slot("iphone", "../marketing/captures/ios", 1290, 2796, 3f, APP_STORE_VERSION),
             /*
              * App Store 13" iPad, portrait.
              *
@@ -204,7 +206,7 @@ class StoreShotsTest {
              * to the store looking like a stretched phone. At 2f it is 1032x1376 dp, which is
              * what an iPad Pro 13" actually reports.
              */
-            Slot("ipad", "../marketing/captures/ios-ipad", 2064, 2752, 2f),
+            Slot("ipad", "../marketing/captures/ios-ipad", 2064, 2752, 2f, APP_STORE_VERSION),
             /*
              * Play phone, 9:16.
              *
@@ -212,23 +214,28 @@ class StoreShotsTest {
              * any phone sold. At 2.625 it is 411x731 dp, which is a Pixel, and a Pixel is what
              * the hand layout was measured against (`CrowdedTableTest`).
              */
-            Slot("android", "../marketing/captures/android", 1080, 1920, 2.625f),
+            Slot("android", "../marketing/captures/android", 1080, 1920, 2.625f, PLAY_VERSION),
             /*
              * Play tablet, and it is **landscape** 16:9 — which is why it needs its own render
              * rather than a crop of the phone's. 2560x1440 at 2f is 1280x720 dp, and the table
              * turns on its side there the way it does on a real tablet held that way.
              */
-            Slot("android-tablet", "../marketing/captures/android-tablet", 2560, 1440, 2f),
+            Slot("android-tablet", "../marketing/captures/android-tablet", 2560, 1440, 2f, PLAY_VERSION),
         )
 
         const val EXPECTED = 5
 
         /**
-         * What the home screen's footer says in every store shot. Constants, like the goldens'
+         * What the home screen's footer says in the store shots. Constants, like the goldens'
          * pins: the real build moves with every commit and the version with every release, and a
          * screenshot that read them would change at every capture while the screen had not.
+         *
+         * **One version per store**, because the stores do not share one (VERSIONING.md): the
+         * App Store sells 1.2 and Play 1.1. It was a single "1.0" for both, which is what an
+         * App Store 1.2 listing would have shown on its home screen.
          */
-        const val SHOWN_VERSION = "1.0"
+        const val APP_STORE_VERSION = "1.2"
+        const val PLAY_VERSION = "1.1"
         const val SHOWN_BUILD = "100"
 
         /** The same pinned seed `MarketingState` deals from, so a shot is the same shot twice. */
