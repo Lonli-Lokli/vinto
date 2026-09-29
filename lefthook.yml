@@ -23,6 +23,11 @@ assert_lefthook_installed: true
 
 pre-commit:
   commands:
+    # No committed Python (owner, 2026-09-29: "committed code must not be python if I specifically not allowed it").
+    # Refuses a staged .py file unless its path is in .python-allowed (owner-only). No glob: it runs on every commit
+    # and costs nothing when no .py is staged.
+    no-python:
+      run: sh tools/githooks/no-python.sh
     # Static analysis for the Kotlin side. maxIssues is 0, so this either passes or names
     # the file. Scoped by glob so it costs nothing on a commit that touches no Kotlin, and
     # it runs the whole detekt task rather than only the staged files: detekt analyses per
