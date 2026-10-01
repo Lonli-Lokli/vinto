@@ -3,6 +3,14 @@ import SwiftUI
 
 @main
 struct iOSApp: App {
+    init() {
+        // First, before anything that can block: compile the Metal programs Compose's first frame needs on a
+        // background thread, so a cold shader cache (every install, every iOS update) is not paid frozen on the
+        // main thread. Niva (NIVA-6) and Vodar (1.0+108) both stalled 2 s there. FirstFrameWarmUp (composeApp,
+        // a copy of games-core's) has the reasoning and its honest limits.
+        MainViewControllerKt.WarmUpFirstFrame()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

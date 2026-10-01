@@ -102,6 +102,10 @@ style:
       # against the spec. Both files are covered by test vectors instead.
       - '**/Prng.kt'
       - '**/Sha256.kt'
+      # FirstFrameWarmUp draws a throwaway picture off screen so Metal compiles its programs early;
+      # its coordinates are the picture, not tunables, and naming each one would only bury what
+      # the drawing is. It also stays line-for-line with games-core's copy, which keeps them literal.
+      - '**/FirstFrameWarmUp.kt'
       # Test data is expected to be literal.
       - '**/*Test.kt'
   DataClassContainsFunctions:

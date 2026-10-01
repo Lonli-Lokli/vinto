@@ -61,3 +61,11 @@ private fun captureScene(): String? =
  */
 @Suppress("FunctionNaming")
 fun HandleOpenedLink(url: String?) = offerOpenedLink(url)
+
+/**
+ * Compile the Metal programs the first frame needs, off the main thread — see [FirstFrameWarmUp].
+ * Swift calls this as `MainViewControllerKt.WarmUpFirstFrame()`, as the FIRST line of `iOSApp.init`:
+ * the warm-up races Compose's first frame, so every millisecond of head start counts.
+ */
+@Suppress("FunctionNaming") // Swift-facing, named like MainViewController above.
+fun WarmUpFirstFrame() = FirstFrameWarmUp.start()
