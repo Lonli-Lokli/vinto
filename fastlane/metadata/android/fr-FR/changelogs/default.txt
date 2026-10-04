@@ -1,7 +1,0 @@
-Première version de Vinto.
-
-Cinq cartes, deux que vous avez vues, et trois adversaires qui déduisent les leurs en même temps. Appelez Vinto quand vous pensez avoir la main la plus basse. Avoir raison paie, avoir tort coûte.
-
-En solo contre l’ordinateur à trois niveaux, entièrement hors ligne. Ou ouvrez une salle, envoyez six caractères, et celui qui les reçoit est à table. Pas de compte, pas d’inscription.
-
-Un tutoriel distribue une vraie manche au lieu de réciter des règles, et vous pouvez le passer.
