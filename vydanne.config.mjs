@@ -27,6 +27,19 @@
  *           somebody has to make the app in the Play Console and upload the first signed bundle
  *           by hand, which also needs the upload key (ship-and-operate 2.1).
  */
+// REQUIRED RELEASE GATE (owner, 2026-10-04). Every store upload is refused while the text it ships has a voice ERROR:
+// `prerelease` checks the in-app strings and release notes, `fill`/`push`/`prepare` the listing. The rules and why:
+// ../gulnya/claude/skills/portfolio-voice. Fails CLOSED: with ../gulnya absent the upload is refused, not skipped.
+// The only valve is VOICE_GATE_WAIVER="<reason>" (logged). CI asserts this block is here.
+{
+  const voice = await import("../gulnya/tools/voice/gate.mjs").catch(() => null);
+  if (voice) voice.guardRelease();
+  else if (process.argv.includes("--apply") || process.env.VYDANNE_COMMIT === "1") {
+    console.error("voice gate: ../gulnya is not checked out, so the text cannot be checked — refusing to upload.");
+    process.exit(1);
+  }
+}
+
 export default {
   // Both stores, one identifier: `androidApp/build.gradle.kts` sets `applicationId` and
   // `iosApp.xcodeproj` sets `PRODUCT_BUNDLE_IDENTIFIER` to this same string.
@@ -60,7 +73,7 @@ export default {
   // reading it. `vydanne locales` maps these to each store's own codes — Apple and Play disagree,
   // and Play is the one with the surprises (`zh-CN`, `iw-IL`, `in-ID`).
   uiLocales: [
-    'en', 'id', 'de', 'es', 'fr', 'it', 'pl', 'pt', 'tr',
+    'en', 'id', 'de', 'es', 'es-MX', 'fr', 'it', 'pl', 'pt', 'tr',
     'be', 'ru', 'uk', 'he', 'ar', 'ur', 'hi', 'bn', 'ko', 'ja', 'zh',
   ],
 

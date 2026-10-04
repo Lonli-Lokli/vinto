@@ -45,7 +45,9 @@
     "capture-iap": "npm run capture-headless && zdymak screenshots && vydanne iap",
     "release:check": "node tools/check-release-branch.mjs",
     "shipped": "node ../gulnya/tools/shipped.mjs app.kupalinka.vinto",
-    "shipped:all": "node ../gulnya/tools/shipped.mjs"
+    "shipped:all": "node ../gulnya/tools/shipped.mjs",
+    "voice": "node ../gulnya/tools/voice-lint.mjs",
+    "voice:gate": "node ../gulnya/tools/voice-lint.mjs --gate=all"
   },
   "devDependencies": {
     "lefthook": "^2.1.12",

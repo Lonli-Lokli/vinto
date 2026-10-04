@@ -1,23 +1,31 @@
-Vinto est un jeu de cartes de déduction et de bluff, en solo hors ligne ou en multijoueur en ligne avec des amis.
+Vinto! est un jeu de cartes de mémoire et de bluff pour une table de quatre. Jouez en solo contre trois adversaires informatiques, ou en ligne avec des personnes que vous connaissez.
 
-Cinq cartes posées devant vous, face cachée. Au début, vous pouvez en regarder deux. Le reste, il faut le déduire — de ce que les autres piochent, de ce qu'ils jettent, et de ce qu'ils sont soudain prêts à risquer.
+Vous recevez cinq cartes face cachée, et vous pouvez en regarder deux, une seule fois. Le reste est affaire de déduction : ce que les autres piochent, ce qu’ils jettent, et ce qu’ils sont soudain prêts à risquer.
 
-Appelez Vinto quand vous pensez avoir la main la plus basse. Si vous avez raison, ça paie. Si vous avez tort, ça coûte.
+À votre tour, piochez dans la pioche, ou prenez dans la défausse une carte d’action encore inutilisée. Échangez-la dans votre main, utilisez son action ou jetez-la. Ensuite, quiconque détient une carte du même rang peut jeter la sienne en riposte, et une manche peut basculer en une seconde.
 
-POURQUOI VINTO
-• On apprend en jouant — le tutoriel distribue une vraie manche et vous guide sur votre propre main au fil du jeu. Pas de règles à lire, pas de vidéo, et vous pouvez le passer pour jouer directement.
-• Jouez avec des gens que vous connaissez — ouvrez une table et envoyez six caractères. Quiconque les reçoit rejoint la partie. Pas de compte, pas d'inscription, pas de liste d'amis, et rien à installer pour qui préfère jouer dans son navigateur.
-• Trois adversaires qui réfléchissent vraiment — les joueurs informatiques explorent la partie plutôt que de suivre un script, à trois niveaux de difficulté. En solo, tout fonctionne hors ligne.
-• Chaque carte fait quelque chose — regarder une de vos cartes, regarder celle d'un autre joueur, échanger deux cartes à l'aveugle, ou forcer toute la table à jeter un rang. Savoir quand NE PAS en jouer une, c'est l'essentiel du jeu.
-• À votre rythme — calme le temps d'apprendre, vif une fois que c'est fait. Thème clair et sombre, tous deux pensés pour le contraste, et rien à table ne se distingue par la seule couleur.
-• Rien à acheter, rien à regarder — pas de publicité, jamais. Pas de compte. Le comptage anonyme peut être désactivé dans les réglages, et il n'a jamais porté de nom pour commencer.
+Appelez Vinto quand vous pensez avoir la main la plus basse. Tous les autres jouent encore un tour en équipe, et la plus basse de leurs mains est comparée à la vôtre. Si vous avez raison, cela paie. Si vous avez tort, cela coûte.
 
-DÉROULEMENT D'UN TOUR
-Piochez dans la pioche, ou prenez la carte action posée sur la défausse. Échangez-la dans votre main, utilisez son effet, ou jetez-la. Ensuite, quiconque détient une carte du même rang peut la jeter à son tour — c'est là qu'une manche peut basculer en une seconde, dans un sens comme dans l'autre.
+Les manches sont courtes : de celles qu’on rejoue quatre fois parce que la première s’est terminée en dispute.
 
-Les cartes numérotées valent leur chiffre. Les cartes action valent dix points. Le Roi ne vaut rien du tout, et le Joker retire un point. Une main que vous ne voyez pas est une main que vous ne pouvez pas évaluer — voilà tout le problème.
+Les cartes de 2 à 10 valent leur chiffre, les Valets et les Dames valent 10, et un As vaut 1. Un Roi ne vaut rien, et un Joker retire un point à votre total. Une main qu’on ne voit pas est une main qu’on ne peut pas évaluer, et c’est tout le problème.
 
-POUR QUI
-Pour qui aime un jeu de cartes avec du bluff et une manche courte — le genre de jeu qu'on refait quatre fois de suite parce que la première s'est terminée en dispute. C'est une famille de jeux qu'on joue autour d'une table de cuisine depuis des années ; en voici la version, avec trois adversaires toujours disponibles et une table que vous pouvez ouvrir pour les vôtres.
+Huit des quatorze rangs ont une action. Un 7 ou un 8 permet de regarder une de vos cartes, un 9 ou un 10 une carte de quelqu’un d’autre. Un Valet échange deux cartes à l’aveugle, et une Dame en montre deux avant que vous décidiez de les échanger ou non.
 
-Gardez peu. Sachez plus.
+Un As force un autre joueur à piocher une carte de pénalité. Un Roi nomme n’importe quelle carte de la table, et si le nom est juste, vous jouez l’action de cette carte. Savoir quand ne pas utiliser une action, c’est l’essentiel du jeu.
+
+Les trois adversaires informatiques anticipent les coups possibles au lieu de suivre un script. Vous pouvez les régler sur Facile, Modéré ou Difficile. Le jeu solo fonctionne entièrement hors ligne.
+
+La leçon, sous Comment jouer, distribue une vraie manche et vous guide à travers votre propre main. Vous pouvez la passer, et le bouton ? explique chaque carte à tout moment d’une partie.
+
+Pour jouer à plusieurs, ouvrez une salle et envoyez son code de six caractères. Quiconque a le code prend une place, et des bots occupent les places que personne ne prend. Aucun compte n’est nécessaire, et un ami sans l’application peut jouer dans un navigateur web.
+
+Une salle peut être privée, accessible par code uniquement, ou répertoriée pour que tout le monde puisse la rejoindre. Les noms des joueurs viennent d’une liste fixe, et il n’y a aucun champ de saisie dans l’application.
+
+Les thèmes clair et sombre sont tous deux vérifiés pour le contraste, et rien à table ne se distingue par la seule couleur. Le mouvement peut être réduit, le rythme se règle de Calme à Vif, et chaque bouton a une étiquette pour les lecteurs d’écran.
+
+L’application est gratuite, et rien n’y est verrouillé. Il n’y a pas de publicité. Un pourboire facultatif dans les Paramètres revient au développeur et n’ajoute rien au jeu.
+
+L’application garde des comptages anonymes sur la façon dont les manches se jouent, sans aucun nom. Vous pouvez désactiver ce comptage dans les Paramètres.
+
+Vinto! est un jeu de cartes conçu et publié par d’autres personnes, sur vinto.game. Ceci est une application non officielle pour y jouer.

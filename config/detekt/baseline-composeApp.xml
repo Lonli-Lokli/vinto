@@ -11,7 +11,6 @@
     <ID>CascadingCallWrapping:FontCoverageTest.kt:FontCoverageTest$replace("&amp;lt;", "&lt;")</ID>
     <ID>CascadingCallWrapping:LandingTest.kt:LandingTest$single()</ID>
     <ID>CascadingCallWrapping:QueenAimTest.kt:QueenAimTest$boundsInRoot</ID>
-    <ID>CascadingCallWrapping:TossInAreaTest.kt:TossInAreaTest$endsWith("cards left in the deck")</ID>
     <ID>CascadingCallWrapping:WebShellTest.kt:WebShellTest$value</ID>
     <ID>ClassOrdering:CardStage.kt:Stage$/** * A card being shown off where it lies, or null. Read by the pile as well as drawn: while * a card is being flourished it has not landed anywhere, so nothing else may draw it. */ var flourish: Pair&lt;CardView, Anchor&gt;? by mutableStateOf(null)</ID>
     <ID>ClassOrdering:CardStage.kt:Stage$/** * Cards the stepped view already shows face-up whose reveal has not been *played* yet. * * The table steps to the position a move produced before its scenes play, and at * scoring that position has every hand face-up — so without this the whole table * flashed over in one frame and the seat-by-seat reveal turned cards that were already * showing. A concealed card draws its back until its reveal scene starts, and the flip * is then `CardFace`'s own animation, in place, one seat at a time. */ internal val concealing = mutableStateListOf&lt;Anchor&gt;()</ID>

@@ -1,9 +1,7 @@
 Primeira versão do Vinto.
 
-Cinco cartas, duas vistas, três oponentes desvendando as deles. Chame Vinto quando achar que tem a menor mão.
+Cinco cartas, duas que você já viu e três adversários descobrindo as deles ao mesmo tempo. Chame Vinto quando achar que a sua mão é a menor. Acertar compensa, e errar custa caro.
 
-Jogue sozinho contra o computador, totalmente offline, em três níveis. Ou abra uma sala e envie seis caracteres — sem conta, sem cadastro.
+Jogo solo contra o computador em três níveis, totalmente offline. Ou abra uma sala, envie seis caracteres e quem os receber está na mesa. Sem conta, sem cadastro.
 
-Tutorial que distribui uma rodada de verdade, pode ser pulado.
-
-Obrigado por jogar.
+Há um tutorial que distribui uma rodada de verdade em vez de recitar regras, e dá para pular.

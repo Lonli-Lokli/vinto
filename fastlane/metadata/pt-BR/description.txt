@@ -1,21 +1,31 @@
-Cinco cartas na sua frente, viradas para baixo. No início você pode olhar duas delas. O resto você precisa descobrir — pelo que os outros compram, pelo que descartam, e pelo que de repente estão dispostos a arriscar.
+Vinto! é um jogo de cartas de memória e blefe para uma mesa de quatro. Jogue sozinho contra três adversários controlados pelo computador, ou online com pessoas que você conhece.
 
-Chame Vinto quando achar que sua mão é a menor. Acertar compensa. Errar custa caro.
+Você recebe cinco cartas viradas para baixo e pode olhar duas delas, uma única vez. O resto é dedução: o que os outros compram, o que descartam e o que de repente aceitam arriscar.
 
-POR QUE JOGAR VINTO
-• Você aprende jogando — o tutorial distribui uma rodada de verdade e te guia pela sua própria mão enquanto ela acontece. Sem manual, sem vídeo, e dá para pular e já começar a jogar.
-• Jogue com quem você conhece — abra uma sala e envie seis caracteres. Quem os receber está na mesa. Sem conta, sem cadastro, sem lista de amigos, e nada para instalar para quem preferir jogar pelo navegador.
-• Três oponentes que realmente pensam — os jogadores do computador calculam a jogada em vez de seguir um roteiro, em três níveis de dificuldade. O modo solo funciona totalmente offline.
-• Toda carta faz alguma coisa — olhar uma das suas, olhar a de outra pessoa, trocar duas cartas às cegas, ou fazer a mesa toda descartar uma carta de um valor. Saber quando NÃO usar uma é boa parte da estratégia.
-• No seu ritmo — calmo enquanto você está aprendendo, rápido depois que já sabe. Temas claro e escuro, os dois medidos para contraste, e nada na mesa é diferenciado só pela cor.
-• Nada para comprar e nada para assistir — sem anúncios, nem agora nem nunca. Sem conta. A contagem anônima pode ser desativada em Configurações, e ela nunca carregou um nome, para começo de conversa.
+Na sua vez, compre do baralho ou pegue do descarte uma carta de ação que ninguém usou. Troque-a por uma carta da sua mão, use a ação dela ou descarte. Depois, quem tiver uma carta do mesmo valor pode jogá-la por cima, e uma rodada pode virar em um segundo.
 
-COMO FUNCIONA UMA RODADA
-Compre do monte, ou pegue a carta de ação que está no topo do descarte. Coloque-a na mão, use o que ela faz, ou descarte. Depois, qualquer um que tiver uma carta do mesmo valor pode descartar a sua também — e é aí que uma rodada pode virar de ponta-cabeça em um segundo, para qualquer lado.
+Chame Vinto quando achar que a sua mão é a menor. Os outros jogam mais uma vez, como equipe, e a menor mão entre eles é comparada com a sua. Se você acertar, compensa. Se errar, custa caro.
 
-Cartas numéricas valem o número que mostram. Cartas de ação valem dez. O Rei não vale nada, e o Curinga tira um ponto. Então uma mão que você não vê é uma mão que você não consegue calcular — e esse é o problema todo.
+As rodadas são curtas, do tipo que se joga quatro vezes porque a primeira terminou em discussão.
 
-PARA QUEM É
-Para quem gosta de um jogo de cartas com blefe e rodada curta — do tipo que é jogado quatro vezes seguidas porque a primeira terminou em discussão. É uma família de jogos que as pessoas jogam há anos ao redor da mesa da cozinha; este é esse jogo, com três oponentes sempre disponíveis e uma mesa que você pode abrir para os seus.
+As cartas de 2 a 10 valem o número que mostram, Valetes e Damas valem 10 e o Ás vale 1. O Rei vale zero, e o Coringa tira um do seu total. Uma mão que não se vê é uma mão que não se consegue calcular, e esse é todo o problema.
 
-Guarde menos. Saiba mais.
+Oito dos catorze valores têm uma ação. Um 7 ou um 8 deixa você olhar uma das suas cartas, e um 9 ou um 10 deixa olhar a de outra pessoa. O Valete troca duas cartas às cegas, e a Dama mostra duas antes de você decidir se troca.
+
+O Ás faz outro jogador comprar uma carta de penalidade. O Rei diz o valor de qualquer carta da mesa e, se o valor estiver certo, você joga a ação dessa carta. Saber quando não gastar uma ação é quase toda a habilidade.
+
+Os três adversários do computador analisam jogadas futuras em vez de seguir um roteiro. Você pode ajustá-los para Fácil, Médio ou Difícil. O jogo solo funciona totalmente offline.
+
+A lição em Como jogar distribui uma rodada de verdade e acompanha você pela sua própria mão enquanto ela acontece. Dá para pular, e o botão ? explica cada carta a qualquer momento de uma partida.
+
+Para jogar com outras pessoas, abra uma sala e envie o código de seis caracteres. Quem tiver o código senta à mesa, e bots ocupam os lugares que ninguém ocupar. Ninguém precisa de conta, e um amigo sem o app pode jogar no navegador.
+
+Uma sala pode ser privada, só por código, ou listada para qualquer pessoa entrar. Os nomes dos jogadores vêm de uma lista fixa, e não há campo de texto em lugar nenhum do app.
+
+Os temas claro e escuro têm o contraste verificado, e nada na mesa se distingue só pela cor. O movimento pode ser reduzido, o ritmo vai de Calmo a Rápido, e todo botão tem um rótulo para leitores de tela.
+
+O app é grátis, e nada nele está bloqueado. Não há anúncios. Uma gorjeta opcional em Configurações vai para o desenvolvedor e não acrescenta nada ao jogo.
+
+O app guarda contagens anônimas de como as rodadas são jogadas, sem nenhum nome. Você pode desligar a contagem em Configurações.
+
+Vinto! é um jogo de cartas criado e publicado por outras pessoas, em vinto.game. Este é um app não oficial para jogá-lo.

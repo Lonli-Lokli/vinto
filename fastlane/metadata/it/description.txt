@@ -1,21 +1,31 @@
-Cinque carte davanti a te, coperte. All'inizio puoi guardarne due. Tutto il resto devi capirlo da solo — da quello che gli altri pescano, da quello che scartano, e da quello che a un certo punto sono disposti a rischiare.
+Vinto! è un gioco di carte di memoria e bluff per un tavolo da quattro. Gioca da solo contro tre avversari controllati dal computer, oppure online con persone che conosci.
 
-Dichiara Vinto quando pensi di avere il punteggio più basso. Se hai ragione, ci guadagni. Se sbagli, lo paghi.
+Ricevi cinque carte coperte e puoi guardarne due, una sola volta. Il resto è deduzione: cosa pescano gli altri, cosa scartano e cosa, a un certo punto, sono disposti a rischiare.
 
-PERCHÉ VINTO
-• Si impara giocando — il tutorial ti fa giocare un round vero e ti guida attraverso la tua mano mentre succede. Niente regolamento, niente video, e puoi saltarlo e iniziare subito.
-• Gioca con persone che conosci davvero — apri una stanza e invia sei caratteri. Chi li riceve è al tavolo. Nessun account, nessuna registrazione, nessuna lista amici, e niente da installare per chi preferisce giocare dal browser.
-• Tre avversari che ragionano davvero — i giocatori automatici esplorano la partita invece di seguire uno schema fisso, a tre livelli di difficoltà. In solitaria si gioca completamente offline.
-• Ogni carta fa qualcosa — guarda una delle tue carte, guarda quella di qualcun altro, scambia due carte alla cieca, oppure costringi tutto il tavolo a scartare un rango. Sapere quando NON usarne una è gran parte dell'abilità.
-• Il tuo ritmo — calmo mentre impari, veloce quando non ne hai più bisogno. Tema chiaro e scuro, entrambi misurati per il contrasto, e nulla al tavolo si distingue solo per colore.
-• Niente da comprare e niente da guardare — nessuna pubblicità, ora e mai. Nessun account. Il conteggio anonimo si può disattivare nelle Impostazioni, e non ha mai portato un nome.
+Nel tuo turno pesca dal mazzo oppure prendi dalla pila degli scarti una carta azione che nessuno ha usato. Puoi scambiarla con una carta della tua mano, usarne l’azione o buttarla via. Poi chiunque abbia una carta dello stesso valore può buttare dentro la sua, e un round può cambiare in un attimo.
 
-COME FUNZIONA UN TURNO
-Pesca dal mazzo, oppure prendi la carta azione che sta sulla pila degli scarti. Mettila nella tua mano, usa il suo effetto, oppure buttala via. Poi chiunque abbia in mano una carta dello stesso rango può gettarla a sua volta — ed è qui che un round può ribaltarsi in un secondo, in entrambe le direzioni.
+Chiama Vinto quando pensi che la tua mano sia la più bassa. Tutti gli altri hanno ancora un turno, come squadra, e la più bassa delle loro mani viene confrontata con la tua. Se hai ragione ci guadagni, se sbagli lo paghi.
 
-Le carte numeriche valgono il loro valore. Le carte azione valgono dieci. Il Re non vale nulla, e il Jolly toglie un punto. Quindi una mano che non vedi è una mano che non puoi stimare, ed è proprio questo il problema.
+I round sono brevi, di quelli che si giocano quattro volte perché il primo è finito in una discussione.
 
-PER CHI È
-Per chiunque ami un gioco di carte con un po' di bluff e un round breve — di quelli che si rigiocano quattro volte perché il primo è finito in una discussione. È una famiglia di giochi che si gioca da anni intorno ai tavoli di cucina; questo è quel gioco, con tre avversari sempre disponibili e un tavolo che puoi aprire per il tuo.
+Le carte da 2 a 10 valgono il loro numero, Fanti e Regine valgono 10 e un Asso vale 1. Un Re non vale nulla e un Jolly toglie uno dal totale. Una mano che non vedi è una mano che non puoi valutare, ed è tutto il problema.
 
-Tieni meno. Sai di più.
+Otto dei quattordici valori hanno un’azione. Un 7 o un 8 ti fa guardare una delle tue carte, un 9 o un 10 una carta di qualcun altro. Un Fante scambia due carte alla cieca e una Regina te ne mostra due prima che tu decida se scambiarle.
+
+Un Asso fa pescare una carta di penalità a un altro giocatore. Un Re nomina una carta qualsiasi sul tavolo e, se il nome è giusto, ne giochi l’azione. Sapere quando non usare un’azione è gran parte dell’abilità.
+
+I tre avversari controllati dal computer guardano avanti tra le mosse possibili invece di seguire un copione. Puoi impostarli su Facile, Moderata o Difficile. Il gioco in solitaria funziona completamente offline.
+
+La lezione in Come si gioca distribuisce un round vero e ti accompagna passo passo nella tua mano. Puoi saltarla, e il pulsante ? spiega ogni carta in qualsiasi momento della partita.
+
+Per giocare in più persone, apri una stanza e invia il suo codice di sei caratteri. Chi ha il codice si siede al tavolo, e i bot occupano i posti che nessuno prende. Non serve nessun account, e un amico senza l’app può giocare in un browser web.
+
+Una stanza può essere privata, solo con il codice, oppure in elenco, aperta a chiunque. I nomi dei giocatori vengono da un elenco fisso e in tutta l’app non c’è nessuna casella di testo.
+
+Il tema chiaro e quello scuro sono entrambi verificati per il contrasto, e nulla al tavolo si distingue solo dal colore. Il movimento si può ridurre, il ritmo si regola da Calmo a Rapido e ogni pulsante ha un’etichetta per gli screen reader.
+
+L’app è gratuita e nulla è bloccato. Non ci sono pubblicità. Una mancia facoltativa nelle Impostazioni va allo sviluppatore e non aggiunge nulla al gioco.
+
+L’app conserva conteggi anonimi su come si giocano i round, senza alcun nome. Puoi disattivare il conteggio nelle Impostazioni.
+
+Vinto! è un gioco di carte ideato e pubblicato da altri, su vinto.game. Questa è un’app non ufficiale per giocarlo.

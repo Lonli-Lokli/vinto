@@ -1,21 +1,31 @@
-Pięć kart, ułożonych zakrytych rzędem. Na początku wolno zerknąć na dwie z nich. Resztę trzeba odgadnąć — po tym, co inni dobierają, co odrzucają i na co nagle są gotowi zaryzykować.
+Vinto! to karciana gra pamięci i blefu dla czterech osób przy stole. Grasz solo przeciwko trzem komputerowym przeciwnikom albo online ze znajomymi.
 
-Vinto wywołuje się wtedy, gdy własna ręka wydaje się najniższa. Trafiona decyzja się opłaca. Chybiona — kosztuje.
+Dostajesz pięć kart zakrytych i możesz raz spojrzeć na dwie z nich. Resztę trzeba wydedukować: co inni dobierają, co odrzucają i na co nagle są gotowi zaryzykować.
 
-DLACZEGO VINTO
-• Reguł uczy sama gra — samouczek rozdaje prawdziwą rundę i tłumaczy kolejne posunięcia na bieżąco. Bez instrukcji, bez filmu, a w każdej chwili można go pominąć i zacząć grać.
-• Gra z ludźmi, których się zna — wystarczy otworzyć stół i przesłać sześć znaków. Kto je dostanie, siada przy stole. Bez konta, bez rejestracji, bez listy znajomych, i bez niczego do instalowania dla tych, którzy wolą grać w przeglądarce.
-• Trzej przeciwnicy, którzy naprawdę myślą — komputerowi gracze przeszukują grę zamiast trzymać się schematu, na trzech poziomach trudności. Tryb solo działa w pełni offline.
-• Każda karta coś robi — pozwala zerknąć na własną, zerknąć na cudzą, zamienić dwie karty w ciemno albo zmusić cały stół do dorzucenia karty tej samej rangi. To, kiedy NIE użyć karty, jest ważniejsze niż to, kiedy jej użyć.
-• Własne tempo — spokojne na początku, szybsze, gdy gra jest już znana. Jasny i ciemny motyw, oba dopracowane pod kątem kontrastu, i nic przy stole nie da się rozpoznać wyłącznie po kolorze.
-• Nic do kupienia i nic do oglądania — żadnych reklam, ani teraz, ani nigdy. Żadnego konta. Anonimowe liczniki można wyłączyć w ustawieniach, a i tak nigdy nie były niczyje.
+W swojej turze dobierasz kartę z talii albo bierzesz nieużytą kartę akcji ze stosu kart odrzuconych. Możesz ją wymienić do ręki, użyć jej akcji albo odrzucić. Potem każdy, kto ma kartę tej samej rangi, może dorzucić swoją, a runda potrafi się odwrócić w sekundę.
 
-JAK WYGLĄDA TURA
-Dobiera się kartę z talii albo bierze kartę akcji leżącą na stosie odrzuconych. Można ją zamienić do ręki, użyć jej działania albo odrzucić. Potem każdy, kto trzyma kartę tej samej rangi, może dorzucić swoją — i to właśnie wtedy runda potrafi się odwrócić w ułamku sekundy, w każdą stronę.
+Zawołaj Vinto, gdy uważasz, że Twoja ręka jest najniższa. Wszyscy pozostali dostają jeszcze jedną turę jako drużyna, a ich najniższa ręka jest porównywana z Twoją. Trafna decyzja się opłaca, błędna kosztuje.
 
-Karty liczbowe liczą się według swojej wartości. Karty akcji — dziesięć punktów. Król nie daje nic, a Joker odejmuje jeden punkt. Ręka, której nie widać, jest ręką, której nie da się wycenić — i o to w tej grze chodzi.
+Rundy są krótkie: takie, które gra się cztery razy, bo pierwsza skończyła się kłótnią.
 
-DLA KOGO JEST TA GRA
-Dla każdego, kto lubi karcianki z odrobiną blefu i krótką rundą — takie, które gra się cztery razy z rzędu, bo pierwsza skończyła się sprzeczką. To gra z rodziny znanej od lat przy kuchennych stołach — a tutaj są trzej przeciwnicy zawsze gotowi do gry i stół, który można otworzyć dla własnych ludzi.
+Karty od 2 do 10 liczą się według swojej liczby, Walety i Damy za 10, a As za 1. Król nie liczy się wcale, a Joker odejmuje jeden od Twojej sumy. Ręka, której nie widać, to ręka, której nie da się wycenić, i na tym polega cały problem.
 
-Miej mniej. Wiedz więcej.
+Osiem z czternastu rang ma akcję. Karta 7 albo 8 pozwala spojrzeć na jedną z własnych kart, a 9 albo 10 na kartę kogoś innego. Walet zamienia dwie karty w ciemno, a Dama pokazuje dwie, zanim zdecydujesz, czy je zamienić.
+
+As sprawia, że inny gracz dobiera kartę karną. Król nazywa dowolną kartę na stole, a jeśli nazwa jest trafna, rozgrywasz akcję tej karty. Wiedza, kiedy nie użyć akcji, to większość umiejętności.
+
+Trzej komputerowi przeciwnicy przeszukują możliwe ruchy zamiast trzymać się scenariusza. Możesz ustawić poziom Łatwy, Średni albo Trudny. Gra solo działa w pełni offline.
+
+Lekcja w sekcji „Jak grać” rozdaje prawdziwą rundę i na bieżąco omawia Twoją rękę. Możesz ją pominąć, a przycisk ? w dowolnej chwili gry wyjaśnia każdą kartę.
+
+W trybie wieloosobowym otwierasz pokój i wysyłasz jego sześcioznakowy kod. Kto ma kod, zajmuje miejsce, a boty wypełniają miejsca, których nikt nie zajął. Nikt nie potrzebuje konta, a znajomy bez aplikacji może grać w przeglądarce.
+
+Pokój może być prywatny, wyłącznie z kodem, albo widoczny na liście dla każdego chętnego. Imiona graczy pochodzą ze stałej listy, a w aplikacji nigdzie nie ma pola tekstowego.
+
+Jasny i ciemny motyw mają sprawdzony kontrast, a nic przy stole nie jest odróżniane samym kolorem. Ruch można ograniczyć, tempo ustawić od „Spokojne” do „Żwawe”, a każdy przycisk ma etykietę dla czytników ekranu.
+
+Aplikacja jest darmowa i nic w niej nie jest zablokowane. Nie ma reklam. Opcjonalny napiwek w Ustawieniach trafia do twórcy i niczego nie dodaje do gry.
+
+Aplikacja zlicza anonimowo, jak rozgrywane są rundy, bez żadnych imion. Liczenie można wyłączyć w Ustawieniach.
+
+Vinto! to gra karciana zaprojektowana i wydana przez inne osoby, na vinto.game. To nieoficjalna aplikacja do grania w nią.

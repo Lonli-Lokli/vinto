@@ -24,7 +24,7 @@
     <!-- ================================================================ online -->
     <string name="online_screen_title">Main online</string>
     <string name="online_nickname">Nama Anda di meja</string>
-    <string name="online_nickname_detail">Yang terlihat oleh kursi lain. Ketuk untuk mengganti. Bukan akun — memang tidak ada akun.</string>
+    <string name="online_nickname_detail">Yang dilihat kursi lain. Ketuk wajahnya untuk menggantinya. Tidak ada akun.</string>
     <string name="online_avatar_name">Beri saya nama lain</string>
     <string name="online_avatar_pick">Pilih wajah yang berbeda</string>
     <string name="online_avatar_ground">Warnanya</string>
@@ -95,17 +95,17 @@
     <!-- The lobby: who is in, what everybody is waiting for. -->
     <string name="lobby_title">Ruangan %1$s</string>
     <string name="lobby_seat_open">Kursi kosong</string>
-    <string name="lobby_seat_you">%1$s — Anda</string>
+    <string name="lobby_seat_you">%1$s (Anda)</string>
     <string name="lobby_add_bot">Tambah bot</string>
     <string name="lobby_remove_bot">Hapus bot di kursi %1$d</string>
     <string name="lobby_leave">Tinggalkan ruangan</string>
     <string name="online_session_over_title">Sesi telah berakhir</string>
     <string name="online_session_over_home">Kembali ke menu</string>
     <string name="lobby_connecting">Menghubungi ruangan…</string>
-    <string name="lobby_needs_human">Permainan butuh dua orang. Bagikan kodenya — bot bisa mengisi sisa meja.</string>
+    <string name="lobby_needs_human">Permainan butuh dua orang. Bagikan kodenya. Bot bisa mengisi sisa meja.</string>
     <string name="lobby_fill_seats">Setiap kursi ikut bermain. Isi yang kosong dengan orang atau bot, dan hitung mundur pembagian kartu akan dimulai sendiri.</string>
-    <string name="lobby_counting_down">Semua siap — membagi kartu dalam %1$d…</string>
-    <string name="lobby_offered_bots">Tidak ada yang datang lagi, jadi bot mengisi kursi yang kosong — membagi kartu dalam %1$d…. Hapus satu untuk terus menunggu.</string>
+    <string name="lobby_counting_down">Semua siap. Kartu dibagikan dalam %1$d…</string>
+    <string name="lobby_offered_bots">Tidak ada yang datang, jadi bot mengisi kursi kosong. Kartu dibagikan dalam %1$d…. Hapus satu bot untuk terus menunggu.</string>
     <string name="lobby_over">Ruangan ini sudah berakhir.</string>
     <string name="lobby_unreachable">Tidak dapat menjangkau ruangan itu. Periksa kode, atau koneksi Anda.</string>
     <string name="lobby_retry">Coba lagi</string>
@@ -133,10 +133,10 @@
     <string name="settings_group_about">Tentang</string>
 
     <string name="settings_support">Dukung permainan ini</string>
-    <string name="settings_support_detail">Jika Anda menikmatinya dan ingin mengatakannya. Ini tidak membuka apa pun — tidak ada yang terkunci.</string>
-    <string name="settings_support_buy">Ucapkan terima kasih — %1$s</string>
+    <string name="settings_support_detail">Jika Anda menikmatinya dan ingin menyampaikannya. Ini tidak menambah apa pun pada permainan, karena tidak ada yang terkunci.</string>
+    <string name="settings_support_buy">Ucapkan terima kasih (%1$s)</string>
     <string name="settings_support_link">Ucapkan terima kasih</string>
-    <string name="settings_support_link_detail">Membuka halaman tempat Anda memilih jumlahnya. Versi ponsel tidak bisa melakukan itu — pembayaran di sana diambil alih toko aplikasi, dan aturannya yang menetapkan harga.</string>
+    <string name="settings_support_link_detail">Membuka halaman tempat Anda memilih jumlahnya. Versi ponsel tidak bisa melakukannya: pembayaran di sana ditangani toko aplikasi, dan aturannya yang menetapkan harga.</string>
     <string name="settings_support_unavailable">Belum tersedia di sini. Tidak ada yang bisa dilakukan dari layar ini; ini butuh toko aplikasi, dan ponsel akan mendapatkannya lebih dulu.</string>
     <string name="settings_support_thanks">Terima kasih. Sungguh.</string>
     <string name="settings_support_given">Berterima kasih: %1$d kali</string>
@@ -159,7 +159,7 @@
     <string name="settings_share">Beri tahu seseorang</string>
     <string name="settings_share_detail">Kirim permainan ini ke teman. Empat kursi, dan tiga di antaranya bisa jadi bot.</string>
     <string name="settings_share_subject">Vinto</string>
-    <string name="settings_share_body">Vinto — permainan kartu memegang lebih sedikit dan tahu lebih banyak. Gratis, di peramban, tanpa pendaftaran: %1$s</string>
+    <string name="settings_share_body">Vinto adalah permainan kartu ingatan dan gertak. Mainkan gratis di peramban, tanpa pendaftaran: %1$s</string>
     <string name="settings_back">Kembali</string>
 
     <string name="settings_bots">Bot</string>
@@ -181,19 +181,19 @@
     <string name="theme_dark">Gelap</string>
 
     <string name="settings_motion">Gerakan</string>
-    <string name="settings_motion_detail">Apakah kartu melayang, atau langsung muncul di tempatnya. Dikurangi tetap menyimpan setiap cincin, hasil, dan jeda — permainan tetap dinarasikan, hanya saja tidak bergerak. Sistem mengikuti pengaturan aksesibilitas perangkat Anda.</string>
+    <string name="settings_motion_detail">Apakah kartu melayang, atau langsung muncul di tempatnya. Opsi Dikurangi tetap menyimpan setiap cincin, hasil, dan jeda: permainan tetap memberi tahu apa yang terjadi, tetapi tidak ada yang bergerak. Opsi Sistem mengikuti pengaturan aksesibilitas perangkat Anda.</string>
     <string name="motion_system">Sistem</string>
     <string name="motion_full">Penuh</string>
     <string name="motion_reduced">Dikurangi</string>
 
     <string name="settings_sound">Suara</string>
-    <string name="settings_sound_detail">Kartu dibagikan, kartu mendarat, penalti, ronde berakhir — dan tidak ada yang lain.</string>
+    <string name="settings_sound_detail">Kartu dibagikan, kartu mendarat, penalti, dan ronde berakhir. Tidak ada suara lain.</string>
     <string name="settings_haptics">Getaran</string>
     <string name="settings_awake">Biarkan layar menyala</string>
-    <string name="settings_awake_detail">Satu ronde lebih banyak menonton daripada menyentuh, dan ponsel menganggapnya diam. Aktif, layar tetap menyala selama ronde berlangsung — dan hanya saat itu.</string>
+    <string name="settings_awake_detail">Satu ronde lebih banyak menonton daripada mengetuk, dan ponsel menganggapnya diam. Jika diaktifkan, layar tetap menyala selama ronde berlangsung, dan hanya saat itu.</string>
     <string name="settings_haptics_detail">Sentakan kecil di jempol saat kartu disentuh, langkah berhasil, atau aturan berlaku.</string>
     <string name="settings_analytics">Hitungan anonim</string>
-    <string name="settings_analytics_detail">Berapa banyak ronde yang dimainkan, dan berapa lama waktunya. Tidak pernah nama Anda, kode ruangan Anda, atau apa pun yang bisa mengarah kembali ke Anda — tidak ada tempat dalam yang kami kirim untuk menaruhnya. Mematikan ini tidak mengirim apa pun sama sekali.</string>
+    <string name="settings_analytics_detail">Berapa ronde yang dimainkan dan berapa lama waktunya. Tidak pernah nama Anda, kode ruangan, atau apa pun yang bisa mengarah kembali kepada Anda: data yang kami kirim tidak punya tempat untuk itu. Jika dimatikan, tidak ada yang dikirim sama sekali.</string>
     <string name="settings_on">Nyala</string>
     <string name="settings_off">Mati</string>
 
@@ -201,7 +201,7 @@
     <string name="settings_saved_game_detail">Ada ronde yang sedang berlangsung. Melupakannya tidak bisa dibatalkan, dan skor berjalan sesi itu ikut hilang.</string>
     <string name="settings_forget">Lupakan itu</string>
     <string name="settings_record">Rekam jejak Anda</string>
-    <string name="settings_record_detail">Ronde yang dimainkan, berapa yang Anda menangkan, tangan terbaik Anda dan rentetan kemenangan Anda. Disimpan hanya di perangkat ini — tidak pernah dikirim ke mana pun.</string>
+    <string name="settings_record_detail">Ronde yang dimainkan, berapa yang Anda menangkan, tangan terbaik, dan rentetan kemenangan. Hanya disimpan di perangkat ini dan tidak pernah dikirim ke mana pun.</string>
     <string name="settings_forget_record">Hapus itu</string>
 
     <!-- ================================================================ the table -->
@@ -236,8 +236,8 @@
     <string name="detail_ace_hurts_your_side">Kartu pemanggil di luar jangkauan, jadi Ace hanya bisa membuat seseorang dari pihak Anda sendiri mengambil kartu.</string>
     <string name="talk_low">Anda mengatakan tangan Anda yang rendah.</string>
     <string name="talk_low_they">%1$s mengatakan tangannya yang rendah.</string>
-    <string name="talk_high">Anda mengatakan tangan Anda yang tinggi — kirim kartu buruk Anda ke sini.</string>
-    <string name="talk_high_they">%1$s mengatakan tangannya yang tinggi — kirim kartu buruk ke sana.</string>
+    <string name="talk_high">Anda mengatakan tangan Anda tinggi: kirimkan kartu buruk Anda.</string>
+    <string name="talk_high_they">%1$s mengatakan tangannya tinggi: kirimkan kartu buruk Anda kepadanya.</string>
     <string name="talk_bin">Anda mengatakan sudah keluar dari perhitungan, dan menawarkan diri sebagai tempat sampah.</string>
     <string name="talk_bin_they">%1$s sudah keluar dari perhitungan, dan menawarkan diri sebagai tempat sampah.</string>
     <string name="talk_will_shed">Anda mengatakan akan melempar masuk %1$s begitu muncul.</string>
@@ -274,15 +274,15 @@
     <string name="header_settings">Pengaturan</string>
     <string name="header_rules">Aturan</string>
     <string name="header_leave">Tinggalkan meja</string>
-    <string name="header_deck_left">%1$d kartu tersisa di dek</string>
-    <string name="header_deck_badge">%1$d di dek — apa artinya itu</string>
+    <string name="header_deck_left">Kartu tersisa di dek: %1$d</string>
+    <string name="header_deck_badge">%1$d di dek. Artinya</string>
 
     <!-- What the deck count means, when it is asked. -->
-    <string name="pile_take_live">Belum ada yang menggunakan kartu ini. Pada giliran Anda, Anda bisa mengambilnya alih-alih mengambil dari dek — tetapi Anda harus langsung memainkannya, dan kartu ini tidak bisa masuk ke tangan Anda.</string>
+    <string name="pile_take_live">Belum ada yang memakai kartu ini. Pada giliran Anda, kartu ini bisa diambil sebagai ganti mengambil dari dek. Setelah itu kartu harus langsung dimainkan dan tidak bisa masuk ke tangan Anda.</string>
     <string name="pile_take_spent">Aksinya sudah digunakan, jadi kartu ini tidak bisa diambil. Anda masih bisa melempar masuk kartu yang cocok di atasnya.</string>
     <string name="pile_take_none">Kartu ini tidak punya aksi, jadi tidak bisa diambil. Anda masih bisa melempar masuk kartu yang cocok di atasnya.</string>
     <string name="deck_title">Dek kartu</string>
-    <string name="deck_body">%1$d kartu tersisa untuk diambil.\n\nSaat habis, tumpukan buangan dikocok kembali ke dalamnya dan semua yang dipelajari siapa pun dari mengamati tumpukan itu tidak lagi berguna — termasuk yang Anda pelajari. Ronde yang dek-nya hampir habis adalah ronde yang tepat untuk memanggil Vinto.</string>
+    <string name="deck_body">Kartu tersisa di dek: %1$d.\n\nSaat dek habis, tumpukan buangan dikocok dan menjadi dek lagi. Semua yang dipelajari orang dari mengamati tumpukan itu jadi tidak berguna, termasuk yang Anda pelajari. Ronde yang dek-nya hampir habis cocok untuk memanggil Vinto.</string>
 
     <!-- A card, for somebody who cannot see it. `%1$s` is the rank, `%2$d` its value. -->
     <string name="card_described">%1$s, bernilai %2$d</string>
@@ -304,7 +304,7 @@
     <!-- ================================================================ the score sheet -->
     <string name="score_round">Ronde %1$d</string>
     <string name="score_caller_won">Panggilan Vinto bertahan</string>
-    <string name="score_level">Seri — panggilan bertahan</string>
+    <string name="score_level">Seri. Panggilan bertahan</string>
     <string name="score_coalition_won">Yang lain mengalahkan panggilan itu</string>
     <string name="score_deck_out">Tidak ada yang memanggil</string>
     <string name="score_versus">Vinto %1$d melawan yang terbaik dari mereka %2$d</string>
@@ -316,98 +316,98 @@
     <string name="score_column_game">permainan</string>
     <string name="score_you_called">Anda memanggil Vinto, jadi tangan Anda diadu dengan yang terbaik dari yang lain.</string>
     <string name="score_they_called">%1$s memanggil Vinto, jadi tangan mereka diadu dengan yang terbaik dari Anda.</string>
-    <string name="score_deck_ended">Tidak ada yang memanggil Vinto — dek habis, jadi ronde berakhir dan semua tangan dihitung.</string>
+    <string name="score_deck_ended">Tidak ada yang memanggil Vinto. Dek habis, jadi ronde berakhir dan semua tangan dihitung.</string>
     <string name="score_next_round">Bagikan ronde berikutnya</string>
     <string name="score_stop">Berhenti di sini</string>
 
     <!-- ================================================================ bug report -->
     <string name="report_title">Laporkan masalah</string>
-    <string name="report_body">Ada sesuatu yang dilakukan meja ini yang seharusnya tidak terjadi? Kirim permainannya beserta laporan.\n\nYang dikirim adalah kartu awal ronde itu, setiap langkah sejak itu, dan checksum setelah masing-masing — cukup untuk memutar ulang persis permainan ini, di sini atau di aplikasi web, dan melihat kesalahan yang sama terjadi. Tanpa akun, tanpa detail perangkat, tidak ada apa pun tentang Anda.</string>
+    <string name="report_body">Ada yang dilakukan meja ini dan seharusnya tidak? Kirim permainannya bersama laporan.\n\nYang dikirim adalah pembagian kartu awal, setiap langkah sesudahnya, dan checksum setelah tiap langkah. Itu cukup untuk memutar ulang permainan ini persis, di sini atau di aplikasi web, dan melihat kesalahan yang sama terjadi. Tidak ada data tentang Anda atau perangkat Anda.</string>
     <string name="report_send">Kirim…</string>
     <string name="report_copy">Salin saja</string>
     <string name="report_copied">Disalin ke papan klip</string>
     <string name="report_dismiss">Nanti saja</string>
-    <string name="report_subject">Vinto — laporan masalah</string>
+    <string name="report_subject">Vinto: laporan masalah</string>
 
     <!-- ================================================================ the lesson -->
     <string name="beat_only_look_title">Satu-satunya kesempatan melihat</string>
     <string name="beat_only_look_body">Setiap orang boleh melihat dua kartunya sendiri sebelum ronde dimulai, sekali saja. Setelah itu permainan ini adalah soal ingatan: milik Anda melawan tiga orang lainnya.</string>
-    <string name="beat_peeks_end_body">Kartu-kartu itu tertutup lagi — ingat baik-baik di mana posisinya. Semua orang lain juga sudah melihat dua kartu mereka.</string>
+    <string name="beat_peeks_end_body">Kartu-kartu itu tertutup lagi. Ingat di mana posisinya. Semua orang lain juga sudah melihat dua kartu mereka.</string>
     <string name="beat_name_only_seen_title">Sebutkan hanya yang pernah Anda lihat</string>
-    <string name="beat_name_only_seen_body">Anda pernah melihat kartu ini, jadi Anda tahu apa itu. Sebutkan dengan benar dan Anda memainkan aksinya secara gratis. Sebutkan salah dan Anda mengambil kartu penalti — jadi sebutkan hanya yang Anda yakini.</string>
+    <string name="beat_name_only_seen_body">Anda pernah melihat kartu ini, jadi Anda tahu isinya. Sebutkan dengan benar dan aksinya Anda mainkan gratis. Sebutkan dengan salah dan Anda mengambil kartu penalti. Jadi sebutkan hanya kartu yang Anda yakini.</string>
     <string name="beat_toss_in_title">Siapa pun yang memegang pangkat itu boleh melemparkannya masuk</string>
-    <string name="beat_toss_in_body">Begitu sebuah kartu mendarat terbuka, semua orang mendapat kesempatan untuk melepas kartu yang cocok — dan menggunakan aksinya. Pangkat yang salah membuat Anda mengambil kartu penalti dan menutup kesempatan Anda untuk kartu itu — kartu berikutnya yang mendarat adalah kesempatan baru. Layak dilakukan untuk kartu yang merugikan Anda; King tidak merugikan apa pun jika disimpan.</string>
+    <string name="beat_toss_in_body">Begitu kartu mendarat terbuka, semua orang berkesempatan melepas kartu yang cocok dan memakai aksinya. Peringkat yang salah membuat Anda mengambil kartu penalti dan tidak bisa lagi memakai kartu itu. Kartu berikutnya yang mendarat adalah kesempatan baru. Layak dicoba untuk kartu yang merugikan Anda; Raja tidak merugikan apa pun jika dipegang.</string>
     <string name="beat_watching_body">Perhatikan apa yang mereka ambil dan apa yang mereka letakkan. Itu, dan catatan baris demi baris di bawah ini, adalah semua yang bisa Anda ketahui tentang tangan mereka.</string>
-    <string name="beat_watching_title">%1$s memainkan %2$s — %3$s</string>
+    <string name="beat_watching_title">%1$s memainkan %2$s: %3$s</string>
     <string name="beat_do_not_guess_title">Jangan menebak</string>
     <string name="beat_do_not_guess_body">Anda belum pernah melihat kartu ini, jadi menyebutkannya adalah tebakan, dan tebakan yang salah membuat Anda mengambil kartu penalti. Letakkan saja tanpa berkata apa-apa.</string>
     <string name="beat_final_play_title">%1$s memainkan %2$s</string>
-    <string name="beat_final_play_ace">Ace membuat satu pemain mengambil kartu dari dek, tertutup, dan satu kartu lagi berarti satu poin lagi yang merugikan mereka. Kartu ini tidak bisa dibidikkan ke Anda sekarang — kartu pemanggil di luar jangkauan — jadi ia jatuh ke pihak koalisi sendiri. Perhatikan siapa yang harus mengambil kartu.</string>
-    <string name="beat_final_play_king">King membidik sebuah kartu dan menyebutkan namanya, dan namanya harus tepat. Benar: kartu itu keluar dari tangan tempatnya berada dan aksinya dimainkan. Salah: semua orang melihat kartu itu sebenarnya apa, dan penyebut namanya mengambil kartu penalti. Seorang pemain menyebutkan kartu yang pernah dilihatnya — sering kali salah satu kartunya sendiri, untuk melepaskannya. Di ronde final, King adalah alat milik koalisi semata: pemanggil tidak boleh melempar kartu apa pun masuk, jadi pangkat apa pun yang disebutkan hanya bisa keluar dari tangan koalisi sendiri.</string>
-    <string name="beat_final_play_look">9 atau 10 melihat satu kartu di tangan orang lain. Di ronde final itulah cara koalisi mengetahui apa yang sedang mereka pegang, karena kartu Anda di luar jangkauan — dan apa yang dipelajari salah satu dari mereka, boleh dipakai semuanya.</string>
+    <string name="beat_final_play_ace">As membuat satu pemain mengambil kartu dari dek, tertutup, dan satu kartu lagi berarti satu kartu lagi yang merugikan mereka. Sekarang As tidak bisa diarahkan kepada Anda, karena kartu pemanggil di luar jangkauan. Jadi sasarannya pihak koalisi sendiri. Perhatikan siapa yang harus mengambil kartu.</string>
+    <string name="beat_final_play_king">Raja menunjuk sebuah kartu dan menyebut namanya, dan nama itu harus benar. Benar: kartu itu keluar dari tangan tempatnya berada dan aksinya dimainkan. Salah: semua orang melihat kartu itu sebenarnya apa, dan penyebutnya mengambil kartu penalti. Pemain menyebut kartu yang pernah ia lihat, sering kali salah satu kartunya sendiri, untuk melepaskannya. Di ronde terakhir, Raja hanya dipakai koalisi. Pemanggil tidak boleh melempar apa pun masuk, jadi peringkat apa pun yang disebut hanya bisa keluar dari tangan koalisi sendiri.</string>
+    <string name="beat_final_play_look">9 atau 10 melihat satu kartu di tangan orang lain. Di ronde terakhir, itulah cara koalisi mengetahui apa yang mereka pegang, karena kartu Anda di luar jangkauan. Apa yang diketahui satu orang boleh dipakai semuanya.</string>
     <string name="beat_final_play_other">Perhatikan apa yang terjadi: ini kartu yang belum pernah Anda pegang, dan kotak langkah terbaru di bawah meja menjelaskan apa yang terjadi.</string>
     <string name="beat_swap_them_title">Tukar</string>
-    <string name="beat_swap_them_body">Anda sudah melihat keduanya. Milik mereka bernilai lebih rendah dari milik Anda, jadi tukarlah: kartu Anda pindah ke mereka dan kartu mereka datang ke Anda — dan Anda tahu persis apa yang Anda pegang setelahnya.</string>
+    <string name="beat_swap_them_body">Anda sudah melihat keduanya. Milik mereka bernilai lebih rendah dari milik Anda, jadi tukarlah: kartu Anda pindah ke mereka dan kartu mereka datang kepada Anda. Setelahnya, Anda tahu persis apa yang Anda pegang.</string>
     <string name="beat_leave_them_title">Biarkan saja</string>
     <string name="beat_leave_them_body">Anda sudah melihat keduanya, dan milik Anda kartu yang lebih baik. Tidak ada untungnya bertukar, jadi kembalikan ke tempatnya semula.</string>
     <string name="beat_call_now_title">Panggil sekarang</string>
-    <string name="beat_call_now_body">Anda tahu setiap kartu di tangan Anda, dan totalnya nol atau lebih rendah — tidak ada yang bisa mengalahkan Anda di meja ini. Tekan Panggil Vinto: semua orang lain mendapat tepat satu giliran lagi, lalu semua tangan dibuka.</string>
+    <string name="beat_call_now_body">Anda tahu setiap kartu di tangan Anda, dan jumlahnya nol atau kurang. Tidak ada yang bisa menyelesaikan di bawah Anda di meja ini. Tekan Panggil Vinto: semua orang lain mendapat tepat satu giliran lagi, lalu semua tangan dibuka.</string>
     <string name="beat_you_called_title">Anda memanggil Vinto</string>
     <string name="beat_you_called_body">Ronde berakhir menurut syarat Anda. Ember, Tide dan Dune masing-masing mendapat satu giliran lagi, dan tidak ada yang boleh menyentuh kartu Anda sekarang. Lalu semua tangan dibuka dan tangan Anda diadu dengan yang terbaik dari mereka.</string>
     <string name="beat_coalition_vs_you_title">Sekarang mereka bermain sebagai satu</string>
     <string name="beat_aim_it_title">Bidikkan</string>
-    <string name="beat_coalition_vs_you_body">Tiga orang yang tidak memanggil adalah koalisi: satu giliran masing-masing, dan hanya tangan terbaik mereka yang dibandingkan dengan milik Anda — jadi ini tim melawan satu tangan Anda. Anda akan mendengar mereka mencari tahu, dan Anda boleh membalas — tidak ada yang bisa memeriksa satu kata pun sampai tangan dibuka. Perhatikan apa yang mereka lakukan pada giliran terakhir mereka: di sinilah Anda melihat kartu yang belum pernah Anda pegang.</string>
-    <string name="beat_aim_it_body">Ini aksi milik kartu itu sendiri, dan gratis — tidak merugikan Anda untuk menggunakannya, dan kartunya akan masuk tumpukan buangan setelahnya, apa pun yang terjadi.</string>
+    <string name="beat_coalition_vs_you_body">Tiga orang yang tidak memanggil adalah koalisi. Masing-masing mendapat satu giliran, dan hanya tangan terbaik mereka yang dibandingkan dengan milik Anda. Jadi ini tim melawan satu tangan Anda. Anda akan mendengar mereka menghitung, dan Anda boleh membalas. Tidak ada yang bisa memeriksa sepatah kata pun sampai tangan dibuka. Perhatikan apa yang mereka lakukan pada giliran terakhir: di sinilah Anda melihat kartu yang belum pernah Anda pegang.</string>
+    <string name="beat_aim_it_body">Ini aksi milik kartu itu sendiri, dan gratis. Memakainya tidak membuat Anda rugi, dan kartunya masuk ke tumpukan buangan sesudahnya, apa pun yang terjadi.</string>
     <string name="beat_remember_it_title">Ingat baik-baik</string>
-    <string name="beat_remember_it_body">Itulah yang dibeli oleh kesempatan melihat tadi. Ingat di mana letaknya dan apa isinya, lalu letakkan kembali — mulai sekarang ini kartu yang Anda kenal, dan permainan dimainkan berdasarkan kartu-kartu semacam itu.</string>
+    <string name="beat_remember_it_body">Itulah yang Anda dapat dari melihat tadi. Catat letaknya dan isinya, lalu kembalikan. Mulai sekarang kartu itu sudah Anda kenal, dan permainan dimainkan berdasarkan kartu seperti itu.</string>
     <string name="beat_give_up_worst_title">Lepaskan kartu terburuk Anda</string>
-    <string name="beat_give_up_worst_body">Kartu baru masuk tertutup, dan kartu yang digantikannya jatuh terbuka di tumpukan buangan untuk dibaca semua orang. Lepaskan kartu yang paling tidak ingin Anda pegang — yang tertinggi yang Anda ketahui. Jika kartu itu punya aksi dan Anda yakin, sebutkan namanya saat meletakkannya: aksinya jadi milik Anda secara gratis.</string>
+    <string name="beat_give_up_worst_body">Kartu baru masuk tertutup, dan kartu yang digantikannya jatuh terbuka di tumpukan buangan agar dibaca semua orang. Lepaskan kartu yang paling tidak ingin Anda pegang: yang tertinggi di antara yang Anda ketahui. Jika kartu itu punya aksi dan Anda yakin, sebutkan namanya saat diletakkan, dan aksinya menjadi milik Anda secara gratis.</string>
     <string name="beat_swap_blind_title">Tukar dengan kartu yang belum pernah Anda lihat</string>
-    <string name="beat_swap_blind_body">Tidak ada kartu yang Anda kenal yang lebih buruk dari kartu ini, jadi menukarnya dengan salah satu dari itu berarti membuang pengetahuan yang berharga. Letakkan saja di slot yang belum pernah Anda lihat: kartu yang belum diketahui lebih mungkin lebih buruk daripada lebih baik, dan bagaimanapun juga Anda akan mengenal satu kartu lagi milik Anda setelahnya.</string>
+    <string name="beat_swap_blind_body">Tidak ada kartu yang Anda kenal yang lebih buruk dari kartu ini, jadi menukarnya dengan salah satunya berarti membuang pengetahuan. Letakkan saja di slot yang belum pernah Anda lihat. Kartu yang tidak terlihat lebih mungkin lebih buruk daripada lebih baik, dan bagaimanapun Anda akan mengenal satu kartu lagi sesudahnya.</string>
     <string name="beat_nothing_worse_title">Tidak ada yang perlu diganti di sini</string>
-    <string name="beat_nothing_worse_body">Setiap kartu yang Anda kenal lebih baik dari kartu ini, dan nilainya terlalu tinggi untuk dipertaruhkan pada slot yang belum pernah Anda lihat. Kembalilah dan buang saja kartu ini — biarkan tumpukan buangan yang menerimanya.</string>
+    <string name="beat_nothing_worse_body">Setiap kartu yang Anda kenal lebih baik dari kartu ini, dan nilainya terlalu tinggi untuk dipertaruhkan pada slot yang belum Anda lihat. Kembali dan buang saja. Biarkan tumpukan buangan menerimanya.</string>
     <string name="beat_keep_or_throw_title">Simpan atau buang</string>
-    <string name="beat_keep_or_throw_body">Masukkan ke tangan Anda — tertutup, menggantikan kartu yang Anda punya, yang lalu terbuka di tumpukan buangan — atau buang saja. Setiap kartu di tangan Anda merugikan Anda, jadi yang bernilai rendah layak disimpan. Jika kartu itu punya aksi, memainkannya sekarang adalah pilihan ketiga, dan tidak merugikan Anda untuk mengambilnya.</string>
+    <string name="beat_keep_or_throw_body">Masukkan ke tangan Anda dalam keadaan tertutup, menggantikan salah satu kartu Anda, atau buang. Kartu yang digantikan jatuh terbuka di tumpukan buangan. Setiap kartu di tangan merugikan Anda, jadi kartu rendah layak disimpan. Jika kartu itu punya aksi, memainkannya sekarang adalah pilihan ketiga, dan tidak merugikan Anda.</string>
     <string name="beat_two_ways_to_start_title">Dua cara memulai giliran</string>
-    <string name="beat_two_ways_to_start_body">Dari dek, tanpa melihat isinya — atau dari tumpukan buangan, tapi hanya kartu aksi yang belum pernah dipakai, dan Anda harus langsung memainkannya alih-alih menyimpannya.</string>
+    <string name="beat_two_ways_to_start_body">Dari dek, tanpa melihat isinya. Atau dari tumpukan buangan, tetapi hanya kartu aksi yang belum dipakai siapa pun, dan kartu itu harus langsung dimainkan, tidak boleh disimpan.</string>
     <string name="beat_every_turn_starts_title">Setiap giliran dimulai dengan cara yang sama</string>
-    <string name="beat_every_turn_starts_body">Giliran dimulai dengan mengambil kartu. Dek tertutup, jadi yang Anda dapat adalah kejutan — itulah risiko yang Anda dibayar untuk dijalani.</string>
+    <string name="beat_every_turn_starts_body">Giliran dimulai dengan mengambil kartu. Dek tertutup, jadi yang Anda dapat adalah kejutan. Itulah risiko yang diimbangi hadiahnya.</string>
     <string name="beat_welcome_title">Empat pemain, lima kartu masing-masing</string>
-    <string name="beat_welcome_body">Setiap kartu merugikan Anda dan tangan terendah menang. Lima kartu Anda tergeletak tertutup di depan Anda, dan Anda tidak diizinkan melihatnya — permainan ini adalah soal mengetahui apa yang Anda pegang. Ini ronde sungguhan melawan tiga lawan sungguhan; pelatih hanya berjalan di samping Anda.</string>
+    <string name="beat_welcome_body">Setiap kartu merugikan Anda dan tangan terendah menang. Kelima kartu Anda tergeletak tertutup di depan Anda, dan Anda tidak boleh melihatnya. Permainan ini soal mengetahui apa yang Anda pegang. Ini ronde sungguhan melawan tiga lawan sungguhan; pelatih hanya mendampingi.</string>
     <string name="beat_memory_title">Kenali kartu Anda sendiri</string>
-    <string name="beat_memory_body">Anda akan melihat dua dari lima kartu Anda sebelum ronde dimulai, dan tiga lainnya hanya jika ada kartu yang mengizinkan. Jadi ronde ini dimainkan berdasarkan apa yang Anda ingat: slot mana yang sudah Anda lihat, dan apa isinya. Itu mengubah nilai sebuah kartu tinggi. Di awal, 9 atau 10 yang membelikan Anda satu kesempatan melihat adalah pertukaran yang adil — Anda tahu apa itu, jadi Anda bisa meletakkannya dan menyebutkannya nanti. Kartu yang membuat Anda kalah ronde adalah kartu yang tidak pernah Anda ketahui isinya.</string>
-    <string name="beat_cards_numbers_title">2 sampai 6 — kartu polos</string>
-    <string name="beat_cards_numbers_body">Bernilai persis seperti angkanya dan tidak lebih. Jangan salah kira kartu kecil sebagai kartu bagus: tangan yang memenangkan ronde biasanya berjumlah nol atau kurang — King, Joker, paling banyak satu Ace. 2 boleh disimpan sebentar; kartu polos apa pun sebaiknya ditukar sebelum permainan berakhir.</string>
-    <string name="beat_cards_own_title">7 dan 8 — lihat salah satu kartu Anda</string>
-    <string name="beat_cards_own_body">Bernilai 7 dan 8, cukup besar untuk dipegang di akhir. Yang Anda dapat sebagai gantinya adalah kesempatan melihat salah satu kartu Anda sendiri — dan permainan ini soal ingatan, jadi kartu yang pernah Anda lihat lebih berharga daripada yang belum. Simpan sebentar jika kartu ini membelikan Anda satu kesempatan melihat; tukar dan sebutkan setelah Anda tidak punya lagi yang perlu dipelajari.</string>
-    <string name="beat_cards_theirs_title">9 dan 10 — lihat salah satu kartu mereka</string>
-    <string name="beat_cards_theirs_body">Kesempatan melihat yang sama, tapi mengarah ke tempat lain: satu kartu di tangan orang lain. Ingat di mana letaknya — dua giliran kemudian itulah yang menentukan apakah Anda memanggil, atau ke mana membidikkan Jack. Bernilai 9 dan 10, dan tetap layak diambil sejak awal: kartu tinggi yang Anda tahu Anda pegang bisa Anda letakkan dan sebutkan, sedangkan kartu rendah yang tidak bisa Anda lihat hanyalah tebakan.</string>
-    <string name="beat_cards_jack_title">Jack — tukar dua kartu, tanpa melihat</string>
-    <string name="beat_cards_jack_body">Bernilai 10. Menukar dua kartu milik dua pemain yang berbeda — tidak pernah dua kartu milik satu orang — dan tidak ada yang melihat kartunya lebih dulu. Bagus untuk mendorong kartu yang Anda tahu buruk ke tangan orang lain; sebuah taruhan untuk apa pun yang Anda tahu bagus.</string>
-    <string name="beat_cards_queen_title">Queen — lihat dua kartu, lalu putuskan</string>
-    <string name="beat_cards_queen_body">Juga bernilai 10, dan kartu terkuat dalam permainan ini: lihat dua kartu mana pun dari dua pemain berbeda, dan baru setelah itu putuskan apakah akan menukarnya. Jack berjudi. Queen tahu.</string>
-    <string name="beat_cards_king_title">King — tidak bernilai, dan bisa apa saja</string>
-    <string name="beat_cards_king_body">Sama sekali tidak bernilai, dan itu sendiri membuatnya layak disimpan. Aksinya membidik kartu apa pun di meja — milik Anda atau siapa pun — lalu menyebutkan namanya. Benar: kartu itu keluar dari tangan tempatnya berada, dan aksinya menjadi milik Anda untuk dimainkan. Salah: semua orang melihat kartu itu sebenarnya apa, dan Anda mengambil kartu penalti.</string>
+    <string name="beat_memory_body">Anda akan melihat dua dari lima kartu sebelum ronde dimulai, dan tiga lainnya hanya jika ada kartu yang mengizinkan. Jadi ronde dimainkan berdasarkan ingatan: slot mana yang sudah Anda lihat dan apa isinya. Itu mengubah nilai kartu tinggi. Di awal, 9 atau 10 yang memberi Anda satu kali melihat adalah tukar yang adil. Anda tahu isinya, jadi bisa meletakkannya dan menyebutnya nanti. Kartu yang membuat Anda kalah adalah kartu yang tidak pernah Anda ketahui.</string>
+    <string name="beat_cards_numbers_title">2 sampai 6: kartu biasa</string>
+    <string name="beat_cards_numbers_body">Bernilai persis seperti angkanya, tidak lebih. Jangan mengira kartu kecil pasti kartu bagus. Tangan yang memenangkan ronde biasanya berjumlah nol atau kurang: Raja, Joker, paling banyak satu As. Menyimpan 2 untuk sementara tidak masalah; kartu biasa apa pun sebaiknya ditukar sebelum akhir.</string>
+    <string name="beat_cards_own_title">7 dan 8: lihat salah satu kartu Anda</string>
+    <string name="beat_cards_own_body">Bernilai 7 dan 8, cukup besar untuk dipegang di akhir. Sebagai gantinya Anda boleh melihat salah satu kartu Anda sendiri. Permainan ini soal ingatan, jadi kartu yang pernah Anda lihat lebih berharga daripada yang belum. Simpan satu di awal jika memberi Anda kesempatan melihat; tukar dan sebutkan setelah tidak ada lagi yang perlu dipelajari.</string>
+    <string name="beat_cards_theirs_title">9 dan 10: lihat salah satu kartu mereka</string>
+    <string name="beat_cards_theirs_body">Melihat yang sama, tetapi ke arah lain: satu kartu di tangan orang lain. Ingat letaknya. Dua giliran kemudian, itulah yang menentukan apakah Anda memanggil, atau ke mana Jack diarahkan. Bernilai 9 dan 10, dan tetap layak diambil di awal. Kartu tinggi yang Anda tahu isinya bisa diletakkan dan disebut namanya. Kartu rendah yang tidak terlihat hanyalah tebakan.</string>
+    <string name="beat_cards_jack_title">Jack: tukar dua kartu tanpa melihat</string>
+    <string name="beat_cards_jack_body">Bernilai 10. Menukar dua kartu milik dua pemain berbeda (tidak pernah dua kartu milik satu orang), dan tidak ada yang melihat kedua kartu itu lebih dulu. Cocok untuk mendorong kartu yang Anda tahu buruk ke tangan orang lain; untuk kartu yang Anda tahu bagus, itu taruhan.</string>
+    <string name="beat_cards_queen_title">Ratu: lihat dua, lalu putuskan</string>
+    <string name="beat_cards_queen_body">Juga bernilai 10, dan kartu terkuat dalam permainan. Lihat dua kartu mana pun dari dua pemain berbeda, baru setelah itu pilih apakah akan menukarnya. Jack berjudi. Ratu tahu.</string>
+    <string name="beat_cards_king_title">Raja: tidak bernilai, tetapi bisa apa saja</string>
+    <string name="beat_cards_king_body">Sama sekali tidak bernilai, dan itu saja sudah membuatnya layak disimpan. Aksinya menunjuk kartu mana pun di meja, milik Anda atau siapa pun, lalu menyebut namanya. Benar: kartu itu keluar dari tangan tempatnya berada, dan aksinya Anda mainkan. Salah: semua orang melihat kartu itu sebenarnya apa, dan Anda mengambil kartu penalti.</string>
     <string name="beat_cards_king_name_title">Apa yang Anda sebutkan adalah apa yang Anda mainkan</string>
-    <string name="beat_cards_king_name_body">Jadi sebenarnya Anda memilih sebuah aksi, dari kartu-kartu yang pernah Anda lihat. Sebutkan 7 atau 8 dan Anda mendapat kesempatan melihat salah satu kartu Anda sendiri. Sebutkan Jack dan Anda mendapat pertukaran butanya — dan Anda memilih kedua kartunya, itulah cara sebuah Joker yang Anda temukan berpindah ke tangan Anda dan kartu terburuk Anda pindah ke arah sebaliknya. Sebutkan Queen dan Anda melihat dua kartu sebelum memutuskan untuk menukar.</string>
+    <string name="beat_cards_king_name_body">Jadi sebenarnya Anda memilih sebuah aksi, dari kartu yang pernah Anda lihat. Sebut 7 atau 8 dan Anda boleh melihat salah satu kartu Anda sendiri. Sebut Jack dan Anda mendapat tukar butanya. Anda memilih kedua kartu, sehingga Joker yang sudah Anda temukan datang kepada Anda dan kartu terburuk Anda pergi ke arah lain. Sebut Ratu dan Anda melihat dua kartu sebelum memutuskan menukarnya.</string>
     <string name="beat_cards_king_whose_title">Dan kartu siapa yang Anda sebutkan</string>
-    <string name="beat_cards_king_whose_body">Siapa pun yang memegangnya, kartu yang Anda sebutkan keluar dari tangan mereka. Menyebutkan 10 milik Anda sendiri mengurangi sepuluh poin dari total Anda; menyebutkan Joker milik lawan menghilangkan minus satunya dan meninggalkannya dengan kartu yang lebih buruk. Satu King, dua kegunaan — mana yang lebih penting itulah yang harus dibaca.</string>
+    <string name="beat_cards_king_whose_body">Siapa pun yang memegangnya, kartu yang Anda sebut keluar dari tangannya. Menyebut 10 milik Anda sendiri mengurangi sepuluh poin dari total Anda. Menyebut Joker lawan menghilangkan minus satunya dan membuatnya kurang satu kartu bagus. Satu Raja, dua tugas. Mana yang lebih penting, Anda yang menilai.</string>
     <string name="beat_cards_odd_title">Ace dan Joker</string>
-    <string name="beat_cards_odd_body">Ace bernilai 1 dan membuat siapa pun yang Anda pilih mengambil kartu penalti. Joker bernilai minus satu — kartu terbaik di dalam dek, dan yang paling tidak boleh diberikan kepada orang lain.</string>
+    <string name="beat_cards_odd_body">As bernilai 1 dan membuat pemain pilihan Anda mengambil kartu penalti. Joker bernilai minus satu. Itu kartu terbaik di dek, dan yang tidak boleh diberikan kepada siapa pun.</string>
     <string name="beat_tour_title">Dek dan tumpukan buangan</string>
-    <string name="beat_tour_body">Kartu diambil dari dek. Apa pun yang dibuang siapa pun jatuh terbuka di sebelahnya, tempat seluruh meja bisa membacanya — termasuk Anda.</string>
+    <string name="beat_tour_body">Kartu diambil dari dek. Apa pun yang dibuang jatuh terbuka di sebelahnya, tempat seluruh meja bisa membacanya, termasuk Anda.</string>
     <string name="beat_seats_title">Ember, Tide dan Dune</string>
     <string name="beat_seats_body">Tiga bot, masing-masing dengan lima kartu yang tidak bisa mereka lihat lebih baik dari Anda. Kursi yang menyala hijau adalah giliran siapa yang sedang berjalan.</string>
     <string name="beat_help_title">Tanda ? selalu ada</string>
-    <string name="beat_help_body">Ia menjelaskan momen yang sedang Anda alami dan apa yang dilakukan setiap kartu. Permainan kotak fisiknya dilengkapi kartu pengingat untuk hal ini, satu per pemain — tidak ada yang diharapkan menghafal empat belas pangkat di kepala, di sini atau di meja sungguhan.</string>
+    <string name="beat_help_body">Tombol ini menjelaskan momen yang sedang Anda alami dan fungsi setiap kartu. Permainan kotaknya memang dilengkapi kartu pengingat untuk hal ini, satu per pemain. Tidak ada yang diharapkan menghafal empat belas peringkat, di sini maupun di meja sungguhan.</string>
     <string name="beat_disagreement_title">Dua orang mengingatnya secara berbeda</string>
-    <string name="beat_disagreement_body">Dua klaim atas satu kartu tidak bisa sama-sama benar, jadi kartu itu menyandang keduanya, ditandai sebagai perselisihan. Permainan tidak pernah memutuskan siapa yang benar — kartu-kartu dibuka di akhir dan itulah yang menyelesaikannya. Sampai saat itu, tanyakan pada diri Anda ingatan siapa yang lebih segar: orang yang terakhir melihatnya biasanya yang paling bisa dipercaya.</string>
+    <string name="beat_disagreement_body">Dua klaim atas satu kartu tidak bisa sama-sama benar, jadi kartu itu menyandang keduanya, ditandai sebagai perselisihan. Permainan tidak pernah memutuskan siapa yang benar. Kartu dibuka di akhir dan itulah yang menyelesaikannya. Sampai saat itu, tanyakan ingatan siapa yang lebih segar: yang terakhir melihatnya biasanya yang layak dipercaya.</string>
     <string name="beat_coalition_title">Semua yang lain bermain sebagai satu</string>
     <string name="beat_your_turn_to_call_title">Anda juga bisa memanggilnya</string>
-    <string name="beat_coalition_body">Anda, dan dua orang yang tidak memanggil, adalah koalisi: satu giliran masing-masing, dan hanya tangan terbaik Anda yang dibandingkan dengan milik pemanggil — jadi ini tim melawan satu tangan. Ketuk kartu mana pun untuk menyebutkan menurut Anda kartu apa itu, dan katakan itu bahkan saat Anda hanya ingat dua pangkat tanpa tahu yang mana yang mana. Melempar masuk kartu tidak menghabiskan giliran Anda dan merupakan cara termurah untuk menurunkan sebuah tangan. Tidak ada yang boleh menyentuh kartu pemanggil, dan permainan tidak akan membiarkan Anda mencoba.</string>
-    <string name="beat_your_turn_to_call_body">Di akhir giliran Anda kapan pun, tombol emas ada di sana: tekan saat Anda yakin tangan Anda adalah yang terendah di meja. Ia disembunyikan selama Anda belajar karena ia mengakhiri ronde untuk semua orang — mulai sekarang giliran Anda yang menekannya, dan menekannya terlalu cepat adalah cara kebanyakan orang kalah di permainan pertama mereka.</string>
+    <string name="beat_coalition_body">Anda dan dua orang yang tidak memanggil adalah koalisi. Masing-masing mendapat satu giliran, dan hanya tangan terbaik Anda yang dibandingkan dengan milik pemanggil. Jadi ini tim melawan satu tangan. Ketuk kartu mana pun untuk menyebut apa menurut Anda kartu itu. Sebutlah bahkan jika Anda hanya ingat dua peringkat tanpa tahu mana yang mana. Melempar kartu masuk tidak memakai giliran dan merupakan cara termurah menurunkan tangan. Tidak ada yang boleh menyentuh kartu pemanggil, dan permainan tidak akan membiarkan Anda mencoba.</string>
+    <string name="beat_your_turn_to_call_body">Di akhir setiap giliran Anda, tombol emas ada di sana. Tekan saat Anda yakin tangan Anda yang terendah di meja. Tombol itu disembunyikan selama Anda belajar, karena ia mengakhiri ronde bagi semua orang. Mulai sekarang Anda yang menekannya, dan menekannya terlalu cepat adalah cara kebanyakan orang kalah di permainan pertama.</string>
     <string name="beat_session_title">Dan itulah satu ronde</string>
-    <string name="beat_session_body">Sebuah permainan terdiri dari ronde-ronde, satu demi satu, dengan poin yang dibawa di antaranya, dimainkan sesuai batas waktu yang disepakati sebelumnya — setengah jam biasanya cukup. Saat waktu habis, ronde yang sedang berlangsung diselesaikan, dan siapa pun dengan poin terbanyak mendapat 5 poin permainan untuk posisi pertama, 3 untuk kedua, 2 untuk ketiga. Ronde yang dimenangkan dengan selisih tiga poin dihitung sama saja apakah Anda menang satu poin atau dua puluh poin.</string>
+    <string name="beat_session_body">Satu permainan terdiri dari ronde demi ronde, dengan poin yang dibawa di antaranya. Permainan dimainkan sampai waktu yang disepakati sebelumnya, biasanya setengah jam. Saat waktu habis, ronde yang berjalan diselesaikan. Pemilik poin terbanyak menjadi yang pertama dengan 5 poin permainan, kedua 3, ketiga 2. Memenangkan satu ronde bernilai 3 poin, baik Anda menang dengan selisih satu poin maupun dua puluh.</string>
     <string name="beat_scoring_title">Setiap tangan dibuka</string>
     <string name="beat_scoring_body">Tangan pemanggil diadu dengan tangan terbaik di antara semua orang lain. Lebih rendah, dan pemanggil mendapat +3 sementara semua orang lain kehilangan 1 masing-masing. Seri dihitung sebagai milik pemanggil: +3 untuk mereka, tidak ada yang hilang dari siapa pun. Kalah, dan pemanggil kehilangan 1 sementara setiap orang lain mendapat +3.</string>
     <string name="beat_vinto_body">Itu adalah taruhan bahwa tangan mereka yang terendah di meja. Ini mengakhiri ronde: semua orang lain mendapat tepat satu giliran lagi, lalu semua tangan dibuka.</string>
@@ -416,20 +416,20 @@
     <string name="beat_toss_in_also">%1$s baru saja melempar satu masuk. </string>
     <string name="list_join_and"> dan </string>
     <string name="beat_vinto_somebody">Seseorang</string>
-    <string name="beat_strayed_body">Meja Anda, bukan milik saya — tidak ada langkah yang salah di sini. Pelajaran ini melanjutkan dari mana pun Anda membawanya.</string>
+    <string name="beat_strayed_body">Ini meja Anda, dan tidak ada langkah yang salah di sini. Pelajaran ini dilanjutkan dari mana pun Anda membawanya.</string>
 
     <!-- What a glow or a ring on the table means, said once, the first time it appears. -->
     <string name="gloss_pulse">Kartu yang berdenyut bisa disentuh sekarang.</string>
     <string name="gloss_toss">Chip di bawah tumpukan menyebutkan pangkat yang jendelanya sedang terbuka.</string>
-    <string name="gloss_log">Setiap langkah dicatat di kotak ini — lihat sekilas saat kartu bergerak lebih cepat dari yang bisa Anda baca.</string>
+    <string name="gloss_log">Setiap langkah dicatat di kotak ini. Lihat sekilas saat kartu bergerak lebih cepat dari yang bisa Anda baca.</string>
 
-    <string name="teach_note">%1$s — bernilai %2$s. %3$s.</string>
-    <string name="teach_note_plain">%1$s — bernilai %2$s, dan tidak melakukan apa pun. Boleh disimpan untuk sementara, dan sebaiknya ditukar sebelum seseorang memanggil.</string>
+    <string name="teach_note">%1$s, bernilai %2$s. %3$s.</string>
+    <string name="teach_note_plain">%1$s, bernilai %2$s. Tidak melakukan apa-apa. Tidak masalah disimpan untuk sementara, dan sebaiknya ditukar sebelum ada yang memanggil.</string>
 
 
     <string name="teach_heading">Mempelajari permainan</string>
     <string name="teach_finished_title">Itulah seluruh permainannya</string>
-    <string name="teach_finished_body">Semua tangan terbuka dan ronde dinilai. Setiap aturan yang Anda temui di sini adalah aturan yang dipakai permainan sungguhan — tidak ada versi latihannya.</string>
+    <string name="teach_finished_body">Semua tangan terbuka dan ronde sudah dinilai. Setiap aturan yang Anda temui di sini adalah aturan permainan sungguhan. Tidak ada versi latihannya.</string>
     <string name="teach_watching">Perhatikan apa yang mereka ambil, dan apa yang mereka letakkan kembali.</string>
     <string name="teach_go_on">Lanjut</string>
     <string name="teach_done">Selesai</string>
@@ -442,13 +442,13 @@
     <string name="help_right_now">Saat ini</string>
     <string name="help_the_cards">Kartu-kartunya</string>
     <string name="help_signals">Apa yang meja beri tahu kepada Anda</string>
-    <string name="help_group_numbers">Angka — bernilai persis seperti tertulis, dan tidak lebih</string>
-    <string name="help_group_lookers">Pengintip — membelikan Anda kartu yang bisa Anda ingat</string>
-    <string name="help_group_movers">Penggerak — memindahkan kartu ke tempat lain</string>
+    <string name="help_group_numbers">Angka: bernilai persis seperti angkanya, tidak lebih</string>
+    <string name="help_group_lookers">Pengintip: memberi Anda kartu yang bisa diingat</string>
+    <string name="help_group_movers">Pemindah: memindahkan kartu ke tempat lain</string>
     <string name="help_group_odd">Yang unik-unik</string>
     <string name="help_no_action">Tidak ada aksi.</string>
-    <string name="help_card_worth">%1$s — bernilai %2$d</string>
-    <string name="help_closing">Setiap kartu di tangan merugikan Anda, jadi total terendah yang menang. Panggil Vinto saat Anda yakin tangan Anda yang terendah — semua orang lain lalu bermain satu giliran lagi bersama, dan hanya tangan terbaik mereka yang diadu dengan Anda.</string>
+    <string name="help_card_worth">%1$s, bernilai %2$d</string>
+    <string name="help_closing">Setiap kartu di tangan merugikan Anda, jadi total terendah menang. Panggil Vinto saat Anda yakin tangan Anda yang terendah. Semua orang lain lalu bermain satu giliran lagi bersama, dan hanya tangan terbaik mereka yang dibandingkan dengan milik Anda.</string>
     <string name="stats_played">%1$d dimainkan</string>
     <string name="stats_won">%1$d% menang</string>
     <string name="stats_best">terbaik %1$d</string>
@@ -466,15 +466,15 @@
     <string name="chapter_toss">Melempar masuk</string>
     <string name="chapter_vinto">Memanggil Vinto</string>
     <string name="chapter_score">Penilaian</string>
-    <string name="chapter_covered">%1$s — sudah dibahas</string>
-    <string name="chapter_to_come">%1$s — belum dibahas</string>
-    <string name="intro_part_covered">Bagian %1$d dari %2$d — sudah dibaca</string>
-    <string name="intro_part_to_come">Bagian %1$d dari %2$d — belum dibaca</string>
+    <string name="chapter_covered">%1$s, sudah dibahas</string>
+    <string name="chapter_to_come">%1$s, belum dibahas</string>
+    <string name="intro_part_covered">Bagian %1$d dari %2$d, sudah dibaca</string>
+    <string name="intro_part_to_come">Bagian %1$d dari %2$d, belum dibaca</string>
 
     <!-- What the "?" explains. -->
     <string name="explains_card_plain">%1$s. Bernilai %2$d. Tidak punya aksi, jadi hanya bisa masuk ke tangan Anda atau ke tumpukan buangan.</string>
     <string name="explains_card_action">%1$s. Bernilai %2$d. %3$s. %4$s</string>
-    <string name="explains_setup">Lihat dua kartu Anda sendiri dan ingat baik-baik — kartu itu tertutup lagi saat ronde dimulai. Setelah itu semuanya soal ingatan.</string>
+    <string name="explains_setup">Lihat dua kartu Anda sendiri dan ingat. Kartu itu tertutup lagi saat ronde dimulai. Setelah itu semuanya soal ingatan.</string>
     <string name="explains_scoring">Semua tangan terbuka. Total terendah memenangkan ronde; pemain yang memanggil Vinto dinilai melawan tangan terbaik di antara semua orang lain.</string>
     <string name="explains_toss_in">Siapa pun yang memegang kartu pangkat yang sama boleh melemparkannya masuk, yang mengeluarkannya dari tangan mereka secara gratis. Salah pangkat dan Anda mengambil kartu penalti, dan Anda tidak bisa melempar masuk lagi di ronde ini.</string>
     <string name="explains_final_round">Vinto telah dipanggil. Semua orang lain bermain satu giliran terakhir sebagai koalisi, dan hanya tangan terbaik mereka yang diadu dengan tangan pemanggil.</string>
@@ -483,8 +483,8 @@
     <!-- The smaller line under the prompt. -->
     <string name="detail_card_does">%1$s, bernilai %2$d: %3$s</string>
     <string name="detail_king_declared">King menyebutkan %1$s: %2$s</string>
-    <string name="detail_tap_to_say">Ketuk kartu mana pun untuk menyebutkan menurut Anda kartu apa itu — milik Anda, milik rekan setim, atau milik mereka.</string>
-    <string name="detail_name_the_ranks">Ketuk setiap peringkat yang mungkin — satu saja jika tidak ragu.</string>
+    <string name="detail_tap_to_say">Ketuk kartu mana pun untuk menyebut apa menurut Anda kartu itu: milik Anda, rekan setim, atau mereka.</string>
+    <string name="detail_name_the_ranks">Ketuk setiap peringkat yang mungkin, atau satu saja jika tidak ragu.</string>
     <string name="detail_right_plays">Benar memainkan aksinya; salah membuat Anda kehilangan sebuah kartu.</string>
     <string name="detail_wrong_costs">Yang salah membuat Anda mengambil kartu penalti.</string>
     <string name="detail_barred_card">Anda menebak salah untuk kartu ini, jadi Anda tidak bisa mengikuti yang ini. Kartu berikutnya yang mendarat adalah kesempatan baru.</string>
@@ -517,7 +517,7 @@
     <string name="ask_which_card_king_points_at">Kartu mana yang ditunjuk oleh King? Sentuh kartu itu.</string>
     <string name="ask_who_should_draw">Siapa yang mengambil kartu?</string>
     <string name="detail_touch_the_card">Sentuh kartu di atas meja.</string>
-    <string name="detail_claim_was_wrong">Sebuah langkah di sini disusun berdasarkan klaim yang kini terbukti salah oleh kartu yang ada. Itu tandanya permainan berjalan semestinya, bukan kesalahan — ada yang mengingat sebuah kartu berbeda dari kenyataannya.</string>
+    <string name="detail_claim_was_wrong">Satu langkah di sini disusun dari klaim yang kemudian terbukti salah oleh kartunya. Itu tanda permainan berjalan semestinya, bukan kesalahan: ada yang mengingat kartu berbeda dari letak sebenarnya.</string>
     <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
     <string name="ask_what_will_you_do">Apa yang akan Anda lakukan pada giliran Anda?</string>
     <string name="ask_what_should_they_do">Apa yang sebaiknya %1$s lakukan pada gilirannya?</string>
@@ -538,7 +538,7 @@
     <string name="board_turn_stop_spoken">Giliran %1$d, %2$s</string>
     <string name="board_unplayable">Giliran ini tidak bisa dimainkan dari sini: kartu yang disebutkan sudah tidak ada.</string>
     <string name="board_broken">Klaim pada giliran ini sudah terbukti salah.</string>
-    <string name="board_carry_hint">Seret kartu ke tempat yang seharusnya — atau sentuh kartu itu, lalu sentuh tempatnya.</string>
+    <string name="board_carry_hint">Seret kartu ke tempat yang seharusnya, atau sentuh kartu itu lalu sentuh tempatnya.</string>
     <string name="board_owner_you">Anda</string>
     <string name="board_owner_named">milik %1$s</string>
     <string name="board_step_swap">tukar kartu ke-%2$d %1$s dengan kartu ke-%4$d %3$s</string>
@@ -599,15 +599,15 @@
     <string name="ask_who_draws">Siapa yang mengambil kartu?</string>
     <string name="ask_card_waiting">%1$s sedang menunggu</string>
     <string name="ask_card_waiting_unknown">Menunggu</string>
-    <string name="ask_toss_in">%1$s baru saja dibuang — lempar masuk yang cocok?</string>
+    <string name="ask_toss_in">%1$s sudah dibuang. Lempar masuk yang cocok?</string>
     <string name="ask_toss_in_barred">%1$s baru saja dibuang</string>
     <string name="ask_waiting_for_others">Menunggu yang lain</string>
     <string name="ask_watching">Menonton</string>
     <string name="ask_somebody_playing">%1$s sedang bermain</string>
     <string name="ask_you_playing">Anda sedang bermain</string>
     <string name="ask_round_over">Ronde selesai</string>
-    <string name="ask_round_over_lowest">Ronde selesai — Anda selesai terendah dengan %1$d</string>
-    <string name="ask_round_over_not_lowest">Ronde selesai — Anda selesai dengan %1$d, yang terbaik adalah %2$d</string>
+    <string name="ask_round_over_lowest">Ronde selesai. Anda terendah dengan %1$d</string>
+    <string name="ask_round_over_not_lowest">Ronde selesai. Anda selesai dengan %1$d, yang terbaik %2$d</string>
 
     <!-- The buttons on the table. -->
     <string name="choice_back">Kembali</string>
@@ -647,8 +647,8 @@
     <string name="log_play_unknown_they">%1$s memainkan kartu itu</string>
     <string name="log_tossed_in">%1$s melempar masuk %2$s</string>
     <string name="log_tossed_in_unknown">%1$s melempar masuk sebuah kartu</string>
-    <string name="log_toss_in_missed">%1$s melempar masuk %2$s — salah, dan itu memakan kartu penalti</string>
-    <string name="log_toss_in_missed_unknown">%1$s melempar masuk kartu yang salah — kartu penalti</string>
+    <string name="log_toss_in_missed">%1$s melempar masuk %2$s, salah, dan harus mengambil kartu penalti</string>
+    <string name="log_toss_in_missed_unknown">%1$s melempar masuk kartu yang salah dan mengambil kartu penalti</string>
     <string name="log_called_vinto">%1$s memanggil Vinto</string>
     <string name="log_swapped_two">%1$s menukar dua kartu</string>
     <string name="log_swapped_two_named">%1$s menukar %2$s dengan %3$s</string>
@@ -658,7 +658,7 @@
     <string name="log_made_you_draw">%1$s membuat Anda mengambil kartu</string>
     <string name="log_made_draw_they">%1$s membuat %2$s mengambil kartu</string>
     <string name="log_round_begins">ronde dimulai</string>
-    <string name="log_seat_covered">%1$s terputus — bot mengambil alih kursinya</string>
+    <string name="log_seat_covered">%1$s pergi, jadi bot memainkan kursinya</string>
     <string name="log_seat_covered_you">Bot memainkan kursi Anda selama Anda tidak ada</string>
     <string name="log_seat_back">%1$s kembali</string>
     <string name="log_seat_back_you">Anda kembali ke meja</string>
@@ -668,17 +668,17 @@
     <string name="help_rules_action">Buka aturan</string>
 
     <string name="help_plan_title">Rencana, di ronde terakhir</string>
-    <string name="help_plan_body">Begitu seseorang memanggil Vinto, semua pemain lain bermain satu giliran terakhir bersama-sama dan hanya tangan terbaik mereka yang dibandingkan — jadi rel di bawah meja menjadi rencana yang ditulis bersama, satu giliran satu halaman. Rencana ini hanya sekadar saran, bukan langkah: tidak ada yang di dalamnya menekan tombol untuk Anda, dan saat giliran Anda tiba, Anda tetap bebas bermain sesuka hati. Rencana hanya bisa menyebut kartu yang pernah terlihat atau diberitahukan di meja, dan tidak pernah bisa menyentuh tangan pemanggil.</string>
+    <string name="help_plan_body">Begitu seseorang memanggil Vinto, semua orang lain bermain satu giliran lagi bersama, dan hanya tangan terbaik mereka yang dibandingkan. Jadi rel di bawah meja menjadi rencana yang Anda susun bersama mereka, satu giliran satu halaman. Rencana hanya pembicaraan, bukan langkah. Tidak ada isinya yang menekan tombol untuk Anda, dan saat giliran Anda tiba, Anda memainkannya sesuka hati. Rencana hanya bisa menyebut kartu yang sudah terlihat atau diberitahukan di meja, dan tidak pernah bisa menyentuh tangan pemanggil.</string>
 
     <string name="help_counts_title">Apa yang dihitung aplikasi ini</string>
-    <string name="help_counts_body">Hanya hitungan anonim: berapa banyak ronde yang dimainkan, sejauh mana orang bermain, apakah sebuah meja terhenti, dan berapa biaya menjalankan sebuah ruangan. Tidak pernah nama Anda, kode ruangan Anda, apa yang ada di tangan Anda, atau apa pun yang bisa dilacak kembali ke Anda atau perangkat Anda — tidak ada tempat dalam yang dikirim untuk menaruhnya. Bisa dimatikan di Pengaturan, dan peramban yang meminta untuk tidak dilacak akan mematikannya untuk Anda.</string>
+    <string name="help_counts_body">Hanya hitungan anonim: berapa ronde yang dimainkan, sejauh mana orang bermain, apakah meja macet, dan berapa biaya menjalankan sebuah ruangan. Tidak pernah nama Anda, kode ruangan, isi tangan Anda, atau apa pun yang bisa dilacak kembali ke Anda atau perangkat Anda. Data yang dikirim tidak punya tempat untuk semua itu. Hitungan ini bisa dimatikan di Pengaturan, dan peramban yang meminta untuk tidak dilacak mematikannya untuk Anda.</string>
 
     <string name="signal_turn">Cincin emas pada kursi</string>
     <string name="signal_turn_meaning">Giliran siapa. Ia berdenyut saat giliran tiba, karena tiga bot bermain di antara dua ketukan.</string>
     <string name="signal_pick">Cincin hijau pada kursi</string>
     <string name="signal_pick_meaning">Anda boleh memilih pemain ini. Hijau berarti sama pada kursi seperti pada kartu: ini bisa disentuh sekarang.</string>
     <string name="signal_penalty">Cincin merah, dan tangan yang tersentak</string>
-    <string name="signal_penalty_meaning">Kartu penalti baru saja mendarat di sana — tebakan salah, atau lempar masuk yang salah.</string>
+    <string name="signal_penalty_meaning">Kartu penalti baru saja mendarat di sana, setelah tebakan salah atau lempar masuk yang salah.</string>
     <string name="signal_live">Cincin emas pada tumpukan buangan</string>
     <string name="signal_live_meaning">Kartu itu diletakkan tanpa aksinya digunakan, jadi pemain berikutnya boleh mengambilnya dan memainkannya alih-alih mengambil dari dek. Kartu yang aksinya *sudah* dimainkan tidak memiliki cincin.</string>
     <string name="signal_tappable">Kartu yang berdenyut</string>
@@ -686,7 +686,7 @@
     <string name="signal_reshuffle">Kartu-kartu tersapu kembali ke dek</string>
     <string name="signal_reshuffle_meaning">Dek habis, jadi tumpukan buangan dikocok kembali ke dalamnya. Semua yang dipelajari siapa pun dari mengamati tumpukan itu sekarang sudah usang.</string>
     <string name="signal_peek">Kartu yang terangkat ke arah tengah</string>
-    <string name="signal_peek_meaning">Seseorang sedang melihatnya. Semua orang melihat *kartu mana* yang dilihat — hanya pemain yang berhak yang melihat wajahnya.</string>
+    <string name="signal_peek_meaning">Seseorang sedang melihatnya. Semua orang melihat *kartu mana* yang dilihat, tetapi hanya pemain yang berhak yang melihat wajahnya.</string>
 
 
     <!-- The cards, in words. -->
@@ -723,7 +723,7 @@
     <string name="card_help_eight">Ketuk salah satu kartu Anda untuk melihatnya sebentar dan mengingat nilainya. Anda boleh melewati aksi ini jika mau.</string>
     <string name="card_help_nine">Ketuk salah satu kartu lawan untuk melihatnya sebentar dan mengetahui nilainya. Anda boleh melewati aksi ini jika mau.</string>
     <string name="card_help_ten">Ketuk salah satu kartu lawan untuk melihatnya sebentar dan mengetahui nilainya. Anda boleh melewati aksi ini jika mau.</string>
-    <string name="card_help_jack">Pilih dua kartu dari pemain berbeda untuk menukar posisinya — boleh termasuk kartu Anda sendiri atau hanya kartu lawan. Anda tidak bisa memilih dua kartu dari pemain yang sama. Anda bisa mengatur ulang pilihan atau melewati aksi ini.</string>
+    <string name="card_help_jack">Pilih dua kartu dari pemain berbeda untuk menukar posisinya. Anda boleh menyertakan kartu Anda sendiri, atau hanya kartu lawan. Anda tidak bisa memilih dua kartu dari pemain yang sama. Anda bisa mengatur ulang pilihan atau melewati aksi ini.</string>
     <string name="card_help_queen">1. Lihat dua kartu dari pemain berbeda (boleh milik Anda sendiri atau lawan, tapi harus dari dua pemain berbeda)\n2. Setelah melihat kedua kartu, putuskan apakah akan menukarnya</string>
     <string name="card_help_king">Pilih aksi kartu mana yang akan dijalankan: 7 (lihat milik sendiri), 8 (lihat milik sendiri), 9/10 (lihat milik lawan), J (tukar), Q (lihat &amp; tukar), A (paksa ambil kartu). Anda juga bisa menyebutkan kartu tanpa aksi (2-6, K, Joker).</string>
     <string name="card_help_ace">Pilih seorang lawan untuk memaksanya mengambil kartu penalti dari dek. Ini menambah jumlah kartu dan total nilai tangan mereka. Anda boleh melewati aksi ini jika mau.</string>
@@ -744,7 +744,7 @@
     <string name="says_looks_at_word">melihat</string>
     <string name="says_looks_at_one">melihat kartu ke-%2$d %1$s</string>
     <string name="says_points_at">menunjuk kartu ke-%2$d %1$s: %3$s</string>
-    <string name="says_points_at_what">menunjuk kartu ke-%2$d %1$s — nilai apa?</string>
+    <string name="says_points_at_what">menunjuk kartu ke-%2$d milik %1$s: peringkat apa?</string>
     <string name="says_which_to_point_at">menunjuk kartu yang mana?</string>
     <string name="says_names">mengumumkan %1$s</string>
     <string name="says_is_a">adalah %1$s</string>
@@ -762,8 +762,8 @@
     <string name="board_hand_unknown">+%1$d tidak diketahui</string>
     <string name="card_arrives">Kartu yang belum pernah dilihat siapa pun, muncul pada giliran %1$d</string>
     <string name="label_plan_play_all">Mainkan semua giliran</string>
-    <string name="label_plan_changed_by">Rencana — %1$s mengubah giliran Anda</string>
-    <string name="label_rank_said_by">%1$s — kata %2$s</string>
+    <string name="label_plan_changed_by">Rencana. %1$s mengubah giliran Anda</string>
+    <string name="label_rank_said_by">%1$s (kata %2$s)</string>
     <string name="label_another_rank">Nilai lain…</string>
     <string name="detail_touch_a_word">Sentuh kata yang berkotak untuk mengubahnya.</string>
     <string name="detail_changed_by">%1$s mengubah giliran ini.</string>

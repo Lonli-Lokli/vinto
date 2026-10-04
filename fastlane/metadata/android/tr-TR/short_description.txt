@@ -1,1 +1,1 @@
-Beş kart, ikisini gör, gerisini çöz. En düşük elde olduğunda Vinto de.
+Bellek ve blöf kart oyunu. Tek kişilik oyun çevrimdışı çalışır, reklam yok.

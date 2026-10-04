@@ -1,21 +1,31 @@
-Lima kartu di depan Anda, tertutup. Di awal permainan, Anda boleh melihat dua di antaranya. Sisanya harus Anda simpulkan sendiri — dari apa yang diambil orang lain, apa yang mereka buang, dan apa yang tiba-tiba berani mereka pertaruhkan.
+Vinto! adalah permainan kartu ingatan dan gertak untuk satu meja berempat. Main solo melawan tiga pemain komputer, atau online bersama orang yang Anda kenal.
 
-Klaim Vinto saat Anda merasa kartu Anda paling rendah. Jika benar, itu menguntungkan. Jika salah, itu merugikan.
+Anda mendapat lima kartu tertutup, dan boleh melihat dua di antaranya satu kali. Sisanya adalah deduksi: apa yang diambil orang lain, apa yang mereka buang, dan apa yang tiba-tiba berani mereka pertaruhkan.
 
-KENAPA VINTO
-• Anda mempelajarinya sambil bermain — tutorial menyajikan satu babak sungguhan dan menjelaskan kartu Anda sambil berjalan. Tanpa buku aturan, tanpa video, dan Anda bisa melewatkannya lalu langsung bermain.
-• Bermain dengan orang yang Anda kenal — buka ruang permainan dan kirim enam karakter. Siapa pun yang menerimanya bergabung di meja. Tanpa akun, tanpa pendaftaran, tanpa daftar teman, dan tidak perlu memasang apa pun bagi yang lebih suka bermain lewat peramban.
-• Tiga lawan yang benar-benar berpikir — pemain komputer mencari langkah terbaik, bukan mengikuti skrip, pada tiga tingkat kekuatan. Mode solo berjalan sepenuhnya offline.
-• Setiap kartu punya fungsi — lihat salah satu kartu Anda sendiri, lihat kartu orang lain, tukar dua kartu secara membabi buta, atau buat seluruh meja melempar kartu dengan peringkat yang sama. Tahu kapan TIDAK memakainya adalah sebagian besar dari keahlian ini.
-• Sesuai tempo Anda sendiri — tenang saat Anda masih belajar, cepat begitu Anda sudah mahir. Mode terang dan gelap, keduanya diukur agar kontras terlihat jelas, dan tidak ada apa pun di meja yang hanya dibedakan lewat warna.
-• Tidak ada yang perlu dibeli dan tidak ada yang perlu ditonton — tanpa iklan, sekarang maupun nanti. Tanpa akun. Penghitungan anonim bisa dimatikan di Pengaturan, dan sejak awal pun tidak pernah menyimpan nama Anda.
+Pada giliran Anda, ambil kartu dari dek, atau ambil kartu aksi yang belum dipakai dari tumpukan buangan. Tukar ke tangan Anda, pakai aksinya, atau buang. Setelah itu, siapa pun yang memegang kartu dengan peringkat sama boleh melemparkannya masuk, dan satu ronde bisa berbalik dalam sedetik.
 
-CARA SATU GILIRAN BERJALAN
-Ambil dari tumpukan kartu, atau ambil kartu aksi yang ada di tumpukan buang. Tukar ke tangan Anda, gunakan fungsinya, atau buang begitu saja. Setelah itu, siapa pun yang memegang kartu dengan peringkat sama boleh melemparkannya — di sinilah satu babak bisa berbalik arah dalam sekejap, ke arah mana pun.
+Panggil Vinto saat Anda merasa tangan Anda yang terendah. Semua orang lain mendapat satu giliran lagi sebagai tim, dan tangan terendah di antara mereka diadu dengan tangan Anda. Jika Anda benar, ada hadiahnya. Jika salah, ada harganya.
 
-Kartu angka bernilai sesuai angkanya. Kartu aksi bernilai sepuluh. Raja tidak bernilai sama sekali, dan Joker mengurangi satu poin. Jadi tangan yang tidak bisa Anda lihat adalah tangan yang tidak bisa Anda perkirakan nilainya — dan itulah inti persoalannya.
+Ronde berlangsung singkat, jenis yang dimainkan empat kali karena yang pertama berakhir dengan perdebatan.
 
-UNTUK SIAPA PERMAINAN INI
-Siapa pun yang menyukai permainan kartu dengan unsur gertakan dan babak yang singkat — jenis yang dimainkan empat kali berturut-turut karena yang pertama berakhir dengan perdebatan. Ini adalah keluarga permainan yang sudah dimainkan orang-orang di meja dapur selama bertahun-tahun; inilah permainan itu, dengan tiga lawan yang selalu siap dan meja yang bisa Anda buka sendiri.
+Kartu 2 sampai 10 bernilai sesuai angkanya, Jack dan Ratu bernilai 10, dan As bernilai 1. Raja tidak bernilai apa pun, dan Joker mengurangi satu dari total Anda. Tangan yang tidak bisa Anda lihat adalah tangan yang tidak bisa Anda hitung, dan itulah seluruh persoalannya.
 
-Pegang lebih sedikit. Ketahui lebih banyak.
+Delapan dari empat belas peringkat punya aksi. 7 atau 8 membiarkan Anda melihat salah satu kartu Anda sendiri, dan 9 atau 10 melihat kartu orang lain. Jack menukar dua kartu tanpa melihat, dan Ratu menunjukkan dua kartu sebelum Anda memutuskan menukarnya atau tidak.
+
+As membuat pemain lain mengambil kartu penalti. Raja menyebut kartu mana pun di meja, dan jika namanya benar, Anda memainkan aksi kartu itu. Tahu kapan tidak memakai aksi adalah sebagian besar dari keahlian ini.
+
+Ketiga pemain komputer melihat ke depan lewat berbagai kemungkinan langkah, bukan mengikuti skrip. Anda bisa menyetelnya ke Mudah, Sedang, atau Sulit. Mode solo berjalan sepenuhnya offline.
+
+Pelajaran di bawah Cara bermain membagikan satu ronde sungguhan dan memandu Anda lewat tangan Anda sendiri selagi berjalan. Anda boleh melewatinya, dan tombol ? menjelaskan setiap kartu kapan pun di tengah permainan.
+
+Untuk multipemain, buka ruangan dan kirim kode enam karakternya. Siapa pun yang punya kode mengambil kursi, dan bot mengisi kursi yang tidak diambil. Tidak perlu akun, dan teman yang belum memasang aplikasi bisa bermain di peramban web.
+
+Ruangan bisa pribadi, hanya dengan kode, atau terdaftar agar siapa pun bisa bergabung. Nama pemain berasal dari daftar tetap, dan tidak ada kolom teks di mana pun dalam aplikasi.
+
+Tema terang dan gelap sama-sama diperiksa kontrasnya, dan tidak ada yang di meja dibedakan hanya lewat warna. Gerak bisa dikurangi, kecepatan bisa diatur dari Tenang sampai Cepat, dan setiap tombol punya label untuk pembaca layar.
+
+Aplikasi ini gratis, dan tidak ada yang terkunci di dalamnya. Tidak ada iklan. Tip opsional di Pengaturan diberikan kepada pengembang dan tidak menambah apa pun pada permainan.
+
+Aplikasi ini menyimpan hitungan anonim tentang cara ronde dimainkan, tanpa nama apa pun. Penghitungan ini bisa dimatikan di Pengaturan.
+
+Vinto! adalah permainan kartu yang dirancang dan diterbitkan oleh pihak lain, di vinto.game. Ini adalah aplikasi tidak resmi untuk memainkannya.

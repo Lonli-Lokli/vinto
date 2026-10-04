@@ -146,14 +146,15 @@ class TossInAreaTest {
         var tall = 0
         runComposeUiTest {
             show(view)
-            // The deck's description carries its count — "40 cards left in the deck" — so
-            // this matches the sentence's tail rather than pinning a number the session's
-            // deal would have to keep producing.
+            // The deck's description carries its count ("Cards left in the deck: 40"), so this
+            // matches the label rather than pinning a number the session's deal would have to
+            // keep producing.
             val deck = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ContentDescription))
                 .fetchSemanticsNodes()
                 .first { n ->
                     n.config.getOrNull(SemanticsProperties.ContentDescription)
-                        ?.firstOrNull()?.endsWith("cards left in the deck") == true
+                        ?.firstOrNull()
+                        ?.startsWith("Cards left in the deck") == true
                 }
             tall = deck.boundsInRoot.top.toInt()
         }

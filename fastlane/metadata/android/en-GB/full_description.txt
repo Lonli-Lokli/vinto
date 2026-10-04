@@ -1,21 +1,31 @@
-Five cards in front of you, face down. At the start you may look at two of them. Everything else you have to work out — from what other people draw, what they throw away, and what they are suddenly willing to risk.
+Vinto! is a card game of memory and bluff for a table of four. Play solo against three computer opponents, or online with people you know.
 
-Call Vinto when you think your hand is the lowest. Be right and it pays. Be wrong and it costs you.
+You get five cards face down, and you may look at two of them once. The rest is deduction: what other people draw, what they throw away, and what they are suddenly willing to risk.
 
-WHY VINTO
-• You learn it by playing it — the tutorial deals a real round and talks you through your own hand as it goes. No rulebook, no video, and you can skip it and start playing.
-• A multiplayer card game with people you actually know — open a room and send six characters. Whoever gets them is at the table. No account, no sign-up, no friend list, and nothing to install for anyone who would rather play in their browser.
-• Three opponents who genuinely think — the computer players search the game out rather than following a script, at three strengths. Solo plays fully offline, with no connection at all.
-• Every card does something — look at one of your own, look at somebody else's, swap two cards blind, or make the whole table throw in a rank. Knowing when NOT to spend one is most of the skill.
-• Your own pace — calm while you are learning it, brisk once you are not. Light and dark, both measured for contrast, and nothing at the table is told apart by colour alone.
-• Nothing to buy and nothing to watch — no ads, not now and not ever. No account. The anonymous counting can be switched off in Settings, and it never carried a name in the first place.
+On your turn, draw from the deck, or take an unused action card from the discard pile. Swap it into your hand, use its action, or throw it away. Then anybody holding a card of the same rank may throw theirs in, and a round can turn in a second.
 
-HOW A TURN GOES
-Draw from the deck, or take the action card sitting on the discard pile. Swap it into your hand, use what it does, or throw it away. Then anybody holding a card of the same rank may throw theirs in — which is where a round can turn over in one second, in either direction.
+Call Vinto when you think your hand is the lowest. Everybody else gets one more turn as a team, and the lowest of their hands is set against yours. Be right and it pays; be wrong and it costs you.
 
-Number cards score their face value. Action cards score ten. The King scores nothing at all, and the Joker takes one off. So a hand you cannot see is a hand you cannot price, and that is the whole problem.
+Rounds are short: the kind that get played four times because the first one ended in an argument.
 
-WHO IT IS FOR
-Anyone who likes a card game with memory and a bluff in it, and a short round — the kind that gets played four times because the first one ended in an argument. It is a family of games people have played around kitchen tables for years; this is that game, with three opponents who are always free and a table you can open for your own.
+Cards 2 to 10 count their number, Jacks and Queens count 10, and an Ace counts 1. A King counts nothing, and a Joker takes one off your total. A hand you cannot see is a hand you cannot price, and that is the whole problem.
 
-Hold less. Know more.
+Eight of the fourteen ranks have an action. A 7 or 8 lets you look at one of your own cards, and a 9 or 10 at somebody else's. A Jack swaps two cards blind, and a Queen shows you two before you decide whether to swap them.
+
+An Ace makes another player draw a penalty card. A King names any card on the table, and if the name is right, you play that card's action. Knowing when not to spend an action is most of the skill.
+
+The three computer opponents look ahead through possible moves instead of following a script. You can set them to Easy, Moderate or Hard. Solo play works fully offline.
+
+The lesson under How to play deals a real round and talks you through your own hand as it goes. You can skip it, and the ? button explains every card at any point in a game.
+
+For multiplayer, open a room and send its six-character code. Whoever has the code takes a seat, and bots fill the seats nobody takes. Nobody needs an account, and a friend without the app can play in a web browser.
+
+A room can be private, by code only, or listed for anyone to join. Player names come from a fixed list, and there is no text box anywhere in the app.
+
+Light and dark themes are both checked for contrast, and nothing at the table is told apart by colour alone. Motion can be reduced, the pace can be set from Calm to Brisk, and every button has a label for screen readers.
+
+The app is free, and nothing in it is locked. There are no ads. An optional tip in Settings goes to the developer and adds nothing to the game.
+
+The app keeps anonymous counts of how rounds are played, without any names. You can switch the counting off in Settings.
+
+Vinto! is a card game designed and published by other people, at vinto.game. This is an unofficial app for playing it.

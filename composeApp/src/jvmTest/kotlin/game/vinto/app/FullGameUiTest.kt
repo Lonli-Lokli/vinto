@@ -109,7 +109,7 @@ class FullGameUiTest {
 
         // The sheet: the round named, the score offered, and the reason the hands went
         // face-up. All three of A1's endings contain the same two words — "You called
-        // Vinto…", "%s called Vinto…", "Nobody called Vinto — the deck ran out…" — so the
+        // Vinto…", "%s called Vinto…", "Nobody called Vinto. The deck ran out…" — so the
         // assertion is on the promise (a reason is given) rather than on this seed's ending.
         onNodeWithText("Round 1", substring = true).assertIsDisplayed()
         button("Deal the next round").assertIsDisplayed()

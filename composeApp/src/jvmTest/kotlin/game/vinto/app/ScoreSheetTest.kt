@@ -87,7 +87,7 @@ class ScoreSheetTest {
     fun levelIsNamedRatherThanRoundedIntoAWin() = runComposeUiTest {
         sheetFor(mapOf("p1" to 12, "p2" to 12, "p3" to 15, "p4" to 30), caller = "p1")
 
-        onNodeWithText("Level — the call held").assertIsDisplayed()
+        onNodeWithText("Level. The call held").assertIsDisplayed()
     }
 
     /** And a round nobody called is not a contest, so it is not reported as one. */

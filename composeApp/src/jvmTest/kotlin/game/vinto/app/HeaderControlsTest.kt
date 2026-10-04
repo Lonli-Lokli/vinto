@@ -140,10 +140,10 @@ class HeaderControlsTest {
         const val SEED = 20260819L
 
         /** The felt's draw pile, which is the thing being counted. */
-        const val DECK = "cards left in the deck"
+        const val DECK = "Cards left in the deck"
 
         /** The header control, which is the thing that explains the count. */
-        const val BADGE = "in the deck — what that means"
+        const val BADGE = "in the deck. What that means"
         const val REPORT = "Report a problem"
         const val SETTINGS = "Settings"
     }

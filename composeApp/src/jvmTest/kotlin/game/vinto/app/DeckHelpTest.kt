@@ -60,7 +60,7 @@ class DeckHelpTest {
         const val SEED = 12L
 
         /** The tail of `header_deck_left`, which is the deck's accessible name. */
-        const val DECK = "cards left in the deck"
+        const val DECK = "Cards left in the deck"
 
         /** `deck_title` — the heading the sheet opens with. */
         const val TITLE = "The deck"

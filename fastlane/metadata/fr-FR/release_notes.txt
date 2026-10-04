@@ -1,7 +1,5 @@
-La table se sent maintenant chez elle sur tous les écrans. Sur iPad, elle s'étale, et les cartes grandissent avec elle.
+La table s’adapte désormais à tous les écrans. Sur iPad, elle s’étale et les cartes grandissent avec elle.
 
 Les grandes mains restent bien rangées, les noms longs tiennent, et la salle en ligne tient sur un seul écran.
 
-Et un nouvel écran de lancement pour vous accueillir.
-
-Merci d'y jouer !
+L’écran de lancement est nouveau.

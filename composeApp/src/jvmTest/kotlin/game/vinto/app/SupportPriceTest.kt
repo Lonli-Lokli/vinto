@@ -16,8 +16,8 @@ import kotlin.test.assertEquals
 /**
  * What the thank-you button says when the store hands back no figure.
  *
- * `settings_support_buy` is "Say thanks — %1$s", so a blank price renders **"Say thanks — "** with
- * the dash hanging off the end. It looks like a string that failed to load, on the one control in
+ * `settings_support_buy` is "Say thanks (%1$s)", so a blank price renders **"Say thanks ()"** with
+ * empty brackets on the end. It looks like a string that failed to load, on the one control in
  * the app that asks somebody for money.
  *
  * It is not hypothetical. `formattedPrice` is Play's own field and it comes back **empty for a
@@ -41,7 +41,7 @@ class SupportPriceTest {
         onNodeWithContentDescription("Say thanks").assertIsDisplayed()
         assertEquals(
             0,
-            onAllNodes(hasContentDescription("Say thanks —", substring = true))
+            onAllNodes(hasContentDescription("Say thanks (", substring = true))
                 .fetchSemanticsNodes()
                 .size,
             "the button kept the separator with nothing after it",
@@ -53,7 +53,7 @@ class SupportPriceTest {
     fun aStoreThatNamesAPriceStillShowsIt() = runComposeUiTest {
         settingsOffering("£4.99")
 
-        onNodeWithContentDescription("Say thanks — £4.99").assertIsDisplayed()
+        onNodeWithContentDescription("Say thanks (£4.99)").assertIsDisplayed()
     }
 
     private fun ComposeUiTest.settingsOffering(price: String) {

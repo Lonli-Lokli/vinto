@@ -1,21 +1,31 @@
-Cinco cartas boca abajo, delante de usted. Al empezar puede mirar dos. Todo lo demás debe deducirlo — de lo que otros roban, de lo que descartan, y de lo que de pronto se atreven a arriesgar.
+Vinto! es un juego de cartas de memoria y engaño para una mesa de cuatro. Juega solo contra tres rivales controlados por la app, o en línea con gente que conoces.
 
-Cante Vinto cuando crea que su mano es la más baja. Si acierta, gana. Si se equivoca, le cuesta.
+Recibes cinco cartas boca abajo y puedes mirar dos de ellas una sola vez. Lo demás es deducción: lo que roban los demás, lo que descartan y lo que de pronto se atreven a arriesgar.
 
-POR QUÉ VINTO
-• Se aprende jugando — el tutorial reparte una ronda real y le explica su propia mano mientras avanza. Sin manual, sin vídeo, y puede saltárselo y empezar a jugar.
-• Juegue con quien conoce — abra una sala y envíe seis caracteres. Quien los reciba se sienta a la mesa. Sin cuenta, sin registro, sin lista de amigos, y nada que instalar para quien prefiera jugar desde el navegador.
-• Tres rivales que realmente piensan — los jugadores automáticos exploran la partida en vez de seguir un guion, con tres niveles de fuerza. En solitario se juega totalmente sin conexión.
-• Cada carta hace algo — mirar una propia, mirar la de otro, cambiar dos cartas a ciegas, u obligar a toda la mesa a descartar un rango. Saber cuándo NO usar una es la mitad del juego.
-• A su ritmo — tranquilo mientras aprende, ágil cuando ya domina. Modo claro y oscuro, ambos medidos por contraste, y nada en la mesa se distingue solo por el color.
-• Nada que comprar y nada que ver — sin anuncios, ni ahora ni nunca. Sin cuenta. El recuento anónimo puede desactivarse en Ajustes, y nunca llevó un nombre.
+En tu turno, roba del mazo o toma una carta de acción sin usar de la pila de descarte. Cámbiala por una de tu mano, usa su acción o tírala. Después, cualquiera que tenga una carta del mismo rango puede lanzar la suya, y una ronda puede cambiar en un segundo.
 
-CÓMO ES UN TURNO
-Robe del mazo, o tome la carta de acción que hay en la pila de descarte. Cámbiela por una de su mano, use lo que hace, o deséchela. Después, cualquiera que tenga una carta del mismo rango puede tirarla también — y ahí una ronda puede darse la vuelta en un segundo, en cualquier dirección.
+Canta Vinto cuando creas que tu mano es la más baja. Todos los demás juegan un turno más como equipo, y la más baja de sus manos se compara con la tuya. Acertar compensa y equivocarse sale caro.
 
-Las cartas numéricas valen su número. Las cartas de acción valen diez. El Rey no vale nada, y el Comodín resta uno. Una mano que no se ve es una mano que no se puede calcular, y ese es todo el problema.
+Las rondas son cortas: de las que se juegan cuatro veces porque la primera acabó en discusión.
 
-PARA QUIÉN ES
-Para quien disfruta de un juego de cartas con algo de farol y una ronda corta — de esas que se repiten cuatro veces porque la primera acabó en discusión. Es una familia de juegos que se ha jugado en las mesas de muchas cocinas durante años; este es ese juego, con tres rivales siempre disponibles y una mesa que puede abrir para los suyos.
+Las cartas del 2 al 10 valen su número, las Jotas y las Damas valen 10 y un As vale 1. Un Rey no vale nada y un Comodín resta uno a tu total. Una mano que no ves es una mano que no puedes valorar, y ese es todo el problema.
 
-Tenga menos. Sepa más.
+Ocho de los catorce rangos tienen acción. Un 7 o un 8 permite mirar una de tus cartas, y un 9 o un 10, una de otro jugador. Una Jota cambia dos cartas a ciegas, y una Dama te enseña dos antes de que decidas si las cambias.
+
+Un As hace que otro jugador robe una carta de penalización. Un Rey nombra cualquier carta de la mesa y, si el nombre es correcto, juegas la acción de esa carta. Saber cuándo no gastar una acción es buena parte de la habilidad.
+
+Los tres rivales controlados por la app calculan las jugadas posibles por adelantado en lugar de seguir un guion. Puedes ponerlos en Fácil, Moderada o Difícil. Jugar solo funciona totalmente sin conexión.
+
+La lección de Cómo se juega reparte una ronda real y te explica tu mano sobre la marcha. Puedes saltarla, y el botón ? explica cada carta en cualquier momento de la partida.
+
+Para jugar con otras personas, abre una sala y envía su código de seis caracteres. Quien tenga el código ocupa un asiento, y los bots rellenan los asientos que nadie toma. No hace falta cuenta, y un amigo sin la app puede jugar en un navegador web.
+
+Una sala puede ser privada, solo con código, o pública, para que entre cualquiera. Los nombres de los jugadores salen de una lista fija, y en toda la app no hay ningún cuadro de texto.
+
+Los temas claro y oscuro están comprobados en contraste, y nada en la mesa se distingue solo por el color. Se puede reducir el movimiento, el ritmo va de Tranquilo a Rápido y cada botón tiene una etiqueta para lectores de pantalla.
+
+La app es gratuita y nada en ella está bloqueado. No hay anuncios. Una propina opcional en Ajustes va para el desarrollador y no añade nada al juego.
+
+La app guarda recuentos anónimos de cómo se juegan las rondas, sin ningún nombre. Puedes desactivar el recuento en Ajustes.
+
+Vinto! es un juego de cartas diseñado y publicado por otras personas, en vinto.game. Esta es una app no oficial para jugarlo.

@@ -1,1 +1,1 @@
-Bluff-Kartenspiel: drei kluge Gegner, Freunde einladen, offline spielbar
+Kartenspiel aus Gedächtnis und Bluff. Solo offline spielbar, ohne Werbung.

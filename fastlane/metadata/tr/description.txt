@@ -1,21 +1,31 @@
-Önünüzde yüz üstü duran beş kart. Başlangıçta bunlardan ikisine bakabilirsiniz. Gerisini kendiniz çıkarmanız gerekir — başkalarının ne çektiğinden, neyi attığından ve birden neyi göze aldığından.
+Vinto!, dört kişilik bir masa için bellek ve blöf kart oyunudur. Üç bilgisayar rakibe karşı tek başınıza ya da tanıdığınız insanlarla çevrimiçi oynayın.
 
-Elinizin en düşük olduğunu düşündüğünüzde Vinto deyin. Haklıysanız kazanırsınız, yanılırsanız bedelini ödersiniz.
+Yüzü kapalı beş kart alırsınız ve bunlardan ikisine bir kez bakabilirsiniz. Gerisi çıkarımdır: diğerlerinin ne çektiği, neyi attığı ve birden neyi göze aldığı.
 
-NEDEN VINTO
-• Oynayarak öğrenirsiniz — eğitim bölümü size gerçek bir el dağıtır ve oynarken kendi elinizi anlatır. Kural kitapçığı yok, video yok; isterseniz atlayıp doğrudan oynamaya başlayabilirsiniz.
-• Tanıdığınız insanlarla oynayın — bir oda açın ve altı karakter gönderin. Onları alan herkes masaya oturur. Hesap yok, kayıt yok, arkadaş listesi yok; tarayıcıda oynamak isteyen için kurulacak hiçbir şey yok.
-• Gerçekten düşünen üç rakip — bilgisayar oyuncuları bir senaryo izlemek yerine oyunu arar, üç farklı güçte. Tek başına oynarken tamamen çevrimdışı çalışır.
-• Her kart bir şey yapar — kendi kartlarınızdan birine bakın, başka birininkine bakın, iki kartı görmeden takas edin ya da tüm masayı bir rütbeyi atmaya zorlayın. Bir kartı NE ZAMAN kullanmayacağınızı bilmek, işin çoğudur.
-• Kendi hızınızda — öğrenirken sakin, öğrendikten sonra hızlı. Açık ve koyu tema, ikisi de kontrast için ölçülmüş; masada hiçbir şey yalnızca renkle ayırt edilmez.
-• Satın alınacak, izlenecek hiçbir şey yok — hiç reklam yok, şimdi de hiçbir zaman da. Hesap yok. Anonim sayaç Ayarlar'dan kapatılabilir ve zaten hiçbir zaman bir isim taşımadı.
+Sıra sizdeyken desteden çekin ya da atılanlar yığınından henüz kullanılmamış bir eylem kartı alın. Kartı elinize takas edin, eylemini kullanın ya da atın. Ardından aynı değerde kart tutan herkes kendi kartını atabilir ve bir tur saniyeler içinde değişebilir.
 
-BİR TUR NASIL İŞLER
-Desteden çekin ya da atılan kartların üstündeki eylem kartını alın. Onu elinize takas edin, ne yapıyorsa kullanın ya da atın. Ardından aynı rütbeden kart tutan herkes kendi kartını atabilir — ve bir tur, bir anda, her iki yöne de dönebilir.
+Elinizin en düşük olduğunu düşündüğünüzde Vinto çağırın. Diğer herkes takım olarak bir tur daha oynar ve onların en düşük eli sizinkiyle karşılaştırılır. Haklıysanız kazanırsınız, yanılırsanız bedelini ödersiniz.
 
-Sayı kartları yüzeysel değerini verir. Eylem kartları on puan. Papaz sıfır puan, Joker ise bir puan düşürür. Göremediğiniz bir el, fiyatlandıramayacağınız bir eldir — sorunun tamamı da bu.
+Turlar kısadır: ilki bir tartışmayla bittiği için dört kez oynanan türden.
 
-KİMLER İÇİN
-İçinde blöf olan, kısa süren bir kart oyunu sevenler için — dört kez oynanıp ilkinin bir tartışmayla bittiği türden. Bu, insanların yıllardır mutfak masalarında oynadığı bir oyun ailesi; bu da o oyun, her zaman hazır üç rakip ve kendi kuracağınız bir masayla.
+2’den 10’a kadar kartlar üzerindeki sayıyı sayar, Vale ve Kız 10, As ise 1 eder. Papaz hiçbir şey saymaz, Joker toplamınızdan bir puan düşer. Göremediğiniz bir elin fiyatını biçemezsiniz ve bütün mesele de budur.
 
-Az tut. Çok bil.
+On dört değerin sekizinin bir eylemi vardır. 7 ya da 8 kendi kartlarınızdan birine, 9 ya da 10 başkasının kartına bakmanızı sağlar. Vale iki kartı görmeden değiştirir, Kız ise değiştirip değiştirmeyeceğinize karar vermeden önce ikisini gösterir.
+
+As, başka bir oyuncuya ceza kartı çektirir. Papaz masadaki herhangi bir kartın adını söyler ve ad doğruysa o kartın eylemini oynarsınız. Bir eylemi ne zaman harcamayacağınızı bilmek, becerinin büyük kısmıdır.
+
+Üç bilgisayar rakip bir senaryoyu izlemek yerine olası hamleleri önceden hesaplar. Onları Kolay, Orta ya da Zor olarak ayarlayabilirsiniz. Tek kişilik oyun tamamen çevrimdışı çalışır.
+
+Nasıl oynanır bölümündeki ders, gerçek bir tur dağıtır ve ilerledikçe kendi elinizi size anlatır. Atlayabilirsiniz ve ? düğmesi oyunun her anında her kartı açıklar.
+
+Çok oyunculu için bir oda açın ve altı karakterli kodunu gönderin. Kodu alan masada bir koltuğa oturur, kimsenin almadığı koltukları botlar doldurur. Kimsenin hesap açması gerekmez ve uygulaması olmayan bir arkadaş tarayıcıda oynayabilir.
+
+Bir oda yalnızca kodla girilen özel bir oda olabilir ya da herkesin katılabileceği şekilde listelenebilir. Oyuncu adları sabit bir listeden gelir ve uygulamanın hiçbir yerinde metin kutusu yoktur.
+
+Açık ve koyu temanın ikisi de kontrast için denetlenmiştir ve masada hiçbir şey yalnızca renkle ayırt edilmez. Hareket azaltılabilir, hız Sakin’den Hızlı’ya ayarlanabilir ve her düğmenin ekran okuyucular için bir etiketi vardır.
+
+Uygulama ücretsizdir ve içinde kilitli hiçbir şey yoktur. Reklam yoktur. Ayarlar’daki isteğe bağlı bahşiş geliştiriciye gider ve oyuna hiçbir şey eklemez.
+
+Uygulama, turların nasıl oynandığına dair anonim sayımlar tutar ve bunlarda hiçbir isim yoktur. Sayımı Ayarlar’dan kapatabilirsiniz.
+
+Vinto!, başkaları tarafından tasarlanıp yayımlanan bir kart oyunudur ve resmî adresi vinto.game’dir. Bu, oyunu oynamak için resmî olmayan bir uygulamadır.
