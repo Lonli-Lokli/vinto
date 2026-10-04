@@ -1,1 +1,1 @@
-cartas,blof,deducción,memoria,multijugador,online,mesa,estrategia,offline,solitario,bots,mazo,baraja
+cartas,blof,deducción,memoria,multijugador,online,mesa,estrategia,offline,bots,mazo,baraja,anuncios

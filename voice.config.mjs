@@ -6,6 +6,7 @@ export default {
   rules: {
     'de-free-claim': 'off',
     'fr-free-claim': 'off',
+    'aso-price': 'off',
   },
   allow: [
     { rule: 'es-inverted', match: 'Vinto!', why: 'the "!" belongs to the name "Vinto!", so it takes no opening ¡' },

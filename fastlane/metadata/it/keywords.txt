@@ -1,1 +1,1 @@
-deduzione,bluff,multigiocatore,online,offline,strategia,carte,mazzo,mano,bot,tavolo,punteggio,solo
+deduzione,bluff,multigiocatore,online,offline,strategia,carte,mazzo,mano,bot,punteggio,pubblicità

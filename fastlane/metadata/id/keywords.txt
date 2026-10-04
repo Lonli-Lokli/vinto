@@ -1,1 +1,1 @@
-kartu,deduksi,gertak,multipemain,online,offline,strategi,solo,bot,dek,peringkat,tangan,tanpa iklan
+kartu,deduksi,gertak,multipemain,online,offline,strategi,solo,bot,dek,peringkat,tangan,iklan
