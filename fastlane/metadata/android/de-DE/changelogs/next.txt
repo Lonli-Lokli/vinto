@@ -1,0 +1,1 @@
+Vinto schließt sich nicht mehr auf Telefonen mit Android 7, wenn die Online-Verbindung abbricht. Die Zurück-Taste schließt jetzt die Hilfe, den Punktestand und andere Bereiche, statt den Tisch zu verlassen. Hebräisch und Indonesisch zeigen sich auf älteren Android-Telefonen jetzt in der eigenen Sprache. Einige Texte in der App sind kürzer und klarer.

@@ -1,5 +1,1 @@
-La mesa ahora se ajusta a cualquier pantalla. En un iPad se despliega y las cartas crecen con ella.
-
-Las manos grandes quedan ordenadas, los nombres largos caben y la sala en línea cabe en una sola pantalla.
-
-La pantalla de inicio es nueva.
+Los sonidos de Vinto ya no detienen la música de otra app. Tras instalar la app o actualizar iOS, la primera pantalla prepara sus gráficos en segundo plano. Parte del texto de la app es más breve y claro.

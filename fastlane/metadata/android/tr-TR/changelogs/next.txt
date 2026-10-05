@@ -1,0 +1,1 @@
+Vinto artık Android 7 çalıştıran telefonlarda çevrimiçi bağlantı kesildiğinde kapanmıyor. Geri tuşu artık masadan çıkmak yerine yardım, skor ve diğer panelleri kapatıyor. İbranice ve Endonezce artık eski Android telefonlarda kendi dillerinde görünüyor. Uygulamadaki bazı metinler daha kısa ve daha açık.

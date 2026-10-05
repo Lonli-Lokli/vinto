@@ -1,0 +1,1 @@
+Vinto ya no se cierra en teléfonos con Android 7 cuando falla la conexión. El botón de atrás cierra Ayuda, el Marcador y otros paneles, en lugar de salir de la mesa. El hebreo y el indonesio ya se muestran en su propio idioma en teléfonos Android antiguos. Parte del texto de la app es más breve y claro.

@@ -1,5 +1,1 @@
-Stół mieści się teraz na każdym ekranie. Na iPadzie rozkłada się szerzej, a karty rosną razem z nim.
-
-Duże ręce pozostają czytelne, długie imiona się mieszczą, a pokój online mieści się na jednym ekranie.
-
-Ekran powitalny jest nowy.
+Dźwięki w Vinto nie zatrzymują już muzyki odtwarzanej w innej aplikacji. Po instalacji lub aktualizacji iOS pierwszy ekran przygotowuje teraz grafikę w tle. Część tekstów w aplikacji jest krótsza i jaśniejsza.

@@ -1,0 +1,1 @@
+Vinto non si chiude più sui telefoni con Android 7 quando la connessione online si interrompe. Il tasto Indietro chiude Regole, il punteggio e altri pannelli, invece di lasciare il tavolo. L’ebraico e l’indonesiano ora si mostrano nella propria lingua sui telefoni Android più vecchi. Alcuni testi nell’app sono più brevi e chiari.

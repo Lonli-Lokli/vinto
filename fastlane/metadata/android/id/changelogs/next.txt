@@ -1,0 +1,1 @@
+Vinto tidak lagi tertutup di ponsel dengan Android 7 saat koneksi online terputus. Tombol kembali menutup Bantuan, Skor, dan panel lain, bukan meninggalkan meja. Ibrani dan Indonesia sekarang tampil dalam bahasanya sendiri di ponsel Android yang lebih lama. Beberapa teks di aplikasi kini lebih singkat dan jelas.

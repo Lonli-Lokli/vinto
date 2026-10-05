@@ -1,0 +1,1 @@
+Vinto przestało się zamykać na telefonach z Androidem 7, gdy traci połączenie online. Przycisk Wstecz zamyka teraz pomoc, wyniki i inne panele, zamiast opuszczać stół. Hebrajski i indonezyjski teraz pokazują się we własnym języku na starszych telefonach z Androidem. Część tekstów w aplikacji jest krótsza i jaśniejsza.

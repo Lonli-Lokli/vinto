@@ -1,5 +1,1 @@
-Il tavolo ora si adatta a ogni schermo. Su iPad si allarga e le carte crescono con lui.
-
-Le mani numerose restano in ordine, i nomi lunghi ci stanno e la stanza online sta in una sola schermata.
-
-La schermata di avvio è nuova.
+I suoni di Vinto non interrompono più la musica di un’altra app. Dopo un’installazione o un aggiornamento di iOS, la prima schermata ora prepara la grafica in background. Alcuni testi nell’app sono più brevi e chiari.

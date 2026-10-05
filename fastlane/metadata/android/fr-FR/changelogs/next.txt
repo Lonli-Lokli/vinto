@@ -1,0 +1,1 @@
+Vinto ne se ferme plus sur les téléphones avec Android 7 quand la connexion en ligne tombe. Le bouton retour ferme Aide, le score et les autres panneaux, au lieu de quitter la table. L’hébreu et l’indonésien s’affichent maintenant dans leur propre langue sur les téléphones Android plus anciens. Certains textes de l’application sont plus courts et plus clairs.

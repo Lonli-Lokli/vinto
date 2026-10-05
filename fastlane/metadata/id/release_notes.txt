@@ -1,5 +1,1 @@
-Meja kini muat di setiap layar. Di iPad meja melebar, dan kartu ikut membesar.
-
-Tangan yang penuh tetap rapi, nama panjang muat, dan lobi online muat dalam satu layar.
-
-Layar pembuka kini baru.
+Suara Vinto tidak lagi menghentikan musik yang diputar di aplikasi lain. Setelah pemasangan atau pembaruan iOS, layar pertama sekarang menyiapkan grafisnya di latar belakang. Beberapa teks di aplikasi lebih singkat dan jelas.

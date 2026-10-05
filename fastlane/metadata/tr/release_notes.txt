@@ -1,5 +1,1 @@
-Masa artık her ekrana sığıyor. iPad’de geniş alana yayılıyor ve kartlar da onunla birlikte büyüyor.
-
-Kalabalık eller düzenli kalıyor, uzun adlar sığıyor ve çevrimiçi lobi tek ekrana oturuyor.
-
-Açılış ekranı yeni.
+Vinto’nun sesleri artık başka bir uygulamada çalan müziği durdurmuyor. Bir kurulumdan veya iOS güncellemesinden sonra ilk ekran artık görsellerini arka planda hazırlıyor. Uygulamadaki bazı metinler daha kısa ve daha açık.

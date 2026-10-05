@@ -1,5 +1,1 @@
-La table s’adapte désormais à tous les écrans. Sur iPad, elle s’étale et les cartes grandissent avec elle.
-
-Les grandes mains restent bien rangées, les noms longs tiennent, et la salle en ligne tient sur un seul écran.
-
-L’écran de lancement est nouveau.
+Les sons de Vinto n’arrêtent plus la musique jouée dans une autre application. Après une installation ou une mise à jour d’iOS, le premier écran prépare maintenant ses graphismes en arrière-plan. Certains textes de l’application sont plus courts et plus clairs.

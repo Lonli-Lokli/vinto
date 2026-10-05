@@ -1,5 +1,1 @@
-Der Tisch passt jetzt auf jeden Bildschirm. Auf dem iPad breitet er sich aus, und die Karten wachsen mit.
-
-Große Hände bleiben übersichtlich, lange Namen passen hinein, und die Online-Lobby passt auf einen Bildschirm.
-
-Der Startbildschirm ist neu.
+Die Töne von Vinto unterbrechen jetzt keine Musik mehr, die in einer anderen App läuft. Nach einer Installation oder einem iOS-Update bereitet der erste Bildschirm seine Grafik jetzt im Hintergrund vor. Einige Texte in der App sind kürzer und klarer.

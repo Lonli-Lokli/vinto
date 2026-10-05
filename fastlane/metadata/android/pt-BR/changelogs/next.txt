@@ -1,0 +1,1 @@
+O Vinto não fecha mais em celulares com Android 7 quando a conexão online cai. O botão Voltar fecha a Ajuda, o placar e outros painéis, em vez de sair da mesa. Hebraico e indonésio agora aparecem no próprio idioma em celulares Android mais antigos. Alguns textos do app ficaram mais curtos e claros.

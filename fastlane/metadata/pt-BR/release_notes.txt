@@ -1,5 +1,1 @@
-A mesa agora cabe em qualquer tela. No iPad, ela se expande, e as cartas crescem junto.
-
-Mãos grandes ficam organizadas, nomes longos cabem e a sala online cabe em uma tela.
-
-A tela de abertura é nova.
+Os sons do Vinto não interrompem mais a música de outro app. Depois de uma instalação ou atualização do iOS, a primeira tela agora prepara os gráficos em segundo plano. Alguns textos do app ficaram mais curtos e claros.

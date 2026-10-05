@@ -1,0 +1,1 @@
+Vinto no longer closes on phones with Android 7 when the online connection drops. The back button closes Help, Standings and other panels instead of leaving the table. Hebrew and Indonesian now show in their own language on older Android phones. Some text in the app is shorter and clearer.

@@ -1,5 +1,1 @@
-The table now fits every screen. On an iPad it spreads out, and the cards grow with it.
-
-Big hands stay tidy, long names fit, and the online lobby fits on one screen.
-
-The launch screen is new.
+Vinto's sounds no longer stop the music playing in another app. After an install or an iOS update, the first screen now prepares its graphics in the background. Some text in the app is shorter and clearer.
