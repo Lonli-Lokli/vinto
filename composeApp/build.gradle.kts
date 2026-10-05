@@ -52,6 +52,13 @@ kotlin {
         compileSdk = libs.versions.androidCompileSdk.get().toInt()
         minSdk = libs.versions.androidMinSdk.get().toInt()
 
+        // This module is the one that calls java.time (`nowIso()`, `AndroidStorage.android.kt`),
+        // and minSdk 24 predates it. The rewrite itself happens in `androidApp`, which dexes
+        // everything; declaring it here as well writes it into this library's AAR metadata, so an
+        // application that dropped it would fail `checkAarMetadata` rather than ship the
+        // Android 7 crash again. `coreLibraryDesugaring` below is its other half.
+        enableCoreLibraryDesugaring = true
+
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
@@ -150,6 +157,11 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
     }
+}
+
+dependencies {
+    // The other half of `enableCoreLibraryDesugaring`: the java.time backport L8 rewrites calls to.
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
 
 /**

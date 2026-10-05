@@ -110,6 +110,26 @@
                 <string>CA92.1</string>
             </array>
         </dict>
+        <dict>
+            <!-- File timestamps and sizes inside the app's own container: the binary imports stat/fstat and
+                 NSFileCreationDate through Kotlin/Native, Compose and Skia (audit, 2026-10-05). C617.1. -->
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>C617.1</string>
+            </array>
+        </dict>
+        <dict>
+            <!-- systemUptime, to measure time between events inside the app (frame timing, launch
+                 timing): imported through Compose and Kotlin/Native. 35F9.1. -->
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategorySystemBootTime</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>35F9.1</string>
+            </array>
+        </dict>
     </array>
 </dict>
 </plist>

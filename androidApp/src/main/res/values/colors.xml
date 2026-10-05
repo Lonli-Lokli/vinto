@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-        The bars' colour on phones before Android 15, which draw them opaque (`themes.xml`).
+        The bars' colour before edge-to-edge takes over in MainActivity (`themes.xml`).
         It was the window's own colour too, until the launch screen came: the window is now
         the launch felt (`launch.xml`, generated), the green the launch screen hands over to.
 

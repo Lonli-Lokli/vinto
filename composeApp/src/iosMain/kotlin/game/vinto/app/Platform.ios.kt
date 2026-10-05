@@ -15,6 +15,14 @@ actual fun freshSeed(): Long = kotlin.random.Random.Default.nextLong()
 @OptIn(kotlin.experimental.ExperimentalNativeApi::class)
 actual fun isReleaseBuild(): Boolean = !kotlin.native.Platform.isDebugBinary
 
+/**
+ * No heuristics needed: the simulator sets `SIMULATOR_DEVICE_NAME` in the process environment and
+ * a real device never has it. `#if targetEnvironment(simulator)` would answer at compile time, but
+ * only inside Swift, and the reporter that asks is here.
+ */
+actual val isEmulatedDevice: Boolean
+    get() = platform.Foundation.NSProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] != null
+
 /** Kotlin/Native on Apple: `cocoa` is the platform a dSYM is read under. */
 actual val crashPlatform: game.vinto.app.crash.SentryPlatform =
     game.vinto.app.crash.SentryPlatform.COCOA

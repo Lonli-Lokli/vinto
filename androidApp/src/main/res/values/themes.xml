@@ -23,10 +23,13 @@
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowBackground">@color/launch_felt</item>
-        <!-- Ignored from Android 15 on, where edge-to-edge makes the bars transparent and
-             the rail behind them shows through anyway. Kept for older phones. -->
+        <!-- Only the colour the window shows before MainActivity calls enableEdgeToEdge(),
+             which makes the bars transparent on every version so the rail behind them shows
+             through; the icons then follow the in-app theme (SystemBars). -->
         <item name="android:statusBarColor">@color/rail</item>
         <item name="android:navigationBarColor">@color/rail</item>
+        <!-- The game draws its own measured light and dark schemes: Android 10+ and OEM skins must not invert them. -->
+        <item name="android:forceDarkAllowed" tools:targetApi="29">false</item>
     </style>
 
     <!--
@@ -60,5 +63,7 @@
         <item name="postSplashScreenTheme">@style/Theme.Vinto</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+        <!-- The game draws its own measured light and dark schemes: Android 10+ and OEM skins must not invert them. -->
+        <item name="android:forceDarkAllowed" tools:targetApi="29">false</item>
     </style>
 </resources>

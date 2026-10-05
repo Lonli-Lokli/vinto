@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import game.vinto.app.SystemBack
 
 /**
  * A hairline between two things.
@@ -82,9 +83,17 @@ private fun rising(open: Boolean): MutableTransitionState<Boolean> =
  * gesture dismisses, and the sheets in this app are read and closed rather than half-opened.
  * Rebuilding a drag-to-dismiss with velocity and settling would be more machinery than the two
  * screens using it justify, and doing it badly is worse than not having it.
+ *
+ * The back gesture dismisses because of the [SystemBack] below, and nothing else would do it.
+ * This comment said so for a long time while no handler existed: back fell through to the
+ * app's own, so pressing it over Help or the standings left the table, and in a room it left
+ * the room.
  */
 @Composable
 fun VintoSheet(open: Boolean, onDismiss: () -> Unit, content: @Composable () -> Unit) {
+    // Composed inside a screen, so after the app's handler, and Android asks the most recently
+    // added handler first: while the sheet is open, back closes it and goes no further.
+    SystemBack(enabled = open, onBack = onDismiss)
     Scrim(open = open, onDismiss = onDismiss)
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
@@ -114,10 +123,10 @@ fun VintoSheet(open: Boolean, onDismiss: () -> Unit, content: @Composable () -> 
                     }
 
                     // The way out that is always on screen. The scrim dismisses on tap and
-                    // Android's back gesture dismisses — but a sheet tall enough to cover
-                    // the scrim, on a platform with no back gesture (the browser, iOS),
-                    // left a phone user with no exit at all. The help sheet is exactly
-                    // that sheet.
+                    // Android's back gesture dismisses (`SystemBack`, above) — but a sheet
+                    // tall enough to cover the scrim, on a platform with no back gesture (the
+                    // browser, iOS), left a phone user with no exit at all. The help sheet is
+                    // exactly that sheet.
                     CloseButton(
                         onDismiss = onDismiss,
                         modifier = Modifier.align(Alignment.TopEnd),
@@ -137,6 +146,10 @@ fun VintoSheet(open: Boolean, onDismiss: () -> Unit, content: @Composable () -> 
  *
  * The buttons are the caller's, and are [GameButton]s, so the answer to a question looks like
  * every other move a player makes.
+ *
+ * Back on Android answers it the way a tap on the scrim does, through [SystemBack]. Without
+ * that it went past the dialog to the app's own handler and left the screen behind it, which
+ * is not an answer to either question.
  */
 @Composable
 fun VintoDialog(
@@ -146,6 +159,8 @@ fun VintoDialog(
     body: String,
     buttons: @Composable () -> Unit,
 ) {
+    // Asked before the app's handler while open, for the reason [VintoSheet] gives.
+    SystemBack(enabled = open, onBack = onDismiss)
     Scrim(open = open, onDismiss = onDismiss)
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

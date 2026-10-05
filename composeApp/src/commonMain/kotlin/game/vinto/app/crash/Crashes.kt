@@ -6,6 +6,7 @@ import game.vinto.app.SENTRY_DSN
 import game.vinto.app.appVersion
 import game.vinto.app.crashPlatform
 import game.vinto.app.elapsedMs
+import game.vinto.app.isEmulatedDevice
 import game.vinto.app.net.postBeacon
 import game.vinto.app.nowIso
 import game.vinto.app.platformName
@@ -60,8 +61,17 @@ object Crashes {
          */
         vault: Vault? = platformVault(),
         dsn: String = SENTRY_DSN,
+        /**
+         * An emulator or a simulator, which installs nothing: no handler, no stored crash sent,
+         * and [report] does nothing because there is no reporter to hand to. Checked here rather
+         * than at each entry point so that all four ask the one question ([isEmulatedDevice]),
+         * and a parameter so that a test can be the emulator. The DSN could not do it: it is
+         * built into every build, and the build type says only which bucket a crash lands in,
+         * not whether a player had it.
+         */
+        emulated: Boolean = isEmulatedDevice,
     ) {
-        if (reporter != null) return
+        if (reporter != null || emulated) return
         this.vault = vault
 
         val crashes = CrashReporter(

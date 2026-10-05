@@ -71,6 +71,8 @@ dependencies {
     // The launch screen, the same on every Android the game runs on: the icon's V on the felt
     // (`Theme.Vinto.Launch` in res/values/themes.xml).
     implementation(libs.androidx.core.splashscreen)
+    // The other half of `isCoreLibraryDesugaringEnabled`: the java.time backport L8 rewrites calls to.
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     // Play's SDK report flagged `androidx.fragment:fragment` on build 526: it resolves to 1.1.0,
     // which is six years old. Nothing here uses a Fragment — this is one Activity and Compose —
@@ -198,6 +200,13 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // minSdk 24 predates java.time (API 26), and `nowIso()` in composeApp's
+        // `AndroidStorage.android.kt` is `java.time.Instant.now()`. Every crash report reads it,
+        // the non-fatal ones included, so on Android 7.0 and 7.1 the first report (a lost socket
+        // is enough) threw NoClassDefFoundError inside the reporter and ended the app — shipped in
+        // 1.1, build 656. This is the module whose dexing rewrites the calls, composeApp's
+        // included, so this line is the fix; composeApp declares it too, as a guard.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     /**

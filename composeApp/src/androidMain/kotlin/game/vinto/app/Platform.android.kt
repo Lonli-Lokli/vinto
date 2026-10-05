@@ -3,6 +3,8 @@ package game.vinto.app
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import game.vinto.app.crash.AndroidBuild
+import game.vinto.app.crash.isEmulatorBuild
 
 actual fun platformName(): String = "Android ${Build.VERSION.SDK_INT}"
 
@@ -28,6 +30,26 @@ actual fun isReleaseBuild(): Boolean {
     val info = AndroidStorage.context?.applicationInfo ?: return false
     return info.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0
 }
+
+/**
+ * Read once: these fields are baked into the system image and cannot change while the process
+ * lives, and asking on every crash would put string matching in a process that is failing.
+ *
+ * Public `Build` fields only. `ro.kernel.qemu` is the most definitive signal and is reachable only
+ * through `SystemProperties`, a hidden API greylisted since Android 9; a guard that a future
+ * release throttles fails by quietly letting emulator crashes back in.
+ */
+actual val isEmulatedDevice: Boolean = isEmulatorBuild(
+    AndroidBuild(
+        fingerprint = Build.FINGERPRINT,
+        model = Build.MODEL,
+        product = Build.PRODUCT,
+        device = Build.DEVICE,
+        hardware = Build.HARDWARE,
+        brand = Build.BRAND,
+        manufacturer = Build.MANUFACTURER,
+    ),
+)
 
 /** Android is a JVM to Sentry, and `java` is the word that gets the R8 mapping applied. */
 actual val crashPlatform: game.vinto.app.crash.SentryPlatform =

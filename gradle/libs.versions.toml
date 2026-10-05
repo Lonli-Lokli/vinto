@@ -35,6 +35,11 @@ androidxActivityCompose = "1.13.0"
 # The launch screen (`Theme.Vinto.Launch`): one API for the system splash on Android 12+ and the
 # same screen drawn by the library before it. The version Hronka ships with.
 androidxCoreSplashscreen = "1.2.0"
+# java.time for Android 7.0 and 7.1: minSdk is 24 and java.time arrived in 26. `nowIso()` on
+# Android is `java.time.Instant.now()`, and every crash report reads it, the non-fatal ones too,
+# so without this the first report on those phones threw NoClassDefFoundError inside the reporter
+# and ended the app (1.1, build 656). The version every other game in the portfolio ships.
+desugarJdkLibs = "2.1.5"
 # Play Billing, for the one thing this app sells: a fixed-price way to say thanks. `-ktx` for
 # the suspend wrappers — the callback API would otherwise need a hand-rolled continuation per
 # call, which is three chances to leak a coroutine in code nobody can test without a store.
@@ -69,6 +74,7 @@ detekt-formatting = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "androidxCoreSplashscreen" }
 play-billing = { module = "com.android.billingclient:billing-ktx", version.ref = "playBilling" }
+desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 
 # Compose Multiplatform's own artifacts, named here rather than reached through the plugin's
 # `compose.runtime` / `compose.ui` accessors — which 1.12 deprecates in as many words

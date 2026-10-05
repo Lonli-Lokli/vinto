@@ -25,9 +25,15 @@ import kotlin.test.fail
  */
 class FontCoverageTest {
 
-    /** The locales drawn in whatever face the platform supplies. See [Language.bundledFace]. */
+    /**
+     * The locales drawn in whatever face the platform supplies. See [Language.bundledFace]. A generated
+     * legacy-code copy (values-iw for he: Android 7 to 13 name Hebrew "iw"; gulnya/tools/legacy-locales.mjs)
+     * is the same language, so it falls back with it.
+     */
     private val fallsBackToThePlatform: Set<String>
-        get() = Language.entries.filterNot { it.bundledFace }.map { "values-${it.tag}" }.toSet()
+        get() = Language.entries.filterNot { it.bundledFace }
+            .flatMap { listOfNotNull("values-${it.tag}", LEGACY_COPY[it.tag]?.let { old -> "values-$old" }) }
+            .toSet()
 
     @Test
     fun everyLetterOfEveryTranslationCanBeDrawnInTheBundledFace() {
@@ -208,3 +214,6 @@ class FontCoverageTest {
         val VARIATION = 0xFE00..0xFE0F
     }
 }
+
+/** The old codes Android 7 to 13 use, under which the generated copies live. */
+private val LEGACY_COPY = mapOf("he" to "iw", "id" to "in", "yi" to "ji")

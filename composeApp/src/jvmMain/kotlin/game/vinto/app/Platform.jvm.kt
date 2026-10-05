@@ -14,6 +14,12 @@ actual fun freshSeed(): Long = java.security.SecureRandom().nextLong()
  */
 actual fun isReleaseBuild(): Boolean = false
 
+/**
+ * A desktop JVM runs on the machine itself, with no emulator under it. Whether its crashes are
+ * worth having is [isReleaseBuild]'s question, and it already files every one as ours.
+ */
+actual val isEmulatedDevice: Boolean = false
+
 /** The desktop app, on the same JVM stacks Android files. */
 actual val crashPlatform: game.vinto.app.crash.SentryPlatform =
     game.vinto.app.crash.SentryPlatform.JAVA

@@ -503,6 +503,22 @@ expect val crashPlatform: SentryPlatform
 expect fun isReleaseBuild(): Boolean
 
 /**
+ * Whether this is an emulator or a simulator rather than somebody's phone.
+ *
+ * Asked by the crash reporter's install step ([game.vinto.app.crash.Crashes]), which then installs
+ * nothing: the portfolio rule is that nothing reports from one, ever. [isReleaseBuild] only sorts
+ * our crashes from the players', and it cannot see this case at all — a release build on an
+ * emulator, a store capture driving screens from a cold start, a simulator starved of memory by
+ * the machine that is also compiling. Those arrive with the same release and the same stack as a
+ * player's crash, and make a bug with eleven events look urgent until nine of them turn out to be
+ * one laptop.
+ *
+ * Deliberately not "a debug build": a debug build on a real phone is a real phone, and its
+ * crashes are worth having.
+ */
+expect val isEmulatedDevice: Boolean
+
+/**
  * Installs the crash reporter, once, for the life of the app.
  *
  * Same discipline as the counter and deliberately a different pipe. The DSN is a build

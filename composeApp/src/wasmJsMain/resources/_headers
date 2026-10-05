@@ -79,11 +79,15 @@
 
 /composeResources/game.vinto.app.art/values-he/strings.commonMain.cvr
   Cache-Control: no-store
+/composeResources/game.vinto.app.art/values-iw/strings.commonMain.cvr
+  Cache-Control: no-store
 
 /composeResources/game.vinto.app.art/values-hi/strings.commonMain.cvr
   Cache-Control: no-store
 
 /composeResources/game.vinto.app.art/values-id/strings.commonMain.cvr
+  Cache-Control: no-store
+/composeResources/game.vinto.app.art/values-in/strings.commonMain.cvr
   Cache-Control: no-store
 
 /composeResources/game.vinto.app.art/values-it/strings.commonMain.cvr

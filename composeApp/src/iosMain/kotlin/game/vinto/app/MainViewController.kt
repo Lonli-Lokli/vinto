@@ -4,6 +4,7 @@ import androidx.compose.ui.window.ComposeUIViewController
 import game.vinto.app.crash.Crashes
 import game.vinto.app.crash.appReportingScope
 import game.vinto.app.link.offerOpenedLink
+import game.vinto.app.theme.mixWithOtherAudio
 
 /**
  * Entry point the Swift side embeds. Exported through the `ComposeApp` framework, so the
@@ -22,6 +23,10 @@ fun MainViewController(): platform.UIKit.UIViewController {
     // listening at that moment means a charge that never reaches the app. `attach` is
     // idempotent for the same reason `install` is — Swift may ask for a second controller.
     IosBilling.attach()
+
+    // Before the first composition, so before anything can play: the game's sounds mix with the
+    // player's music instead of stopping it. Setting a category twice is harmless.
+    mixWithOtherAudio()
 
     return ComposeUIViewController { App(marketing = captureScene()) }
 }

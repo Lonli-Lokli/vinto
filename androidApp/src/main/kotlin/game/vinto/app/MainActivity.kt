@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.splashscreen.SplashScreenViewProvider
 import game.vinto.app.crash.Crashes
@@ -26,6 +27,16 @@ class MainActivity : ComponentActivity() {
         // Android. Before `super.onCreate`, so the window is built with the theme it hands over
         // to rather than the launch theme.
         installSplashScreen().setOnExitAnimationListener { fadeOutLaunchScreen(it) }
+        // Edge-to-edge on every Android, not only on 15 and later where the platform forces it.
+        // Without it, 14 and below drew opaque bars in the theme's `rail`, which follows the
+        // PHONE's night mode, while `SystemBars` turns the icons by the APP's theme setting: a
+        // player whose setting disagreed with the phone got light icons on the light rail, or
+        // dark on dark, and lost the clock and the navigation buttons. Now the bars are
+        // transparent everywhere and what shows through them is the app's own rail (`App.kt`
+        // paints it behind the bars and insets the table by `safeDrawing`), so the icons and the
+        // colour under them come from the same setting. Before `super.onCreate` and any content,
+        // and after the launch screen has swapped in the theme the window is built from.
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         holdPhonesUpright()
         // Storage first, and only because the reporter needs it: a crash is written to the
@@ -113,9 +124,11 @@ class MainActivity : ComponentActivity() {
      */
     private fun fadeOutLaunchScreen(launch: SplashScreenViewProvider) {
         // Android 12 and 12L re-apply the window theme's bars just before this runs, and again on
-        // `remove()`, over the icons the app chose from its own theme setting (`SystemBars`; this
-        // app styles its bars from Compose rather than with `enableEdgeToEdge`). Put them back at
-        // both points.
+        // `remove()`: opaque bars with the decor fitted inside them, and the theme's icons over
+        // the ones the app chose from its own setting (`SystemBars`). Edge-to-edge and the app's
+        // icons go back at both points, in that order, because `enableEdgeToEdge` picks icons of
+        // its own from the phone's night mode.
+        enableEdgeToEdge()
         reassertSystemBars(this)
         // The platform stamps the start with the WALL clock, so the wait is measured against
         // `System.currentTimeMillis()`. Against uptime, as Hronka first had it, it comes out as
@@ -128,6 +141,7 @@ class MainActivity : ComponentActivity() {
             .setDuration(LAUNCH_FADE_MS)
             .withEndAction {
                 launch.remove()
+                enableEdgeToEdge()
                 reassertSystemBars(this)
             }
             .start()

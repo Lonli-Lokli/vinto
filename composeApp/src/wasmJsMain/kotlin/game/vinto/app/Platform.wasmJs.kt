@@ -14,6 +14,12 @@ actual fun freshSeed(): Long = kotlin.random.Random.Default.nextLong()
  */
 actual fun isReleaseBuild(): Boolean = window.location.hostname.equals(INVITE_HOST, ignoreCase = true)
 
+/**
+ * A browser is the player's own, wherever it runs; the page cannot tell an emulated phone's
+ * browser from a real one, and a development server is already filed as ours by [isReleaseBuild].
+ */
+actual val isEmulatedDevice: Boolean = false
+
 /** The browser. Wasm frames arrive through the same JS error shapes Sentry reads. */
 actual val crashPlatform: game.vinto.app.crash.SentryPlatform =
     game.vinto.app.crash.SentryPlatform.JAVASCRIPT
