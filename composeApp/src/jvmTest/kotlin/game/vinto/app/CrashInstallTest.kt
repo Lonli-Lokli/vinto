@@ -50,7 +50,8 @@ class CrashInstallTest {
             Entry("../androidApp/src/main/kotlin/game/vinto/app/MainActivity.kt", "setContent {"),
             Entry("src/jvmMain/kotlin/game/vinto/app/Main.kt", "application {"),
             Entry("src/wasmJsMain/kotlin/game/vinto/app/Main.kt", "ComposeViewport"),
-            Entry("src/iosMain/kotlin/game/vinto/app/MainViewController.kt", "ComposeUIViewController {"),
+            // Compose's controller, inside the parent that turns the status bar (SystemBars.ios.kt).
+            Entry("src/iosMain/kotlin/game/vinto/app/MainViewController.kt", "GameUIViewController {"),
         ).forEach { entry ->
             val text = source(entry.path)
             val installed = text.indexOf("Crashes.install")

@@ -1,6 +1,5 @@
 package game.vinto.app
 
-import androidx.compose.ui.window.ComposeUIViewController
 import game.vinto.app.crash.Crashes
 import game.vinto.app.crash.appReportingScope
 import game.vinto.app.link.offerOpenedLink
@@ -28,7 +27,8 @@ fun MainViewController(): platform.UIKit.UIViewController {
     // player's music instead of stopping it. Setting a category twice is harmless.
     mixWithOtherAudio()
 
-    return ComposeUIViewController { App(marketing = captureScene()) }
+    // Compose inside the parent that lets SystemBars turn the status bar's icons to the table's theme.
+    return GameUIViewController { App(marketing = captureScene()) }
 }
 
 /**
