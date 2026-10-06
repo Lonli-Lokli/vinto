@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -22,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,6 +79,7 @@ import game.vinto.app.openUrl
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.CardWhite
 import game.vinto.app.theme.ChoiceRow
+import game.vinto.app.theme.Felt
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Signal
@@ -501,8 +504,14 @@ private val GROUPS = listOf(
  * that does not exist.
  */
 private data class Cue(
-    val swatch: Color,
-    /** What the real ring is drawn against: a white card, or the dark seat plate. */
+    /**
+     * The ring's colour, or null for the one sign the table draws in no colour of its own: the
+     * reshuffle, which is card backs sweeping from the pile to the deck. Null is drawn in
+     * [Rail.edge], the rail's neutral grey, which clears 3:1 on a card's white in both schemes;
+     * the grey it replaced was 2.50:1 there (`ScreenContrastTest`).
+     */
+    val swatch: Color?,
+    /** What the real ring is drawn against: a white card, the dark seat plate, or the felt. */
     val ground: Color,
     val name: StringResource,
     val meaning: StringResource,
@@ -521,13 +530,10 @@ private val SIGNALS = listOf(
     Cue(Signal.penalty, Slate.fill, Res.string.signal_penalty, Res.string.signal_penalty_meaning),
     Cue(Signal.live, CardWhite, Res.string.signal_live, Res.string.signal_live_meaning),
     Cue(Signal.tappable, CardWhite, Res.string.signal_tappable, Res.string.signal_tappable_meaning),
-    Cue(Signal.peeked, CardWhite, Res.string.signal_peek, Res.string.signal_peek_meaning),
-    Cue(
-        Color(0xFF9AA5B1),
-        CardWhite,
-        Res.string.signal_reshuffle,
-        Res.string.signal_reshuffle_meaning,
-    ),
+    // The look's light is a halo behind the card, so the table draws it on the cloth rather
+    // than on the card: 3.38:1 on the felt, and 2.28:1 on the white chip it was shown on here.
+    Cue(Signal.peeked, Felt, Res.string.signal_peek, Res.string.signal_peek_meaning),
+    Cue(null, CardWhite, Res.string.signal_reshuffle, Res.string.signal_reshuffle_meaning),
 )
 
 /**
@@ -551,7 +557,9 @@ private val CLAIM_MARKS = listOf(
 /** One seat mark: the real glyph, and the sentence a screen reader is given for it. */
 @Composable
 private fun SeatMarkRow(mark: SeatBadge) {
-    LegendRow(said = stringResource(mark.spoken())) { SeatMark(mark, MarkSize) }
+    // On the rail, not on a plate: the sheet is paper on a light phone, and the plate's
+    // near-white marks were drawn on it at 1.01:1 (`LegendMarksContrastTest`).
+    LegendRow(said = stringResource(mark.spoken())) { SeatMark(mark, MarkSize, onRail = true) }
 }
 
 /** One claim mark, drawn by the same composable the felt draws it with. */
@@ -578,7 +586,13 @@ private fun LegendRow(said: String, mark: @Composable () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(RowGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(modifier = Modifier.size(Chip), contentAlignment = Alignment.Center) { mark() }
+        // At least a chip, and wider when the mark is: a claim badge is words, and at the
+        // doubled system font "↔ Q" no longer fitted a chip's width and lost its Q to a second
+        // line the chip had no room for.
+        Box(
+            modifier = Modifier.sizeIn(minWidth = Chip, minHeight = Chip),
+            contentAlignment = Alignment.Center,
+        ) { mark() }
         Text(said, fontSize = BodySize, color = Rail.ink, modifier = Modifier.weight(1f))
     }
 }
@@ -593,10 +607,10 @@ private fun SignalRow(signal: Cue) {
         verticalAlignment = Alignment.Top,
     ) {
         Surface(
-            modifier = Modifier.size(Chip),
+            modifier = Modifier.size(Chip).testTag(SWATCH_TAG + signal.name.key),
             shape = RoundedCornerShape(Corner),
             color = signal.ground,
-            border = BorderStroke(SwatchRing, signal.swatch),
+            border = BorderStroke(SwatchRing, signal.swatch ?: Rail.edge),
             content = {},
         )
 
@@ -642,6 +656,9 @@ private fun RankRow(config: CardConfig) {
 }
 
 private val SwatchRing = 3.dp
+
+/** How a test finds a ring's swatch on the Rings tab: this, then the ring's name key. */
+internal const val SWATCH_TAG = "help:swatch:"
 
 private val TitleSize = 16.sp
 private val BodySize = 14.sp

@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -355,7 +356,9 @@ private fun RowLabel(text: String) {
         fontSize = LabelSize,
         letterSpacing = 1.sp,
         color = Rail.inkDim,
-        modifier = Modifier.width(MarkSize + Gap),
+        // At least the mark's column, so the rows' words line up; wider when the word is, which
+        // at the doubled system font "THEN" is, and it was cut to "TH".
+        modifier = Modifier.widthIn(min = MarkSize + Gap),
         maxLines = 1,
     )
 }

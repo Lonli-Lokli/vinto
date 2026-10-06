@@ -264,6 +264,7 @@
     <string name="header_settings">সেটিংস</string>
     <string name="header_rules">নিয়ম</string>
     <string name="header_leave">টেবিল ছেড়ে যান</string>
+    <string name="sheet_close">বন্ধ করুন</string>
     <string name="header_deck_left">ডেকে বাকি তাস: %1$d</string>
     <string name="header_deck_badge">ডেকে %1$d। এর মানে কী</string>
 

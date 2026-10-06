@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -102,7 +103,9 @@ fun StandingsSheet(
             Verdict(round, outcomeOf(result.hands, result.callerId))
 
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text("", modifier = Modifier.weight(1f))
+                // A spacer, not an empty text: an empty text is an element a screen reader stops on and
+                // finds nothing in (iOS audit, "Element has no description").
+                Spacer(modifier = Modifier.weight(1f))
                 Header(stringResource(Res.string.score_column_hand))
                 Header(stringResource(Res.string.score_column_round))
                 Header(stringResource(Res.string.score_column_game))

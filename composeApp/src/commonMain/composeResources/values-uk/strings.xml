@@ -282,6 +282,7 @@
     <string name="header_settings">Налаштування</string>
     <string name="header_rules">Правила</string>
     <string name="header_leave">Залишити стіл</string>
+    <string name="sheet_close">Закрити</string>
     <string name="header_deck_left">Карт у колоді: %1$d</string>
     <string name="header_deck_badge">У колоді %1$d. Що це означає</string>
 

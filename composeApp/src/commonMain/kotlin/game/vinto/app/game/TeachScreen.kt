@@ -645,7 +645,13 @@ private fun Coach(
             // In the band the coach is narrow, and a title beside nine dots is a title
             // wrapped to four lines; there the dots go under it.
             CoachHead(lesson, coaching.taught, finished, stacked = slot is Slot.Band && !showing)
-            if (showing) CoachBody(lesson, finished, coaching.strayed, talkBody)
+            // Weighted, so the heading and "Go on" are measured first and the words take what
+            // is left, up to their own height. [Room.talkBody] reserves room for the other two
+            // at the size they are drawn at 1.0; at the doubled system font they are twice that,
+            // and the button the whole beat waits on was pushed off the felt.
+            if (showing) {
+                CoachBody(lesson, finished, coaching.strayed, talkBody, Modifier.weight(1f, fill = false))
+            }
             CoachFoot(lesson, finished, onRead = { coaching.heard() }, onDone = onDone)
         }
     }
@@ -712,10 +718,16 @@ private fun CoachFoot(lesson: Lesson?, finished: Boolean, onRead: () -> Unit, on
  * whether the player has opened it, and what to do when they press the button.
  */
 @Composable
-private fun CoachBody(lesson: Lesson?, finished: Boolean, strayed: Boolean, talkBody: Dp) {
+private fun CoachBody(
+    lesson: Lesson?,
+    finished: Boolean,
+    strayed: Boolean,
+    talkBody: Dp,
+    modifier: Modifier = Modifier,
+) {
     val talking = lesson?.talkId != null || finished
     Column(
-        modifier = Modifier
+        modifier = modifier
             .then(if (talking) Modifier.height(talkBody) else Modifier.heightIn(max = CoachMax))
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(Tight),

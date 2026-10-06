@@ -264,6 +264,7 @@
     <string name="header_settings">Ustawienia</string>
     <string name="header_rules">Zasady</string>
     <string name="header_leave">Opuść stół</string>
+    <string name="sheet_close">Zamknij</string>
     <string name="header_deck_left">Kart w talii: %1$d</string>
     <string name="header_deck_badge">W talii: %1$d. Co to znaczy</string>
 

@@ -6,7 +6,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
@@ -71,7 +72,9 @@ class HeaderOrderTest {
                 waitForIdle()
 
                 val edges = words.value.associateWith { word ->
-                    val found = onAllNodesWithContentDescription(word).fetchSemanticsNodes()
+                    // By its name either way it is given: the word where the header draws words, the
+                    // description where it draws only the mark.
+                    val found = onAllNodes(hasContentDescription(word) or hasText(word)).fetchSemanticsNodes()
                     found.firstOrNull()?.boundsInRoot?.left
                 }
                 val leaveAt = edges[words.value.last()]

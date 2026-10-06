@@ -86,6 +86,13 @@ targets:
           - -framework
           - ComposeApp
 
+    # The scheme `xcodebuild -scheme iosApp` builds, archives and now TESTS. Declared here so the
+    # UI test bundle below is in its Test action; without a scheme in this file Xcode autocreates
+    # one per target and the tests are reachable only by a scheme nobody committed.
+    scheme:
+      testTargets:
+        - iosAppUITests
+
     preBuildScripts:
       - name: SwiftLint (strict)
         basedOnDependencyAnalysis: false
@@ -184,3 +191,25 @@ targets:
             sentry-cli debug-files upload --org echo-xl --project vinto \
               --include-sources "$DWARF_DSYM_FOLDER_PATH"
           fi
+
+  # The accessibility evidence behind every Apple Accessibility Nutrition Label in
+  # `vydanne.config.mjs`. XCUITest reads the same accessibility tree VoiceOver and Voice Control
+  # read, which is the only way to see it at all on a simulator, where VoiceOver cannot run.
+  # `iosAppUITests/AccessibilityAuditTests.swift` says what each test proves and how to run it.
+  #
+  # iOS 17.0 for this bundle alone: `XCUIApplication.performAccessibilityAudit` starts there. The
+  # app keeps its 15.0 floor; a test bundle's deployment target does not reach the app it drives.
+  iosAppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: iosAppUITests
+    dependencies:
+      - target: iosApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.kupalinka.vinto.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: iosApp
+        TARGETED_DEVICE_FAMILY: "1,2"

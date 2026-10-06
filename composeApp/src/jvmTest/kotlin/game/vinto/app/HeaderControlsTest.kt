@@ -5,6 +5,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -37,7 +38,7 @@ class HeaderControlsTest {
         // No chip of its own any more: six controls is too many for a phone's header, and this
         // was the one of them that was a number rather than something to press. The explanation
         // went where the rest of "what does this mean" already lives.
-        onNodeWithText("?").performClick()
+        onNode(named(RULES)).performClick()
         waitForIdle()
         // Behind the "More" tab now: the sheet is four tabs rather than one long column, so the
         // deck is one press away instead of a screen and a half of scrolling.
@@ -85,7 +86,7 @@ class HeaderControlsTest {
 
     @Test
     fun theQuestionMarkOpensTheRules() = onATable {
-        onNodeWithText("?").performClick()
+        onNode(named(RULES)).performClick()
         waitForIdle()
         // The sheet opens on the cards, because "what does this one do" is the question a
         // player has with a card waiting and one hand free. The other three are a press away.
@@ -107,7 +108,7 @@ class HeaderControlsTest {
      */
     @Test
     fun theGearOpensTheSettingsAndComesBackToTheSameTable() = onATable {
-        onNodeWithContentDescription(SETTINGS).performClick()
+        onNode(named(SETTINGS)).performClick()
         waitForIdle()
         // The front page now, where sound and haptics are; pace lives behind "Game".
         onNodeWithText("Sound", substring = true).assertIsDisplayed()
@@ -125,6 +126,9 @@ class HeaderControlsTest {
             assertEquals(0, it.size, "it went home instead of back to the round")
         }
     }
+
+    /** A header chip, by the word it draws or, where it draws only a mark, by its description. */
+    private fun named(name: String) = hasContentDescription(name) or hasText(name)
 
     /** A game, played far enough that the table is on screen. */
     private fun onATable(check: androidx.compose.ui.test.ComposeUiTest.() -> Unit) =
@@ -146,5 +150,8 @@ class HeaderControlsTest {
         const val BADGE = "in the deck. What that means"
         const val REPORT = "Report a problem"
         const val SETTINGS = "Settings"
+
+        /** The "?" chip, by its name: the mark itself is not spoken (iOS read it as part of the name). */
+        const val RULES = "Rules"
     }
 }

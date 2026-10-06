@@ -21,10 +21,12 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import game.vinto.app.game.HelpSheet
 import game.vinto.app.game.LocalStage
 import game.vinto.app.game.RoomScreen
+import game.vinto.app.game.SWATCH_TAG
 import game.vinto.app.game.Stage
 import game.vinto.app.game.StandingsSheet
 import game.vinto.app.game.TableLayout
@@ -199,11 +202,30 @@ class ScreenContrastTest {
         }
     }
 
+    /**
+     * The help sheet, every tab of it and every line of every tab.
+     *
+     * This measured the Cards tab as it opens and nothing else, so three tabs and most of the
+     * fourth were never read — and the Badges tab is where the seat marks turned out to be drawn
+     * at 1.01:1 (`LegendMarksContrastTest` holds those, being drawings rather than text). The
+     * sheet is drawn on a window tall enough that no tab has a fold, and each tab is checked
+     * for having fitted, so a tab that grows cannot quietly push its last lines out of reach.
+     */
     @Test
     fun theHelpSheetCanBeRead() = eachScheme { dark, scheme ->
-        judged(
-            scheme,
-            shown(dark, "the help sheet") { HelpSheet(open = true, now = null, left = 33, onDismiss = {}) },
+        judged(scheme, tabByTab(dark) { tab -> unreadableHere("the help sheet's $tab tab") })
+    }
+
+    /**
+     * The rings on the Rings tab, which are colour carrying a meaning (SC 1.4.11): each swatch's
+     * ring is held to 3:1 against the ground it says the table draws that ring on.
+     */
+    @Test
+    fun everyRingTheHelpSheetShowsCanBeSeen() = eachScheme { dark, scheme ->
+        val found = tabByTab(dark) { tab -> if (tab == RINGS) unseenRings() else emptyList() }
+        assertTrue(
+            found.isEmpty(),
+            "$scheme scheme — rings that cannot be seen:\n" + found.joinToString("\n"),
         )
     }
 
@@ -235,6 +257,42 @@ class ScreenContrastTest {
     private fun ComposeUiTest.unreadableHere(what: String): List<String> {
         val image = onRoot(useUnmergedTree = true).captureToImage().toPixelMap()
         return textNodes().mapNotNull { unreadable(it, image) }.map { "  $what: $it" }
+    }
+
+    /**
+     * Every swatch on the screen whose ring does not clear 3:1 against its own ground.
+     *
+     * Read from the middle of each edge, one pixel in — the middle of a 3 dp ring at one pixel
+     * a point, clear of the rounded corners where the rail behind shows through — against the
+     * swatch's centre. The worst of the four edges is the verdict.
+     */
+    private fun ComposeUiTest.unseenRings(): List<String> {
+        val image = onRoot(useUnmergedTree = true).captureToImage().toPixelMap()
+        val swatches = onAllNodes(
+            SemanticsMatcher("a ring's swatch") {
+                it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(SWATCH_TAG) == true
+            },
+            useUnmergedTree = true,
+        ).fetchSemanticsNodes()
+        assertTrue(swatches.isNotEmpty(), "the Rings tab draws no swatch to measure")
+
+        return swatches.mapNotNull { node ->
+            val b = node.boundsInRoot
+            val x = b.center.x.toInt()
+            val y = b.center.y.toInt()
+            val ground = image[x, y]
+            val ring = listOf(
+                image[x, b.top.toInt() + RING_MIDDLE],
+                image[x, b.bottom.toInt() - 1 - RING_MIDDLE],
+                image[b.left.toInt() + RING_MIDDLE, y],
+                image[b.right.toInt() - 1 - RING_MIDDLE, y],
+            ).minBy { Wcag.contrast(it, ground) }
+            val got = Wcag.contrast(ring, ground)
+            val name = node.config[SemanticsProperties.TestTag].removePrefix(SWATCH_TAG)
+            "  the $name ring is ${ring.hex()} on ${ground.hex()} at %.2f:1, and has to be %.1f:1"
+                .format(got, Wcag.UI)
+                .takeIf { got < Wcag.UI }
+        }
     }
 
     /** One verdict per scheme, carrying every screen's complaints rather than the first. */
@@ -430,6 +488,45 @@ class ScreenContrastTest {
         return found
     }
 
+    /**
+     * The help sheet open at each of its tabs in turn, on a window tall enough that none of them
+     * has a fold — and each one checked for having fitted, rather than assumed to.
+     */
+    private fun tabByTab(dark: Boolean, look: ComposeUiTest.(tab: String) -> List<String>): List<String> {
+        val found = mutableListOf<String>()
+        runDesktopComposeUiTest(PHONE_W.value.toInt(), SHEET_H.value.toInt()) {
+            setContent {
+                VintoTheme(dark = dark) {
+                    Surface(color = Rail.fill) {
+                        Box(modifier = Modifier.size(PHONE_W, SHEET_H)) {
+                            HelpSheet(open = true, now = null, left = 33, onDismiss = {})
+                        }
+                    }
+                }
+            }
+            waitForIdle()
+            HELP_TABS.forEach { tab ->
+                onNodeWithText(tab).performClick()
+                waitForIdle()
+                assertTrue(
+                    !runsOn(),
+                    "the help sheet's $tab tab runs past a ${SHEET_H.value.toInt()}dp window",
+                )
+                found += look(tab)
+            }
+        }
+        return found
+    }
+
+    /** Whether any list on the screen could still scroll further down. */
+    private fun ComposeUiTest.runsOn(): Boolean = onAllNodes(
+        SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange),
+        useUnmergedTree = true,
+    ).fetchSemanticsNodes().any { node ->
+        val range = node.config[SemanticsProperties.VerticalScrollAxisRange]
+        range.maxValue() > range.value()
+    }
+
     @Composable
     private fun table(view: PlayerView, question: Question) {
         TableScreen(
@@ -485,6 +582,14 @@ class ScreenContrastTest {
         val PHONE_W = 411.dp
         val PHONE_H = 740.dp
         const val SEED = 20_260_831L
+
+        /** Taller than any tab of the help sheet, so every line of every tab is on the screen. */
+        val SHEET_H = 2400.dp
+        const val RINGS = "RINGS"
+        val HELP_TABS = listOf("CARDS", RINGS, "BADGES", "MORE")
+
+        /** The middle of a swatch's 3 dp ring, at one pixel a point. */
+        const val RING_MIDDLE = 1
 
         /** Anything thinner than this is a sliver, not a place text is read from. */
         const val SPAN = 2

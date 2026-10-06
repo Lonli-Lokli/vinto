@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -99,13 +100,18 @@ fun IdentityStrip(
             // The face is the tap target for the picker: it is the thing being changed, so it is
             // the thing to press. A separate "choose a face" row would be a fourth item in a list
             // this control exists to stay out of.
+            // Named as well as given its action's label: iOS does not read `onClickLabel` as a name,
+            // and this was the one button in the lobby VoiceOver called only "button" and Voice
+            // Control could not name at all (`VoiceControlTests`, iosApp/iosAppUITests).
+            val pick = stringResource(Res.string.online_avatar_pick)
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
-                    .clickable(onClickLabel = stringResource(Res.string.online_avatar_pick)) {
+                    .clickable(onClickLabel = pick) {
                         feedback.commit()
                         open = !open
-                    },
+                    }
+                    .semantics { contentDescription = pick },
             ) {
                 GeneratedAvatar(
                     traits = mintAvatar(avatarKind, avatarSeed),
@@ -121,7 +127,10 @@ fun IdentityStrip(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .semantics(mergeDescendants = true) { contentDescription = "$label: $nickname" },
+                    // Cleared rather than merged: merged, the two texts were read again after the
+                    // announcement — "Your name at the table: Lucky Rowan, Your name at the table,
+                    // Lucky Rowan".
+                    .clearAndSetSemantics { contentDescription = "$label: $nickname" },
             ) {
                 Text(
                     text = label,
@@ -307,7 +316,11 @@ private fun RerollButton(onClick: () -> Unit) {
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onFelt(),
-                modifier = Modifier.rotate(spin),
+                // The arrow is the picture of the name, not part of it: merged in, it was read aloud.
+                modifier = Modifier
+                    // Still for a reader who asked for less motion: the new name is the news.
+                    .rotate(if (LocalReducedMotion.current) 0f else spin)
+                    .clearAndSetSemantics { },
             )
         }
     }

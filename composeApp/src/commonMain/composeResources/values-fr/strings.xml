@@ -275,6 +275,7 @@
     <string name="header_settings">Paramètres</string>
     <string name="header_rules">Règles</string>
     <string name="header_leave">Quitter la table</string>
+    <string name="sheet_close">Fermer</string>
     <string name="header_deck_left">Cartes restantes dans la pioche : %1$d</string>
     <string name="header_deck_badge">%1$d dans la pioche. Ce que cela signifie</string>
 

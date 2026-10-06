@@ -41,6 +41,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import game.vinto.app.SystemBack
+import game.vinto.app.art.Res
+import game.vinto.app.art.sheet_close
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * A hairline between two things.
@@ -211,6 +214,7 @@ fun VintoDialog(
 @Composable
 private fun Scrim(open: Boolean, onDismiss: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
+    val close = stringResource(Res.string.sheet_close)
     AnimatedVisibility(
         visibleState = rising(open),
         enter = fadeIn(tween(RiseMs)),
@@ -225,19 +229,21 @@ private fun Scrim(open: Boolean, onDismiss: () -> Unit) {
                     indication = null,
                     onClick = onDismiss,
                 )
-                .semantics { contentDescription = "Close" },
+                .semantics { contentDescription = close },
         )
     }
 }
 
 /**
  * A ✕ in the sheet's own chrome, drawn as strokes rather than fetched from a glyph font —
- * the same decision the header's gear made. Spoken as "Close", matching the scrim: the theme
- * layer is deliberately resource-free, and the two exits should announce themselves alike.
+ * the same decision the header's gear made. Spoken as "Close", matching the scrim, so the two
+ * exits announce themselves alike. In the reader's language: this said "Close" in English in
+ * every locale, the one spoken word the theme layer kept out of `strings.xml`.
  */
 @Composable
 private fun CloseButton(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     val interaction = remember { MutableInteractionSource() }
+    val close = stringResource(Res.string.sheet_close)
     Box(
         modifier = modifier
             .padding(GripPad)
@@ -248,7 +254,7 @@ private fun CloseButton(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
                 indication = null,
                 onClick = onDismiss,
             )
-            .semantics { contentDescription = "Close" },
+            .semantics { contentDescription = close },
         contentAlignment = Alignment.Center,
     ) {
         val ink = Rail.inkDim

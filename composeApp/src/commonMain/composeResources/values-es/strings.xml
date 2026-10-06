@@ -283,6 +283,7 @@
     <string name="header_settings">Ajustes</string>
     <string name="header_rules">Reglas</string>
     <string name="header_leave">Salir de la mesa</string>
+    <string name="sheet_close">Cerrar</string>
     <string name="header_deck_left">Cartas que quedan en el mazo: %1$d</string>
     <string name="header_deck_badge">%1$d en el mazo. Qué significa</string>
 

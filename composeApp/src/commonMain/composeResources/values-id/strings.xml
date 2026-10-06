@@ -274,6 +274,7 @@
     <string name="header_settings">Pengaturan</string>
     <string name="header_rules">Aturan</string>
     <string name="header_leave">Tinggalkan meja</string>
+    <string name="sheet_close">Tutup</string>
     <string name="header_deck_left">Kartu tersisa di dek: %1$d</string>
     <string name="header_deck_badge">%1$d di dek. Artinya</string>
 

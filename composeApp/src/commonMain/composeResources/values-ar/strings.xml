@@ -277,6 +277,7 @@
     <string name="header_settings">الإعدادات</string>
     <string name="header_rules">القواعد</string>
     <string name="header_leave">غادر الطاولة</string>
+    <string name="sheet_close">إغلاق</string>
     <string name="header_deck_left">البطاقات المتبقية في المكدس: %1$d</string>
     <string name="header_deck_badge">%1$d في المكدس. ماذا يعني ذلك</string>
 

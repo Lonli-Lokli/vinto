@@ -264,6 +264,7 @@
     <string name="header_settings">설정</string>
     <string name="header_rules">규칙</string>
     <string name="header_leave">테이블 나가기</string>
+    <string name="sheet_close">닫기</string>
     <string name="header_deck_left">덱에 남은 카드: %1$d장</string>
     <string name="header_deck_badge">덱 %1$d장. 이 숫자의 뜻 보기</string>
 

@@ -81,10 +81,15 @@ class AppIdentityTest {
         return found.groupValues[1]
     }
 
+    /**
+     * The app's own bundle identifiers. A UI test target's (`app.kupalinka.vinto.uitests`, the accessibility
+     * suite added 2026-10-05) must differ from the app's, and it never ships, so it is not one of them.
+     */
     private fun appleBundleIds(): List<String> =
         Regex("""PRODUCT_BUNDLE_IDENTIFIER\s*=\s*([^;]+);""")
             .findAll(read("iosApp/iosApp.xcodeproj/project.pbxproj"))
             .map { it.groupValues[1].trim().trim('"') }
+            .filterNot { it.endsWith(".uitests") || it.endsWith(".tests") }
             .toList()
 
     /** The module directory is the working directory, but that has moved before now. */

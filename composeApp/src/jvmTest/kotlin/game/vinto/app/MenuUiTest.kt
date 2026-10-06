@@ -82,9 +82,35 @@ class MenuUiTest {
 
         assertEquals(Pace.CALM, vault.loadSettings().pace, "the choice reached the vault")
 
+        // Out of the Game page to the settings, then out of the settings: two presses, the same
+        // two the phone's own back gesture takes (see the next case).
+        press("Back")
+        waitForIdle()
         press("Back")
         waitForIdle()
         button("Play").assertIsDisplayed()
+    }
+
+    /**
+     * Back on a settings page leads to the settings' front page, as the phone's back gesture does.
+     *
+     * The chevron went straight home instead, so the two ways out of the Game page went to two
+     * different places. Found by the iOS UI tests (iosAppUITests, `CommonTaskTests`), which press
+     * it by name as VoiceOver and Voice Control do.
+     */
+    @Test
+    fun backOnASettingsPageReturnsToTheSettings() = runComposeUiTest {
+        setContent { VintoTheme { App(seeds = { FIXED_SEED }, vault = MemoryVault()) } }
+        waitForIdle()
+
+        press("Settings")
+        waitForIdle()
+        onNodeWithText("GAME").performScrollTo().performClick()
+        waitForIdle()
+        press("Back")
+        waitForIdle()
+
+        onNodeWithText("GAME").performScrollTo().assertIsDisplayed()
     }
 
     /**

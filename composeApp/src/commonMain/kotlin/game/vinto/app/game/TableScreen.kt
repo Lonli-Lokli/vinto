@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
@@ -757,7 +758,9 @@ private fun HeaderChip(
         onClick = onClick,
         modifier = modifier
             .height(HeaderTap)
-            .semantics { contentDescription = description }
+            // Named once: by the description where only the mark is drawn, by the drawn word where
+            // there is one. Both at once, iOS names the chip "Rules, Rules" in a landscape header.
+            .semantics { if (!wide) contentDescription = description }
             .pressable(),
         shape = HeaderShape,
         color = Color.Transparent,
@@ -769,7 +772,10 @@ private fun HeaderChip(
             horizontalArrangement = Arrangement.spacedBy(HeaderWordGap),
         ) {
             Box(
-                modifier = if (wide) Modifier else Modifier.width(HeaderTap),
+                // The mark is the picture of the name, not a second one. Merged into the chip, the
+                // "?" made iOS name it "Rules, ?": read aloud as a question mark, and not a name
+                // Voice Control can be asked for (`CommonTaskTests`, iosApp/iosAppUITests).
+                modifier = (if (wide) Modifier else Modifier.width(HeaderTap)).clearAndSetSemantics { },
                 contentAlignment = Alignment.Center,
                 content = { mark() },
             )
@@ -2216,6 +2222,7 @@ private fun SeatCard(
                 arrived = stage.arrivedAt(ref, table.board),
             ),
             label = stringResource(Res.string.card_position, seat.nickname, position + 1),
+            sayFace = true,
             onClick = move?.let { { onMove(it) } },
         )
 
@@ -2228,11 +2235,13 @@ private fun SeatCard(
         // longer fitted its row, wrapped onto a second, and the whole seat re-pitched — the
         // plate slid, the hands moved (product owner). The badge hangs off the corner over a
         // layer the size of the card, so the box stays a card's size whatever the claim says.
+        // Down as well as across: a card lying on its side is shorter than a badge at the doubled
+        // system font, and held to the card's height the badge lost the bottom of its words.
         table.badges[ref]?.let { badge ->
             Box(modifier = Modifier.matchParentSize()) {
                 ClaimBadge(
                     badge,
-                    Modifier.align(Alignment.TopEnd).wrapContentWidth(Alignment.End, unbounded = true),
+                    Modifier.align(Alignment.TopEnd).wrapContentSize(Alignment.TopEnd, unbounded = true),
                 )
             }
         }

@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,12 +38,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import game.vinto.app.LocalReducedMotion
 import game.vinto.app.art.Res
 import game.vinto.app.art.card_10
 import game.vinto.app.art.card_2
@@ -121,6 +124,11 @@ fun CardFace(
     modifier: Modifier = Modifier,
     state: CardState = CardState(),
     label: String? = null,
+    /**
+     * Whether a [label]led card also says its face while it is face up. The seats' cards do: their
+     * label is where the card is, and a card the player has turned over is one they need to know.
+     */
+    sayFace: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     val faceUp = card is CardView.Visible
@@ -131,9 +139,12 @@ fun CardFace(
     // Dereferenced inside the `graphicsLayer` block below it is a draw-phase read instead, which
     // is what `CardStage.InFlight` already says about the flights: "read from the animation
     // here, in the draw phase, none of it recomposes".
+    // Turned in one step for a reader who has asked for less motion: the face still changes, the
+    // card does not spin to get there. It spun regardless, on every peek and every reveal.
+    val still = LocalReducedMotion.current
     val turn = animateFloatAsState(
         targetValue = if (faceUp) HALF_TURN else 0f,
-        animationSpec = tween(FLIP_MS, easing = FastOutSlowInEasing),
+        animationSpec = if (still) snap() else tween(FLIP_MS, easing = FastOutSlowInEasing),
         label = "flip",
     )
 
@@ -164,12 +175,16 @@ fun CardFace(
     // Read out loud when somebody cannot see it. A description is copy like any other: a
     // screen reader announcing "a face-down card" in a Belarusian game is the same failure as
     // an untranslated button, so it comes from resources too.
-    val spoken = label ?: when (card) {
-        is CardView.Visible ->
-            stringResource(Res.string.card_described, card.card.rank.serialName, card.card.value)
-
-        CardView.Hidden -> stringResource(Res.string.card_face_down)
+    val described = (card as? CardView.Visible)?.let {
+        stringResource(Res.string.card_described, it.card.rank.serialName, it.card.value)
     }
+    val spoken = label ?: described ?: stringResource(Res.string.card_face_down)
+    // A seat's card turned face up says what it is after where it is. It said only "You, card 1":
+    // the face of a card the player had just spent a peek on was drawn and never spoken, so the
+    // memory the game is played on was out of reach without sight (iosApp/iosAppUITests,
+    // `CommonTaskTests`). A second entry rather than one sentence: the name stays the name a
+    // card is addressed by, and no two strings are glued into a sentence (WORDS.md).
+    val said = if (sayFace && label != null && described != null) listOf(label, described) else listOf(spoken)
 
     Box(
         modifier = modifier
@@ -203,7 +218,7 @@ fun CardFace(
                     )
                 },
             )
-            .semantics { contentDescription = spoken },
+            .semantics { this[SemanticsProperties.ContentDescription] = said },
         contentAlignment = Alignment.Center,
     ) {
         Box(

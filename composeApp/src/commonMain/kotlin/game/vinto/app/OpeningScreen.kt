@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,6 +47,7 @@ private const val BOB_PX = -10f
  */
 @Composable
 fun OpeningScreen() {
+    val still = LocalReducedMotion.current
     val bob = rememberInfiniteTransition(label = "opening")
     val lift by bob.animateFloat(
         initialValue = 0f,
@@ -68,7 +70,11 @@ fun OpeningScreen() {
                 "🂡",
                 fontSize = CardSize,
                 color = MaterialTheme.colorScheme.onFelt(),
-                modifier = Modifier.graphicsLayer { translationY = lift },
+                // Still for a reader who asked for less motion, and silent: a picture of a card, which
+                // a screen reader otherwise announces as "playing card ace of spades".
+                modifier = Modifier
+                    .graphicsLayer { translationY = if (still) 0f else lift }
+                    .clearAndSetSemantics { },
             )
             Text(
                 text = stringResource(Res.string.app_name),

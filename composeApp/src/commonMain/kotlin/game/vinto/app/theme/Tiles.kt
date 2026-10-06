@@ -25,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -88,17 +90,16 @@ fun ActionTile(
             feedback.commit()
             onClick()
         },
-        // Spoken as the title alone. A screen reader reading title *and* sentence for each of
-        // three tiles is a paragraph before the first choice; the sentence is there for the
-        // eye, and a reader can reach it as the tile's own text.
+        // Spoken as the title, then the sentence, once each. The name used to sit here as well as
+        // on the stamp, and iOS merges both with every text inside: "Open a room, OPEN A ROOM, ›,
+        // Four seats…". The name is on the stamp now (below), and the arrow says nothing.
         modifier = modifier
             .fillMaxWidth()
             // 84dp is a title with a sentence under it. A tile that is only its name and kept
             // that height is an empty slab — three of them stacked was what removing the doors'
             // summaries first produced. Still well past the 48dp `TouchTargetTest` insists on.
             .heightIn(min = if (detail == null) NameHeight else MinHeight)
-            .pressable()
-            .semantics { contentDescription = title },
+            .pressable(),
         shape = shape,
         color = Color.Transparent,
         // The tile's charcoal is fixed in both schemes, so its ink is too — `Rail.ink` here
@@ -132,6 +133,9 @@ fun ActionTile(
                         text = title.uppercase(),
                         style = stamped(size = TitleSize),
                         color = accent ?: Slate.ink,
+                        // Named on the stamp, as `GameButton` names its own: spoken as written rather than
+                        // in capitals, and only once. On the tile as well, iOS read "Game, GAME, ›".
+                        modifier = Modifier.semantics { contentDescription = title },
                     )
                     detail?.let {
                         Text(
@@ -175,9 +179,15 @@ fun BackChevron(description: String, onClick: () -> Unit, modifier: Modifier = M
         Box(contentAlignment = Alignment.Center) {
             Text(
                 text = "‹",
-                fontSize = BackSize.sp,
+                // A mark in a fixed box, so it keeps its size when the words grow: at iOS's largest
+                // text (2.35x) a 30sp glyph had a line three times the 48dp box and showed as a
+                // sliver of stroke (iosAppUITests, audit-lobby/settings-*-AX-XXXL.png). The name it
+                // stands for is spoken, and the box is the target, so neither shrinks.
+                fontSize = with(LocalDensity.current) { BackSize.dp.toSp() },
                 color = MaterialTheme.colorScheme.onFelt(),
                 textAlign = TextAlign.Center,
+                // The picture of "Back", not a second name: merged in, iOS called this "Back, ‹".
+                modifier = Modifier.clearAndSetSemantics { },
             )
         }
     }
@@ -186,7 +196,13 @@ fun BackChevron(description: String, onClick: () -> Unit, modifier: Modifier = M
 /** A tile points somewhere, and this is the arrow saying so. */
 @Composable
 private fun Chevron(colour: Color) {
-    Text(text = "›", fontSize = ChevronSize.sp, color = colour)
+    // An arrow, not a word: merged into the tile it was read out as part of the tile's name.
+    Text(
+        text = "›",
+        fontSize = ChevronSize.sp,
+        color = colour,
+        modifier = Modifier.clearAndSetSemantics { },
+    )
 }
 
 /**

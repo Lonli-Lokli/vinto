@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -104,7 +105,12 @@ fun PickerField(
                     .background(Brush.verticalGradient(listOf(Rail.fill.darken(), Rail.fill))),
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = PadH, vertical = PadV),
+                    // Cleared, so the description above is the whole of what is said: merged in, the
+                    // value and the chevron followed it and iOS read "Language: Follow the device,
+                    // Follow the device, ›".
+                    modifier = Modifier
+                        .padding(horizontal = PadH, vertical = PadV)
+                        .clearAndSetSemantics { },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Gap),
                 ) {

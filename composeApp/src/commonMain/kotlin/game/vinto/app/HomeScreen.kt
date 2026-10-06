@@ -9,13 +9,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -56,6 +60,7 @@ import game.vinto.app.art.home_version
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
 import game.vinto.app.theme.Rail
+import game.vinto.app.theme.WholeWords
 import game.vinto.app.theme.Wordmark
 import game.vinto.app.theme.feltGold
 import game.vinto.app.theme.feltGradient
@@ -127,16 +132,27 @@ fun HomeScreen(
             Column(
                 modifier = Modifier
                     .align(Alignment.Center)
+                    // The screen's height as the column's floor, which is what lets the fan
+                    // give up height (below) and keeps the menu centred where it fits.
+                    .fillMaxHeight()
                     // Scrollable for the screen this menu was not drawn for: a phone on its
                     // side, where the fan, the panel and the buttons stand taller than the
-                    // screen. On every other screen the content fits and the scroll is inert.
+                    // screen, or the doubled system font. On every other screen the content
+                    // fits and the scroll is inert.
                     .verticalScroll(rememberScrollState())
                     .padding(Pad)
                     .widthIn(max = ColumnMax),
-                verticalArrangement = Arrangement.spacedBy(Gap),
+                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                // The fan is the one thing here that is decoration, so on a phone too short for
+                // the menu it gets smaller before anything else is pushed off the screen. An
+                // Android 7 phone at 540 x 960 has 568 dp under its bars, and the last row of
+                // buttons was cut in half above the footer there at the ordinary font size.
+                Fan(modifier = Modifier.weight(1f, fill = false))
+                Spacer(modifier = Modifier.height(Tight))
                 Hero()
+                Spacer(modifier = Modifier.height(Gap))
 
                 SoloPanel(
                     difficulty = settings.difficulty,
@@ -144,6 +160,7 @@ fun HomeScreen(
                     onContinue = go.continueGame,
                     onPlay = go.newGame,
                 )
+                Spacer(modifier = Modifier.height(Gap))
 
                 // Not "coming soon" as a disabled button. The room and its server exist and the
                 // client that joins one does not, which is a real answer and worth giving when
@@ -154,6 +171,7 @@ fun HomeScreen(
                     onClick = go.online,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                Spacer(modifier = Modifier.height(Gap))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -220,7 +238,7 @@ private fun Footer(version: String, build: String, modifier: Modifier = Modifier
 private const val FOOTER_GAP = " · "
 
 /**
- * The wordmark, dealt in.
+ * The fan over the wordmark, dealt in.
  *
  * A logo that is simply *there* on the first frame is the one part of a card game that never
  * moves; the fan arriving card by card is both the app introducing itself and the first thing
@@ -228,16 +246,29 @@ private const val FOOTER_GAP = " · "
  * whole thing is over in three quarters of a second.
  */
 @Composable
-private fun Hero() {
+private fun Fan(modifier: Modifier) {
     val deal = remember { Animatable(0f) }
-    LaunchedEffect(Unit) { deal.animateTo(1f, tween(DealMs, easing = FastOutSlowInEasing)) }
+    val still = LocalReducedMotion.current
+    LaunchedEffect(Unit) {
+        // Dealt where it lands for a reader who has asked for less motion: the same fan, without
+        // the sweep. It ignored Reduce Motion, which `LocalReducedMotion` already carried here.
+        if (still) deal.snapTo(1f) else deal.animateTo(1f, tween(DealMs, easing = FastOutSlowInEasing))
+    }
 
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Tight),
-    ) {
+    // Drawn at its own height and scaled to the room it is given, so a fan with less room is a
+    // smaller fan rather than five cards spilling over the wordmark — and none at all below half
+    // its size, where it stops reading as a hand of cards and starts reading as a smudge.
+    BoxWithConstraints(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        val room = (maxHeight / FanHeight).coerceIn(0f, 1f)
+        if (room < FanLeast) return@BoxWithConstraints
         Box(
-            modifier = Modifier.height(FanHeight).fillMaxWidth(),
+            modifier = Modifier
+                .requiredHeight(FanHeight)
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = room
+                    scaleY = room
+                },
             contentAlignment = Alignment.Center,
         ) {
             FAN.forEachIndexed { index, angle ->
@@ -260,7 +291,16 @@ private fun Hero() {
                 )
             }
         }
+    }
+}
 
+/** The name, the line under it, and whose game this is. */
+@Composable
+private fun Hero() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Tight),
+    ) {
         Text(
             stringResource(Res.string.app_name),
             fontFamily = Wordmark,
@@ -269,6 +309,10 @@ private fun Hero() {
             letterSpacing = TitleTracking,
             // Gold leaf on baize. Not the rail's brass, which is 2.7:1 on the lighter felt.
             color = MaterialTheme.colorScheme.feltGold(),
+            // A name is one word and stays one: at the doubled system font it broke into
+            // "VINT" over "O!" on a small phone. It gets smaller instead, only as far as it has to.
+            maxLines = 1,
+            autoSize = WholeWords(least = TitleLeast, most = TitleSize),
         )
         Text(
             stringResource(Res.string.home_tagline),
@@ -391,8 +435,12 @@ private val CardW = 64.dp
 private val CardH = 90.dp
 private val FanHeight = 130.dp
 
+/** The smallest share of its height the fan is drawn at; with less room it is left out. */
+private const val FanLeast = 0.5f
+
 private val TitleSize = 46.sp
 private val TitleTracking = 6.sp
+private val TitleLeast = 20.sp
 private val BodySize = 15.sp
 private val LabelSize = 12.sp
 

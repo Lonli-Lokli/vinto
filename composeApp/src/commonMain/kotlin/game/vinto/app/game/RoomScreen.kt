@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -209,11 +210,18 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
         // rest are things that genuinely appear and disappear. Anchoring both ends is what
         // actually settles it: what changes size is the middle, and nothing a thumb is
         // aiming at rides on top of it.
+        //
+        // The page scrolls, and the middle does not: the spacer under the seats is what holds
+        // the two ends apart. On a screen they fit, that is the same picture as before. On one
+        // they do not — the doubled system font on a small phone — a scrolling middle was the
+        // only thing that could give up height, and it gave up all of it: the seats were drawn
+        // zero tall and "Leave the room" was cut in half under the invitation.
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxSize()
                 .widthIn(max = LobbyMax)
+                .verticalScroll(rememberScrollState())
                 .padding(Pad),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
@@ -230,10 +238,7 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
             }
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState()),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(Gap),
             ) {
                 if (ui.seats.isEmpty() && ui.word == LobbyWord.CONNECTING) {
@@ -269,6 +274,8 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
                     UpdateTheApp(RoomTrouble.UPDATE_NEEDED, onUpdate = { openUrl(storeListingUrl()) })
                 }
             }
+
+            Spacer(modifier = Modifier.weight(1f))
 
             InviteCard(room.code)
             GameButton(
@@ -522,6 +529,9 @@ private fun RoomTitle(code: String, modifier: Modifier = Modifier) {
         },
         style = MaterialTheme.typography.headlineSmall,
         color = MaterialTheme.colorScheme.onFelt(),
+        // Smaller before the code is split: at the doubled system font it broke as "G7V8" over
+        // "EF", which reads as two codes to somebody saying it out loud.
+        autoSize = WholeWords(least = TitleLeast, most = MaterialTheme.typography.headlineSmall.fontSize),
         modifier = modifier,
     )
 }
@@ -1134,6 +1144,9 @@ private val BadgeSpinner = 12.dp
 
 /** A room code is read a character at a time; the tracking is what makes that possible. */
 private val CodeTracking = 4.sp
+
+/** The least the title shrinks to keep the code whole. */
+private val TitleLeast = 12.sp
 
 /**
  * Where a shared invitation points.

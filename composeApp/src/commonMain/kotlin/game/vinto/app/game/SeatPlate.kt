@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -76,6 +77,7 @@ import game.vinto.app.art.seat_pointed_penalty
 import game.vinto.app.art.seat_pointed_turn
 import game.vinto.app.art.seat_pointed_vinto
 import game.vinto.app.theme.GeneratedAvatar
+import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Signal
 import game.vinto.app.theme.Slate
 import game.vinto.app.theme.WholeWords
@@ -363,7 +365,9 @@ private fun NowHome(now: Boolean, size: Dp) {
 private fun TossHome(homes: Homes, size: Dp) {
     val score = homes.score ?: return HomeOf(homes.toss, size)
     Box(modifier = Modifier.size(size), contentAlignment = Alignment.Center) {
-        val style = MaterialTheme.typography.labelSmall
+        // A line as tall as the digits: the style's own is set for a paragraph, does not shrink
+        // with the size below, and at the doubled system font was twice this home's height.
+        val style = MaterialTheme.typography.labelSmall.copy(lineHeight = 1.em)
         Text(
             text = score,
             style = style,
@@ -442,9 +446,14 @@ enum class SeatBadge {
  *
  * Internal because the help sheet's legend draws the **same** composable rather than a picture
  * of it: a legend that redraws a mark is a legend that can come to disagree with the table.
+ *
+ * [onRail] is the one way the legend's mark differs: it says what the mark is standing on, so
+ * the ink can be chosen for that ground. The same shape, in the same hue, at a strength the
+ * ground can carry. The felt never passes it, and draws exactly what it always drew. See
+ * [inkOnRail].
  */
 @Composable
-internal fun SeatMark(badge: SeatBadge, size: Dp) {
+internal fun SeatMark(badge: SeatBadge, size: Dp, onRail: Boolean = false) {
     // The away mark is the one that stands for two facts — nobody is there, and a bot is playing
     // for them — so it says both, where the table used to draw two marks to say them.
     val said = if (badge == SeatBadge.AWAY) {
@@ -452,14 +461,7 @@ internal fun SeatMark(badge: SeatBadge, size: Dp) {
     } else {
         listOf(stringResource(badge.spoken()))
     }
-    val ink = when (badge) {
-        SeatBadge.VINTO -> Slate.gold
-        SeatBadge.AWAY -> Slate.ink.copy(alpha = QUIET)
-        SeatBadge.BOT -> Slate.ink.copy(alpha = QUIET)
-        SeatBadge.BARRED -> Signal.penalty
-        SeatBadge.AGREED -> Signal.pick
-        SeatBadge.WILL_SHED -> Signal.coalition
-    }
+    val ink = if (onRail) badge.inkOnRail() else badge.inkOnPlate()
     val marked = Modifier
         .size(size)
         .semantics { this[SemanticsProperties.ContentDescription] = said }
@@ -474,6 +476,43 @@ internal fun SeatMark(badge: SeatBadge, size: Dp) {
         SeatBadge.AGREED -> Canvas(marked) { drawNod(ink) }
         SeatBadge.WILL_SHED -> Canvas(marked) { drawShed(ink) }
     }
+}
+
+/** A mark's ink on the table, where it stands on a plate's dark slate in both schemes. */
+private fun SeatBadge.inkOnPlate(): Color = when (this) {
+    SeatBadge.VINTO -> Slate.gold
+    SeatBadge.AWAY -> Slate.ink.copy(alpha = QUIET)
+    SeatBadge.BOT -> Slate.ink.copy(alpha = QUIET)
+    SeatBadge.BARRED -> Signal.penalty
+    SeatBadge.AGREED -> Signal.pick
+    SeatBadge.WILL_SHED -> Signal.coalition
+}
+
+/**
+ * A mark's ink in the help sheet's legend, which stands on the rail: slate on a dark phone and
+ * paper on a light one.
+ *
+ * The plate's inks are chosen for slate, and on paper four of them vanished: the bot and away
+ * marks, near-white at [QUIET], measured 1.01:1, the crown 2.14, the nod 1.61 and the shed mark
+ * 2.7 — a legend whose marks cannot be seen, on the one screen whose job is showing them
+ * (`LegendMarksContrastTest`, 3:1 in both schemes).
+ *
+ * Each is the rail's counterpart of the same colour, so the hue stays the table's. On slate
+ * the crown, nod and shed inks are the very values the plate draws; the quiet two take
+ * [Rail.inkDim], the rail's own second voice, opaque, because dimming a mark with alpha is
+ * what made it vanish. The bar keeps the plate's red, which already clears 3:1 on paper.
+ */
+@Composable
+@ReadOnlyComposable
+private fun SeatBadge.inkOnRail(): Color = when (this) {
+    SeatBadge.VINTO -> Rail.gold
+    SeatBadge.AWAY -> Rail.inkDim
+    SeatBadge.BOT -> Rail.inkDim
+    SeatBadge.BARRED -> Signal.penalty
+    // Mint on slate, which is the pick green itself, and the coach's deep green on paper.
+    SeatBadge.AGREED -> Rail.coach
+    // The coalition's blue on slate, and its deeper paper blue.
+    SeatBadge.WILL_SHED -> Rail.asked
 }
 
 /**

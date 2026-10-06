@@ -285,6 +285,7 @@
     <string name="header_settings">Настройки</string>
     <string name="header_rules">Правила</string>
     <string name="header_leave">Выйти из-за стола</string>
+    <string name="sheet_close">Закрыть</string>
     <string name="header_deck_left">Карт в колоде: %1$d</string>
     <string name="header_deck_badge">В колоде %1$d. Что это значит</string>
 

@@ -30,7 +30,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 /**
  * One of a small set of answers, all of them visible: a bezel selector.
@@ -118,11 +120,21 @@ fun <T> ChoiceRow(
                         // cut shadow put `Rail.inkDim` at 3.4:1 in the light scheme, and the
                         // thumb already says which answer is chosen — the ink does not have
                         // to say it again.
-                        modifier = Modifier.semantics { contentDescription = name },
                         style = stamped(size = LabelSize),
                         fontWeight = if (chosen) FontWeight.Bold else FontWeight.SemiBold,
                         color = if (chosen) Rail.fill else Rail.ink,
                         textAlign = TextAlign.Center,
+                        // One line, smaller before it is cut, and an ellipsis past the floor. A
+                        // cell is a third of a panel and does not grow: at the doubled system
+                        // font "MODERATE" wrapped onto a second line the track had no room for,
+                        // and the chosen answer read "MODER".
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        autoSize = WholeWords(least = LabelLeast, most = LabelSize.sp),
+                        // A margin inside the cell, so two shrunken words never meet at its edge.
+                        modifier = Modifier
+                            .padding(horizontal = CellPad)
+                            .semantics { contentDescription = name },
                     )
                 }
             }
@@ -141,3 +153,7 @@ private const val CUT = 0.22f
 private const val FACE = 0.86f
 private const val SlideMs = 190
 private const val LabelSize = 14
+
+/** The least a cell's word is drawn at: at the doubled font, the size it is drawn at 1.0. */
+private val LabelLeast = 7.sp
+private val CellPad = 3.dp

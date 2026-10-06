@@ -274,6 +274,7 @@
     <string name="header_settings">Configurações</string>
     <string name="header_rules">Regras</string>
     <string name="header_leave">Sair da mesa</string>
+    <string name="sheet_close">Fechar</string>
     <string name="header_deck_left">Cartas no baralho: %1$d</string>
     <string name="header_deck_badge">No baralho: %1$d. O que isso significa</string>
 

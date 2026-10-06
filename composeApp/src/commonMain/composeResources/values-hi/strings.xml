@@ -277,6 +277,7 @@
     <string name="header_settings">सेटिंग्स</string>
     <string name="header_rules">नियम</string>
     <string name="header_leave">मेज़ छोड़ें</string>
+    <string name="sheet_close">बंद करें</string>
     <string name="header_deck_left">डेक में बचे पत्ते: %1$d</string>
     <string name="header_deck_badge">डेक में %1$d। इसका मतलब</string>
 

@@ -221,7 +221,7 @@ fun App(
                                             vault.forgetGame()
                                             screen = Screen.Home(canContinue = false)
                                         },
-                                        onBack = { screen = here.back },
+                                        onBack = { screen = here.backedOutOf(vault) },
                                         report = reportFor(here.back),
                                     )
 
@@ -346,8 +346,10 @@ private fun surfaceOf(screen: Screen): Surface = when (screen) {
  *    holding a chair for somebody who was never coming back.
  */
 private fun Screen.backedOutOf(vault: Vault): Screen {
-    // A submenu backs out to the settings' own front page first, which is where its chevron
-    // goes; only the front page leaves the settings altogether.
+    // A submenu backs out to the settings' own front page first, and only the front page leaves
+    // the settings altogether. The chevron on the screen calls this too: it went straight to
+    // `back` while this said otherwise, so Back on the Game page left the settings for one
+    // gesture and not for the other (iosAppUITests, CommonTaskTests, 2026-10-06).
     if (this is Screen.Settings) {
         return if (page == SettingsPage.ROOT) back else copy(page = SettingsPage.ROOT)
     }

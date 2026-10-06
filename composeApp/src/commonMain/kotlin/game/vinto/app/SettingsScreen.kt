@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -37,13 +38,21 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.header_report
@@ -1162,6 +1171,16 @@ private fun Explain(open: Boolean, title: String, onToggle: () -> Unit) {
                 fontSize = DetailSize,
                 fontWeight = FontWeight.Bold,
                 color = if (open) Rail.ink else Rail.inkDim,
+                // The ring is a fixed tap target and the letter grows with the system font: at
+                // twice the size the *line* — the style's, set in sp for paragraphs — was taller
+                // than the ring, and the ring cut the stem. The same line, measured in the
+                // letter, so the two get smaller together when the ring needs them to.
+                lineHeight = ExplainLine,
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = ExplainLeast, maxFontSize = DetailSize),
+                // The letter is the picture of the name above, not part of it: merged in, iOS read
+                // "More about Sound, i".
+                modifier = Modifier.clearAndSetSemantics { },
             )
         }
     }
@@ -1228,11 +1247,32 @@ private fun SwitchLine(
         // under the finger that had just pressed it — and at four points of padding either side
         // it read as a word set on the panel rather than as something to press. One width, wide
         // enough for the longer of the two in every language the app is written in.
+        val feedback = LocalFeedback.current
+        val word = stringResource(if (on) Res.string.settings_on else Res.string.settings_off)
         GameButton(
-            label = stringResource(if (on) Res.string.settings_on else Res.string.settings_off),
+            label = word,
             tone = if (on) ButtonTone.PLAY else ButtonTone.NEUTRAL,
             onClick = onToggle,
-            modifier = Modifier.widthIn(min = SwitchWidth),
+            modifier = Modifier
+                .widthIn(min = SwitchWidth)
+                // A switch, named for what it switches and saying where it stands. As a plain
+                // button it was named by its word alone: iOS offered three buttons called "On" on
+                // one screen, so VoiceOver read "On" with nothing to say what was on, and Voice
+                // Control had three controls answering to one name (`VoiceControlTests`,
+                // iosApp/iosAppUITests). This replaces the button's own semantics, so the press is
+                // restated here.
+                .clearAndSetSemantics {
+                    contentDescription = title
+                    role = Role.Switch
+                    toggleableState = ToggleableState(on)
+                    // The word on the switch, as its state: "Sound, On" rather than "Sound, 1".
+                    stateDescription = word
+                    onClick {
+                        feedback.commit()
+                        onToggle()
+                        true
+                    }
+                },
             compact = true,
         )
     }
@@ -1242,6 +1282,10 @@ private fun SwitchLine(
 private val SwitchWidth = 84.dp
 
 private val ExplainTap = 32.dp
+private val ExplainLeast = 6.sp
+
+/** The style's paragraph line at 1.0 — 24 sp over the 13 sp letter — as a share of the letter. */
+private val ExplainLine = 1.85.em
 private val MarkSize = 18.dp
 
 private val TitleRowSize = 17.sp

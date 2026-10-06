@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -32,8 +33,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
 /**
@@ -169,26 +173,12 @@ fun GameButton(
                     )
                 } else {
                     leadingContent?.invoke()
-                    leading?.let { Text(it, fontSize = LabelSize) }
-                    // Stamped rather than written: caps and letterspaced, the way the word on a
-                    // chip or a plaque is cut into it. A button that reads like a sentence is a
-                    // form control; one that reads like a stamp is part of a table.
-                    Text(
-                        text = label.uppercase(),
-                        // Stamped for the eye, spoken as it was written: a screen reader handed
-                        // "PLAY IT — FORCE OPPONENT TO DRAW" may spell it, and the caps are a
-                        // property of the plaque rather than of the words.
-                        modifier = Modifier.semantics { contentDescription = label },
-                        fontWeight = FontWeight.Bold,
-                        fontSize = if (compact) CompactLabel else LabelSize,
-                        letterSpacing = Tracking,
-                        textAlign = TextAlign.Center,
-                        // One line on a compact button: they sit in a grid, and a label that
-                        // wraps makes its own chip taller than the thirteen beside it. The size
-                        // and padding below are what make "JOKER" fit on one, which is the only
-                        // rank that does not fit trivially.
-                        maxLines = if (compact) 1 else 2,
-                    )
+                    // A picture before the word, not a word: merged in, iOS named the call "🏆, Call Vinto",
+                    // which VoiceOver reads as "trophy" and nobody can say to Voice Control.
+                    leading?.let {
+                        Text(it, fontSize = LabelSize, modifier = Modifier.clearAndSetSemantics { })
+                    }
+                    Stamp(label, compact)
                 }
             }
 
@@ -322,6 +312,40 @@ private fun faceOf(
     },
 )
 
+/**
+ * A button's words. Stamped rather than written: caps and letterspaced, the way the word on a
+ * chip or a plaque is cut into it. A button that reads like a sentence is a form control; one
+ * that reads like a stamp is part of a table.
+ */
+@Composable
+private fun Stamp(label: String, compact: Boolean) {
+    Text(
+        text = label.uppercase(),
+        // Stamped for the eye, spoken as it was written: a screen reader handed
+        // "PLAY IT — FORCE OPPONENT TO DRAW" may spell it, and the caps are a property of the
+        // plaque rather than of the words.
+        modifier = Modifier.semantics { contentDescription = label },
+        fontWeight = FontWeight.Bold,
+        fontSize = if (compact) CompactLabel else LabelSize,
+        // A compact label is one line in a row of fixed height, so its line is measured in its
+        // own letters: the paragraph line the style carries is in sp, does not shrink with the
+        // size below, and doubled was taller than the row — "AGREE" came out at the floor, cut.
+        lineHeight = if (compact) CompactLine else TextUnit.Unspecified,
+        letterSpacing = Tracking,
+        textAlign = TextAlign.Center,
+        // One line on a compact button: they sit in a grid, and a label that wraps makes its
+        // own chip taller than the thirteen beside it. The size and padding are what make
+        // "JOKER" fit on one, which is the only rank that does not fit trivially.
+        maxLines = if (compact) 1 else 2,
+        // And when it still does not — the doubled system font, where the invitation's "SHARE
+        // THE CODE" was cut to "SHARE THE" with nothing to say so, and "SETTINGS" on the menu
+        // broke as "SETTIN" over "GS" — the label gets smaller first and admits it with an
+        // ellipsis only past the floor. Never inside a word.
+        overflow = TextOverflow.Ellipsis,
+        autoSize = if (compact) WholeWords(CompactLeast, CompactLabel) else WholeWords(Least, LabelSize),
+    )
+}
+
 /** The edge: thicker where the button is a toggle that is on, dimmer where it cannot be pressed. */
 private fun rimOf(tone: ButtonTone, live: Boolean, selected: Boolean) = BorderStroke(
     if (selected) SelectedRim else Hairline,
@@ -356,4 +380,16 @@ private val Gap = 8.dp
 private val StackGap = 3.dp
 private val LabelSize = 15.sp
 private val CompactLabel = 13.sp
+
+/** The least a compact label shrinks to: at the doubled font, still larger than [CompactLabel] at 1.0. */
+private val CompactLeast = 8.sp
+
+/**
+ * The style's paragraph line at 1.0 — 24 sp over the 13 sp label — as a share of the letters, so
+ * it is the same line at 1.0 and gets smaller with them when they have to.
+ */
+private val CompactLine = 1.85.em
+
+/** The same for a full button: at the doubled font, still larger than [LabelSize] at 1.0. */
+private val Least = 8.sp
 private val Tracking = 1.1.sp

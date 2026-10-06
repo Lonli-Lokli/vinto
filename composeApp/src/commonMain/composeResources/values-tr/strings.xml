@@ -277,6 +277,7 @@
     <string name="header_settings">Ayarlar</string>
     <string name="header_rules">Kurallar</string>
     <string name="header_leave">Masadan ayrıl</string>
+    <string name="sheet_close">Kapat</string>
     <string name="header_deck_left">Destede %1$d kart kaldı</string>
     <string name="header_deck_badge">Destede %1$d kart. Bunun anlamı</string>
 

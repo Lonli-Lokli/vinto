@@ -280,6 +280,7 @@
     <string name="header_settings">Налады</string>
     <string name="header_rules">Правілы</string>
     <string name="header_leave">Пакінуць стол</string>
+    <string name="sheet_close">Закрыць</string>
     <string name="header_deck_left">Картак у калодзе: %1$d</string>
     <string name="header_deck_badge">У калодзе %1$d. Што гэта значыць</string>
 

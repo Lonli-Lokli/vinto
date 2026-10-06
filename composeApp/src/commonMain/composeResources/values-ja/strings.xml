@@ -279,6 +279,7 @@
     <string name="header_settings">設定</string>
     <string name="header_rules">ルール</string>
     <string name="header_leave">テーブルを退出</string>
+    <string name="sheet_close">閉じる</string>
     <string name="header_deck_left">山札の残り: %1$d枚</string>
     <string name="header_deck_badge">山札に%1$d枚。この数の意味を見る</string>
 
