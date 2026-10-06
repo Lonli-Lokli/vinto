@@ -2,7 +2,7 @@
 /**
  * Refuses a Play bundle that R8 did not process.
  *
- *   node tools/check-minified.mjs                  # the bundle `vydanne prerelease` would upload
+ *   node tools/check-minified.mjs                  # the bundle `vydanne prerelease` would upload (dist/)
  *   node tools/check-minified.mjs <file.aab|dir>   # a particular one, or a directory's newest
  *
  * **R8 is not optional for a build that reaches a store.** It halves the download (10.30 MB against
@@ -14,7 +14,8 @@
  * proguard.map`, and one it did not, does not.
  *
  * It runs in the two places a bundle is trusted: before every Play upload (`npm run play:closed`,
- * `play:internal`), and in CI after the release bundle is built (`kmp-android`), so a change that
+ * `play:internal`, on the bundle `play:build` just copied to `dist/`), and in CI after the release
+ * bundle is built (`kmp-android`, which names Gradle's own output directory), so a change that
  * quietly turns R8 off fails a pull request rather than a release.
  *
  * Plain Node and no `unzip`: an .aab is a zip, and the names in its central directory are all this
@@ -26,8 +27,12 @@ import path from 'node:path';
 /** Where R8 leaves its mapping inside a bundle. Its presence is the proof R8 ran. */
 const MAPPING = 'BUNDLE-METADATA/com.android.tools.build.obfuscation/proguard.map';
 
-/** `google.aab` in vydanne.config.mjs: a directory, whose newest .aab is the one uploaded. */
-const DEFAULT_DIR = 'androidApp/build/outputs/bundle/release';
+/**
+ * `google.aab` in vydanne.config.mjs: a directory, whose newest .aab is the one uploaded. It is `dist/`
+ * since the legacy gate (2026-10-05): `npm run play:build` copies the one bundle there, the API 24 gate
+ * writes its receipt beside it, and the upload takes it from there.
+ */
+const DEFAULT_DIR = 'dist';
 
 function fail(lines) {
   console.error(`\x1b[31mrefusing the bundle: ${lines[0]}\x1b[0m`);
@@ -37,13 +42,13 @@ function fail(lines) {
 
 /** The .aab at [target], or a directory's newest by modification time — vydanne's own rule. */
 function bundleAt(target) {
-  if (!fs.existsSync(target)) fail([`nothing at ${target}.`, 'Build it: ./gradlew :androidApp:bundleRelease']);
+  if (!fs.existsSync(target)) fail([`nothing at ${target}.`, 'Build it: npm run play:build']);
   if (!fs.statSync(target).isDirectory()) return target;
   const newest = fs.readdirSync(target)
     .filter((name) => name.endsWith('.aab'))
     .map((name) => path.join(target, name))
     .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0];
-  if (!newest) fail([`no .aab in ${target}.`, 'Build it: ./gradlew :androidApp:bundleRelease']);
+  if (!newest) fail([`no .aab in ${target}.`, 'Build it: npm run play:build']);
   return newest;
 }
 
@@ -93,7 +98,7 @@ if (!entryNames(bundle).includes(MAPPING)) {
     '',
     'A bundle that reaches a store is minified, locally and in CI alike. Check that the release',
     'build type in androidApp/build.gradle.kts still sets isMinifyEnabled = true, rebuild with',
-    './gradlew :androidApp:bundleRelease, and try again.',
+    'npm run play:build, and try again.',
   ]);
 }
 

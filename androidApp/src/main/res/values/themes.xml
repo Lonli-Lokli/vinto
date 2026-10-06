@@ -23,11 +23,21 @@
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowBackground">@color/launch_felt</item>
-        <!-- Only the colour the window shows before MainActivity calls enableEdgeToEdge(),
-             which makes the bars transparent on every version so the rail behind them shows
-             through; the icons then follow the in-app theme (SystemBars). -->
-        <item name="android:statusBarColor">@color/rail</item>
-        <item name="android:navigationBarColor">@color/rail</item>
+        <!-- NO android:statusBarColor / android:navigationBarColor here. Both are deprecated in
+             Android 15 and Play Console flags them ("Your app uses deprecated APIs or parameters
+             for edge-to-edge"). They were also doing nothing worth keeping: the app targets SDK 35+,
+             so Android 15 and later enforce edge-to-edge and ignore them outright, and on 14 and
+             older enableEdgeToEdge() in MainActivity.onCreate makes the bars transparent before
+             the first frame, so the rail Compose paints behind them shows through and the icons
+             follow the in-app theme (SystemBars). The only window they ever covered was that first
+             frame, which windowBackground (the launch felt) already paints. Android 12 and 12L
+             re-apply the theme's bars at the launch screen's exit and on its remove(); MainActivity
+             calls enableEdgeToEdge() again at both points, and that stays.
+
+             Removing them does NOT clear Play's warning entirely: what is left comes from inside
+             androidx.activity (its EdgeToEdgeApi28 sets SHORT_EDGES on Android 9 and 10, still in
+             1.14.0-alpha03), which is accepted. The point is that the warning has nothing of OURS
+             in it, and AndroidReleaseConfigTest keeps it that way. -->
         <!-- The game draws its own measured light and dark schemes: Android 10+ and OEM skins must not invert them. -->
         <item name="android:forceDarkAllowed" tools:targetApi="29">false</item>
     </style>

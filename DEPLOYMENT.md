@@ -670,17 +670,31 @@ Play wants an **app bundle** (`.aab`), not an APK, and it comes from `androidApp
 `composeApp`, which is a library and has no such task:
 
 ```sh
-./gradlew :androidApp:bundleRelease -PversionCode="$(Scripts/build-number.sh)"
+npm run play:build      # ./gradlew :androidApp:bundleRelease -PversionCode="$(Scripts/build-number.sh)", then dist/
 ```
 
-It appears at `androidApp/build/outputs/bundle/release/androidApp-release.aab`. The version
-number comes from the script rather than by hand — VERSIONING.md says why, and Play refuses an
-upload whose number does not go up.
+It appears at `androidApp/build/outputs/bundle/release/vinto-<version>-<build>-release.aab`, and
+`play:build` copies that one file to `dist/vinto-<version>-<build>.aab`, which is the folder the
+upload takes it from. The version number comes from the script rather than by hand — VERSIONING.md
+says why, and Play refuses an upload whose number does not go up.
+
+### Then open it on the oldest Android it supports, every time
+
+```sh
+npm run play:legacy     # ../gulnya/tools/legacy-gate.mjs check dist: about five minutes
+```
+
+This installs the exact bundle in `dist/` on an Android 7 (API 24) emulator, opens it twice, and
+scans it for platform calls an Android 7 phone does not have, against `legacy-baseline.json`. A
+pass writes a receipt beside the bundle, and **Play refuses the upload without one**: the guard is
+at the top of `vydanne.config.mjs`. It exists because 1.1 (656) went to testers with a call that
+ends the app on Android 7 and nothing here could see it. `npm run play:closed` runs the branch
+check, the build, the R8 check, this gate and the upload, in that order.
 
 ### Then look inside it, every time
 
 ```sh
-unzip -l androidApp/build/outputs/bundle/release/androidApp-release.aab | grep composeResources
+unzip -l "$(ls -t dist/*.aab | head -1)" | grep composeResources
 ```
 
 Two different things have gone wrong here, and neither showed up any other way.
@@ -697,7 +711,7 @@ could not be submitted at all. It is fixed (the task mirrors the sources now), b
 cheap and the failure is invisible:
 
 ```sh
-unzip -l …/androidApp-release.aab | grep -i "avatar"    # four .xml files, nothing else
+unzip -l "$(ls -t dist/*.aab | head -1)" | grep -i "avatar"    # four .xml files, nothing else
 ```
 
 A stale file in a package is not something `git status` can see.

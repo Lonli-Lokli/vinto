@@ -1,16 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--
-        The bars' colour before edge-to-edge takes over in MainActivity (`themes.xml`).
-        It was the window's own colour too, until the launch screen came: the window is now
-        the launch felt (`launch.xml`, generated), the green the launch screen hands over to.
-
-        This one is the light rail, and `values-night/` holds the dark one. It follows the
-        *system* setting rather than the app's, which is the best that can be done — the app's
-        own choice lives in a file that has not been read yet at the moment this colour is
-        used.
-    -->
-    <color name="rail">#FFF4F1E8</color>
     <!-- The launcher icon's ground, which is the table rather than the room, so it does not
          change: the icon opens on the same colour it lands on. -->
     <color name="launcher_background">#FF1B5E43</color>

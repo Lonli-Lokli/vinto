@@ -400,7 +400,7 @@ embedding `composeApp`'s framework, and this is its counterpart.
 # --- iOS app (run from iosApp/) ---
 # The Xcode build invokes Gradle itself, via its "Build Kotlin framework" phase.
 xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
+  -destination 'platform=iOS Simulator,name=iPhone 18 Pro Max,OS=latest' build
 
 # --- Cloudflare Worker (run from worker/cloudflare/) ---
 # Build the Kotlin bundle first: the shim imports it out of build/compileSync/.
