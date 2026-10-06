@@ -27,6 +27,23 @@
  *           somebody has to make the app in the Play Console and upload the first signed bundle
  *           by hand, which also needs the upload key (ship-and-operate 2.1).
  */
+// REQUIRED RELEASE GATE (owner, 2026-10-03; Vinto since 2026-10-05). `prerelease --store google --apply` is refused
+// unless THIS bundle has a passing receipt from the API 24 emulator + platform-API scan: ../gulnya/tools/legacy-gate.mjs,
+// `npm run play:legacy`. Vinto 1.1 (656) reached the closed track with a java.time `Instant.now()` that ends the app on
+// Android 7 the first time a crash report is written (a lost socket is enough), and nothing could see it; Niva 1.1 and
+// Vodar 1.1 launch-crashed on every Android 7 phone the same way. Fails CLOSED: with ../gulnya absent the upload is
+// refused, not skipped. The only valve is LEGACY_GATE_WAIVER="<reason>" (logged).
+{
+  const gate = await import("../gulnya/tools/legacy-gate.mjs").catch(() => null);
+  const uploading = process.argv.includes("prerelease") && process.argv.includes("google") &&
+    (process.argv.includes("--apply") || process.env.VYDANNE_COMMIT === "1");
+  if (gate) gate.guardRelease({ aab: "./dist" });
+  else if (uploading) {
+    console.error("legacy gate: ../gulnya is not checked out, so the API 24 gate cannot run — refusing to upload.");
+    process.exit(1);
+  }
+}
+
 // REQUIRED RELEASE GATE (owner, 2026-10-04). Every store upload is refused while the text it ships has a voice ERROR:
 // `prerelease` checks the in-app strings and release notes, `fill`/`push`/`prepare` the listing. The rules and why:
 // ../gulnya/claude/skills/portfolio-voice. Fails CLOSED: with ../gulnya absent the upload is refused, not skipped.
@@ -244,35 +261,86 @@ export default {
   },
 
   /**
-   * Accessibility Nutrition Labels. These are CLAIMS made to Apple, so each is stated only where
-   * this repo can show its work. Audited 2026-09-02 against the code, not assumed:
+   * Accessibility Nutrition Labels. These are CLAIMS made to Apple, and Apple's bar for each is
+   * that a person can do the app's common tasks with the feature on: start a game against the
+   * bots, take turns (draw; swap or discard; use a card's power; call Vinto), reach the round's
+   * score sheet, and open the help, the settings and the online lobby.
    *
-   *   voiceover        ~53 contentDescription/semantics sites across 17 files in commonMain.
-   *   voiceControl     `TouchTargetTest` asserts every clickable node carries a content
-   *                    description AND clears 44dp, which is exactly what Voice Control needs to
-   *                    name a target.
-   *   largerText       FALSE, and deliberately. 50 `.sp` sites means text is in scalable units,
-   *                    but nothing pins that a layout SURVIVES Dynamic Type at its largest — and
-   *                    Palon set this false for the same reason. Flip it in the pass that adds
-   *                    the test, not before.
-   *   sufficientContrast  `ContrastTest` + `ScreenContrastTest`, both schemes, WCAG 1.4.3/1.4.11
-   *                    ratios asserted through the theme rather than off the constants.
-   *   darkInterface    both schemes ship and the switch is in Settings.
-   *   differentiateWithoutColorAlone  the deck was redrawn for this: large-print rank indices on
-   *                    every card, four colour FAMILIES rather than four hues, one row per peek.
-   *                    A card is read by its index, not its colour.
-   *   reducedMotion    genuinely wired, not merely declared — `systemPrefersReducedMotion` has
-   *                    real actuals on Android (ANIMATOR_DURATION_SCALE) and iOS
-   *                    (UIAccessibilityIsReduceMotionEnabled), resolves through
-   *                    `LocalReducedMotion` in `App`, and is READ at the animation sites
-   *                    (`CardStage.travel` returns 0, `Progress` takes the still branch).
-   *                    Vodar once shipped this unwired, so the check is the read site.
-   *   captions / audioDescriptions  there is sound but no speech and no video.
+   * The evidence is the iOS UI tests in iosApp/iosAppUITests (target iosAppUITests, scheme
+   * iosApp), run on the real build on an iPhone 18 Pro Max simulator, iOS 27, 2026-10-06 04:44-05:23.
+   * XCUITest reads the same accessibility tree VoiceOver and Voice Control read. It cannot run
+   * VoiceOver itself, so VoiceOver's gestures and its speech are not tested, and neither is iPad.
+   *
+   * RE-RUN (r4, 2026-10-06, on a fresh build): all five passed, with the JVM subset and detekt.
+   * Three failures of r3 were fixed first: Settings' Back on the Game page went home instead of to
+   * the settings (App.kt); the round at the largest text and the score-sheet audit looked for "Deal
+   * the next round", which at 2.35x is below the fold and out of the tree until scrolled to (the
+   * tests now scroll to it, as a person would); and the back chevron was a clipped sliver at 2.35x
+   * (Tiles.kt). Passed: CommonTaskTests settings + largest-text round, AccessibilityAuditTests score
+   * + settings + lobby.
+   *
+   *   voiceover        TRUE. CommonTaskTests.testARoundAgainstTheBotsThroughTheAccessibilityTree
+   *                    passed: a whole round, every control found by its accessibility label and
+   *                    pressed through XCUI, never a coordinate (New game, both setup peeks, a
+   *                    card's power and its target, a swap, Call Vinto, the score sheet). It reads
+   *                    back that a card turned over says its face ("You, card 1, K, worth 0"),
+   *                    which it did not before 2026-10-05: the peek, the game itself, was drawn
+   *                    and never spoken. AccessibilityAuditTests, Apple's performAccessibilityAudit
+   *                    on ten screens x light/dark x default/2.35x: nine passed, and the tenth
+   *                    (score sheet) found nothing either and failed on the test's own marker.
+   *                    The help sheet and the lobby are walked by name (CommonTaskTests, passed).
+   *                    Open and off the common task, held as expected failures where found: every
+   *                    face and colour in the lobby's face picker is an unnamed button
+   *                    (IdentityControl.kt AvatarPicker, needs new strings); a seat plate half
+   *                    under the lesson's coach has no name (SeatPlate.kt).
+   *   voiceControl     TRUE. VoiceControlTests.testEveryControlOnEveryMainScreenHasASayableName
+   *                    passed: every enabled control on ten screens has a name with no glyph,
+   *                    emoji or doubled word, and no two controls share one (the sheet's ✕ and the
+   *                    dark behind it are both Close, and both close it). The rounds above are
+   *                    played by those names. Open and off the common task, expected failures
+   *                    there: the lesson's coach panel is one button named by all fourteen chapter
+   *                    dots (TeachScreen.kt), and three of the coalition plan's controls say their
+   *                    name twice, "Plan, PLAN" (TableScreen.kt PlanSwitch, PlanFelt.kt Word).
+   *   largerText       TRUE (r4 passed). LargerTextTests.testTextGrowsToAtLeastTwice-
+   *                    ItsSizeThroughDynamicType passed: measured on the glyphs, 1.94x at AX-L and
+   *                    2.35x at the largest size (DynamicType.kt; Compose's own scale stopped at
+   *                    1.8x). At 2.35x the round got through peeks, a power, a swap and Call Vinto
+   *                    to the score sheet, whose buttons are a scroll below the fold; About, last
+   *                    in the settings, is one scroll away (testAtTheLargestTextTheLastSettingIs-
+   *                    ReachedByScrolling, passed). The 2.35x screenshots of all ten screens show
+   *                    no word cut off without a scroll to bring it in: Home, the settings, the
+   *                    lesson's coach (TeachScreen.kt) and the plan's word rows (PlanFelt.kt)
+   *                    scroll. Still open at 2.35x and off the common task: claim badges on the
+   *                    coalition plan are wider than the cards they sit on and overlap them
+   *                    (audit-plan-*-AX-XXXL.png), as LargeTextTest also lists.
+   *   sufficientContrast  TRUE. AccessibilityAuditTests: Apple's contrast check, sampled from the
+   *                    rendered pixels, found nothing on any of ten screens in either palette at
+   *                    either size, the help sheet's Badges tab (the seat marks fixed on
+   *                    2026-10-05) included. On the JVM, ContrastTest, ScreenContrastTest and
+   *                    LegendMarksContrastTest hold the WCAG ratios through the theme.
+   *   darkInterface    TRUE. The app follows the system appearance (Settings > Theme > System is
+   *                    the default); AccessibilityAuditTests sets the simulator dark with
+   *                    XCUIDevice.appearance and audits all ten screens in it.
+   *   differentiateWithoutColorAlone  TRUE. Every card face carries its rank in large print and
+   *                    says it; seat states are marks (bot, crown, coalition) with spoken names; the
+   *                    score sheet names the caller and the best hand in words; a card that can be
+   *                    touched pulses where a chosen one holds still. Checked by eye on the audit
+   *                    screenshots turned to greyscale, where every one of those still reads.
+   *   reducedMotion    TRUE. ReducedMotionTests.testTheWaitingSeatHoldsStillUnderReduceMotion,
+   *                    run twice with the simulator's own setting: Reduce Motion off, the waiting
+   *                    seat changed 4735 pixels in 0.45 s; on, 0. That is the iOS setting through
+   *                    Motion.ios.kt and LocalReducedMotion to the drawing. The card flip, Home's
+   *                    fan, the name re-roll's spin and the opening card's bounce ignored it until
+   *                    2026-10-05 (CardTurnTest holds the flip).
+   *   captions / audioDescriptions  FALSE: there is sound but no speech and no video.
+   *
+   * The fixes behind these labels are in the working tree on 2026-10-06; the labels describe the
+   * build that carries them, not 1.2 (665).
    */
   accessibility: {
     voiceover: true,
     voiceControl: true,
-    largerText: false,
+    largerText: true,
     sufficientContrast: true,
     darkInterface: true,
     differentiateWithoutColorAlone: true,
@@ -336,15 +404,16 @@ export default {
     // The signed bundle `prerelease` uploads. A DIRECTORY, so it takes the newest build in it and
     // there is no path to update on every release — the same shape as `ios.ipa` above.
     //
-    // `androidApp`, not `composeApp`: since AGP 9 the application half lives in its own module,
-    // and `bundleRelease` is a task only that module has. Build it with the version stamped from
-    // git, never by hand:
-    //
-    //     ./gradlew :androidApp:bundleRelease -PversionCode="$(Scripts/build-number.sh)"
+    // `dist/`, as in every game, and no longer Gradle's own output folder: `npm run play:build`
+    // builds `:androidApp:bundleRelease` with the version stamped from git (`androidApp`, not
+    // `composeApp`, because since AGP 9 the application half lives in its own module) and copies
+    // that one bundle to `dist/vinto-<version>-<code>.aab`. `npm run play:legacy` then writes its
+    // receipt beside it, and the guard at the top of this file names the same folder, so the gate
+    // and the upload resolve the same newest bundle. Gradle's folder held thirty old builds.
     //
     // See VERSIONING.md — Play refuses an upload whose versionCode does not strictly exceed the
     // last one on the track, and the commit count is what guarantees that.
-    aab: './androidApp/build/outputs/bundle/release',
+    aab: './dist',
 
     // THE CLOSED TRACK, always — `alpha` is Play's API name for it and the Console calls it
     // "Closed testing". This line said `internal` while its comment claimed to be closed, and the
