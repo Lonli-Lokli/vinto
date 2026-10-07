@@ -1,1 +1,3 @@
-Vinto's sounds no longer stop the music playing in another app. After an install or an iOS update, the first screen now prepares its graphics in the background. Some text in the app is shorter and clearer.
+With VoiceOver, a turned card now says which card it is. Buttons and switches have clearer names for VoiceOver and Voice Control. Text now grows with the largest text sizes in iOS Settings, and labels shrink to fit before they are cut off. When Reduce Motion is on, more of Vinto's animations stay still. The marks and rings under Rules now stand out more from the background, in both themes.
+
+The clock and battery at the top of the screen now follow the light or dark theme. Vinto's sounds no longer stop the music playing in another app. After an install or an iOS update, the first screen now prepares its graphics in the background. Some text in the app is shorter and clearer.

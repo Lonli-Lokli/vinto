@@ -1,1 +1,3 @@
-Os sons do Vinto não interrompem mais a música de outro app. Depois de uma instalação ou atualização do iOS, a primeira tela agora prepara os gráficos em segundo plano. Alguns textos do app ficaram mais curtos e claros.
+Com o VoiceOver, uma carta virada agora diz qual carta é. Botões e interruptores têm nomes mais claros para VoiceOver e Controle por Voz. O texto agora aumenta com os maiores tamanhos de texto dos Ajustes do iOS, e os rótulos encolhem antes de serem cortados. Com o Reduzir Movimento ativado, mais animações do Vinto ficam paradas. As marcas e os anéis embaixo de Regras agora se destacam mais do fundo, nos dois temas.
+
+O relógio e o ícone de bateria no topo da tela agora seguem o tema claro ou escuro. Os sons do Vinto não interrompem mais a música de outro app. Depois de uma instalação ou atualização do iOS, a primeira tela agora prepara os gráficos em segundo plano. Alguns textos do app ficaram mais curtos e claros.

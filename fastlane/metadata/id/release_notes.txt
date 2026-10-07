@@ -1,1 +1,3 @@
-Suara Vinto tidak lagi menghentikan musik yang diputar di aplikasi lain. Setelah pemasangan atau pembaruan iOS, layar pertama sekarang menyiapkan grafisnya di latar belakang. Beberapa teks di aplikasi lebih singkat dan jelas.
+VoiceOver sekarang membacakan kartu yang baru dibalik. Nama tombol dan sakelar lebih jelas untuk VoiceOver dan Kontrol Suara. Teks membesar mengikuti ukuran teks terbesar di iOS, dan label mengecil dulu sebelum terpotong. Saat Kurangi Gerakan aktif, lebih banyak animasi tetap diam. Tanda dan cincin di bawah Aturan kini lebih terlihat dari latar belakang, di kedua tema.
+
+Jam dan indikator baterai di atas layar sekarang mengikuti tema terang atau gelap. Suara Vinto tidak lagi menghentikan musik yang diputar di aplikasi lain. Setelah pemasangan atau pembaruan iOS, layar pertama sekarang menyiapkan grafisnya di latar belakang. Beberapa teks di aplikasi lebih singkat dan jelas.

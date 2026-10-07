@@ -1,1 +1,3 @@
-Vinto’nun sesleri artık başka bir uygulamada çalan müziği durdurmuyor. Bir kurulumdan veya iOS güncellemesinden sonra ilk ekran artık görsellerini arka planda hazırlıyor. Uygulamadaki bazı metinler daha kısa ve daha açık.
+VoiceOver artık çevrilen bir kartın hangi kart olduğunu okuyor. Düğmeler ve anahtarlar VoiceOver ve Sesle Denetim için daha açık adlar aldı. Metin artık iOS Ayarlar’daki en büyük yazı boyutlarıyla büyüyor, etiketler kesilmeden önce küçülüyor. Hareketi Azalt açıkken Vinto’nun animasyonlarının daha fazlası sabit kalıyor. Kurallar’ın altındaki işaretler ve halkalar artık her iki temada da arka plandan daha çok ayrışıyor.
+
+Ekranın üstündeki saat ve pil simgesi artık açık veya koyu temayı takip ediyor. Vinto’nun sesleri artık başka bir uygulamada çalan müziği durdurmuyor. Bir kurulumdan veya iOS güncellemesinden sonra ilk ekran artık görsellerini arka planda hazırlıyor. Uygulamadaki bazı metinler daha kısa ve daha açık.

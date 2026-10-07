@@ -1,1 +1,3 @@
-Dźwięki w Vinto nie zatrzymują już muzyki odtwarzanej w innej aplikacji. Po instalacji lub aktualizacji iOS pierwszy ekran przygotowuje teraz grafikę w tle. Część tekstów w aplikacji jest krótsza i jaśniejsza.
+VoiceOver teraz odczytuje, jaka karta została odwrócona. Przyciski i przełączniki mają czytelniejsze nazwy w VoiceOver i Sterowaniu głosem. Tekst powiększa się teraz wraz z największymi rozmiarami tekstu w Ustawieniach iOS, a etykiety zmniejszają się, zanim zostaną przycięte. Gdy włączona jest opcja Ogranicz ruch, więcej animacji w Vinto pozostaje nieruchomych. Oznaczenia i pierścienie pod Zasadami wyróżniają się teraz bardziej na tle, w obu motywach.
+
+Zegar i bateria na górze ekranu są teraz zgodne z jasnym lub ciemnym motywem. Dźwięki w Vinto nie zatrzymują już muzyki odtwarzanej w innej aplikacji. Po instalacji lub aktualizacji iOS pierwszy ekran przygotowuje teraz grafikę w tle. Część tekstów w aplikacji jest krótsza i jaśniejsza.

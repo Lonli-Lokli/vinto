@@ -1,1 +1,3 @@
-I suoni di Vinto non interrompono più la musica di un’altra app. Dopo un’installazione o un aggiornamento di iOS, la prima schermata ora prepara la grafica in background. Alcuni testi nell’app sono più brevi e chiari.
+Con VoiceOver, una carta scoperta dice ora quale carta è. I pulsanti e gli interruttori hanno nomi più chiari per VoiceOver e Controllo vocale. Il testo cresce ora con le dimensioni di testo più grandi delle impostazioni di iOS, e le etichette si riducono prima di essere tagliate. Con Riduci movimento attivo, più animazioni di Vinto restano immobili. I segni e gli anelli sotto Regole si distinguono ora meglio dallo sfondo, in entrambi i temi.
+
+L’orologio e la batteria in alto nello schermo seguono ora il tema chiaro o scuro. I suoni di Vinto non interrompono più la musica di un’altra app. Dopo un’installazione o un aggiornamento di iOS, la prima schermata ora prepara la grafica in background. Alcuni testi nell’app sono più brevi e chiari.
