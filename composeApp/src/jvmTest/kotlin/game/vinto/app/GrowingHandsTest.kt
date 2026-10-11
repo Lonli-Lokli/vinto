@@ -41,9 +41,14 @@ import kotlin.test.assertTrue
  * So a line holds five, the dealt five first, and a sixth card starts the next line — for every
  * seat, the two at the sides included. The row nearest a seat's own rim is the dealt one: your
  * five along the bottom and the extras above, the seat opposite's along the top and the extras
- * below it, a side seat's in the column beside its plate and the extras further in. And a hand
- * that grows must still lie flat and still be a thumb's target per card: no card drawn on
- * another, and 24 points of each its own (WCAG 2.2 AA, SC 2.5.8), on every seat.
+ * below it, a side seat's along its rim and the extras further in — under its plate where they fit
+ * there, and in one column between the five and the plate where they do not. And a hand that
+ * grows must still lie flat and still be a thumb's target per card: no card drawn on another, and
+ * 24 points of each its own (WCAG 2.2 AA, SC 2.5.8), on every seat.
+ *
+ * Up to ten. The owner's rule for the table, 2026-10-09: "accommodate as much as possible cards
+ * per seat without losing empty space or cards overlapping". Ten is two of every seat's rows, and
+ * further than a round goes.
  *
  * Laid out as a room lays it — the toss-in clock's row under the felt — on the phones people
  * hold, every seat holding the same number of cards, which is the fullest a table gets.
@@ -62,20 +67,28 @@ class GrowingHandsTest {
             if (cards.map { it.lineKey() }.distinct().size == 1) {
                 assertInOrder(cards, "$where one row is out of order")
             } else {
-                assertDealtFiveFirst(cards, rimSide(cards, phone), where)
+                assertDealtFiveFirst(cards, rimSide(cards, phone), where, side = who in SIDES)
             }
         }
     }
 
-    /** The dealt five in the row nearest the rim, the rest in the next, the five in dealt order. */
-    private fun assertDealtFiveFirst(cards: List<Card>, rimward: Int, where: String) {
+    /**
+     * The dealt five in the row nearest the rim, the rest further in, the five in dealt order.
+     *
+     * Above and below the felt the rest are one row. At the sides they may be two columns: the
+     * plate's own, under or over the plate, and one between it and the five.
+     */
+    private fun assertDealtFiveFirst(cards: List<Card>, rimward: Int, where: String, side: Boolean) {
         val dealt = cards.filter { it.number <= DEALT }
         val extra = cards.filter { it.number > DEALT }
         assertEquals(1, dealt.map { it.lineKey() }.distinct().size, "$where dealt five are not one row")
-        assertEquals(1, extra.map { it.lineKey() }.distinct().size, "$where extra cards are not one row")
+        val extraLines = extra.map { it.lineKey() }.distinct().size
+        assertTrue(extraLines <= if (side) 2 else 1, "$where extra cards are on $extraLines rows")
         // The dealt row is the one nearest the seat's own rim, so the extras sit further in.
-        val inward = extra.first().lineKey() - dealt.first().lineKey()
-        assertTrue(inward * rimward < 0, "$where extra cards went on the rim side of the dealt five")
+        extra.forEach { card ->
+            val inward = card.lineKey() - dealt.first().lineKey()
+            assertTrue(inward * rimward < 0, "$where card ${card.number} went on the rim side of the dealt five")
+        }
         assertInOrder(dealt, "$where dealt five are out of order")
     }
 
@@ -296,7 +309,7 @@ class GrowingHandsTest {
         val SIDES = setOf("Clever Harbour", "Patient Sparrow")
         const val SEATS = 4
         const val DEALT = 5
-        val HELD = listOf(6, 7, 8)
+        val HELD = listOf(6, 7, 8, 9, 10)
 
         /** WCAG 2.2 AA, SC 2.5.8: a target of at least 24 by 24. */
         const val STRIP = 24f

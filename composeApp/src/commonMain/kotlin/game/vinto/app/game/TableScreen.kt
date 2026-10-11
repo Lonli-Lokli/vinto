@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,7 +62,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
@@ -78,6 +81,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -124,6 +128,7 @@ import game.vinto.app.drawBothWays
 import game.vinto.app.drawCross
 import game.vinto.app.drawTick
 import game.vinto.app.openUrl
+import game.vinto.app.phoneHeldUpright
 import game.vinto.app.speakerName
 import game.vinto.app.supportOffer
 import game.vinto.app.theme.ButtonTone
@@ -575,11 +580,15 @@ private fun FeltTable(
     val seating = seatingFor(view.players, mine)
 
     Felt(modifier = modifier) {
+        // A tablet's or a desktop's felt, by the line the app already draws between a phone and
+        // anything larger (`phoneHeldUpright`). There a grown hand has the room for a second row
+        // at the size it was dealt at, and shrinking it would only leave felt empty ([Hand]).
+        val roomy = !phoneHeldUpright(minOf(maxWidth, maxHeight).value.toInt())
         Column(
             modifier = Modifier.fillMaxSize().padding(Gap),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
-            TopSeat(seating.top, view, table, sizes, onMove)
+            TopSeat(seating.top, view, table, sizes, onMove, roomy)
 
             MiddleRow(
                 modifier = Modifier.weight(1f),
@@ -592,7 +601,9 @@ private fun FeltTable(
                 onHelp = onHelp,
             )
 
-            seating.near?.let { NearSeat(it, view, table, sizes, onMove, mine = it.id == mine?.id) }
+            seating.near?.let {
+                NearSeat(it, view, table, sizes, onMove, mine = it.id == mine?.id, roomy = roomy)
+            }
         }
     }
 }
@@ -1316,6 +1327,8 @@ private fun TopSeat(
     table: Table,
     sizes: TableSizes,
     onMove: (Move) -> Unit,
+    /** Whether the felt is a tablet's or larger — see [Hand]. */
+    roomy: Boolean,
 ) {
     if (seat == null) return
 
@@ -1337,7 +1350,7 @@ private fun TopSeat(
         // hand narrowing as it wrapped, and the plate sliding inwards with it, reported from a
         // phone as the avatars jumping to the centre — is held by the hand itself now: it is
         // never narrower than its dealt five ([Hand]).
-        Hand(seat, view, table, sizes.theirs, onMove, Modifier.weight(1f, fill = false))
+        Hand(seat, view, table, sizes.theirs, onMove, Modifier.weight(1f, fill = false), roomy = roomy)
         Plate(seat, view, table, sizes, onMove)
     }
 }
@@ -1408,65 +1421,64 @@ private fun MiddleRow(
             // ran clean across the piles. `HandLine` can only cap the lines it lays if somebody
             // has told it how much room across it has.
             val share = Modifier.weight(1f)
-            SideSeat(left, view, table, sizes, plateFirst = true, onMove = onMove, modifier = share)
+            SideSeat(left, view, table, sizes, onTheLeft = true, onMove = onMove, modifier = share)
             Piles(view, sizes, table.board, onHelp)
-            SideSeat(right, view, table, sizes, plateFirst = false, onMove = onMove, modifier = share)
+            SideSeat(right, view, table, sizes, onTheLeft = false, onMove = onMove, modifier = share)
         }
     }
 }
 
 /**
- * A seat down one edge: a column of cards, with the plate beside it against the rim — at the
- * top on the left, at the foot on the right, so neither plate lands in the middle of the felt.
+ * A seat down one edge: its cards along the rim, and its plate between them and the piles — at
+ * the top on the left, at the foot on the right, so neither plate lands level with the piles.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SideSeat(
     seat: PlayerSeatView?,
     view: PlayerView,
     table: Table,
     sizes: TableSizes,
-    plateFirst: Boolean,
+    onTheLeft: Boolean,
     onMove: (Move) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (seat == null) return
 
-    // `plateFirst` is also which side of the felt this is: the plate comes before the cards on
-    // the left and after them on the right, so the seat with its plate first is the left one.
-    val onTheLeft = plateFirst
-
     // The share this seat was given, and the seat itself inside it. The two are separate on
-    // purpose: the share has to reach `HandLine`, which caps its lines by the width it is told
-    // it has — but the caller's edge belongs round the **seat**, and drawn on the share it
-    // enclosed a rectangle of empty felt beside a hand of two cards.
-    //
-    // Measured, because the share is what decides how large this seat's cards can be drawn: a
-    // grown hand wants two columns beside the plate, and on a phone about 400 points across the
-    // share holds two columns of crowded cards with four points to spare or not at all.
-    BoxWithConstraints(
+    // purpose: the share is what decides how large this seat's cards can be drawn ([sideHand]),
+    // but the caller's edge belongs round the **seat**, and drawn on the share it enclosed a
+    // rectangle of empty felt beside a hand of two cards.
+    Box(
         modifier = modifier,
         contentAlignment = if (onTheLeft) Alignment.CenterStart else Alignment.CenterEnd,
     ) {
-        val edge = (CallerRing + CallerPad) * 2
-        val hand = sideHand(
-            count = seat.cards.size,
-            theirs = sizes.theirs,
-            across = maxWidth - sidePlateWidth(sizes.avatar) - Tight - edge,
-            along = maxHeight - edge,
-        )
-        SideColumn(seat, view, table, sizes, onTheLeft, onMove, hand)
+        SideColumn(seat, view, table, sizes, onTheLeft, onMove)
     }
 }
 
 /**
- * How large a side seat's cards are drawn: as large as the seat's share lets its lines lie flat.
+ * How a side seat lays its hand: the cards' size, how many lie along the rim, and how many of the
+ * rest lie in the plate's column. Any left over take a column between the two.
  *
- * Its dealt five in one column beside the plate, and a grown hand's extra cards in a second
- * column further in; a hand past the deal first steps down a size ([CardScale.crowded]) like
- * every other seat's. Where even that does not fit — two columns in a phone's narrow share, or
- * five cards in a short felt's middle — the cards are drawn smaller until it does, rather than
- * sliding onto each other.
+ * Along the rim go the dealt five, or the whole hand when it is no bigger.
+ */
+internal data class SideHand(val scale: CardScale, val alongRim: Int, val underPlate: Int)
+
+/**
+ * A side seat's hand, by the owner's rule for the table (2026-10-09): "accommodate as much as
+ * possible cards per seat without losing empty space or cards overlapping".
+ *
+ * Largest first. A hand of the deal or fewer is one column beside the plate, at its own size if
+ * the felt is tall enough ([sideScale]). A grown hand keeps the dealt five along the rim at the size
+ * they were dealt at and puts the rest **in the plate's column**, in the room a plate leaves under a
+ * short name — if they all fit there and the column is wide enough for a card. That costs the seat
+ * no width and the cards no size, which is why it comes first.
+ *
+ * Only past that does the seat take a column between the five and the plate, sized as two columns
+ * always were: at its own size where the share is wide enough and the felt tall enough for five,
+ * smaller where not. Even then the plate's column is filled first — all the extras, if at that
+ * size they fit there, and the column between stays empty; otherwise as many as fit, and the
+ * column between takes the rest — so empty felt is used before any card is shrunk or slid.
  *
  * **The target and the picture are two sizes.** WCAG 2.2 AA (SC 2.5.8) asks each card for a
  * target 24 points along the column, and that is what its footprint keeps; the card drawn inside
@@ -1476,25 +1488,42 @@ private fun SideSeat(
  *
  * Turned, a card's height lies across the seat and its width along the column.
  */
+internal fun sideHand(count: Int, theirs: CardScale, room: SideRoom): SideHand {
+    val besidePlate = room.across - room.plate.width - Tight
+    // The size a dealt hand is drawn at in this seat: its own, or as large as five fit.
+    val dealt = sideScale(minOf(count, DEALT_ROW), theirs, besidePlate, room.along)
+    if (count <= DEALT_ROW) return SideHand(dealt, count, 0)
 
-/** How a side seat lays its hand: the cards' size, and whether they take a second column. */
-internal data class SideHand(val scale: CardScale, val twoColumns: Boolean)
+    val extras = count - DEALT_ROW
+    if (room.underPlate(dealt, extras, between = false) == extras) return SideHand(dealt, DEALT_ROW, extras)
+
+    val lines = (count + DEALT_ROW - 1) / DEALT_ROW
+    val bothAtSize = columnLength(theirs, DEALT_ROW) <= room.along &&
+        theirs.height * lines + Tight * (lines - 1) <= besidePlate - Slack
+    val scale = if (bothAtSize) theirs else sideScale(count, theirs, besidePlate, room.along)
+    val alone = room.underPlate(scale, extras, between = false)
+    val under = if (alone == extras) extras else room.underPlate(scale, extras, between = true)
+    return SideHand(scale, DEALT_ROW, under)
+}
+
+/** What a side seat has to lay its hand in: its share across, the felt's middle along, and its plate. */
+internal data class SideRoom(val across: Dp, val along: Dp, val plate: DpSize)
+
+/** How long [count] turned cards at [scale] lie along a column. */
+private fun columnLength(scale: CardScale, count: Int): Dp =
+    if (count <= 0) 0.dp else maxOf(scale.width, scale.floor) * count + Tight * (count - 1)
 
 /**
- * A side seat's hand, largest first: one column at its own size if the felt is tall enough, then
- * two columns at its own size — the dealt five beside the plate — and only then smaller cards
- * ([sideScale]). The same order the seats above and below use: a big screen never draws two
- * columns of small cards where it had room for them at their own size.
+ * How many of a grown hand's [most] extra cards fit under the plate at [scale]: as many as the
+ * column has length for under the plate, if a card fits the column's width at all — with a column
+ * of cards [between] the plate and the rim's, or without one.
  */
-internal fun sideHand(count: Int, theirs: CardScale, across: Dp, along: Dp): SideHand {
-    if (count <= DEALT_ROW) return SideHand(sideScale(count, theirs, across, along), twoColumns = false)
-    val step = maxOf(theirs.width, theirs.floor)
-    val oneColumn = step * count + Tight * (count - 1) <= along && theirs.height <= across
-    if (oneColumn) return SideHand(theirs, twoColumns = false)
-    val lines = (count + DEALT_ROW - 1) / DEALT_ROW
-    val bothAtSize = step * DEALT_ROW + Tight * (DEALT_ROW - 1) <= along &&
-        theirs.height * lines + Tight * (lines - 1) <= across - Slack
-    return SideHand(if (bothAtSize) theirs else sideScale(count, theirs, across, along), twoColumns = true)
+private fun SideRoom.underPlate(scale: CardScale, most: Int, between: Boolean): Int {
+    val cards = if (between) 2 else 1
+    val wide = (scale.height + Tight) * cards + maxOf(plate.width, scale.height)
+    if (wide > across - Slack) return 0
+    val room = along - plate.height - Tight
+    return (0..most).last { it == 0 || columnLength(scale, it) <= room }
 }
 
 internal fun sideScale(count: Int, theirs: CardScale, across: Dp, along: Dp): CardScale {
@@ -1529,8 +1558,12 @@ private val SmallestSideCard = 16.dp
 /** See [sideScale]: room held back so a fit in points survives being counted in pixels. */
 private val Slack = 1.dp
 
+/** One part of a side seat, composed once its plate has been measured. See [SideColumn]. */
+private enum class SidePart { PLATE, RIM, BETWEEN, UNDER }
+
 /**
- * The seat itself: its plate and its turned hand, inside the caller's edge if it called.
+ * The seat itself: its cards along the rim and its plate between them and the piles, inside the
+ * caller's edge if it called.
  *
  * **Side by side, not stacked.** The plate used to sit above the column on the left and below
  * it on the right, which put a plate's height and five tap targets in one column — and that is
@@ -1539,9 +1572,20 @@ private val Slack = 1.dp
  * its face above its name is narrow enough to stand beside the cards instead, in width the side
  * seats have to spare, and the column gets the middle's whole height.
  *
+ * **Facing the piles.** The plate stood against the rim with the cards between it and the middle,
+ * and a grown hand took a column further in still. Reported 2026-10-09 from a phone: "Ember must
+ * be displayed between cards and draw area - it looks more natural, also when he has more cards
+ * they can be displayed below her avatar if space allows it." So the cards lie along the rim and
+ * the plate stands on the piles' side of them — on both sides, the product owner's choice over
+ * moving the left seat alone — and a grown hand's extras go in the plate's column first
+ * ([sideHand]). Held by `SidePlatesFaceThePilesTest`.
+ *
  * The plate stays at the end its first card is at — the top on the left, the foot on the right —
- * because a seat's cards are counted from its own plate (`countFromEnd`), and so neither plate
- * lands level with the piles.
+ * because a seat's cards are counted from its own plate (`countFromEnd`), and the extras are
+ * counted on from it: under it on the left, above it on the right.
+ *
+ * Measured before the cards are composed, because how many fit under a plate depends on how tall
+ * the plate is, and a turned name is as tall as it is long.
  */
 @Composable
 private fun SideColumn(
@@ -1551,49 +1595,95 @@ private fun SideColumn(
     sizes: TableSizes,
     onTheLeft: Boolean,
     onMove: (Move) -> Unit,
-    /** The seat's cards as drawn, sized to its share by [sideHand]. */
-    hand: SideHand,
 ) {
-    Row(
-        modifier = Modifier.ringed(seat, view),
-        verticalAlignment = if (onTheLeft) Alignment.Top else Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy(Tight),
-    ) {
-        if (onTheLeft) Plate(seat, view, table, sizes, onMove, NameRun.UP)
+    val count = seat.cards.size
+    SubcomposeLayout(modifier = Modifier.ringed(seat, view)) { constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val plate = subcompose(SidePart.PLATE) {
+            Plate(seat, view, table, sizes, onMove, if (onTheLeft) NameRun.UP else NameRun.DOWN)
+        }.measured(loose)
 
-        // A quarter turn, the way cards lie in front of somebody sitting at the side of a
-        // table. It is not only decoration: turned, a card is wider than it is tall, so five
-        // of them stack down the edge in the height a phone actually has, and the seat reads
-        // as facing inwards rather than as a second copy of your own hand.
+        val hand = sideHand(
+            count,
+            sizes.theirs,
+            SideRoom(
+                across = constraints.maxWidth.toDp() - CallerRing * 2,
+                along = constraints.maxHeight.toDp() - CallerRing * 2,
+                plate = DpSize((plate?.width ?: 0).toDp(), (plate?.height ?: 0).toDp()),
+            ),
+        )
+        // By place in the hand. A hand of the deal or fewer is all one column, whatever gaps a card
+        // in the air is holding open in it; a grown one splits after the dealt five.
+        val rimEnd = if (count > DEALT_ROW) hand.alongRim else Int.MAX_VALUE
+        val underEnd = if (count > DEALT_ROW) rimEnd + hand.underPlate else Int.MAX_VALUE
+
+        // A quarter turn, the way cards lie in front of somebody sitting at the side of a table.
+        // It is not only decoration: turned, a card is wider than it is tall, so five of them
+        // stack down the edge in the height a phone actually has, and the seat reads as facing
+        // inwards rather than as a second copy of your own hand.
         //
-        // **And it wraps, like the hands above and below.** It used to overlap instead, on the
-        // grounds that a side seat's cards are counted rather than read and the felt's width is
-        // scarce. What that cost was visible the moment a hand grew: the overlap is floored at
-        // [TapStrip], so past about seven the column has a minimum length the seat does not
-        // have, and when the plate still stood above it the cards ran over the name. A second
-        // column costs width once; a column that overruns costs the whole seat every time.
         // **The same cards as the seat opposite.** `sizes.side` was a size of its own, a step
         // under `theirs`, so three opponents holding the same number of cards were drawn at two
-        // different sizes — reported as the side players' cards being smaller. It bought
-        // nothing: the column's slots are floored at the tap target either way, so the smaller
-        // picture never fitted one more card in. They are still the same cards wherever the
-        // share has room; only a grown hand in a narrow share is drawn smaller, and then because
-        // its second column needs the width, which a size of its own never bought.
-        //
-        // One column while it fits at its own size, then a second — see [sideHand]. Five is the
-        // deal; more than five is a hand that may have outgrown the edge it lies along.
-        HandLine(
-            vertical = true,
-            wrap = hand.twoColumns,
-            countFromEnd = !onTheLeft,
-            linesFromFarSide = !onTheLeft,
-            modifier = Modifier.weight(1f, fill = false),
-        ) {
-            Cards(seat, view, table, hand.scale, onMove, turned = true)
-        }
+        // different sizes — reported as the side players' cards being smaller. They are still the
+        // same cards wherever the share has room; only a grown hand in a narrow share is drawn
+        // smaller, and then because its second column needs the width.
+        fun column(part: SidePart, from: Int, until: Int): Placeable? = subcompose(part) {
+            HandLine(vertical = true, countFromEnd = !onTheLeft) {
+                Cards(seat, view, table, hand.scale, onMove, turned = true, first = from, end = until)
+            }
+        }.measured(loose)
 
-        if (!onTheLeft) Plate(seat, view, table, sizes, onMove, NameRun.DOWN)
+        SideParts(
+            plate = plate,
+            rim = column(SidePart.RIM, 0, rimEnd),
+            under = column(SidePart.UNDER, rimEnd, underEnd),
+            between = column(SidePart.BETWEEN, underEnd, Int.MAX_VALUE),
+        ).laidOut(this, onTheLeft, Tight.roundToPx())
     }
+}
+
+/** What a part composed, measured — or nothing, for a part that composed nothing. */
+private fun List<Measurable>.measured(constraints: Constraints): Placeable? =
+    firstOrNull()?.measure(constraints)
+
+/** A side seat's measured parts, and where each goes. See [SideColumn]. */
+private class SideParts(
+    val plate: Placeable?,
+    val rim: Placeable?,
+    val under: Placeable?,
+    val between: Placeable?,
+) {
+    /**
+     * Laid out for the left seat, from the rim inward and top-aligned, then turned half a circle
+     * for the right — which puts its cards against its rim, its plate at the foot and its extras
+     * above the plate.
+     */
+    fun laidOut(scope: MeasureScope, onTheLeft: Boolean, gap: Int): MeasureResult {
+        val plateX = rim.wide() + gap + between.wide().let { if (it > 0) it + gap else 0 }
+        val underY = plate.tall() + gap
+        val seatWidth = plateX + maxOf(plate.wide(), under.wide())
+        val plateColumn = if (under.tall() > 0) underY + under.tall() else plate.tall()
+        val seatHeight = maxOf(rim.tall(), between.tall(), plateColumn)
+        return scope.layout(seatWidth, seatHeight) {
+            fun Placeable?.at(x: Int, y: Int) {
+                val part = this ?: return
+                if (onTheLeft) {
+                    part.place(x, y)
+                } else {
+                    part.place(seatWidth - x - part.width, seatHeight - y - part.height)
+                }
+            }
+            rim.at(0, 0)
+            between.at(rim.wide() + gap, 0)
+            under.at(plateX, underY)
+            // Last, so the plate's quip, which overhangs, lies over the cards beside it.
+            plate.at(plateX, 0)
+        }
+    }
+
+    private fun Placeable?.wide(): Int = this?.width ?: 0
+
+    private fun Placeable?.tall(): Int = this?.height ?: 0
 }
 
 @Composable
@@ -1612,6 +1702,8 @@ private fun NearSeat(
      * watcher every seat is somebody else's.
      */
     mine: Boolean,
+    /** Whether the felt is a tablet's or larger — see [Hand]. */
+    roomy: Boolean,
 ) {
     Column(
         modifier = Modifier.ringed(seat, view),
@@ -1639,6 +1731,7 @@ private fun NearSeat(
                 // Your first row is the **lower** one: six along the bottom of the felt and the
                 // three that will not fit above them, which is where a person would put them.
                 firstRowBelow = true,
+                roomy = roomy,
             )
         }
     }
@@ -1674,6 +1767,8 @@ private fun Hand(
     modifier: Modifier = Modifier,
     /** Whether this hand's first row is the lower one — see [HandLine.linesFromFarSide]. */
     firstRowBelow: Boolean = false,
+    /** Whether the felt is a tablet's or larger, where a second row keeps the dealt size. */
+    roomy: Boolean = false,
 ) {
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
         // Never narrower than the dealt five at their own size, so a hand that wraps onto a
@@ -1689,9 +1784,15 @@ private fun Hand(
         // Your own hand is still a third larger than anybody else's, at every count — that is
         // the one hierarchy the table has, and [CardScale.crowded] steps rather than collapsing
         // so a crowded table keeps saying it.
+        //
+        // **A tablet does not step down at all.** Its felt has the height for two rows at the
+        // dealt size, and nine cards on an iPad held upright were drawn as two rows of small ones
+        // with the felt empty round them — against the owner's rule for the table (2026-10-09):
+        // "accommodate as much as possible cards per seat without losing empty space or cards
+        // overlapping". Held by `GrowingHandsTest`, up to ten.
         val count = seat.cards.size
         val oneRow = count <= DEALT_ROW || fits(count, scale, maxWidth)
-        val drawn = if (oneRow) scale else scale.crowded()
+        val drawn = if (oneRow || roomy) scale else scale.crowded()
 
         Box(modifier = Modifier.widthIn(min = dealtRow), contentAlignment = Alignment.Center) {
             HandLine(vertical = false, wrap = !oneRow, linesFromFarSide = firstRowBelow) {
@@ -1726,6 +1827,12 @@ private fun Cards(
     scale: CardScale,
     onMove: (Move) -> Unit,
     turned: Boolean,
+    /**
+     * The places in the hand drawn here, from [first] up to [end]: a side seat lays one hand in up
+     * to three columns, and each draws its own share of the same count of places.
+     */
+    first: Int = 0,
+    end: Int = Int.MAX_VALUE,
 ) {
     val stage = LocalStage.current
     val rendering = Rendering(view, table, scale)
@@ -1776,19 +1883,24 @@ private fun Cards(
     var position = 0
     var card = 0
     while (card < seat.cards.size || position in gaps || position in closing) {
-        closing[position]?.let { fraction ->
+        // Counted from the first place whichever share is drawn here, so a place is the same place
+        // in every column; only the drawing is confined to this one's.
+        val here = position >= first && position < end
+        closing[position]?.takeIf { here }?.let { fraction ->
             // Drawn before the card now at this position — the one that slides into the space.
             EmptySlot(scale, "", Modifier.layoutId(Closing(fraction.value)).alpha(fraction.value), turned)
         }
         if (position in gaps) {
-            EmptySlot(
-                scale,
-                "",
-                Modifier.anchoredAt(stage, Anchor.Seat(seat.id, position), scale),
-                turned,
-            )
+            if (here) {
+                EmptySlot(
+                    scale,
+                    "",
+                    Modifier.anchoredAt(stage, Anchor.Seat(seat.id, position), scale),
+                    turned,
+                )
+            }
         } else if (card < seat.cards.size) {
-            SeatCard(seat, position, seat.cards[card], rendering, onMove, turned)
+            if (here) SeatCard(seat, position, seat.cards[card], rendering, onMove, turned)
             card++
         }
         position++

@@ -1077,10 +1077,6 @@ enum class NameRun {
 internal fun edgeWidth(portrait: Dp, line: Dp): Dp =
     maxOf(maxOf(portrait, homeSize(portrait) + PlateGap + line) + PlatePad * 2, PlateTap)
 
-/** How wide a side seat's plate is drawn at this table's portrait size — see [edgeWidth]. */
-@Composable
-internal fun sidePlateWidth(portrait: Dp): Dp = edgeWidth(portrait, nameLine())
-
 /**
  * A side seat's name, turned to run along the rim. One line — however long, it costs the plate
  * only the height it has plenty of — and it shrinks before it is cut, for a name longer than the

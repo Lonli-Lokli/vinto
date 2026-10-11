@@ -117,10 +117,11 @@ class LandingTest {
             "the card jumped ${drift / scale}dp as it landed: flight $final, rest $slot",
         )
 
-        // `theirs`, not a size of its own: all three opponents are drawn alike now — and
-        // **crowded**, because the hand this card lands in is holding six, which is one past
-        // the deal and so one past the size a hand is drawn at.
-        val side = layout.sizes.theirs.crowded()
+        // `theirs`, not a size of its own: all three opponents are drawn alike now — and at the
+        // size the hand was dealt at, because on this phone a sixth card fits under its seat's
+        // plate, and one that fits there is not shrunk (`sideHand`, 2026-10-09). It used to be
+        // one step down, `crowded`, for any hand past the deal.
+        val side = layout.sizes.theirs
         val expectedW = side.height.value * scale
         val expectedH = side.width.value * scale
         assertTrue(

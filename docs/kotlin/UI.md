@@ -52,7 +52,10 @@ name or mark can re-pitch the hand beside it. The two side seats' names are turn
 the way their cards lie, and read from the middle of the table — the left one from the bottom
 up, the right one from the top down, each starting at the face — so
 their plates are a thumb wide and stand *beside* the column of cards rather than above or below
-it, and the column gets the middle's whole height. The player's own idea, and it is what makes
+it, and the column gets the middle's whole height. The cards lie along the rim and the plate
+stands between them and the piles, on both sides, so the two seats face the middle of the table —
+they stood against the rim until 2026-10-09: "Ember must be displayed between cards and draw area
+- it looks more natural" (`SidePlatesFaceThePilesTest`). The player's own idea, and it is what makes
 a dealt table lie flat on a 360-point phone. Held by `TheDealLiesFlatTest`: at the deal, on
 the phones people hold and with the clock's row under the felt, no seat's cards lie on each
 other, your hand is one row, and every name is drawn whole.
@@ -72,13 +75,20 @@ the caller's is in the coalition, and the caller wears the crown and the gold ed
 
 **A hand that grows keeps its dealt five.** A line holds five, the dealt five first, and a sixth
 card starts the next — your five along the bottom and the extras above, the seat opposite's
-extras below its five, a side seat's in a second column further in. It used to fill a line as
-far as it would go, which laid eight as six and two and rebuilt the row every time the hand grew.
-Every hand past five steps down a size; the side seats then fit their cards to their share of the
-middle row (`sideScale`), and where two columns need more than a 360-point phone has, the drawn
-card shrinks while its target stays 24 points — WCAG 2.2 AA (SC 2.5.8) is about the target, and
-the pictures never touch. Held by `GrowingHandsTest` on every phone with at least 740 points for
-the app. An iPhone SE (667, discontinued) is the one screen that cannot: online its felt is 331
+extras below its five, a side seat's in its plate's column — under the plate on the left, above
+it on the right. It used to fill a line as far as it would go, which laid eight as six and two and
+rebuilt the row every time the hand grew.
+
+**As many cards as the seat has room for, none on another** — the owner's rule for the table,
+2026-10-09: "accommodate as much as possible cards per seat without losing empty space or cards
+overlapping". So empty felt is spent before any card is shrunk: a side seat's extras go first
+into the room a plate leaves under a short name, at their own size (`sideHand`), and only those
+that do not fit there take a column between the dealt five and the plate. Every hand past five
+that needs a second row or column steps down a size; the side seats then fit their cards to their
+share of the middle row (`sideScale`), and where two columns need more than a 360-point phone
+has, the drawn card shrinks while its target stays 24 points — WCAG 2.2 AA (SC 2.5.8) is about the
+target, and the pictures never touch. Held by `GrowingHandsTest`, up to ten cards a seat, on every
+phone with at least 740 points for the app. An iPhone SE (667, discontinued) is the one screen that cannot: online its felt is 331
 points, two plates take 81 each and five side targets need 146, so a second row anywhere leaves
 the side seats sliding.
 
