@@ -29,10 +29,10 @@ hand one rung up the escalation ladder before it is built on.
       `autoInstallation` off and the mapping upload as it is.
       Without `sentry-android-replay`, and with the plugin's bytecode instrumentation off (D2).
       The bundle's `sentry-external-modules.txt` lists core, android-core, ndk and native-ndk, no
-      replay. The upload task still runs on `bundleRelease`; on 2026-10-11 it failed 403, because
-      the only token on this Mac (`~/.sentryclirc`, rewritten that day) has `event:read` and
-      `project:read` and no `project:releases` — so mapping `2f229fa5-700f-3c14-9e86-db55f185a431`
-      (build 676) is not in Sentry
+      replay. The upload task still runs on `bundleRelease`: build 677 (00c88c0b) uploaded mapping
+      `2f229fa5-700f-3c14-9e86-db55f185a431`, which the bundle's `sentry-debug-meta.properties`
+      names. (A first attempt that day failed 403 on a read-only token; a token with
+      `project:releases` replaced it.)
 - [x] 2.3 `VintoApplication` starts the SDK before anything draws, behind `isEmulatedDevice`;
       the SDK's auto-init providers removed in the manifest; `AndroidStorage.attach` moves with it
       if the reporter still needs it there.
