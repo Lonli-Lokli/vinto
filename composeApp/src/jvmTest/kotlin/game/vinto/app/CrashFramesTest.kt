@@ -4,7 +4,12 @@ import game.vinto.app.crash.CrashReport
 import game.vinto.app.crash.CrashSurface
 import game.vinto.app.crash.SentryPlatform
 import game.vinto.app.crash.crashEnvelope
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -108,6 +113,27 @@ class CrashFramesTest {
         assertTrue(body.contains(""""debug_meta""""), body)
         assertTrue(body.contains(""""type":"proguard""""), body)
         assertTrue(body.contains(""""uuid":"8c8d1f0e-0000-4000-8000-abcdefabcdef""""), body)
+    }
+
+    /**
+     * …and it rides **inside** the event, where Sentry looks for it.
+     *
+     * The test above asked only whether the words were somewhere in the body, and they were:
+     * after the event's closing brace, as `{…},"debug_meta":{…}`. Sentry read the event, dropped
+     * the rest without a word, and applied no mapping — so every Android release stack arrived as
+     * `vm0 in d`, `ia in a` (issue 7781529123, build 656) while the build gate was proving, quite
+     * correctly, that the mapping had been uploaded. Parsed here as Sentry parses it.
+     */
+    @Test
+    fun theMappingIsNamedByTheEventItself() {
+        val envelope = crashEnvelope(report(uuid = "8c8d1f0e-0000-4000-8000-abcdefabcdef"))
+
+        // Header, item header, event: one JSON value per line, and nothing after the event.
+        val event = Json.parseToJsonElement(envelope.lines()[2]).jsonObject
+        val image = event["debug_meta"]?.jsonObject?.get("images")?.jsonArray?.single()?.jsonObject
+
+        assertEquals("proguard", image?.get("type")?.jsonPrimitive?.content, envelope)
+        assertEquals("8c8d1f0e-0000-4000-8000-abcdefabcdef", image?.get("uuid")?.jsonPrimitive?.content)
     }
 
     /** Everywhere else — iOS, desktop, web, and any debug build — there is no mapping to name. */

@@ -207,13 +207,18 @@ fun crashEnvelope(report: CrashReport): String = with(report) {
             }
             append("""]}""")
         }
-        append("""}]}}""")
+        append("""}]}""")
         // Which mapping to read this stack through. Sentry ignores an uploaded mapping unless the
-        // event names its uuid here, which is why the plugin injects one into the manifest.
+        // event names its uuid here, which is why the plugin writes one into the app's assets.
+        //
+        // **Inside the event**, before the brace that closes it. It used to follow that brace, as
+        // `{…},"debug_meta":{…}`: Sentry kept the event, dropped the rest without a word, and no
+        // Android release stack was ever read through its mapping (`CrashFramesTest`).
         proguardUuid?.let {
             append(""","debug_meta":{"images":[{"type":"proguard","uuid":""")
             append(json(it)).append("""}]}""")
         }
+        append('}')
     }
 
     val header = """{"event_id":"$eventId","sent_at":"$sentAtIso"}"""
