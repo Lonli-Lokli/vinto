@@ -4,6 +4,37 @@
 <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>en-GB</string>
+    <!-- Every language the app speaks, which iOS cannot find for itself. Compose keeps its strings
+         in compose-resources (composeApp/…/composeResources/values-<locale>/), not in .lproj
+         folders, so without this list the bundle reads as English-only: the App Store lists
+         English and nothing else (it reads the BUILD, not the listing), iOS Settings has no
+         Language row for the app, and the phone's own language never reaches it. Reported
+         2026-10-09: "Vinto has translations but they are invisible on iOS". The list is
+         `Language` in Language.kt, with Chinese written as Apple wants it (zh-Hans for
+         Compose's zh); `IosKnowsItsLanguagesTest` holds the two together. -->
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>ar</string>
+        <string>be</string>
+        <string>bn</string>
+        <string>de</string>
+        <string>es</string>
+        <string>fr</string>
+        <string>he</string>
+        <string>hi</string>
+        <string>id</string>
+        <string>it</string>
+        <string>ja</string>
+        <string>ko</string>
+        <string>pl</string>
+        <string>pt</string>
+        <string>ru</string>
+        <string>tr</string>
+        <string>uk</string>
+        <string>ur</string>
+        <string>zh-Hans</string>
+    </array>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
