@@ -54,10 +54,10 @@ class MainActivity : ComponentActivity() {
     /**
      * A second invite, while the app is already open.
      *
-     * The activity is `singleTop` by default for a launcher activity being re-launched, so a
-     * tapped link with the app running arrives here rather than through `onCreate`. Without
-     * this, the second invitation of an evening does nothing at all — which looks exactly
-     * like a broken link.
+     * The activity is `singleTask` (the manifest says why), so a tapped or scanned link with the
+     * app running arrives here, in the one window there is, rather than through `onCreate` of a
+     * second one. Without this, the second invitation of an evening does nothing at all — which
+     * looks exactly like a broken link.
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)

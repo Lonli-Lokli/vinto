@@ -57,32 +57,39 @@ class ManifestTest {
     }
 
     /**
-     * The one activity is `singleTop`, so a second intent reaches the app that is already open.
+     * The one activity is `singleTask`, so every intent reaches the one app that is already open.
      *
-     * Without it the launch mode is `standard`, and a launch that carries
-     * `FLAG_ACTIVITY_NEW_TASK` — which is every `am start`, and how a link handler starts an app
-     * that is already running — brings the existing task to the front and **discards the intent**.
-     * `onNewIntent` is then never called, so everything hanging off it is dead code: the second
-     * invitation of an evening does nothing at all, which is exactly the case
-     * `MainActivity.onNewIntent` was written for and could never have handled.
+     * The launch mode was `standard` first, and a launch that carries `FLAG_ACTIVITY_NEW_TASK` —
+     * which is every `am start`, and how a link handler starts an app that is already running —
+     * brought the existing task to the front and **discarded the intent**. `onNewIntent` was never
+     * called, so the second invitation of an evening did nothing at all. That was found through
+     * the store captures, which drive one scene per `am start` and came out as six photographs of
+     * the home screen.
      *
-     * It was found through the store captures, which drive one scene per `am start` and came out
-     * as six photographs of the home screen. That is the same defect wearing a harmless face:
-     * `CaptureHandleTest` proves the app understands every scene id, and nothing proved the id
-     * ever arrived. This is the missing half, and it is asserted on the manifest rather than in
-     * Compose because no test with a composition in it can see a launch mode.
+     * `singleTop` fixed that and left the other half open. It reuses the activity only when it is
+     * on top of the task the intent is going *into*, and an app that opens a link without
+     * `FLAG_ACTIVITY_NEW_TASK` — a QR scanner, a messenger — puts it into its own task. So Android
+     * built a second window there, while the first sat behind it in the app's own task. Both read
+     * the one process-wide link (`offerOpenedLink`), the window behind was listening already and
+     * took it, and the window in front opened on the home screen. Reported 2026-10-09: *"I scanned
+     * code on browser with android phone but it didn't connect me to lobby"* — the app opened, and
+     * not the lobby. `singleTask` keeps the activity in the app's own task whoever opened the link,
+     * so there is only ever one window, and the link reaches it through `onNewIntent`.
+     *
+     * Asserted on the manifest rather than in Compose because no test with a composition in it can
+     * see a launch mode.
      */
     @Test
-    fun theActivityIsSingleTopSoASecondIntentIsDeliveredRatherThanDropped() {
+    fun theActivityIsSingleTaskSoEveryIntentReachesTheOneWindow() {
         val text = manifest()
         val activity = text.substringAfter("android:name=\".MainActivity\"", "")
             .substringBefore("</activity>")
         assertTrue(activity.isNotBlank(), "MainActivity is not in the manifest; this test is stale")
 
         assertTrue(
-            activity.contains("android:launchMode=\"singleTop\""),
-            "MainActivity is not singleTop, so Android drops an intent aimed at the running app: " +
-                "a second invite link does nothing, and a capture run photographs one screen six times",
+            activity.contains("android:launchMode=\"singleTask\""),
+            "MainActivity is not singleTask, so a link opened by a scanner or a messenger starts a " +
+                "second window in that app's task, and the first window takes the invitation",
         )
     }
 

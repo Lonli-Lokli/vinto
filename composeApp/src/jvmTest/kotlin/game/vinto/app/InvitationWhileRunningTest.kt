@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
  *
  * Reported from a real evening: the host shared a room, read their own QR back, and the app
  * came to the front and did nothing at all. Both platform halves were there — Android's
- * `onNewIntent` (the manifest's `singleTop` exists for it) and iOS's `HandleOpenedLink` — and
+ * `onNewIntent` (the manifest's launch mode exists for it) and iOS's `HandleOpenedLink` — and
  * both handed the link to a `var` whose only reader was the startup effect, which runs once
  * per composition. So the second invitation of an evening was filed, not read, and stayed
  * pending for whichever cold start came next.

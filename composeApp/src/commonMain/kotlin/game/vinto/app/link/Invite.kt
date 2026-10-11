@@ -111,8 +111,12 @@ private fun pathCodeOf(url: String): String? {
  * only thing that ever read it was the startup effect — which runs once per composition. So a
  * link arriving while the app was *already running* was filed and never read: the second
  * invitation of an evening did nothing at all, which is precisely what `onNewIntent` and the
- * manifest's `singleTop` were added for, and it stayed pending for whichever cold start came
+ * manifest's launch mode were added for, and it stayed pending for whichever cold start came
  * next. A `StateFlow` lets the running app hear one.
+ *
+ * Process-wide, which is right only while there is one window to hear it. With two, the one
+ * behind took the link and the one in front opened on the home screen (reported 2026-10-09);
+ * the manifest's `singleTask` is what keeps Android to one.
  */
 private val opened = MutableStateFlow<String?>(null)
 
