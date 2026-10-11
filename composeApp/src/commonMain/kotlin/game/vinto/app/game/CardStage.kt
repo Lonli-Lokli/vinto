@@ -925,8 +925,11 @@ private fun TurnBanner(banner: Banner, view: PlayerView, sizes: TableSizes) {
     }
 }
 
-/** An arrow pointing right: the turn passing from one seat to the next. */
-private fun DrawScope.drawArrowRight(ink: Color) {
+/**
+ * An arrow pointing right: the turn passing from one seat to the next, and in the log, one move
+ * leading to the next by the same hand.
+ */
+internal fun DrawScope.drawArrowRight(ink: Color) {
     val w = size.width
     val y = size.height / 2f
     val pen = w * ARROW_PEN

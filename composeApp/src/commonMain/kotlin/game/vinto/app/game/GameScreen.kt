@@ -1,7 +1,9 @@
 package game.vinto.app.game
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -26,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import game.vinto.app.CountRefusals
 import game.vinto.app.LocalCounting
 import game.vinto.app.LocalVault
+import game.vinto.app.TextMark
 import game.vinto.app.art.Res
 import game.vinto.app.art.report_subject
 import game.vinto.app.art.table_round_points_they_called
@@ -34,6 +37,8 @@ import game.vinto.app.art.table_round_you_lost
 import game.vinto.app.art.table_round_you_won
 import game.vinto.app.art.table_see_score
 import game.vinto.app.counted
+import game.vinto.app.drawBurst
+import game.vinto.app.drawFrown
 import game.vinto.app.elapsedMs
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
@@ -330,15 +335,27 @@ internal fun RoundOver(verdict: RoundVerdict?, caller: String?, onSee: () -> Uni
 @Composable
 private fun Won(verdict: RoundVerdict, caller: String?) {
     val won = verdict.viewerWon ?: return
+    val ink = if (won) Rail.gold else Rail.ink
+    val said = if (won) Res.string.table_round_you_won else Res.string.table_round_you_lost
 
-    Text(
-        text = (if (won) "🎆 " else "😔 ") +
-            stringResource(if (won) Res.string.table_round_you_won else Res.string.table_round_you_lost),
-        fontSize = VerdictSize,
-        fontWeight = FontWeight.Bold,
-        color = if (won) Rail.gold else Rail.ink,
-        textAlign = TextAlign.Center,
-    )
+    // The sign is drawn, a burst or a frown, where it used to be typed as an emoji, which was a
+    // different picture on every phone and was read aloud ahead of the sentence. Silent now:
+    // the words beside it say who won, and the shape says it beside the gold.
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(SignGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TextMark(fontSize = VerdictSize, ink = ink) { if (won) drawBurst(it) else drawFrown(it) }
+        Text(
+            text = stringResource(said),
+            fontSize = VerdictSize,
+            fontWeight = FontWeight.Bold,
+            color = ink,
+            textAlign = TextAlign.Center,
+            // Wraps beside the mark rather than pushing it off the strip at a large system font.
+            modifier = Modifier.weight(1f, fill = false),
+        )
+    }
 
     // Both sides' points, so the sentence answers "and what did that cost?" without the table.
     // Signed here rather than in the words: a minus belongs to the number, and nineteen
@@ -360,6 +377,9 @@ private fun Won(verdict: RoundVerdict, caller: String?) {
 
 private val VerdictSize = 20.sp
 private val VerdictBodySize = 14.sp
+
+/** Between the drawn sign and the sentence it stands beside. */
+private val SignGap = 8.dp
 
 /** The widest "See the score" needs to be, on any screen. */
 private val RoundOverWidth = 420.dp

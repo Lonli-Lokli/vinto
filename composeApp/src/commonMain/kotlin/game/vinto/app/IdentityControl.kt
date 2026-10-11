@@ -3,6 +3,7 @@ package game.vinto.app
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,7 +32,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
 import game.vinto.app.art.online_avatar_another
@@ -285,6 +285,9 @@ private fun GroundRow(ground: Int, onGround: (Int) -> Unit) {
 /**
  * The re-roll: a circular arrow the app draws itself.
  *
+ * Drawn, not typed: it was the circular-arrow character in a `Text`, which each phone's fonts
+ * drew their own way (owner, 2026-10-11).
+ *
  * Its own button rather than a tap on the name, because the name is not a control — it is the
  * answer. A player who wants to read what they have been called should be able to look at it
  * without changing it, which a tappable word does not allow.
@@ -311,22 +314,19 @@ private fun RerollButton(onClick: () -> Unit) {
             .semantics { contentDescription = another },
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = ARROW,
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onFelt(),
-                // The arrow is the picture of the name, not part of it: merged in, it was read aloud.
+            val ink = MaterialTheme.colorScheme.onFelt()
+            // The arrow is the picture of the name, not part of it, and a `Canvas` says nothing:
+            // the button's own description is what a reader hears.
+            Canvas(
                 modifier = Modifier
+                    .size(ArrowSize)
                     // Still for a reader who asked for less motion: the new name is the news.
-                    .rotate(if (LocalReducedMotion.current) 0f else spin)
-                    .clearAndSetSemantics { },
-            )
+                    .rotate(if (LocalReducedMotion.current) 0f else spin),
+            ) { drawReroll(ink) }
         }
     }
 }
 
-private const val ARROW = "⟳"
 private const val TURN = 120f
 
 /**
@@ -341,6 +341,10 @@ private val FaceSize = 56.dp
 private val TileSize = 44.dp
 private val SwatchSize = 28.dp
 private val ButtonSize = 44.dp
+
+/** The drawn arrow inside the re-roll button: half the button, so it reads at a glance. */
+private val ArrowSize = 22.dp
+
 private const val NameSize = 20
 private val Gap = 12.dp
 private val Tight = 6.dp

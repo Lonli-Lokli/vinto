@@ -10,9 +10,11 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
+import game.vinto.app.game.ClaimMark
 import game.vinto.app.game.LocalStage
 import game.vinto.app.game.Stage
 import game.vinto.app.game.TableLayout
@@ -178,8 +180,12 @@ class CoalitionScreenTest {
 
         show(paired)
 
-        val linked = onAllNodesWithText("↔", substring = true).fetchSemanticsNodes()
+        // The link is drawn rather than typed, so it is found by its tag; and each half says it
+        // is one of a pair in words, for a reader hearing the table rather than seeing it.
+        val linked = onAllNodesWithTag(ClaimMark.PAIRED.tag, useUnmergedTree = true).fetchSemanticsNodes()
         assertTrue(linked.size == 2, "a pair should link both cards, found ${linked.size}")
+        val said = onAllNodesWithContentDescription("one of a pair", substring = true).fetchSemanticsNodes()
+        assertTrue(said.size == 2, "a pair should be said on both cards, found ${said.size}")
     }
 
     @Test
@@ -192,13 +198,22 @@ class CoalitionScreenTest {
 
         show(scored)
 
+        // Drawn marks, found by their tags, and each verdict said in words at the end of its badge.
         assertTrue(
-            onAllNodesWithText("✗", substring = true).fetchSemanticsNodes().isNotEmpty(),
+            onAllNodesWithTag(ClaimMark.WRONG.tag, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty(),
             "the caller's wrong claim is not marked wrong",
         )
         assertTrue(
-            onAllNodesWithText("✓", substring = true).fetchSemanticsNodes().isNotEmpty(),
+            onAllNodesWithTag(ClaimMark.RIGHT.tag, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty(),
             "a true claim is not marked right",
+        )
+        assertTrue(
+            onAllNodesWithContentDescription(": wrong", substring = true).fetchSemanticsNodes().isNotEmpty(),
+            "the caller's wrong claim is not said to be wrong",
+        )
+        assertTrue(
+            onAllNodesWithContentDescription(": right", substring = true).fetchSemanticsNodes().isNotEmpty(),
+            "a true claim is not said to be right",
         )
     }
 

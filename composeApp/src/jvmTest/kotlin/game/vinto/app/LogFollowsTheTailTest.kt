@@ -8,8 +8,10 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
+import game.vinto.app.game.LOG_LINE
 import game.vinto.app.game.TableLayout
 import game.vinto.app.game.TableScreen
 import game.vinto.app.game.TableState
@@ -31,8 +33,8 @@ import kotlin.test.assertTrue
  * The foot of the log is the part worth reading, and it is the part that goes missing.
  *
  * Two ways it can, and the box used to lose both. One run of moves by the same actor folds
- * into a *single* line that grows in place — "You drew the Q ➜ You play the Q ➜ You left them
- * alone" — so the number of lines in the box does not change when the newest thing happens,
+ * into a *single* line that grows in place — "You drew the Q, then you play the Q, then you left
+ * them alone" — so the number of lines in the box does not change when the newest thing happens,
  * and an effect watching that number never fires. And a line long enough to wrap past the
  * depth of the well cannot be brought into view by landing its top at the top of the box:
  * what that shows is its beginning, which is the oldest half of it.
@@ -101,10 +103,11 @@ class LogFollowsTheTailTest {
         )
     }
 
-    /** Every line of the well, and nothing else: the log is the only place a `➜` is written. */
-    private fun hasLogText() = androidx.compose.ui.test.SemanticsMatcher("a line of the log") { node ->
-        node.text()?.contains("➜") == true
-    }
+    /**
+     * Every line of the well, and nothing else. It used to be found by the arrow typed between two
+     * moves; the arrow is drawn now and has no character to look for, so the lines carry a tag.
+     */
+    private fun hasLogText() = hasTestTag(LOG_LINE)
 
     private fun SemanticsNode.text() =
         config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }

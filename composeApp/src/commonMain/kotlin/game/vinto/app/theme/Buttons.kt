@@ -59,6 +59,11 @@ fun GameButton(
     tone: ButtonTone,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    /**
+     * A character before the label, set in the label's own face: a plus, which every font draws
+     * alike. Never a symbol or an emoji, which come from each phone's fallback fonts and look
+     * different on every platform (owner, 2026-10-11); draw those in [leadingContent].
+     */
     leading: String? = null,
     /**
      * Something drawn in the label's place before it — a seat's portrait, where [leading] would
@@ -173,8 +178,8 @@ fun GameButton(
                     )
                 } else {
                     leadingContent?.invoke()
-                    // A picture before the word, not a word: merged in, iOS named the call "🏆, Call Vinto",
-                    // which VoiceOver reads as "trophy" and nobody can say to Voice Control.
+                    // A picture before the word, not a word: merged in, iOS named the call by its
+                    // emoji first, which VoiceOver read as "trophy" and nobody can say to Voice Control.
                     leading?.let {
                         Text(it, fontSize = LabelSize, modifier = Modifier.clearAndSetSemantics { })
                     }

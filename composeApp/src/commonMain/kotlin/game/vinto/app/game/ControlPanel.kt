@@ -29,7 +29,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,18 +53,29 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.inset
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.isFinite
 import androidx.compose.ui.unit.sp
+import game.vinto.app.TextMark
 import game.vinto.app.art.Res
 import game.vinto.app.art.card_described
 import game.vinto.app.art.card_face_down
@@ -79,6 +93,7 @@ import game.vinto.app.asked
 import game.vinto.app.cardLong
 import game.vinto.app.cardName
 import game.vinto.app.detailed
+import game.vinto.app.drawTrophy
 import game.vinto.app.keyOf
 import game.vinto.app.labelled
 import game.vinto.app.said
@@ -189,8 +204,29 @@ private val Gap = 8.dp
 private val Half = 4.dp
 private val LogCorner = 6.dp
 
-/** Between two things one actor did in one turn. */
-private const val LogJoin = " ➜ "
+/**
+ * Between two things one actor did in one turn: an arrow the app draws, in the place of a
+ * character it used to type.
+ *
+ * The typed arrow was whatever each phone's fonts made of it, heavy on one and an outline on
+ * another, and a screen reader read its character name out between two moves. The drawn one
+ * sits in the text as an inline picture [ThenWide] by [ThenHigh] ems, so it grows with the
+ * words; what a screen reader hears in its place is [ThenSaid], a pause.
+ */
+private const val ThenMark = "then"
+private const val ThenSaid = ","
+private val ThenWide = 1.2.em
+private val ThenHigh = 1.em
+
+/** The share of the arrow's box left empty before it and after it; a word space follows it too. */
+private const val ThenBefore = 0.3f
+private const val ThenAfter = 0.1f
+
+/** How a test finds the lines of the log: the drawn arrow left them no character to look for. */
+internal const val LOG_LINE = "log-line"
+
+/** The round-ending call's picture, a little larger than the label so it reads at a glance. */
+private val StakesMarkSize = 18.sp
 
 /** How many turns the log keeps: this one, and the one it is answering. */
 private const val TurnsKept = 2
@@ -949,7 +985,7 @@ private fun RecentActions(recent: List<Say>) {
 
     // A plain loop rather than `map`: `said` is a composable, and a composable call inside
     // a non-inline lambda is not one the compiler will accept.
-    // One line per actor rather than per action, joined by an arrow: "Don draws a card ➜
+    // One line per actor rather than per action, joined by an arrow: "Don draws a card, then
     // Don swaps card 1, dropping the 9" is one thing that happened, read once, and the line
     // grows in place as the turn goes on rather than pushing the last one up. A move by
     // somebody else, or the table's own line, starts a new one.
@@ -986,16 +1022,62 @@ private fun RecentActions(recent: List<Say>) {
             ) {
                 // Keyed on the line itself, so a run of moves folding into one growing line
                 // re-uses that item rather than re-keying everything under it by position.
-                itemsIndexed(rendered, key = { index, line -> "$index:$line" }) { index, line ->
-                    Text(
-                        text = line,
-                        fontSize = DetailSize,
-                        lineHeight = DetailSize * LogLineFactor,
-                        color = if (index == rendered.lastIndex) Rail.ink else Rail.inkDim,
-                    )
+                itemsIndexed(rendered, key = { index, moves -> "$index:$moves" }) { index, moves ->
+                    LogLine(moves, ink = if (index == rendered.lastIndex) Rail.ink else Rail.inkDim)
                 }
             }
         }
+    }
+}
+
+/**
+ * One line of the well: one actor's moves in order, with a drawn arrow between each two.
+ *
+ * The arrow points the way the line reads, so it turns round in Arabic, Hebrew and Urdu. It is
+ * drawn in the line's own ink, newest or dimmed, so it never stands out from the words it joins.
+ */
+@Composable
+private fun LogLine(moves: List<String>, ink: Color) {
+    val backwards = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val arrow = remember(ink, backwards) {
+        mapOf(
+            ThenMark to InlineTextContent(
+                Placeholder(ThenWide, ThenHigh, PlaceholderVerticalAlign.TextCenter),
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    scale(scaleX = if (backwards) -1f else 1f, scaleY = 1f) {
+                        inset(
+                            left = size.width * ThenBefore,
+                            top = 0f,
+                            right = size.width * ThenAfter,
+                            bottom = 0f,
+                        ) { drawArrowRight(ink) }
+                    }
+                }
+            },
+        )
+    }
+    Text(
+        text = logLine(moves),
+        inlineContent = arrow,
+        fontSize = DetailSize,
+        lineHeight = DetailSize * LogLineFactor,
+        color = ink,
+        modifier = Modifier.testTag(LOG_LINE),
+    )
+}
+
+/**
+ * A folded line as text: the moves, and between each two the arrow's place, which a screen
+ * reader hears as a comma. Apart from [LogLine] so a test can read what is said without drawing.
+ */
+internal fun logLine(moves: List<String>): AnnotatedString = buildAnnotatedString {
+    moves.forEachIndexed { index, move ->
+        if (index > 0) {
+            appendInlineContent(ThenMark, ThenSaid)
+            append(' ')
+        }
+        append(move)
     }
 }
 
@@ -1017,7 +1099,7 @@ private fun RecentActions(recent: List<Say>) {
  * tenants change, and a box that just got shallower has to find its foot again.
  */
 @Composable
-private fun KeepTheTailInView(state: LazyListState, rendered: List<String>, depth: Int) {
+private fun KeepTheTailInView(state: LazyListState, rendered: List<List<String>>, depth: Int) {
     LaunchedEffect(rendered, depth) {
         if (rendered.isEmpty()) return@LaunchedEffect
         state.animateScrollToItem(rendered.lastIndex)
@@ -1055,15 +1137,19 @@ internal fun lastTurns(recent: List<Say>, turns: Int = TurnsKept): List<Say> {
     return recent.toList()
 }
 
-/** One line per run of moves by the same actor, joined by [LogJoin]; the table's own lines stand alone. */
-internal fun foldedByActor(lines: List<Pair<Speaker, String>>): List<String> {
-    val folded = ArrayList<String>(lines.size)
+/**
+ * One line per run of moves by the same actor, each line its moves in order, joined on screen by
+ * [logLine]; the table's own lines stand alone. Kept as the moves rather than glued into one
+ * string, because what goes between them is a drawing now and a string has no room for one.
+ */
+internal fun foldedByActor(lines: List<Pair<Speaker, String>>): List<List<String>> {
+    val folded = ArrayList<List<String>>(lines.size)
     var lastWho: Speaker? = null
     for ((who, line) in lines) {
         if (folded.isNotEmpty() && who != Speaker.Nobody && who == lastWho) {
-            folded[folded.lastIndex] = folded.last() + LogJoin + line
+            folded[folded.lastIndex] = folded.last() + line
         } else {
-            folded += line
+            folded.add(listOf(line))
         }
         lastWho = who
     }
@@ -1087,12 +1173,26 @@ private fun ChoiceButton(choice: Choice, onMove: (Move) -> Unit, modifier: Modif
             // Keyed by identity rather than by the rendered words, so the lesson still
             // finds a button after a translation. See `keyOf`.
             .markedAs(LocalStage.current, "choice:${keyOf(choice.label)}"),
-        leading = if (choice.tone == Tone.STAKES) "🏆" else null,
+        // A trophy the app draws, where a typed emoji was a different picture on every phone.
+        leadingContent = if (choice.tone == Tone.STAKES) {
+            { StakesMark() }
+        } else {
+            null
+        },
         // `GameButton` already draws a spinner in the label's place and swallows its own taps;
         // this is the one line that was missing to make the in-flight move visible on the
         // control the player pressed. Read off the stage for the same reason the card does.
         busy = LocalStage.current.acting,
     )
+}
+
+/**
+ * The round-ending call's picture, in whatever ink the button is wearing, dimmed with it when
+ * the button cannot be pressed. Silent, as `GameButton` asks of anything before its label.
+ */
+@Composable
+private fun StakesMark() {
+    TextMark(fontSize = StakesMarkSize, ink = LocalContentColor.current) { drawTrophy(it) }
 }
 
 /** The model says what kind of move it is; this says what that kind looks like. */

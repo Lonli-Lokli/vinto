@@ -67,6 +67,7 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -83,6 +84,7 @@ import androidx.compose.ui.zIndex
 import game.vinto.app.Host
 import game.vinto.app.LocalHost
 import game.vinto.app.Support
+import game.vinto.app.TextMark
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
 import game.vinto.app.art.badge_disputed
@@ -118,6 +120,9 @@ import game.vinto.app.art.table_toss_in_summary
 import game.vinto.app.art.table_toss_in_timed
 import game.vinto.app.art.table_tossed
 import game.vinto.app.art.table_you_are_with
+import game.vinto.app.drawBothWays
+import game.vinto.app.drawCross
+import game.vinto.app.drawTick
 import game.vinto.app.openUrl
 import game.vinto.app.speakerName
 import game.vinto.app.supportOffer
@@ -2263,9 +2268,9 @@ private fun SeatCard(
 internal fun ClaimBadge(badge: Badge, modifier: Modifier = Modifier) {
     val (fill, ink) = badgeColours(badge)
     val mark = when (badge.verdict) {
-        Verdict.RIGHT -> "✓ "
-        Verdict.WRONG -> "✗ "
-        null -> if (badge.paired) "↔ " else ""
+        Verdict.RIGHT -> ClaimMark.RIGHT
+        Verdict.WRONG -> ClaimMark.WRONG
+        null -> ClaimMark.PAIRED.takeIf { badge.paired }
     }
     val standing = badgeStanding(badge)
     // `map` is inline and `joinToString`'s transform is not, and only the first may call a
@@ -2292,13 +2297,41 @@ internal fun ClaimBadge(badge: Badge, modifier: Modifier = Modifier) {
                 // Your own face is on your plate already; a claim of yours wears no portrait.
                 SpeakerFace(name)
             }
+            val words = MaterialTheme.typography.labelSmall
+            // Drawn beside the words, not typed into them, and silent: `spoken` above already
+            // says "right", "wrong" or "one of a pair" in the reader's language, and the shape
+            // says it beside the colour for anybody who cannot tell the warning pair apart.
+            mark?.let {
+                TextMark(
+                    fontSize = words.fontSize,
+                    ink = ink,
+                    modifier = Modifier.testTag(it.tag),
+                    draw = it.draw,
+                )
+            }
             Text(
-                text = mark + badge.text,
-                style = MaterialTheme.typography.labelSmall,
+                text = badge.text,
+                style = words,
                 color = ink,
             )
         }
     }
+}
+
+/**
+ * The mark a claim wears before its words once there is something to add to them: a tick or a
+ * cross when the reveal has refereed it, and a line with a head at each end on both halves of a
+ * pair. They were the characters for the same three things, and came out as a colour emoji, a
+ * thin outline or an empty box depending on whose phone it was.
+ */
+internal enum class ClaimMark(val draw: DrawScope.(Color) -> Unit) {
+    RIGHT({ drawTick(it) }),
+    WRONG({ drawCross(it) }),
+    PAIRED({ drawBothWays(it) }),
+    ;
+
+    /** How a test finds this mark on a badge: a drawing has no words for it to look for. */
+    val tag: String get() = "claim-mark:${name.lowercase()}"
 }
 
 /**

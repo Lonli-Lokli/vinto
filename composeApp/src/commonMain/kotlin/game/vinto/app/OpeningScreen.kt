@@ -25,10 +25,13 @@ import androidx.compose.ui.unit.sp
 import game.vinto.app.art.Res
 import game.vinto.app.art.app_name
 import game.vinto.app.art.opening_shuffling
+import game.vinto.app.game.CardFace
+import game.vinto.app.game.CardScale
 import game.vinto.app.theme.Wordmark
 import game.vinto.app.theme.feltGold
 import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.onFelt
+import game.vinto.engine.CardView
 import org.jetbrains.compose.resources.stringResource
 
 private const val BOB_MS = 900
@@ -66,16 +69,18 @@ fun OpeningScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
-            Text(
-                "🂡",
-                fontSize = CardSize,
-                color = MaterialTheme.colorScheme.onFelt(),
-                // Still for a reader who asked for less motion, and silent: a picture of a card, which
-                // a screen reader otherwise announces as "playing card ace of spades".
+            // The deck's own back, from the artwork every card on the table is drawn with. It was
+            // the playing-card character, which each phone drew from its own fonts: a picture on
+            // one, an outline on another, a box on an old Android (owner, 2026-10-11).
+            Box(
+                // Still for a reader who asked for less motion, and silent: a picture of a card,
+                // which says nothing the wordmark under it does not.
                 modifier = Modifier
                     .graphicsLayer { translationY = if (still) 0f else lift }
                     .clearAndSetSemantics { },
-            )
+            ) {
+                CardFace(card = CardView.Hidden, scale = SplashCard)
+            }
             Text(
                 text = stringResource(Res.string.app_name),
                 fontSize = TitleSize,
@@ -94,7 +99,10 @@ fun OpeningScreen() {
 }
 
 private val Gap = 10.dp
-private val CardSize = 72.sp
+
+/** The card above the wordmark, at the size a phone draws the player's own hand. */
+private val SplashCard = CardScale(width = 56.dp, height = 78.dp)
+
 private val TitleSize = 28.sp
 private val BodySize = 15.sp
 

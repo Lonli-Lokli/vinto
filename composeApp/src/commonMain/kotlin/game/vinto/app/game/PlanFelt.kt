@@ -73,6 +73,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.LocalReducedMotion
+import game.vinto.app.TextMark
 import game.vinto.app.art.Res
 import game.vinto.app.art.board_arrival
 import game.vinto.app.art.board_broken
@@ -96,6 +97,7 @@ import game.vinto.app.art.says_is_a_what
 import game.vinto.app.art.says_throws_word
 import game.vinto.app.chipWords
 import game.vinto.app.detailed
+import game.vinto.app.drawCross
 import game.vinto.app.labelled
 import game.vinto.app.saysWords
 import game.vinto.app.speakerName
@@ -1231,8 +1233,11 @@ private fun TradeArrow(says: Says.Trade, toggle: Move.Quiet?, onMove: (Move) -> 
 private fun TurnNews(sentence: TurnSentence, onMove: (Move) -> Unit) {
     val broken = sentence.health == StepHealth.BROKEN
     if (broken) {
+        // A drawn cross beside the words, where a typed one came out differently on every
+        // phone. Silent: the sentence says what is wrong, and the mark only catches the eye.
+        TextMark(fontSize = WordSize, ink = WarnInk) { drawCross(it) }
         Text(
-            text = "✗ " + stringResource(Res.string.board_broken),
+            text = stringResource(Res.string.board_broken),
             fontSize = WordSize,
             color = WarnInk,
             maxLines = 1,

@@ -2,6 +2,7 @@ package game.vinto.app
 
 import game.vinto.app.game.foldedByActor
 import game.vinto.app.game.lastTurns
+import game.vinto.app.game.logLine
 import game.vinto.client.Say
 import game.vinto.client.Speaker
 import game.vinto.shapes.Rank
@@ -53,10 +54,10 @@ class LogFoldTest {
         )
         assertEquals(
             listOf(
-                "the round begins",
-                "Don drew the 7 \u279c Don swaps card 3, dropping the 7",
-                "You drew the 8",
-                "Raph tossed in the 8 \u279c Raph drew the Joker",
+                listOf("the round begins"),
+                listOf("Don drew the 7", "Don swaps card 3, dropping the 7"),
+                listOf("You drew the 8"),
+                listOf("Raph tossed in the 8", "Raph drew the Joker"),
             ),
             foldedByActor(lines),
         )
@@ -65,6 +66,19 @@ class LogFoldTest {
     @Test
     fun twoOfTheTablesOwnLinesDoNotFold() {
         val lines = listOf(Speaker.Nobody to "the round begins", Speaker.Nobody to "the round begins")
-        assertEquals(listOf("the round begins", "the round begins"), foldedByActor(lines))
+        assertEquals(listOf(listOf("the round begins"), listOf("the round begins")), foldedByActor(lines))
+    }
+
+    /**
+     * The arrow between two moves is drawn now, an inline picture rather than a typed character,
+     * so what a line *says* is the moves with a comma where the arrow is: a pause for a screen
+     * reader, where it used to read the arrow's character name out. One picture per join.
+     */
+    @Test
+    fun aFoldedLineIsReadWithAPauseWhereTheArrowIsDrawn() {
+        val line = logLine(listOf("Don drew the 7", "Don swaps card 3, dropping the 7", "Don left them alone"))
+        assertEquals("Don drew the 7, Don swaps card 3, dropping the 7, Don left them alone", line.text)
+        assertEquals(2, line.getStringAnnotations(0, line.length).size, "one drawn arrow per join")
+        assertEquals("You drew the 8", logLine(listOf("You drew the 8")).text)
     }
 }

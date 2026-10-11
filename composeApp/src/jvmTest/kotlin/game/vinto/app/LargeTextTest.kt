@@ -371,7 +371,7 @@ class LargeTextTest {
 
             when {
                 layout.cutShort() && layout.ellipsizes() -> listed += "$shot: \"$words\" ends in an ellipsis"
-                // A mark drawn with a glyph — the back chevron, the re-roll arrow — sits in a tap
+                // A mark drawn with a glyph — the back chevron, the tiles' arrow — sits in a tap
                 // target rather than on a line, and its line box is taller than its ink. Whether
                 // the ink is whole is a question for the pictures; the line overflowing is not.
                 layout.cutShort() && words.isMark() ->
