@@ -18,6 +18,10 @@ import kotlin.test.assertEquals
  * reporter read the surface from a composition local one level above the screen that provides
  * it, so it read the default, and every report the app has ever sent said MENU wherever it
  * came from.
+ *
+ * Still the one question on every client. On Android the SDK asks it too: `Crashes.install` hands
+ * the same lambda to the SDK's event processor, which reads it when an event is made
+ * (`PhoneReportsTest.theAddressIsTheOneShowingWhenTheReportIsMade`).
  */
 @OptIn(ExperimentalTestApi::class)
 class AReportSaysWhereItHappenedTest {

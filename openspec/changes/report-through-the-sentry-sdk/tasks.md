@@ -11,25 +11,54 @@ hand one rung up the escalation ladder before it is built on.
 
 ## 2. Android through `sentry-android`
 
-- [ ] 2.1 Tests first, on the JVM against `io.sentry` core types: the options a pure
+- [x] 2.1 Tests first, on the JVM against `io.sentry` core types: the options a pure
       `vintoSentryOptions()` builds (`sendDefaultPii` false, no screenshot or view hierarchy,
       no tracing, `release = vinto@<version>`, `dist = <build number>`, the environment), and the
       `beforeSend` scrubber — an event carrying the SDK's default `user.id`, a device id and
       name, a server name and a room code in its message comes out with none of them, and keeps
-      the surface tag and the deal's address. Watch both go red
-- [ ] 2.2 `sentry-android` 8.55.0 (gulnya's pin) on `composeApp`'s `androidMain`; the plugin keeps
-      `autoInstallation` off and the mapping upload as it is
-- [ ] 2.3 `VintoApplication` starts the SDK before anything draws, behind `isEmulatedDevice`;
+      the surface tag and the deal's address. Watch both go red.
+      `PhoneReportsTest`, 10 tests, each event through every processor the options carry and then
+      `beforeSend`. Red on a do-nothing stub, 8 of 10, each for its own reason (no `beforeSend`,
+      no DSN, the server name attached, sessions on); the two that passed assert 8.55.0 defaults
+      already off (tracing, replay) or on (the uncaught handler) and stay as guards. Green since.
+      Also pinned: sessions off (each carries the install id as `did`, D5), the boot time cleared,
+      and an earlier run's ANR or native crash not filed under today's screen. The screenshot and
+      view hierarchy are `SentryAndroidOptions`-only, so they are set beside `SentryAndroid.init`
+      and are not under this JVM test (D2, as built)
+- [x] 2.2 `sentry-android` 8.55.0 (gulnya's pin) on `composeApp`'s `androidMain`; the plugin keeps
+      `autoInstallation` off and the mapping upload as it is.
+      Without `sentry-android-replay`, and with the plugin's bytecode instrumentation off (D2).
+      The bundle's `sentry-external-modules.txt` lists core, android-core, ndk and native-ndk, no
+      replay. The upload task still runs on `bundleRelease`; on 2026-10-11 it failed 403, because
+      the only token on this Mac (`~/.sentryclirc`, rewritten that day) has `event:read` and
+      `project:read` and no `project:releases` — so mapping `2f229fa5-700f-3c14-9e86-db55f185a431`
+      (build 676) is not in Sentry
+- [x] 2.3 `VintoApplication` starts the SDK before anything draws, behind `isEmulatedDevice`;
       the SDK's auto-init providers removed in the manifest; `AndroidStorage.attach` moves with it
-      if the reporter still needs it there
-- [ ] 2.4 `Crashes.report` → `Sentry.captureException` with the surface tag and the deal's
-      address; the SDK's uncaught-exception integration replaces `installCrashHandler` on Android
-- [ ] 2.5 Delete what the SDK now does: `ProguardUuid.android.kt`, the Android
+      if the reporter still needs it there.
+      It does (the version and the environment are read through it), so it moved, and
+      `MainActivity` does neither now. The merged release manifest names `VintoApplication` and has
+      neither provider; its permissions are unchanged. The NDK's `SentryNdkPreloadProvider` merges in
+      and does nothing without `io.sentry.ndk.preload` meta-data, which Vinto does not set
+- [x] 2.4 `Crashes.report` → `Sentry.captureException` with the surface tag and the deal's
+      address; the SDK's uncaught-exception integration replaces `installCrashHandler` on Android.
+      Through `CrashPipe.Sdk` (`CrashPipe.android.kt`), gated by the same `ReportBudget` the
+      envelope uses; the address is an event processor reading `Crashes.where()` and `Where` when an
+      event is made, so an uncaught exception carries it too
+- [x] 2.5 Delete what the SDK now does: `ProguardUuid.android.kt`, the Android
       `CrashHandler` actual, the vault's pending envelope on Android. `ProguardUuid` and
-      `debug_meta` stay only if a non-Android target still needs them (none does — remove both)
-- [ ] 2.6 `ACrashCanBeReadTest`, `CrashInstallTest`, `AReportSaysWhereItHappenedTest` read again
-      for what is now true on Android, and corrected rather than deleted where they still hold
-- [ ] 2.7 Measure the release APK and AAB before and after; write the figure into `design.md`
+      `debug_meta` stay only if a non-Android target still needs them (none does — remove both).
+      All gone, with the common `expect` and its three `null` actuals; `installCrashHandler` and
+      `awaitCrashReport` became `CrashPipe.ByHand`'s two functions on the targets that keep the envelope
+- [x] 2.6 `ACrashCanBeReadTest`, `CrashInstallTest`, `AReportSaysWhereItHappenedTest` read again
+      for what is now true on Android, and corrected rather than deleted where they still hold.
+      `CrashInstallTest` checks the Application, the manifest and the removed providers for Android
+      in place of `MainActivity`; `CrashEnvironmentTest` reads `VintoApplication` for the storage-first
+      order; the other two say what holds now. In `CrashFramesTest` the two mapping tests went with the
+      field, and the parse-as-Sentry-does test now holds the event as one JSON object
+- [x] 2.7 Measure the release APK and AAB before and after; write the figure into `design.md`.
+      Risks, "APK size": AAB +1,964,526 bytes (+24.6%), arm64 download +588,025 (+17.3%), most of
+      it `libsentry.so`
 
 ## 3. iOS through `sentry-cocoa`, and the bridge
 

@@ -57,6 +57,11 @@ kover = "0.9.9"
 # this one. Worth bumping gulnya to match rather than leaving two in the portfolio.
 qrose = "1.2.1"
 
+# The Sentry SDK on Android (`sentry-android`, core + NDK) and its JVM core, which is what the
+# options and the scrubber are compiled against so the JVM suites can hold them. gulnya's pin, so
+# every game in the portfolio sends one event format to one Sentry organisation.
+sentry = "8.55.0"
+
 # Android API levels. minSdk 24 matches Compose Multiplatform's floor and covers ~97% of
 # devices; there is nothing in this app that would justify dropping older phones further.
 sentryGradle = "6.21.0"
@@ -88,6 +93,8 @@ compose-material3 = { module = "org.jetbrains.compose.material3:material3", vers
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
 compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "composeMultiplatform" }
 compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "composeMultiplatform" }
+sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry" }
+sentry-core = { module = "io.sentry:sentry", version.ref = "sentry" }
 
 [plugins]
 sentryAndroid = { id = "io.sentry.android.gradle", version.ref = "sentryGradle" }

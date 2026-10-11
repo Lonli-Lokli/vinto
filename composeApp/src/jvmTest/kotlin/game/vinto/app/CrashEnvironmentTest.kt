@@ -76,13 +76,14 @@ class CrashEnvironmentTest {
 
     /**
      * On Android the answer needs the application context, and the context arrives with storage.
-     * `MainActivity` attaches it one line before installing the reporter; this is what makes that
-     * ordering a property rather than a habit, since the wrong order files a player's crash as
-     * one of ours and nothing would say so.
+     * `VintoApplication` attaches it one line before installing the reporter, which starts the SDK
+     * with the environment and the version read through it; this is what makes that ordering a
+     * property rather than a habit, since the wrong order files a player's crash as one of ours —
+     * or starts no SDK at all — and nothing would say so.
      */
     @Test
     fun androidAttachesItsStorageBeforeItInstallsTheReporter() {
-        val path = "../androidApp/src/main/kotlin/game/vinto/app/MainActivity.kt"
+        val path = "../androidApp/src/main/kotlin/game/vinto/app/VintoApplication.kt"
         val text = File(path).readLines()
             .filterNot { it.trimStart().startsWith("import ") }
             .joinToString("\n")

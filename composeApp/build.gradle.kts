@@ -1,5 +1,7 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import java.util.Properties
 
 plugins {
@@ -23,6 +25,26 @@ if (!isMacOs) {
 }
 
 kotlin {
+    /**
+     * `jvmAndroidMain`: code compiled against the Sentry SDK's JVM core, shared by Android, which
+     * reports through it, and the JVM, whose suites hold what Android hands it — the options and
+     * the scrubber (`PhoneReports.kt`). Android's own half needs a device; this half does not.
+     *
+     * Extending the template rather than wiring `dependsOn` by hand, which detaches the source sets
+     * the template manages (iOS's among them). Android is matched by platform because
+     * `withAndroidTarget()` matches only the old `androidTarget()`, not the
+     * `com.android.kotlin.multiplatform.library` target this module has.
+     */
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate {
+        common {
+            group("jvmAndroid") {
+                withJvm()
+                withCompilations { it.platformType == KotlinPlatformType.androidJvm }
+            }
+        }
+    }
+
     /**
      * A JVM target that ships nowhere.
      *
@@ -143,6 +165,14 @@ kotlin {
             // The one thing this app sells. See `Support.kt` for why a single fixed price and
             // not an amount somebody types.
             implementation(libs.play.billing)
+            // `sentry-android` is declared in the `dependencies` block below this one, because
+            // excluding a module needs a form this block does not take.
+        }
+        getByName("jvmAndroidMain").dependencies {
+            // The SDK's JVM core: the types `PhoneReports.kt` is written against. On Android it
+            // arrives with `sentry-android` anyway; on the JVM nothing calls it outside the tests,
+            // since the desktop window keeps the hand-built reporter (design D1).
+            implementation(libs.sentry.core)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -162,6 +192,14 @@ kotlin {
 dependencies {
     // The other half of `enableCoreLibraryDesugaring`: the java.time backport L8 rewrites calls to.
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+    // Android reports through the Sentry SDK (`CrashPipe.android.kt`, and the change
+    // `report-through-the-sentry-sdk`): core and NDK, so an ANR or a native crash is caught as well
+    // as a Kotlin one. Without session replay, which records the screen: replay is not something
+    // this app does, and leaving its module out is the one way to be sure it never starts.
+    "androidMainImplementation"(libs.sentry.android) {
+        exclude(group = "io.sentry", module = "sentry-android-replay")
+    }
 }
 
 /**

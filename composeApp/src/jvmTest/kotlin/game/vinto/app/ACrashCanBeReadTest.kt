@@ -30,11 +30,20 @@ import kotlin.test.assertTrue
  * 'Android 34' … sentences for a crash report, and branching on them would mean parsing prose
  * that exists to be read by a person."* The crash reporter was branching on nothing and sending
  * the prose.
+ *
+ * **What holds now.** Android reports through `sentry-android`, which writes its own frames, says
+ * `java` and names its own mapping; the release and build number it is told are held by
+ * `PhoneReportsTest`. What is below holds for the envelope the web and the desktop still send.
  */
 class ACrashCanBeReadTest {
 
+    /**
+     * The frame that read `ol0.d`, kept because the split is still what Sentry keys a frame on. No
+     * envelope this writer sends is minified any more — Android, the one R8 build, reports through
+     * the SDK — but a desktop frame is grouped by the same two fields.
+     */
     @Test
-    fun aMinifiedFrameCarriesTheModuleAMappingIsKeyedOn() {
+    fun aFrameCarriesTheModuleAndTheFunctionApart() {
         val item = envelope(frames = listOf("at ol0.d(SourceFile:26)")).split("\n").last()
 
         assertTrue(item.contains(""""module":"ol0""""), "no module, so no mapping applies:\n$item")
@@ -60,8 +69,10 @@ class ACrashCanBeReadTest {
      * And this target says `java`, which is the word that runs the pipeline.
      *
      * Not cosmetic and not a tag: Sentry picks the processing for an event from this field, and
-     * applying an R8 mapping is part of the Java processing. A JVM or Android event that does not
-     * say `java` is an event whose mapping is uploaded, named, and never read.
+     * applying an R8 mapping is part of the Java processing. A JVM event that does not say `java` is
+     * an event whose mapping is uploaded, named, and never read. Android's events are the SDK's
+     * now, and the SDK says `java` itself; the app still reads this value to tell the platforms
+     * apart (`ClientPlatform`).
      */
     @Test
     fun thisTargetNamesItselfAsSentryUnderstandsIt() {

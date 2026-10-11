@@ -9,18 +9,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.splashscreen.SplashScreenViewProvider
-import game.vinto.app.crash.Crashes
-import game.vinto.app.crash.appReportingScope
 import game.vinto.app.link.offerOpenedLink
 
+/**
+ * The one screen. Storage and crash reporting are not started here: `VintoApplication` starts both
+ * before this exists, so a crash on the way to the first frame is reported.
+ */
 class MainActivity : ComponentActivity() {
-
-    /**
-     * A scope that outlives the activity, because a crash report is fired while the process is
-     * ending. Held by the activity only because there is nowhere smaller to hold it; `install`
-     * is idempotent, so a configuration change does not chain a second handler.
-     */
-    private val reporting = appReportingScope()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // The launch screen (`Theme.Vinto.Launch`): the icon's V on the felt, the same on every
@@ -39,24 +34,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         holdPhonesUpright()
-        // Storage first, and only because the reporter needs it: a crash is written to the
-        // vault on the way down and sent by the next launch, since a POST started as Android
-        // tears the process down does not finish. `attach` is one assignment and cannot
-        // realistically fail; everything after it is covered.
-        AndroidStorage.attach(this)
 
         // Play needs an activity to draw its sheet over, and the billing seam is a plain suspend
-        // function with no composition to read one from — so it is handed over here beside
-        // storage, and taken back in `onDestroy` so a finished activity never reaches Play.
+        // function with no composition to read one from — so it is handed over here, and taken
+        // back in `onDestroy` so a finished activity never reaches Play.
         AndroidBilling.attach(this)
 
-        // Then the reporter, and before `setContent` rather than inside it. A crash while the
-        // deep link is read, or in the first composition, used to happen with nothing
-        // listening — the handler was installed by a `LaunchedEffect` inside `App()`, which is
-        // after all of that. A crash on the launcher is the one report worth having most, and
-        // it was the one that could never arrive.
-        Crashes.install(reporting)
-        // And before that too, so an invite is already waiting when `App()` first reads it
+        // Before `setContent`, so an invite is already waiting when `App()` first reads it
         // rather than arriving a frame later and pushing a screen the player did not ask for
         // on top of the one they were looking at.
         offerOpenedLink(intent?.dataString)

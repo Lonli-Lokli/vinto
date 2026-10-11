@@ -4,15 +4,19 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 
+/** The desktop window sends the app's own envelope; nobody ships it, and an SDK would add nothing. */
+internal actual val crashPipe: CrashPipe =
+    CrashPipe.ByHand(catchUncaught = ::catchUncaught, awaitSent = ::awaitSent)
+
 /**
  * The JVM's default handler, wrapped rather than replaced.
  *
- * Chaining to whatever was there is the whole discipline: on Android the previous handler is
- * the platform's, and it is what actually shows "Vinto has stopped" and ends the process.
- * A reporter that installs itself over that and returns leaves an app frozen on a dead frame,
- * which is a worse bug than the one being reported.
+ * Chaining to whatever was there is the whole discipline: the previous handler is the one that
+ * prints the trace and lets the process end. A reporter that installs itself over that and
+ * returns leaves an app frozen on a dead frame, which is a worse bug than the one being reported.
+ * (Android's, which shows "Vinto has stopped", is the Sentry SDK's to chain to now.)
  */
-actual fun installCrashHandler(report: (Throwable) -> Unit) {
+private fun catchUncaught(report: (Throwable) -> Unit) {
     val previous = Thread.getDefaultUncaughtExceptionHandler()
     Thread.setDefaultUncaughtExceptionHandler { thread, error ->
         @Suppress("TooGenericExceptionCaught")
@@ -45,7 +49,7 @@ actual fun installCrashHandler(report: (Throwable) -> Unit) {
  * a network is not answering — and if the timeout wins, the envelope is still on disk and the
  * next launch sends it.
  */
-actual fun awaitCrashReport(job: Job?) {
+private fun awaitSent(job: Job?) {
     if (job == null) return
     runBlocking { withTimeoutOrNull(REPORT_CEILING_MS) { job.join() } }
 }

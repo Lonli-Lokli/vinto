@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!--
         The first of the two permissions this app asks for, and it was missing.
@@ -22,7 +23,11 @@
     -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!--
+        `VintoApplication` starts crash reporting before any activity or frame exists.
+    -->
     <application
+        android:name=".VintoApplication"
         android:label="Vinto!"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/backup_rules"
@@ -115,6 +120,25 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!--
+            The Sentry SDK's own start-up, removed.
+
+            `sentry-android` ships two providers that start it before `Application.onCreate`, from
+            the manifest's meta-data. This app has none: `VintoApplication` starts the SDK in code,
+            with the DSN, the options `PhoneReports.kt` builds, and only on a real phone. Left in,
+            they would start it first with nothing configured — which is what took Vodar down at
+            launch until gulnya removed them the same way (`gulnya/src/androidMain/AndroidManifest.xml`).
+            Held by `CrashInstallTest`.
+        -->
+        <provider
+            android:name="io.sentry.android.core.SentryInitProvider"
+            android:authorities="${applicationId}.SentryInitProvider"
+            tools:node="remove" />
+        <provider
+            android:name="io.sentry.android.core.SentryPerformanceProvider"
+            android:authorities="${applicationId}.SentryPerformanceProvider"
+            tools:node="remove" />
     </application>
 
 </manifest>

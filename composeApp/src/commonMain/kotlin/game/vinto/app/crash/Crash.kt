@@ -8,9 +8,10 @@ package game.vinto.app.crash
  * envelope. Two implementations because the two runtimes share no code, one set of rules
  * because a room code leaking from a phone is exactly as bad as one leaking from the edge.
  *
- * Everything here is pure and target-independent, so it is tested on the JVM and true on all
- * four. The only platform-specific part is *when* a crash is noticed, which is
- * [installCrashHandler].
+ * Everything here is pure and target-independent, so it is tested on the JVM and true wherever the
+ * app sends its own envelope: the web and the desktop, and iOS until it has the SDK. The only
+ * platform-specific part is *when* a crash is noticed, which is [CrashPipe.ByHand]. Android
+ * reports through the Sentry SDK instead, under the same rules (`PhoneReports.kt`).
  */
 
 /** A DSN split into the two things a POST needs. */
@@ -105,7 +106,8 @@ data class CrashPlace(
  *
  * Built by hand for the reason `sentry.mjs` gives and one more: the wasm client is the target
  * with no size headroom left, and this is the whole of what an SDK would do for a Kotlin
- * exception. See `design.md` §A9 for the measurement that settled it.
+ * exception. See `design.md` §A9 for the measurement that settled it — for the web; on a phone
+ * the SDK catches what no Kotlin `try` sees, and `report-through-the-sentry-sdk` moved them to it.
  *
  * There is **no `user` object and no device id**, ever. Vinto has no accounts, a seat is not
  * a person, and a crash report is the pipe that quietly grows one if nobody says otherwise.
@@ -163,14 +165,6 @@ data class CrashReport(
     val message: String,
     val frames: List<String> = emptyList(),
     val place: CrashPlace = CrashPlace(),
-    /**
-     * The id of the R8 mapping this build was minified with, on Android and nowhere else.
-     *
-     * Sentry applies a mapping only to an event that names it, so without this the uploaded
-     * `mapping.txt` is never used and a release stack stays `a.b.c`. Null everywhere else, and
-     * on a debug build, where nothing is minified.
-     */
-    val proguardUuid: String? = null,
 )
 
 fun crashEnvelope(report: CrashReport): String = with(report) {
@@ -208,16 +202,9 @@ fun crashEnvelope(report: CrashReport): String = with(report) {
             append("""]}""")
         }
         append("""}]}""")
-        // Which mapping to read this stack through. Sentry ignores an uploaded mapping unless the
-        // event names its uuid here, which is why the plugin writes one into the app's assets.
-        //
-        // **Inside the event**, before the brace that closes it. It used to follow that brace, as
-        // `{…},"debug_meta":{…}`: Sentry kept the event, dropped the rest without a word, and no
-        // Android release stack was ever read through its mapping (`CrashFramesTest`).
-        proguardUuid?.let {
-            append(""","debug_meta":{"images":[{"type":"proguard","uuid":""")
-            append(json(it)).append("""}]}""")
-        }
+        // No `debug_meta`. Only an R8 build has a mapping to name, and Android reports through the
+        // SDK, which names its own. When this envelope named it, it put `debug_meta` after the
+        // brace closing the event, where Sentry dropped it without a word (`CrashFramesTest`).
         append('}')
     }
 

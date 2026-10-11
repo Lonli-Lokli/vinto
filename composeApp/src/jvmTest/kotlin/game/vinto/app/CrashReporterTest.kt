@@ -24,6 +24,9 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class CrashReporterTest {
 
+    /** Mirrors `ReportBudget.BUDGET`, which is private and should stay so. */
+    private val budgetCeiling = 5
+
     private class Sent {
         val bodies = mutableListOf<String>()
         val auths = mutableListOf<String>()
@@ -50,9 +53,6 @@ class CrashReporterTest {
         surface = { CrashSurface.ONLINE },
         post = post,
     )
-
-    /** Mirrors `CrashReporter.BUDGET`, which is private and should stay so. */
-    private val budgetCeiling = 5
 
     @Test
     fun aBuildWithNoDsnReportsNothingAndSaysSo() = runTest {

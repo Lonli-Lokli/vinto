@@ -47,7 +47,6 @@ class CrashInstallTest {
     @Test
     fun everyEntryPointInstallsTheReporterBeforeItComposes() {
         listOf(
-            Entry("../androidApp/src/main/kotlin/game/vinto/app/MainActivity.kt", "setContent {"),
             Entry("src/jvmMain/kotlin/game/vinto/app/Main.kt", "application {"),
             Entry("src/wasmJsMain/kotlin/game/vinto/app/Main.kt", "ComposeViewport"),
             // Compose's controller, inside the parent that turns the status bar (SystemBars.ios.kt).
@@ -65,6 +64,43 @@ class CrashInstallTest {
                     "way to the first frame is never reported",
             )
         }
+    }
+
+    /**
+     * Android starts it earlier still: in the `Application`, which runs before any activity.
+     *
+     * There it starts `sentry-android`, and `MainActivity` — the entry point the list above used
+     * to name — no longer installs anything. The SDK's own auto-init providers run before the
+     * `Application` and are removed in the manifest; left in, they would start the SDK first, with
+     * no DSN, on an emulator, with its defaults, and `VintoApplication` would be the second start.
+     * The manifest the build merges is checked once, by `:androidApp:bundleRelease`; this is the
+     * half a JVM can read.
+     */
+    @Test
+    fun androidInstallsTheReporterInTheApplicationBeforeAnyActivity() {
+        val application = source("../androidApp/src/main/kotlin/game/vinto/app/VintoApplication.kt")
+        assertTrue(
+            application.contains("Crashes.install"),
+            "VintoApplication never installs the crash reporter",
+        )
+
+        val manifest = File("../androidApp/src/main/AndroidManifest.xml").readText()
+        assertTrue(
+            manifest.contains("android:name=\".VintoApplication\""),
+            "the manifest does not name VintoApplication, so Android never runs it",
+        )
+        listOf("SentryInitProvider", "SentryPerformanceProvider").forEach { provider ->
+            val declared = Regex("""<provider\s[^>]*io\.sentry\.android\.core\.$provider"[^>]*>""")
+                .find(manifest)
+                ?.value
+            assertTrue(
+                declared?.contains("tools:node=\"remove\"") == true,
+                "the SDK's $provider is not removed, so it starts the SDK before VintoApplication does",
+            )
+        }
+
+        val activity = source("../androidApp/src/main/kotlin/game/vinto/app/MainActivity.kt")
+        assertTrue(!activity.contains("Crashes.install"), "MainActivity installs the reporter a second time")
     }
 
     /**

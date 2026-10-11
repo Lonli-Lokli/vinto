@@ -58,6 +58,34 @@ deal's address as a context, read at the moment of the report as `Where` is toda
 uncaught-exception integration replaces `installCrashHandler` there, and its own outbox replaces
 the vault's one pending envelope.
 
+**As built (2026-10-11), and what building it settled:**
+
+- **The seam is `CrashPipe`**, a sealed choice in `commonMain` with one `expect val`: `ByHand` (the
+  envelope, its uncaught handler and its wait — the web, the desktop, and iOS until section 3) or
+  `Sdk` (Android). The two `expect` functions every target used to answer are gone, because Android
+  has no answer to either. `Crashes.install` is unchanged for its callers.
+- **The options and the scrubber live in a `jvmAndroid` source set** (`PhoneReports.kt`), compiled
+  against `io.sentry:sentry` 8.55.0, so `PhoneReportsTest` holds them on the JVM. The default
+  hierarchy template is extended with a matcher on `androidJvm`, since `withAndroidTarget()` matches
+  only the old `androidTarget()`. The screenshot and view-hierarchy switches exist only on
+  `SentryAndroidOptions`, so they are set off beside `SentryAndroid.init` in `CrashPipe.android.kt`
+  and are not under the JVM test; both default to off in 8.55.0.
+- **The address is an event processor**, not a scope pushed on every change: it reads the surface
+  and `Where` when an event is made, for a handled report and an uncaught exception alike. It skips
+  an event whose hint is `Backfillable` or `Cached` — an ANR or a native crash the SDK finds on the
+  next launch — because the app is somewhere else by then; those arrive without surface or deal.
+  Pushing the address into the scope on every turn would let the SDK persist it for them, at a
+  disk write per turn; not done.
+- **The per-process budget stays** (`ReportBudget`, shared with the envelope): a handful of distinct
+  non-fatal reports, each once. The SDK dedupes only the same throwable instance.
+- **Session replay is not shipped**: `sentry-android-replay` is excluded from the dependency, which
+  is the one way to be sure a module that records the screen never starts.
+- **The Gradle plugin's bytecode instrumentation is off** (`tracingInstrumentation`): with the SDK on
+  the classpath it would add tracing spans and turn every `android.util.Log` call, ours and the
+  libraries', into a breadcrumb.
+- **`VintoApplication` attaches storage before it installs**, because the release name and the
+  environment are read off the installed package through it; `MainActivity` does neither now.
+
 ### D3. iOS: `sentry-cocoa` through SwiftPM, started in `iOSApp.init`
 
 The same package entry and the same place as hronka and vodar (`project.yml` `packages:`,
@@ -276,6 +304,15 @@ is the **session**: every session envelope carries `did`, the same installation 
 `sentry-android` for the same `did` — which gives up release-health sessions Vinto never had; or
 the owner decides a per-install id in session counts is acceptable, which reopens this paragraph.
 
+Android checked (2026-10-11, `sentry-android` 8.55.0 bytecode): the same. `AndroidOptionsInitializer`
+sets `options.distinctId` to `Installation.id` when none is set, and `Scope.startSession` builds every
+session from it, so `enableAutoSessionTracking = false` there too. The same id is `user.id`
+(`DefaultAndroidEventProcessor.mergeUser`) and `device.id` (`DeviceInfoUtil.getDeviceId`), and the
+device context carries the boot time, which is the same instant on every report from one phone until
+it restarts. Android's `beforeSend` clears the user, the device id, the boot time, the device name
+and the server name, and runs `scrubReport` over every message, exception value and breadcrumb
+(`PhoneReportsTest`).
+
 Sentry also derives a location from the connecting address on its side, whatever the SDK sends
 (the events of 2026-10-08 carry a city). With `sendDefaultPii = false` the cocoa SDK asks it not
 to: the envelope's `sdk.settings.infer_ip` is `"never"` (`SentrySdkInfo.swift` 22,
@@ -316,6 +353,26 @@ back as readable — and when that same event, opened in Sentry, has no `user`.
   session read as crashed, and the process gone after the hook.
 - **APK size.** `sentry-android` with NDK adds to the download; the other games carry it. Measured
   in task 2.7 rather than assumed.
+
+  **Measured 2026-10-11**, build 676 both times: `:androidApp:bundleRelease` on 70f1ae9a (the
+  hand-built reporter) against the same tree with `sentry-android` 8.55.0, NDK in and replay out.
+  Download sizes are bundletool's `get-size total` over the APKs Play would cut from each bundle,
+  both re-signed with one debug key, so signing does not enter into them; the bundles themselves
+  differ by about 2 KB of signature (debug key before, upload key after).
+
+  | | Before | After | Change |
+  | --- | ---: | ---: | ---: |
+  | Release AAB | 7,971,140 | 9,935,666 | +1,964,526 (+24.6%) |
+  | Download, arm64-v8a | 3,401,186–3,425,808 | 3,989,211–4,014,636 | +588,025 (+17.3%) |
+  | Download, armeabi-v7a | 3,400,829–3,425,459 | 3,953,970–3,979,399 | +553,141 (+16.3%) |
+  | Download, x86_64 | 3,401,409–3,426,033 | 3,993,751–4,019,188 | +592,342 (+17.4%) |
+  | Download, x86 | 3,401,582–3,426,208 | 4,019,431–4,044,852 | +617,849 (+18.2%) |
+
+  (Bytes; a range is bundletool's smallest and largest device configuration.) The native half is
+  the larger: on arm64 `libsentry.so` is 852,736 bytes, stored uncompressed, and the ABI split grows
+  from 32,943 to 926,023 bytes while the master APK grows from 3,499,543 to 3,782,612. So a phone
+  downloads about 0.57 MB more and keeps about 1.2 MB more installed. The NDK is what catches a
+  native crash (D1); it is the line to revisit if the download ever matters more than that.
 
 ## Follow-ups (not in this change)
 

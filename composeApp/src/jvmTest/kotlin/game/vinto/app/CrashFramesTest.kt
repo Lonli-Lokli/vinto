@@ -1,5 +1,6 @@
 package game.vinto.app
 
+import game.vinto.app.crash.CrashPlace
 import game.vinto.app.crash.CrashReport
 import game.vinto.app.crash.CrashSurface
 import game.vinto.app.crash.SentryPlatform
@@ -99,47 +100,27 @@ class CrashFramesTest {
     }
 
     /**
-     * The mapping id rides along, because an uploaded mapping is ignored without it.
+     * The event is one JSON object, and everything it says is inside it — parsed as Sentry parses it.
      *
-     * Sentry will not apply `mapping.txt` to an event that does not name the mapping's uuid, so
-     * this field is the difference between a readable release stack and `a.b.c`. The Sentry
-     * Gradle plugin injects the uuid into the Android manifest and `proguardUuid()` reads it —
-     * work the sentry-android SDK would do for us if this app had one.
+     * The mapping id used to ride here, and a test asked only whether its words were somewhere in
+     * the body. They were: after the event's closing brace, as `{…},"debug_meta":{…}`. Sentry read
+     * the event, dropped the rest without a word, and applied no mapping, so every Android release
+     * stack arrived as `vm0 in d`, `ia in a` (issue 7781529123, build 656) while the build gate was
+     * proving, quite correctly, that the mapping had been uploaded. Android reports through the SDK
+     * now and names its own mapping; what this envelope still owes Sentry is a well-formed event, so
+     * the check is that one: the address and the exception are read back out of the object.
      */
     @Test
-    fun anAndroidReportNamesTheMappingItShouldBeReadThrough() {
-        val body = crashEnvelope(report(uuid = "8c8d1f0e-0000-4000-8000-abcdefabcdef"))
-
-        assertTrue(body.contains(""""debug_meta""""), body)
-        assertTrue(body.contains(""""type":"proguard""""), body)
-        assertTrue(body.contains(""""uuid":"8c8d1f0e-0000-4000-8000-abcdefabcdef""""), body)
-    }
-
-    /**
-     * …and it rides **inside** the event, where Sentry looks for it.
-     *
-     * The test above asked only whether the words were somewhere in the body, and they were:
-     * after the event's closing brace, as `{…},"debug_meta":{…}`. Sentry read the event, dropped
-     * the rest without a word, and applied no mapping — so every Android release stack arrived as
-     * `vm0 in d`, `ia in a` (issue 7781529123, build 656) while the build gate was proving, quite
-     * correctly, that the mapping had been uploaded. Parsed here as Sentry parses it.
-     */
-    @Test
-    fun theMappingIsNamedByTheEventItself() {
-        val envelope = crashEnvelope(report(uuid = "8c8d1f0e-0000-4000-8000-abcdefabcdef"))
+    fun theEventIsOneObjectWithEverythingInside() {
+        val envelope = crashEnvelope(report().copy(place = CrashPlace(gameId = "g-42", round = 3, turn = 17)))
 
         // Header, item header, event: one JSON value per line, and nothing after the event.
         val event = Json.parseToJsonElement(envelope.lines()[2]).jsonObject
-        val image = event["debug_meta"]?.jsonObject?.get("images")?.jsonArray?.single()?.jsonObject
 
-        assertEquals("proguard", image?.get("type")?.jsonPrimitive?.content, envelope)
-        assertEquals("8c8d1f0e-0000-4000-8000-abcdefabcdef", image?.get("uuid")?.jsonPrimitive?.content)
-    }
-
-    /** Everywhere else — iOS, desktop, web, and any debug build — there is no mapping to name. */
-    @Test
-    fun aReportWithNoMappingSendsNoDebugMeta() {
-        assertFalse(crashEnvelope(report(uuid = null)).contains("debug_meta"), "sent an empty image list")
+        assertEquals("g-42", event["extra"]?.jsonObject?.get("gameId")?.jsonPrimitive?.content, envelope)
+        val exception = event["exception"]?.jsonObject?.get("values")?.jsonArray?.single()?.jsonObject
+        assertEquals("boom", exception?.get("value")?.jsonPrimitive?.content, envelope)
+        assertFalse(envelope.contains("debug_meta"), "a mapping was named by an envelope that has none")
     }
 
     /**
@@ -209,7 +190,7 @@ class CrashFramesTest {
         assertTrue(body.contains(""""colno":531663"""), body)
     }
 
-    private fun report(uuid: String?) = CrashReport(
+    private fun report() = CrashReport(
         eventId = "e1",
         sentAtIso = "2026-09-04T00:00:00Z",
         timestampSeconds = 1.0,
@@ -223,7 +204,6 @@ class CrashFramesTest {
         type = "IllegalStateException",
         message = "boom",
         frames = listOf("at game.vinto.app.Foo.bar(Foo.kt:1)"),
-        proguardUuid = uuid,
     )
 
     private fun envelopeWith(frame: String) = crashEnvelope(

@@ -43,13 +43,11 @@ plugins {
      *
      * It is the portfolio's standard answer — `game-deduction`, `game-dots` and `asilak` all
      * apply it — and it is the recommended one because it does the half a build phase cannot: as
-     * well as uploading `mapping.txt` it injects the mapping's UUID into the manifest, which is
-     * the only thing that tells Sentry WHICH mapping belongs to a given event.
+     * well as uploading `mapping.txt` it writes the mapping's UUID into the app's assets, which
+     * is what the SDK names in every event so that Sentry knows WHICH mapping to read it through.
      *
-     * `autoInstallation` is off. Everywhere else in the portfolio the plugin sits under the real
-     * sentry-android SDK; here the crash reporter is hand-built (`composeApp/.../crash`, and
-     * `design.md` §A9 for why), so letting the plugin add an SDK would ship a second reporter
-     * beside ours.
+     * `autoInstallation` is off, as in every game: `composeApp` declares `sentry-android` at
+     * gulnya's pin (`CrashPipe.android.kt`), and the plugin would add a version of its own.
      */
     alias(libs.plugins.sentryAndroid)
 }
@@ -392,9 +390,11 @@ tasks.matching {
  * of being carried in every install.
  *
  * **Uploading is not enough on its own.** Sentry applies a mapping only to an event that names the
- * mapping's UUID in `debug_meta`. The plugin injects that UUID into the manifest as
- * `io.sentry.proguard-uuid`; the SDK would read it automatically, and since this app has no SDK,
- * `Crashes` reads it (see `ProguardUuid.android.kt`) and the envelope sends it. Both halves or
+ * mapping's UUID in `debug_meta`. The plugin writes that UUID into
+ * `assets/sentry-debug-meta.properties`, and `sentry-android` reads it and names it in every event.
+ * The hand-built envelope used to do that half itself and put `debug_meta` after the event's
+ * closing brace, where Sentry dropped it without a word, so no Android release stack was read
+ * through its mapping until the SDK took over (`report-through-the-sentry-sdk`). Both halves or
  * neither — the same trap as iOS dSYMs, where uploading symbols achieves nothing unless the event
  * carries instruction addresses.
  *
@@ -414,8 +414,14 @@ sentry {
     // A debug build is not minified, so there is no mapping to upload and nothing to read back.
     ignoredBuildTypes.set(setOf("debug"))
 
-    // See the plugins block: this app reports crashes itself.
+    // See the plugins block: `composeApp` declares the SDK at gulnya's pin.
     autoInstallation { enabled.set(false) }
+
+    // No bytecode rewriting. With the SDK on the classpath the plugin would otherwise wrap file
+    // I/O and database calls in tracing spans, which this app does not collect, and turn every
+    // `android.util.Log` call into a breadcrumb — text nobody wrote for a crash report, from
+    // libraries as well as from us, attached to every event.
+    tracingInstrumentation { enabled.set(false) }
 
     // The mapping is enough to read a stack, and source context would upload the source itself.
     includeSourceContext.set(false)

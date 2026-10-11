@@ -5,6 +5,13 @@ import kotlinx.coroutines.Job
 import org.w3c.dom.events.Event
 
 /**
+ * The app's own envelope, and it stays: Kotlin/Wasm has no native crash for an SDK to catch, and
+ * the bundle has no room for one (`add-live-analytics/design.md` §A9).
+ */
+internal actual val crashPipe: CrashPipe =
+    CrashPipe.ByHand(catchUncaught = ::catchUncaught, awaitSent = ::awaitSent)
+
+/**
  * The browser has no uncaught-exception handler a Kotlin coroutine would reach, so the app
  * hears about a crash the way a page does: through `window`'s error events.
  *
@@ -21,7 +28,7 @@ import org.w3c.dom.events.Event
  * Kotlin and `js(...)` cannot capture a Kotlin value — an earlier version of this file tried
  * to bridge one through a global and would have reported nothing at all.
  */
-actual fun installCrashHandler(report: (Throwable) -> Unit) {
+private fun catchUncaught(report: (Throwable) -> Unit) {
     window.addEventListener("error", { event: Event ->
         report(BrowserCrash(describe(event, "uncaught error")))
     })
@@ -67,4 +74,4 @@ private fun readMessageJs(event: JsAny): JsString? = js(
  * end the process.
  */
 @Suppress("UnusedParameter")
-actual fun awaitCrashReport(job: Job?) = Unit
+private fun awaitSent(job: Job?) = Unit

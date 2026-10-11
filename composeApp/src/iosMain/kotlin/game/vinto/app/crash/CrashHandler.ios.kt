@@ -6,6 +6,10 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.setUnhandledExceptionHook
 
+/** The app's own envelope, until `sentry-cocoa` and the Swift bridge land (the change's section 3). */
+internal actual val crashPipe: CrashPipe =
+    CrashPipe.ByHand(catchUncaught = ::catchUncaught, awaitSent = ::awaitSent)
+
 /**
  * Kotlin/Native's own hook, and deliberately nothing from Objective-C.
  *
@@ -23,7 +27,7 @@ import kotlin.native.setUnhandledExceptionHook
  * than settled.
  */
 @OptIn(ExperimentalNativeApi::class)
-actual fun installCrashHandler(report: (Throwable) -> Unit) {
+private fun catchUncaught(report: (Throwable) -> Unit) {
     setUnhandledExceptionHook { error ->
         report(error)
         // The hook is cleared once it fires, so returning here lets the runtime terminate as
@@ -38,7 +42,7 @@ actual fun installCrashHandler(report: (Throwable) -> Unit) {
  * was merely *launched* never leaves. `runBlocking` exists on Kotlin/Native and this is what
  * it is for. If the timeout wins the envelope is still stored, and the next launch sends it.
  */
-actual fun awaitCrashReport(job: Job?) {
+private fun awaitSent(job: Job?) {
     if (job == null) return
     runBlocking { withTimeoutOrNull(REPORT_CEILING_MS) { job.join() } }
 }

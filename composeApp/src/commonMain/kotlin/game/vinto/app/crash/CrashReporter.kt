@@ -5,32 +5,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
- * Installs an uncaught-exception handler, if the platform has one to install.
- *
- * The one part of crash reporting that cannot be shared: a JVM has a default handler, a
- * Kotlin/Native binary has a hook, and a browser has an event. All four do the same job —
- * hand over the throwable that is about to end things — and none of them may swallow it.
- * A crash reporter that stops a crash is a crash reporter that hides a bug.
- */
-expect fun installCrashHandler(report: (Throwable) -> Unit)
-
-/**
- * Waits, briefly, for a crash report to actually leave the device.
- *
- * **The one thing standing between a crash and a report.** `report` launches a POST and
- * returns; the handler above then chains to the platform's, which on Android ends the process
- * at once. A DNS lookup, a TLS handshake and a POST do not fit in the microseconds between
- * those two lines, so every fatal crash was reported *nowhere* — the reporter worked, the
- * envelope was correct, and the process was gone before the packet was.
- *
- * So the crashing thread blocks on it, with a short ceiling: a phone that is already dying
- * must not be held there by a network that is not answering. On the JVM, Android and Apple
- * that is `runBlocking` with a timeout; in a browser there is nothing to block *for* — the
- * page is not torn down by an unhandled rejection — and this is a no-op.
- */
-expect fun awaitCrashReport(job: Job?)
-
-/**
  * Sends one crash, once, and then gets out of the way.
  *
  * Fire-and-forget, on a scope that is not the frame's: the process is usually on its way down
@@ -38,13 +12,7 @@ expect fun awaitCrashReport(job: Job?)
  * Nothing is retried and nothing is queued to disk — a crash that never reached Sentry is a
  * lost report, not a reason to write a spool file that outlives the bug.
  *
- * **A handful per process, and no more.** A handler that fires on every thread's death would
- * send the same stack a hundred times from a device in a loop, which costs the project's
- * Sentry quota and tells nobody anything the first one did not. It was *one*, which was right
- * while the only caller was the fatal handler and wrong the moment non-fatal failures started
- * arriving too — a background coroutine failing early would then have spent the budget the
- * crash that actually ended the app needed. [BUDGET] is small enough that a loop cannot run
- * up a bill and large enough that the first thing to go wrong does not silence the last.
+ * A handful per process, and no more ([ReportBudget]).
  */
 class CrashReporter(
     dsn: String?,
@@ -69,8 +37,7 @@ class CrashReporter(
     private val post: suspend (url: String, auth: String, body: String) -> Unit,
 ) {
     private val target = parseDsn(dsn)
-    private var sent = 0
-    private val seen = mutableSetOf<String>()
+    private val budget = ReportBudget()
 
     /** True when this build has somewhere to report to. Absent DSN, absent reporting. */
     val enabled: Boolean get() = target != null
@@ -85,12 +52,7 @@ class CrashReporter(
      */
     fun envelopeFor(error: Throwable): String? {
         if (target == null) return null
-        if (sent >= BUDGET) return null
-        // The same failure twice is one bug reported twice. A retry loop that throws the same
-        // exception every second is the ordinary way a client burns a quota, and it is exactly
-        // the shape of the socket loop this reporter now watches.
-        if (!seen.add("${error::class.simpleName}:${error.message}")) return null
-        sent++
+        if (!budget.admits(error)) return null
 
         return crashEnvelope(
             CrashReport(
@@ -108,7 +70,6 @@ class CrashReporter(
                 message = error.message ?: "no message",
                 frames = error.stackTraceToString().lines().drop(1).take(MAX_FRAMES).map { it.trim() },
                 place = place(),
-                proguardUuid = proguardUuid(),
             ),
         )
     }
@@ -116,7 +77,7 @@ class CrashReporter(
     /**
      * Posts one envelope, and says whether it arrived.
      *
-     * The `Job` is returned so a fatal path can wait on it ([awaitCrashReport]); the `onSent`
+     * The `Job` is returned so a fatal path can wait on it ([CrashPipe.ByHand.awaitSent]); the `onSent`
      * callback runs only on success, which is what lets a stored copy be cleared without
      * guessing.
      */
@@ -139,13 +100,42 @@ class CrashReporter(
     fun report(error: Throwable): Job? = envelopeFor(error)?.let { send(it) }
 
     private companion object {
-        /** How many distinct failures one process may report. */
-        const val BUDGET = 5
-
         const val MILLIS_PER_SECOND = 1000.0
 
         /** Sentry truncates long traces anyway, and the top of the stack is the useful part. */
         const val MAX_FRAMES = 30
+    }
+}
+
+/**
+ * **A handful per process, and no more**, and each failure once — on every pipe, the SDK's too.
+ *
+ * A handler that fires on every thread's death would send the same stack a hundred times from a
+ * device in a loop, which costs the project's Sentry quota and tells nobody anything the first one
+ * did not. It was *one*, which was right while the only caller was the fatal handler and wrong the
+ * moment non-fatal failures started arriving too — a background coroutine failing early would then
+ * have spent the budget the crash that actually ended the app needed. [BUDGET] is small enough
+ * that a loop cannot run up a bill and large enough that the first thing to go wrong does not
+ * silence the last.
+ */
+internal class ReportBudget {
+    private var spent = 0
+    private val seen = mutableSetOf<String>()
+
+    /** True for a failure worth a report — new, and within the budget — which it then counts. */
+    fun admits(error: Throwable): Boolean {
+        if (spent >= BUDGET) return false
+        // The same failure twice is one bug reported twice. A retry loop that throws the same
+        // exception every second is the ordinary way a client burns a quota, and it is exactly
+        // the shape of the socket loop the reporter watches.
+        if (!seen.add("${error::class.simpleName}:${error.message}")) return false
+        spent++
+        return true
+    }
+
+    private companion object {
+        /** How many distinct failures one process may report. */
+        const val BUDGET = 5
     }
 }
 
