@@ -158,6 +158,19 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
   Two things worth keeping. The parameter is **`testTimeout`**, not `timeout` — the name is in
   `ComposeUiTest.skiko.kt` and nowhere convenient. And `advanceTimeBy` is *virtual* time, so
   this is deterministic: a slower runner takes longer per frame but renders the same frames.
+- **`delay` and `withFrameNanos` are two clocks, and only one stops when the app is out of
+  sight.** On Android, Compose pauses its frame clock when the activity stops, so anything
+  waiting on a frame stops with it; a `delay` beside it keeps running. The stage waits on a frame
+  before every scene and its watchdog waited on `delay(30_000)`, so a phone put in a pocket
+  mid-batch reported `STAGE_STALLED` from the pocket (Sentry, build 656, SOLO and ONLINE). A
+  timer that judges something drawn has to be measured on the clock the drawing uses:
+  `reportStalls` asks for a frame each second it counts. Held by
+  `FailureCountingTest.aStageOutOfSightIsNotCounted`.
+  Tracing it turned up the trap's cousin: **a `LaunchedEffect` that restarts on a new key
+  cancels its loop mid-way, and every `remember` outside it keeps what the loop left.** Online
+  is a new session per round, so a deal landing mid-draw left the stage saying it was draining
+  and the felt on the old round's move. State a loop owns is remembered on the loop's key now
+  (`DealtMidDrawTest`).
 - **A green build can ship an APK with no resources in it, and only a phone finds out.**
   Compose Multiplatform 1.12 registers `copyAndroidMainComposeResourcesToAndroidAssets` for a
   module using `com.android.kotlin.multiplatform.library` and never configures its

@@ -3,6 +3,7 @@ package game.vinto.app
 import game.vinto.client.ConnectionState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -54,6 +55,37 @@ class FailureCountingTest {
         }
         advanceTimeBy(900)
         assertEquals(0, stalls, "a stage playing one move per 900ms was called stalled")
+
+        watching.cancel()
+    }
+
+    /**
+     * Reported from Sentry as `STAGE_STALLED in ONLINE`, and one of the two ways to it: a batch
+     * is playing when the phone goes in a pocket. Compose stops handing out frames to an app
+     * out of sight, and the stage waits on a frame before every scene, so it stops where it is
+     * and carries on when the app comes back — while the watchdog's own clock kept running.
+     */
+    @Test
+    fun aStageOutOfSightIsNotCounted() = runTest {
+        val activity = MutableStateFlow(StageActivity(draining = true, progress = 0))
+        val onScreen = MutableStateFlow(true)
+        var stalls = 0
+        val watching = launch {
+            reportStalls(activity, stallMs = 30_000, nextFrame = { onScreen.first { it } }) { stalls++ }
+        }
+
+        advanceTimeBy(5_000)
+        onScreen.value = false
+        advanceTimeBy(10 * 60_000)
+        assertEquals(0, stalls, "a stage nobody could see was called stalled")
+
+        // Back, and it really has stopped. The window is the time it was watched: five seconds
+        // before the pocket, and the rest after it.
+        onScreen.value = true
+        advanceTimeBy(20_000)
+        assertEquals(0, stalls, "the time out of sight was counted towards the window")
+        advanceTimeBy(10_000)
+        assertEquals(1, stalls, "a stage that stopped while it was watched was not counted")
 
         watching.cancel()
     }

@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.withFrameNanos
 import game.vinto.app.crash.Crashes
 import game.vinto.client.ConnectionState
 import game.vinto.protocol.FailureKind
@@ -108,20 +109,39 @@ data class StageActivity(val draining: Boolean, val progress: Int)
  *
  * Once per screen. A wedged stage stays wedged, and a hundred identical points describe one
  * bad evening.
+ *
+ * **Only time the stage could have spent moving counts**, which is what [nextFrame] is for. The
+ * stage waits on a frame before every scene, and an app out of sight is handed none — so a
+ * phone put in a pocket mid-batch stops the stage where it is, and it carries on when the app
+ * comes back. Counted on a plain clock, that was a stall reported from a pocket.
  */
 suspend fun reportStalls(
     activity: Flow<StageActivity>,
     stallMs: Long = STAGE_STALL_MS,
+    nextFrame: suspend () -> Unit = {},
     report: () -> Unit,
 ) {
     var reported = false
     activity.collectLatest { now ->
         if (!now.draining || reported) return@collectLatest
-        delay(stallMs)
+        var watched = 0L
+        while (watched < stallMs) {
+            val step = minOf(STALL_STEP_MS, stallMs - watched)
+            delay(step)
+            nextFrame()
+            watched += step
+        }
         reported = true
         report()
     }
 }
+
+/**
+ * How often the watchdog asks for a frame while it waits: once a second, which is nothing beside
+ * a stage that is asking for one every frame it animates. The time out of sight that slips into
+ * the count is at most this much.
+ */
+private const val STALL_STEP_MS = 1_000L
 
 /** Wires [reportStalls] to the app's counter, for the stage to call with what it is doing. */
 @Composable
@@ -130,7 +150,8 @@ fun CountStalls(draining: Boolean, progress: Int) {
     val now = rememberUpdatedState(StageActivity(draining, progress))
 
     LaunchedEffect(surface) {
-        reportStalls(snapshotFlow { now.value }) {
+        // The frame clock the stage itself waits on, so the two stop and start together.
+        reportStalls(snapshotFlow { now.value }, nextFrame = { withFrameNanos { } }) {
             reportTrouble(FailureKind.STAGE_STALLED, surface)
         }
     }

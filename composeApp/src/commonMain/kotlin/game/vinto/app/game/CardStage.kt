@@ -1056,6 +1056,9 @@ private class Drawing(
     suspend fun play(frames: Flow<List<Frame>>, opening: List<Scene>) = coroutineScope {
         launch { frames.collect { inbox.send(it) } }
 
+        // Whatever a drawing cancelled mid-move left on the felt — see [startOver].
+        stage.startOver()
+
         // Whatever the log already says — a resumed round — is the starting point, and so is
         // the table itself: a screen that has animated nothing has drawn the live view, which
         // is what the first batch holds the table at while it waits to be stepped to.
@@ -1320,14 +1323,20 @@ fun CardStage(
         stage.reducedMotion = reducedMotion
         stage.sounds = sounds
     }
-    val queue = remember { AnimationQueue<Frame>(takesTime = { it.hasSomethingToSee }) }
+    // **What is being drawn belongs to the flow it came from**, so it is remembered per flow
+    // rather than per stage. A new flow is a new session, and online that is every new round:
+    // the deal swaps it under a stage that may still be drawing the round before, and the loop
+    // drawing it is cancelled halfway, before it puts any of this back. Inherited, the felt went
+    // on showing the old round's move in place of the deal, and the watchdog below counted a
+    // stage that said it was draining and never moved again (`DealtMidDrawTest`).
+    val queue = remember(frames) { AnimationQueue<Frame>(takesTime = { it.hasSomethingToSee }) }
 
     // The move being shown, while it is behind the one the engine is on. Null means caught up,
     // which is both the resting state and the only state the player is asked to act in.
     //
     // Held as the state object rather than through `by`, because the loop that writes it lives
     // in [Drawing] now and a delegated var cannot be handed over.
-    val behind = remember { mutableStateOf<PlayerView?>(null) }
+    val behind = remember(frames) { mutableStateOf<PlayerView?>(null) }
 
     // The view being shown right now, current across recompositions: the frame loop below
     // reconciles the lifted cards against it after a drop, and a stale capture would lift
@@ -1338,8 +1347,8 @@ fun CardStage(
     // every time one move of it finishes. Progress rather than elapsed time, because a long
     // batch at a calm pace is slow and perfectly healthy — a stall is a batch that has stopped
     // moving, not one that is taking a while.
-    val draining = remember { mutableStateOf(false) }
-    val progress = remember { mutableIntStateOf(0) }
+    val draining = remember(frames) { mutableStateOf(false) }
+    val progress = remember(frames) { mutableIntStateOf(0) }
     CountStalls(draining.value, progress.intValue)
 
     LaunchedEffect(frames) {
@@ -1468,6 +1477,35 @@ private suspend fun Stage.playScenes(frame: Frame, firstId: Long): Long {
         delay(paced(Pacing.BETWEEN_SCENES_MS))
     }
     return next
+}
+
+/**
+ * Puts down whatever the last drawing was in the middle of, before a new one starts.
+ *
+ * A drawing that finishes clears all of this itself, scene by scene and move by move. One
+ * that is cancelled halfway — a new session's flow, which online is a deal — clears none of
+ * it, and the stage outlives it: a card concealed for a reveal that never played would wear
+ * its back into the next round, a seat would stay pointed at. Not the lifted cards, which
+ * [holdUp] reconciles against the new view, and not the flights, which land on their own.
+ */
+private fun Stage.startOver() {
+    drawing = false
+    rehearsing = false
+    ghostFresh = emptyMap()
+    ghostPileUnknown = null
+    ghostPlayed = null
+    banner = null
+    flourish = null
+    refilling = 0
+    flinching.clear()
+    verdicts.clear()
+    saying.clear()
+    attention.clear()
+    expecting.clear()
+    departing.clear()
+    concealing.clear()
+    arrived.clear()
+    blooming.clear()
 }
 
 /**
