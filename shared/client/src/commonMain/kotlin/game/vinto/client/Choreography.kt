@@ -3,6 +3,8 @@ package game.vinto.client
 import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
 import game.vinto.engine.PublicReveal
+import game.vinto.engine.cardInPlay
+import game.vinto.engine.throwsToCome
 import game.vinto.shapes.Card
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.GamePhase
@@ -437,11 +439,16 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
     // A right King is several scenes, not one — see [namedCardScenes] — and so is a queued throw
     // setting off ([queueStartScenes]). The first is this action's main scene; the rest follow the
     // verdict, because the table is told before the card moves.
+    //
+    // A throw sets off at the end of whatever finished the one before it, too — a peek confirmed,
+    // a swap made or skipped — and there it follows that action's own scenes rather than leading.
+    val setOff = queueStartScenes(before, after)
     val named = when (action) {
         is GameAction.DeclareKingAction -> namedCardScenes(action.payload.declaredRank, before, after)
-        is GameAction.PlayerTossInFinished -> queueStartScenes(before, after)
+        is GameAction.PlayerTossInFinished -> setOff
         else -> emptyList()
     }
+    val following = if (action is GameAction.PlayerTossInFinished) emptyList() else setOff
 
     val main: Scene = when (action) {
         // The deck to the space in front of you, face up — the rules have the drawn card
@@ -512,9 +519,9 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
         is GameAction.PlayDiscard ->
             listOfNotNull(after.pendingCard()?.let { Beat.Flourish(it, Anchor.Discard) })
 
-        // The moment a thrown card's action begins. The card is already on the pile — it flew
-        // there when it was thrown — so nothing moves, but it is a card being *played* and the
-        // table says so, exactly as it does for one played from the hand.
+        // The moment a thrown card's action begins: out of the Tossed row and onto the pile, and
+        // then shown off there, because it is a card being *played* and the table says so,
+        // exactly as it does for one played from the hand.
         is GameAction.PlayerTossInFinished -> named.firstOrNull().orEmpty()
 
         is GameAction.ConfirmPeek,
@@ -565,7 +572,7 @@ fun choreograph(action: GameAction, before: PlayerView, after: PlayerView): List
     // The reveal rides the round-ending frame as trailing scenes, so the hands turn over
     // seat by seat after whatever the last move showed — see [scoringScenes].
     return listOfNotNull(main.takeIf { it.isNotEmpty() }, played, verdict) + named.drop(1) +
-        listOfNotNull(penalty, table) +
+        listOfNotNull(penalty, table) + following +
         scoringScenes(before, after)
 }
 
@@ -755,42 +762,54 @@ private fun tossScene(
     //
     // What it looks like on the table is what a person does: the card goes onto the pile as
     // it is thrown, face up, because a toss-in is a public claim about a rank.
+    //
+    // Where it lands is where the table draws it, card by card. A thrown action card is QUEUED,
+    // and the queue is drawn in the Tossed row under the pile — flown onto the pile, it landed on
+    // a pile that did not have it, and jumped to the Tossed row a frame later. Any other card goes
+    // to the pile. Told apart by the queue, which records where in the hand each throw came from:
+    // a King and a 6 thrown together into a window a King has widened go one to each place.
+    val waiting = before.throwsToCome.size
+    val queuedNow = after.throwsToCome.drop(waiting)
+
     // And the face is the pile's new top only when the top actually *changed*. A successful
     // non-action toss is slid in beneath the top (`addBeforeTop`, so an unplayed action stays
     // reachable), which grows the pile without changing its top — and a flight wearing the
     // untouched top's identity told the pile its own top card was in the air, so the pile hid
     // it and sat empty for the length of the throw. A thrown card that is not the new top is
-    // synthesised instead: from the queue for an action card, from the window's rank for a
-    // plain one — a card only matches the window by carrying that rank.
-    val face = after.discardTop?.takeIf {
+    // synthesised instead: from the queue for an action card, and for a plain one from the one
+    // rank in the window a card with no action can carry. Not the window's *first* rank: once a
+    // King has named a card the window is "K 6", and a 6 thrown into it flew as a King
+    // (reported 2026-10-09). Where two plain ranks are open — two Kings each named one — the view
+    // cannot say which was thrown, and the card flies face down rather than as the wrong one.
+    val newTop = after.discardTop?.takeIf {
         after.discardCount > before.discardCount && it.id != before.discardTop?.id
     }
-        ?: after.activeTossIn?.queuedActions?.lastOrNull()
-            ?.takeIf { it.playerId == who }
-            ?.let { queued -> thrownCard(queued.playerId, queued.rank) }
-        ?: before.activeTossIn?.ranks?.firstOrNull()?.let { rank -> thrownCard(who, rank) }
+    val plain = before.activeTossIn?.ranks?.filterNot(::hasAction)?.singleOrNull()
 
-    // Where it lands is where the table draws it. A thrown action card is QUEUED, and the queue is
-    // drawn in the Tossed row under the pile — flown onto the pile, it landed on a pile that did
-    // not have it, and jumped to the Tossed row a frame later.
-    val queuedBefore = before.activeTossIn?.queuedActions?.size ?: 0
-    val queuedNow = after.activeTossIn?.queuedActions.orEmpty()
-    val queued = queuedNow.size - queuedBefore >= thrown && queuedNow.lastOrNull()?.playerId == who
-
-    return action.payload.positions.take(thrown).mapIndexed { i, position ->
-        val to = if (queued) Anchor.Thrown(queuedBefore + i) else Anchor.Discard
-        Beat.Move(Anchor.Seat(who, position), to, face)
+    return action.payload.positions.take(thrown).map { position ->
+        val from = Anchor.Seat(who, position)
+        val slot = queuedNow.indexOfFirst { it.playerId == who && it.position == position }
+        if (slot >= 0) {
+            Beat.Move(from, Anchor.Thrown(waiting + slot), thrownCard(who, queuedNow[slot].rank))
+        } else {
+            Beat.Move(from, Anchor.Discard, newTop ?: plain?.let { thrownCard(who, it) })
+        }
     }
 }
 
 /**
- * The first queued throw setting off: out of the Tossed row and onto the pile, lit, as a played
- * card goes — then shown off there as its action begins, the way a card taken from the pile is.
- * Only when the queue has actually started, which is the moment a card is in play again.
+ * A queued throw setting off: out of the Tossed row and onto the pile, lit, as a played card goes
+ * — then shown off there as its action begins, the way a card taken from the pile is.
+ *
+ * Only when a throw has actually started, which is the moment the card in play is the head of the
+ * queue made real ([throwsToCome] is one short of the queue) and was not a moment ago. The first
+ * starts when the window closes; each after it starts as the one before it finishes. It leaves
+ * from the front of the row, because the card being played is no longer drawn there.
  */
 private fun queueStartScenes(before: PlayerView, after: PlayerView): List<Scene> {
-    val card = after.pendingCard() ?: return emptyList()
-    if (before.pendingAction != null || after.pendingAction == null) return emptyList()
+    val card = after.cardInPlay ?: return emptyList()
+    val started = after.throwsToCome.size < after.activeTossIn?.queuedActions.orEmpty().size
+    if (!started || before.cardInPlay?.id == card.id) return emptyList()
     return listOf(
         listOf(Beat.Move(Anchor.Thrown(0), Anchor.Discard, card, shown = true)),
         listOf(Beat.Flourish(card, Anchor.Discard)),

@@ -163,10 +163,10 @@ import game.vinto.engine.PlayerSeatView
 import game.vinto.engine.PlayerView
 import game.vinto.engine.cardInPlay
 import game.vinto.engine.mySeat
+import game.vinto.engine.throwsToCome
 import game.vinto.engine.tossInIsOpen
 import game.vinto.engine.turnHolderId
 import game.vinto.shapes.ActionPhase
-import game.vinto.shapes.ActiveTossIn
 import game.vinto.shapes.Card
 import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PendingCardOrigin
@@ -2565,31 +2565,34 @@ private fun drawnLabel(view: PlayerView, drawn: PendingActionView): String {
  * and drawing it here reveals nothing the table has not already seen fly.
  */
 @Composable
-private fun Thrown(view: PlayerView, toss: ActiveTossIn) {
+private fun Thrown(view: PlayerView) {
+    // The throws still to come, not the queue as it stands: the engine keeps the card being
+    // played at the head of its queue, and drawn from the queue it lay here as well as on the
+    // pile (`throwsToCome`, reported 2026-10-09).
+    val thrown = view.throwsToCome
+
+    // Every card here is a place a flight can land or leave (`Anchor.Thrown`), and each is drawn
+    // exactly once. A card still in the air on its way here keeps its space but is not drawn —
+    // the flight has it. And the first card, once its action starts, has already left the row in
+    // the stepped view while it still lies here until its flight picks it up (`Stage.departing`),
+    // so it goes on being drawn in its place until then, ahead of the throws behind it.
+    val stage = LocalStage.current
+    val leaving = (stage.heldAt(Anchor.Thrown(0)) as? CardView.Visible)?.card
+    val ahead = if (leaving != null) 1 else 0
+    val slots = listOfNotNull(leaving?.let { Triple(it.rank, view.pendingAction?.playerId, 0) }) +
+        thrown.mapIndexed { i, queued -> Triple(queued.rank, queued.playerId, i + ahead) }
+    val size = CardScale(ThrownWidth, ThrownHeight)
+
     // Drawn whether or not anything has gone in yet, and empty when nothing has: the space a
     // thrown card will occupy is held from the moment the window opens. Reserving it with a
     // measured minimum height instead left it two pixels short, and two pixels is enough to
-    // move the deck above it while a card is in the air on its way here.
-    val thrown = toss.queuedActions
-
+    // move the deck above it while a card is in the air on its way here. It counts the cards it
+    // draws: "Tossed (1)" over an empty row was the other half of the same report.
     Text(
-        if (thrown.isEmpty()) "" else stringResource(Res.string.table_tossed, thrown.size),
+        if (slots.isEmpty()) "" else stringResource(Res.string.table_tossed, slots.size),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onFelt(),
     )
-    // Every card here is a place a flight can land or leave (`Anchor.Thrown`), and each is drawn
-    // exactly once. A card still in the air on its way here keeps its space but is not drawn —
-    // the flight has it. And the first card, once its action starts, has already left the queue in
-    // the stepped view while it still lies here until its flight picks it up (`Stage.departing`),
-    // so it goes on being drawn in its place, alone, until then.
-    val stage = LocalStage.current
-    val leaving = (stage.heldAt(Anchor.Thrown(0)) as? CardView.Visible)?.card
-    val slots = if (leaving != null) {
-        listOf(Triple(leaving.rank, view.pendingAction?.playerId, 0))
-    } else {
-        thrown.mapIndexed { i, queued -> Triple(queued.rank, queued.playerId, i) }
-    }
-    val size = CardScale(ThrownWidth, ThrownHeight)
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(Tight),
@@ -2713,7 +2716,7 @@ private fun TossIn(view: PlayerView) {
             }
         }
 
-        Thrown(view, toss)
+        Thrown(view)
     }
 }
 

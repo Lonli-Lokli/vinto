@@ -12,6 +12,7 @@ import game.vinto.shapes.PendingAction
 import game.vinto.shapes.PendingCardOrigin
 import game.vinto.shapes.Rank
 import game.vinto.shapes.TargetType
+import game.vinto.shapes.TossInAction
 import game.vinto.shapes.standingClaims
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -410,6 +411,28 @@ val PlayerView.cardInPlay: Card?
     get() = pendingAction
         ?.takeIf { it.from != PendingCardOrigin.DRAWING || it.actionPhase != ActionPhase.CHOOSING_ACTION }
         ?.let { (it.card as? CardView.Visible)?.card }
+
+/**
+ * The cards thrown into this window that are still to be played, in the order they will be.
+ *
+ * Not the queue as it stands. The engine keeps a thrown card at the head of `queuedActions` for
+ * as long as its action runs, which is how it knows a throw is being played
+ * (`resolvingATossIn`), and by then the card is on the pile ([cardInPlay]). A table that drew
+ * the queue as it stood showed that card twice: played on the pile, and still waiting in the
+ * Tossed row under it. Reported 2026-10-09 from a phone: "it stays in toss in area".
+ *
+ * The head is the card in play exactly when the card in play is the head made real, and the
+ * engine names that card from the state alone ([queuedTossInCardId]). A seat and a rank would
+ * not be enough: a King thrown in can win its thrower a card of the same rank as the throw
+ * queued behind it, and that throw has not started.
+ */
+val PlayerView.throwsToCome: List<TossInAction>
+    get() {
+        val queue = activeTossIn?.queuedActions.orEmpty()
+        val head = queue.firstOrNull() ?: return queue
+        val headInPlay = queuedTossInCardId(turnNumber, head.playerId, head.rank, queue.size)
+        return if (cardInPlay?.id == headInPlay) queue.drop(1) else queue
+    }
 
 /**
  * Whose turn it is — which, during a toss-in window, is not who is acting.
