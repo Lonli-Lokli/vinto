@@ -41,9 +41,10 @@ On a phone the SDK catches what no Kotlin `try` will ever see — a signal, an A
   `iOSApp.init` before Kotlin runs anything.
 - **Kotlin's own reports reach the SDK on both phones.** Android calls `Sentry` from `androidMain`.
   iOS cannot call `sentry-cocoa` from Kotlin, so a **Swift bridge** carries a Kotlin throwable's
-  type, message and stack *addresses* across: Swift wraps them in an `NSException` whose
-  `callStackReturnAddresses` are Kotlin's, and the dSYM symbolicates it. An uncaught Kotlin
-  exception is reported once, with its type and message, rather than as a bare SIGABRT.
+  type, message and stack *addresses* across. A report the app survives becomes an event built
+  at Kotlin's addresses; an uncaught exception goes to Sentry's own uncaught-exception handler
+  as an `NSException` carrying them, which files it once, with its type and message, rather
+  than as a bare SIGABRT. Either way the dSYM symbolicates it (design D4).
 - **Nothing identifying leaves, on the SDK as before it.** Both SDKs add a per-install
   `user.id` by default (verified in `sentry-android` 8.55.0's `DefaultAndroidEventProcessor`).
   A `beforeSend` on each phone strips it and everything else that names a person or a device,

@@ -37,15 +37,30 @@ hand one rung up the escalation ladder before it is built on.
       dependency; `xcodegen generate`
 - [ ] 3.2 `iOSApp.swift`: `SentrySDK.start` in `init`, after `WarmUpFirstFrame`, behind Kotlin's
       `isEmulatedDevice`; the options mirror 2.1, with the same `beforeSend` rules
-- [ ] 3.3 **[deep]** Settle the bridge's event shape against `sentry-cocoa` 9.x's source: how an
+- [x] 3.3 **[deep]** Settle the bridge's event shape against `sentry-cocoa` 9.x's source: how an
       event carries frames at Kotlin's addresses *and* the debug images for them, so the dSYM can
-      be applied. Written into `design.md` D4 before any code
-- [ ] 3.4 The Kotlin half, test first on the simulator (`iosSimulatorArm64Test`):
-      `Crashes.report` on iOS hands the bridge the qualified type, the message, a non-empty list
-      of `getStackTraceAddresses()`, the fatal flag, the surface and the deal's address
-- [ ] 3.5 The Swift half: the closure registered at start-up, the event built per 3.3, and the
-      uncaught path — report as fatal, flush with a ceiling, end the process without a signal so
-      no second, nameless SIGABRT is filed
+      be applied. Written into `design.md` D4 before any code — done 2026-10-11 against 9.29.2
+      and the pinned 9.27.0, cross-checked with sentry-kotlin-multiplatform, NSExceptionKt, the
+      Kotlin/Native runtime and the server's symbolicator; D4 carries the shape and every citation
+- [ ] 3.4 The Kotlin half, test first on the simulator (`iosSimulatorArm64Test`): the value D4
+      names — for the throwable and each cause, the qualified type, the message and the frames
+      (`getStackTraceAddresses()`, each with the `game.vinto.` in-app flag), the fatal flag, the
+      surface and the deal's address. The leading constructor frames are dropped by matching the
+      address printed in each `getStackTrace()` line (the stored address minus one) to the stored
+      list, never by index; a line that does not match drops nothing. Tests: a thrown
+      `IllegalStateException` arrives with a non-empty list whose first frame is the `throw`
+      site and no `#<init>` frame; a cause arrives as a second entry after the throwable; the
+      in-app flag is true for a `game.vinto.` frame and false for a stdlib one; `report` is
+      fatal = false and the hook is fatal = true
+- [ ] 3.5 The Swift half, per D4: the closure registered at start-up; a handled report as one
+      hand-built `Event` through `capture(event:block:)` — the exceptions with Kotlin's frames,
+      one `SentryThread` carrying them with `imageAddress` from `dladdr`, no `debugMeta` of our
+      own; a fatal report as a `KotlinException: NSException` whose `callStackReturnAddresses`
+      are Kotlin's, handed to `NSGetUncaughtExceptionHandler()` after the scope is set, then
+      return and let the runtime abort — no `exit`, no flush on that path; the fallback when the
+      handler is nil (capture, `flush(timeout: 2)`, the `vinto.kotlin_crashed` tag) and the
+      `beforeSend` rule that drops a fatal event carrying it. The frame and event shape under a
+      test where one can reach it; what only a device can show is 5.x
 - [ ] 3.6 Delete the iOS `CrashHandler` actual's envelope path and `awaitCrashReport` there
 
 ## 4. iOS symbols from the archive
