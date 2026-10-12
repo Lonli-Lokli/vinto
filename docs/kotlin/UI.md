@@ -118,9 +118,12 @@ Pro Fold (923x891) — and three things were wrong that needed no hinge to show:
   with more usable felt (no wider than `TABLE_ASPECT` times its depth). Every tablet and desktop
   on its side, and the open Duo, still come out on their side.
 - *The side seats' names still ran up and down the rim with room to spare.* The owner: "player
-  name must be horizontal as we have plenty of space". So the turned name is a phone's
-  (`TableLayout.phone`, decided across the **screen** by `phoneHeldUpright`) and every other
-  screen gives the side seats the plate the seats above and below have.
+  name must be horizontal as we have plenty of space", and then "wide phones and landscape
+  tablets" too. So room decides, not the kind of device (`nameRun`): a side seat reads its name
+  across when a plate laid across fits beside its dealt column with 20 points to spare, and along
+  the rim when it does not. A Plus or a Pro Max, every tablet, open fold and desktop read across;
+  phones of 360 to 412 points and the closed Duo keep the turned name. Decided from the dealt hand,
+  so a name never turns over mid-round.
 
 All three are held by `UnfoldedPhonesTest`.
 

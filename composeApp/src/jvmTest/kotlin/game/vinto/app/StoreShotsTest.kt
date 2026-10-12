@@ -132,8 +132,11 @@ class StoreShotsTest {
         val bars: Bars = Bars.NONE,
     )
 
-    /** A device's status bar and home indicator, in points. */
-    private data class Bars(val top: Dp, val bottom: Dp) {
+    /**
+     * A device's status bar and home indicator, in points — and, on the closed iPhone Duo, the
+     * column down its right edge where iOS 27.1 puts the status bar and the camera instead.
+     */
+    private data class Bars(val top: Dp, val bottom: Dp, val end: Dp = 0.dp) {
         companion object {
             val NONE = Bars(0.dp, 0.dp)
         }
@@ -156,7 +159,11 @@ class StoreShotsTest {
                 // behind the insets it pads for. One flat colour, which is how zdymak finds the band
                 // it may draw a status bar into without touching a pixel of the app.
                 Surface(modifier = Modifier.fillMaxSize(), color = Rail.fill) {
-                    Box(modifier = Modifier.fillMaxSize().padding(top = slot.bars.top, bottom = slot.bars.bottom)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = slot.bars.top, bottom = slot.bars.bottom, end = slot.bars.end),
+                    ) {
                         content()
                     }
                 }
@@ -259,9 +266,13 @@ class StoreShotsTest {
              * on a wider screen, which the phone's table fits — and the inner one the way it opens,
              * on its side, 951x669, where the table turns and the side seats read across.
              *
-             * Its bars are not published. These are the iPhone's own, provisional until measured on
-             * the Duo simulator (Xcode 27.1): a shot with too much strip is a shot, and one with too
-             * little is the island over a button again.
+             * Closed, it has no strip at the top at all. Measured on the Duo simulator (Xcode 27.1):
+             * iOS 27.1 stands the status bar and the camera in a column down the right edge, 84 of
+             * the 466 points, and gives the app the rest — Safari's own page there is 382 across. So
+             * the closed screen keeps that column, and the table it shows is a 382-point phone's.
+             *
+             * Open, the bars are still the iPhone's, provisional: the simulator opens the fold only
+             * from its own window, which a script cannot reach.
              */
             Slot(
                 "duo-outer",
@@ -270,7 +281,7 @@ class StoreShotsTest {
                 2034,
                 3f,
                 APP_STORE_VERSION,
-                Bars(59.dp, 34.dp),
+                Bars(top = 0.dp, bottom = 20.dp, end = 84.dp),
             ),
             Slot(
                 "duo-inner",

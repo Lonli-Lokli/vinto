@@ -412,7 +412,6 @@ private fun Table(
                         FeltTable(
                             state = state,
                             sizes = layout.sizes,
-                            phone = layout.phone,
                             onMove = onMove,
                             onHelp = onHelp,
                             modifier = Modifier.weight(1f).padding(start = Edge, end = Edge, bottom = Edge),
@@ -449,7 +448,6 @@ private fun Table(
                 FeltTable(
                     state = state,
                     sizes = layout.sizes,
-                    phone = layout.phone,
                     onMove = onMove,
                     onHelp = onHelp,
                     modifier = Modifier.weight(1f).padding(horizontal = Edge),
@@ -584,8 +582,6 @@ fun <T : Any> seatingFor(players: List<T>, viewer: T?): Seating<T> {
 private fun FeltTable(
     state: TableState,
     sizes: TableSizes,
-    /** Whether the screen is a phone — see [TableLayout.phone]. */
-    phone: Boolean,
     onMove: (Move) -> Unit,
     onHelp: (HelpTopic?) -> Unit,
     modifier: Modifier = Modifier,
@@ -636,7 +632,6 @@ private fun FeltTable(
                 view = view,
                 table = table,
                 sizes = sizes,
-                phone = phone,
                 onMove = onMove,
                 onHelp = onHelp,
             )
@@ -1439,7 +1434,6 @@ private fun MiddleRow(
     view: PlayerView,
     table: Table,
     sizes: TableSizes,
-    phone: Boolean,
     onMove: (Move) -> Unit,
     onHelp: (HelpTopic?) -> Unit,
     modifier: Modifier = Modifier,
@@ -1470,11 +1464,11 @@ private fun MiddleRow(
             // ran clean across the piles. `HandLine` can only cap the lines it lays if somebody
             // has told it how much room across it has.
             val share = Modifier.weight(1f)
-            SideSeat(left, view, table, sizes, phone, onTheLeft = true, onMove = onMove, modifier = share)
+            SideSeat(left, view, table, sizes, onTheLeft = true, onMove = onMove, modifier = share)
             Box(modifier = Modifier.glides(LocalReshape.current, PILES_KEY, Glide.CARDS)) {
                 Piles(view, sizes, table.board, onHelp)
             }
-            SideSeat(right, view, table, sizes, phone, onTheLeft = false, onMove = onMove, modifier = share)
+            SideSeat(right, view, table, sizes, onTheLeft = false, onMove = onMove, modifier = share)
         }
     }
 }
@@ -1489,7 +1483,6 @@ private fun SideSeat(
     view: PlayerView,
     table: Table,
     sizes: TableSizes,
-    phone: Boolean,
     onTheLeft: Boolean,
     onMove: (Move) -> Unit,
     modifier: Modifier = Modifier,
@@ -1504,7 +1497,7 @@ private fun SideSeat(
         modifier = modifier,
         contentAlignment = if (onTheLeft) Alignment.CenterStart else Alignment.CenterEnd,
     ) {
-        SideColumn(seat, view, table, sizes, phone, onTheLeft, onMove)
+        SideColumn(seat, view, table, sizes, onTheLeft, onMove)
     }
 }
 
@@ -1557,6 +1550,31 @@ internal fun sideHand(count: Int, theirs: CardScale, room: SideRoom): SideHand {
     val under = if (alone == extras) extras else room.underPlate(scale, extras, between = true)
     return SideHand(scale, DEALT_ROW, under)
 }
+
+/**
+ * Which way a side seat's name runs: across wherever the seat has room for a plate laid across
+ * beside its dealt column, with some to spare, and along the rim where it has not.
+ *
+ * The owner, 2026-10-12, twice: "player name must be horizontal as we have plenty of space", of
+ * open folds, tablets and desktops, and then of "wide phones and landscape tablets". Room is the
+ * line rather than the kind of device: a Plus or a Pro Max has it, a phone of 360 to 412 points and
+ * the closed iPhone Duo do not, and every tablet, open fold and desktop has it many times over.
+ *
+ * Decided from the seat's [across] and the **dealt** hand, never from the hand it holds now, so a
+ * name does not turn over in the middle of a round because somebody drew a penalty card.
+ */
+internal fun nameRun(across: Dp, sizes: TableSizes, onTheLeft: Boolean): NameRun = when {
+    across >= sizes.theirs.height + Tight + plateWidth(sizes.avatar) + AcrossSpare -> NameRun.ACROSS
+    onTheLeft -> NameRun.UP
+    else -> NameRun.DOWN
+}
+
+/**
+ * The room a plate laid across must leave beside it to be chosen: "plenty of space" rather than
+ * just enough. A name that only just fits across is one whose seat is the first to give way when a
+ * hand grows a column, and the turned name is there for exactly that seat.
+ */
+private val AcrossSpare = 20.dp
 
 /** What a side seat has to lay its hand in: its share across, the felt's middle along, and its plate. */
 internal data class SideRoom(val across: Dp, val along: Dp, val plate: DpSize)
@@ -1645,22 +1663,14 @@ private fun SideColumn(
     view: PlayerView,
     table: Table,
     sizes: TableSizes,
-    phone: Boolean,
     onTheLeft: Boolean,
     onMove: (Move) -> Unit,
 ) {
     val count = seat.cards.size
-    // Along the rim on a phone, where the plate has to be a thumb wide; across anywhere with room,
-    // which is every screen that is not a phone (owner, 2026-10-12: "player name must be horizontal
-    // as we have plenty of space"). Measured like any plate, so the hand is laid round whichever.
-    val run = when {
-        !phone -> NameRun.ACROSS
-        onTheLeft -> NameRun.UP
-        else -> NameRun.DOWN
-    }
     val reshape = LocalReshape.current
     SubcomposeLayout(modifier = Modifier.ringed(seat, view)) { constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val run = nameRun(constraints.maxWidth.toDp() - CallerRing * 2, sizes, onTheLeft)
         val plate = subcompose(SidePart.PLATE) {
             Plate(seat, view, table, sizes, onMove, run, besideOnTheLeft = onTheLeft)
         }.measured(loose)

@@ -49,7 +49,8 @@ import kotlin.test.assertTrue
  *    of the width it had.
  *  - **The side seats' names ran up and down the rim on a screen with room to spare.** The owner's
  *    words: "player name must be horizontal as we have plenty of space" — on unfolded phones,
- *    tablets and desktops alike. A phone keeps the turned name, which is what its width needs.
+ *    tablets and desktops alike, and on wide phones. A phone without that room keeps the turned
+ *    name, which is what its width needs.
  */
 @OptIn(ExperimentalTestApi::class)
 class UnfoldedPhonesTest {
@@ -98,8 +99,17 @@ class UnfoldedPhonesTest {
         }
     }
 
+    /**
+     * Across wherever the seat has room for it, along the rim where it has not.
+     *
+     * The owner, 2026-10-12, twice: "player name must be horizontal as we have plenty of space", of
+     * open folds, tablets and desktops — and then "I was hoping that wide phones and landscape tablets
+     * will display names of side players horizontally". So the line is room, not the kind of device:
+     * a Plus or a Pro Max has it, a phone of 360 to 412 points and the closed Duo (382 of its 466, the
+     * rest being iOS 27.1's status column) do not.
+     */
     @Test
-    fun theSideNamesReadAcrossOnAnythingButAPhone() {
+    fun theSideNamesReadAcrossWhereverTheSeatHasRoom() {
         val view = named(teachingSession().view.value)
         (ROOMY + PHONES).forEach { (screen, size) ->
             runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
@@ -210,6 +220,9 @@ class UnfoldedPhonesTest {
         )
 
         val ROOMY = mapOf(
+            // The app's own area on the wide phones: the screen less its status bar and home indicator.
+            "iPhone 17 Pro Max" to (440.dp to 860.dp),
+            "iPhone 16 Plus" to (430.dp to 839.dp),
             "iPhone Duo, open on its side" to (951.dp to 669.dp),
             "iPhone Duo, open upright" to (669.dp to 951.dp),
             "Galaxy Z Fold 7, open" to (832.dp to 750.dp),
@@ -219,8 +232,11 @@ class UnfoldedPhonesTest {
         )
 
         val PHONES = mapOf(
-            "iPhone Duo, closed" to (466.dp to 678.dp),
+            // Measured on the Duo simulator (Xcode 27.1): the status column takes 84 of the 466 points.
+            "iPhone Duo, closed" to (382.dp to 658.dp),
             "Pixel 7" to (412.dp to 805.dp),
+            "iPhone 16" to (393.dp to 759.dp),
+            "Galaxy S23" to (360.dp to 740.dp),
             "Galaxy Z Fold 7, closed" to (373.dp to 873.dp),
         )
 

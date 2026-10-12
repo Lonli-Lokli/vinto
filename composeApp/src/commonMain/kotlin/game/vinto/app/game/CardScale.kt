@@ -289,11 +289,11 @@ data class TableLayout(
      * Whether the screen is a phone's, by the one line the app draws between a phone and anything
      * larger ([phoneHeldUpright]) — measured across the **screen**, not the felt.
      *
-     * The side seats read their names along the rim on a phone, where width is the thing the felt
-     * has least of, and across everywhere else: "player name must be horizontal as we have plenty
-     * of space" (owner, 2026-10-12, of unfolded phones, tablets and desktops). An open fold's felt
-     * on its side can be under 600 points deep while the screen is a small tablet's, and it is the
-     * screen that says how the player is holding it.
+     * Half of what makes a change of [shape]: a fold opening is a phone becoming a tablet, and the
+     * table glides there ([Reshape]). An open fold's felt on its side can be under 600 points deep
+     * while the screen is a small tablet's, and it is the screen that says how the player is holding
+     * it. Which way a side seat's name runs is not decided here but by the seat's own room
+     * ([nameRun]), so a wide phone reads it across as a tablet does.
      */
     val phone: Boolean = true,
 ) {
