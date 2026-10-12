@@ -424,6 +424,7 @@ private fun Trouble(failure: RoomAnswer.Failed?) {
  */
 @Composable
 private fun Scaffold(title: String, onBack: () -> Unit, content: @Composable () -> Unit) {
+    BehindTheBars(Behind.FELT)
     Box(
         modifier = Modifier
             .fillMaxSize()

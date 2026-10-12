@@ -6,11 +6,14 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasureResult
@@ -18,9 +21,16 @@ import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.node.LayoutModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.toSize
+import game.vinto.app.Hinge
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
+import kotlin.math.pow
 import kotlin.math.sqrt
 
 /**
@@ -60,6 +70,21 @@ class Reshape {
     /** The table everything is measured against: a share of it is what survives a new screen. */
     internal var table: LayoutCoordinates? = null
 
+    /** How large the table was before the last change: whether the new one is that, opened ([pageOf]). */
+    internal var wasSize: Size = Size.Zero
+        private set
+
+    /** The table's arrangement now, for where its felt lies across it ([pageOf]). */
+    internal var layout: TableLayout? = null
+
+    /**
+     * The hinge, live, and where it stood when the table changed shape: a glide that starts with the
+     * phone half open follows the hinge from there to flat ([Hinge]).
+     */
+    internal var hinge: State<Hinge?>? = null
+    internal var openedAt: Float? = null
+        private set
+
     /**
      * The table's kind, every composition. Run as a side effect, which lands after the composition
      * that asked for the new layout and before that layout is placed — so what [now] holds at that
@@ -70,6 +95,8 @@ class Reshape {
         shape = next
         if (before != null && before != next && !still) {
             was = HashMap(now)
+            wasSize = table?.takeIf { it.isAttached }?.size?.toSize() ?: Size.Zero
+            openedAt = hinge?.value?.takeIf { it.partiallyOpen }?.degrees
             change++
         }
     }
@@ -153,8 +180,9 @@ private class GlideNode(
 
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
         val placeable = measurable.measure(constraints)
+        val density: Density = this
         return layout(placeable.width, placeable.height) {
-            coordinates?.let(::arrive)
+            coordinates?.let { arrive(it, density) }
             placeable.placeWithLayer(0, 0) {
                 val t = glide.easing.transform(progress.floatValue)
                 if (t < 1f) {
@@ -173,7 +201,7 @@ private class GlideNode(
     }
 
     /** Placed: note where, and if the table has just changed shape, start from where it was. */
-    private fun arrive(here: LayoutCoordinates) {
+    private fun arrive(here: LayoutCoordinates, density: Density) {
         val table = reshape.table?.takeIf { it.isAttached } ?: return
         if (!here.isAttached) return
         val box = table.size.toSize()
@@ -188,12 +216,25 @@ private class GlideNode(
         )
         reshape.record(key, Spot(share, turn))
         if (start == null || home.width <= 0f || home.height <= 0f) return
+        // Where the felt lies across the new table, in its pixels: on a table on its side, the
+        // felt and not the rail beside it.
+        val felt = with(density) {
+            reshape.layout?.feltSpan(box.width.toDp())?.let { it.left.toPx()..(it.left + it.width).toPx() }
+        }
+        if (!startFrom(start, home, pageOf(reshape.wasSize, box, felt))) return
 
+        progress.floatValue = 0f
+        running?.cancel()
+        running = coroutineScope.launch { travel() }
+    }
+
+    /** Where the glide starts, as an offset from [home], the old table laid over [frame]; false if home. */
+    private fun startFrom(start: Spot, home: Rect, frame: Rect): Boolean {
         val was = Rect(
-            start.share.left * box.width,
-            start.share.top * box.height,
-            start.share.right * box.width,
-            start.share.bottom * box.height,
+            frame.left + start.share.left * frame.width,
+            frame.top + start.share.top * frame.height,
+            frame.left + start.share.right * frame.width,
+            frame.top + start.share.bottom * frame.height,
         )
         from = was.center - home.center
         // Straight, the bend is halfway and the curve is a line. Round a corner, it is the corner:
@@ -206,19 +247,61 @@ private class GlideNode(
         }
         scaleFrom = sqrt(was.width * was.height / (home.width * home.height)).coerceIn(SMALLEST, LARGEST)
         turnFrom = start.turn - turn
-        if (from.getDistance() < STILL && turnFrom == 0f) return
+        return from.getDistance() >= STILL || turnFrom != 0f
+    }
 
-        progress.floatValue = 0f
-        running?.cancel()
-        running = coroutineScope.launch {
-            animate(0f, 1f, animationSpec = tween(glide.millis, glide.delay, LinearEasing)) { value, _ ->
-                progress.floatValue = value
-            }
+    /**
+     * The glide itself: with the hand that opens the phone while there is a hinge to follow
+     * ([followTheHinge]), and on the clock for the rest of the way.
+     */
+    private suspend fun travel() {
+        followTheHinge()
+        val left = 1f - progress.floatValue
+        animate(
+            progress.floatValue,
+            1f,
+            animationSpec = tween(
+                durationMillis = (glide.millis * left).toInt(),
+                delayMillis = if (left < 1f) 0 else glide.delay,
+                easing = LinearEasing,
+            ),
+        ) { value, _ ->
+            progress.floatValue = value
         }
+    }
+
+    /**
+     * From the angle the table changed shape at, to flat, as the hinge moves. The plates lag the
+     * cards ([HINGE_LAG]) as they do on the clock. Until the hinge lies flat, goes, or rests a
+     * moment — a book held half open is a pose, and the table finishes on its own rather than
+     * standing half spread. Nothing at all where the change did not come with a hinge half open.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun followTheHinge() {
+        val hinge = reshape.hinge ?: return
+        val openedAt = reshape.openedAt?.takeIf { it < FLAT } ?: return
+        snapshotFlow { hinge.value }
+            .mapLatest { now ->
+                if (now != null && now.partiallyOpen) {
+                    val opened = ((now.degrees - openedAt) / (FLAT - openedAt)).coerceIn(0f, 1f)
+                    progress.floatValue = if (glide == Glide.PLATE) opened.pow(HINGE_LAG) else opened
+                    delay(RESTING_MS)
+                }
+            }
+            .first()
     }
 
     private companion object {
         const val HALF = 0.5f
+
+        /** Flat, in the hinge's degrees. */
+        const val FLAT = 180f
+
+        /** How much the plates lag the cards while the hinge carries them: the name after its cards. */
+        const val HINGE_LAG = 1.6f
+
+        /** A hinge still for this long is resting, and the table finishes on its own. */
+        const val RESTING_MS = 600L
 
         /** A piece that changes size does so on the way, within reason: past this it reads as a zoom. */
         const val SMALLEST = 0.6f
@@ -228,3 +311,32 @@ private class GlideNode(
         const val STILL = 1f
     }
 }
+
+/**
+ * Where the old table lies over the new one: the right-hand page, when the new table is the old one
+ * opened, and the whole of it otherwise.
+ *
+ * The iPhone Duo opens like a book into two pages the closed screen's shape (466x678 closed, 951x669
+ * open: two pages of about 475x669), so a table that started out on the whole new screen would have
+ * been stretched sideways. Laid on the page the player's eyes were on, it starts at its own size and
+ * spreads across both. Told by shape alone — the new table about twice as wide for its height as the
+ * old one — so it holds for any phone that opens like that, and folding back is the whole screen.
+ *
+ * The right-hand half of the [felt], where it lies across only part of the new table (from its left
+ * to its right, in the table's pixels): an open fold stands its rail down the right, and laid over
+ * the screen's right half, a third of the closed table started under the rail and the opening read
+ * as a table sliding in from the edge.
+ */
+internal fun pageOf(was: Size, now: Size, felt: ClosedFloatingPointRange<Float>? = null): Rect {
+    val whole = Rect(0f, 0f, now.width, now.height)
+    if (was.width <= 0f || was.height <= 0f || now.height <= 0f) return whole
+    val widened = now.width / now.height / (was.width / was.height)
+    if (widened !in PAGE_FROM..PAGE_TO) return whole
+    val left = felt?.start ?: 0f
+    val right = felt?.endInclusive ?: now.width
+    return Rect((left + right) / 2, 0f, right, now.height)
+}
+
+/** How much wider for its height the new table must be to be the old one opened like a book. */
+private const val PAGE_FROM = 1.6f
+private const val PAGE_TO = 2.6f

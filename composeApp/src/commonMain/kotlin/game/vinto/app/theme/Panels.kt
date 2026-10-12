@@ -15,7 +15,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,15 +34,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import game.vinto.app.LocalStatusColumn
 import game.vinto.app.SystemBack
 import game.vinto.app.art.Res
 import game.vinto.app.art.sheet_close
@@ -92,6 +99,20 @@ private fun rising(open: Boolean): MutableTransitionState<Boolean> =
  * app's own, so pressing it over Help or the standings left the table, and in a room it left
  * the room.
  */
+
+/**
+ * Where across the window a sheet should rise: over the felt of a table lying on its side, so it
+ * covers cloth and cards rather than cutting the rail's words in half. Null — the default — is the
+ * whole window.
+ */
+data class SheetSpan(val left: Dp, val width: Dp)
+
+/** See [SheetSpan]. Provided by the screens that hold a table. */
+val LocalSheetSpan = staticCompositionLocalOf<SheetSpan?> { null }
+
+/** How a test finds a sheet. */
+const val SHEET_TAG = "sheet"
+
 @Composable
 fun VintoSheet(open: Boolean, onDismiss: () -> Unit, content: @Composable () -> Unit) {
     // Composed inside a screen, so after the app's handler, and Android asks the most recently
@@ -99,41 +120,59 @@ fun VintoSheet(open: Boolean, onDismiss: () -> Unit, content: @Composable () -> 
     SystemBack(enabled = open, onBack = onDismiss)
     Scrim(open = open, onDismiss = onDismiss)
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-        AnimatedVisibility(
-            visibleState = rising(open),
-            enter = slideInVertically(tween(RiseMs)) { it },
-            exit = slideOutVertically(tween(RiseMs)) { it },
+    // Over the felt, where a table lying on its side says where that is ([LocalSheetSpan]); across
+    // the window otherwise — less a status column, which the closed iPhone Duo's table leaves to its
+    // header and the sheet leaves to the clock and the camera ([LocalStatusColumn]). Consumed, so a
+    // platform that reports the column as a system bar too does not see it kept clear twice below.
+    val span = LocalSheetSpan.current
+    val column = PaddingValues(end = LocalStatusColumn.current)
+    Box(
+        modifier = Modifier.fillMaxSize().padding(column).consumeWindowInsets(column),
+        contentAlignment = Alignment.BottomStart,
+    ) {
+        Box(
+            modifier = if (span == null) {
+                Modifier.fillMaxSize()
+            } else {
+                Modifier.padding(start = span.left).width(span.width).fillMaxHeight()
+            },
+            contentAlignment = Alignment.BottomCenter,
         ) {
-            Surface(
-                // Capped for the same reason as [VintoDialog], and a little wider because a
-                // sheet carries a table of ranks rather than a sentence.
-                modifier = Modifier.widthIn(max = SheetWide).fillMaxWidth(),
-                shape = RoundedCornerShape(topStart = SheetCorner, topEnd = SheetCorner),
-                color = Rail.fill,
-                contentColor = Rail.ink,
-                border = BorderStroke(Line, Rail.line),
+            AnimatedVisibility(
+                visibleState = rising(open),
+                enter = slideInVertically(tween(RiseMs)) { it },
+                exit = slideOutVertically(tween(RiseMs)) { it },
             ) {
-                Box(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)) {
-                    Column(
-                        // Expanded, a sheet can reach the top of the screen, and without
-                        // this the first line of it sits under the clock.
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Grip()
-                        content()
-                    }
+                Surface(
+                    // Capped for the same reason as [VintoDialog], and a little wider because a
+                    // sheet carries a table of ranks rather than a sentence.
+                    modifier = Modifier.widthIn(max = SheetWide).fillMaxWidth().testTag(SHEET_TAG),
+                    shape = RoundedCornerShape(topStart = SheetCorner, topEnd = SheetCorner),
+                    color = Rail.fill,
+                    contentColor = Rail.ink,
+                    border = BorderStroke(Line, Rail.line),
+                ) {
+                    Box(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)) {
+                        Column(
+                            // Expanded, a sheet can reach the top of the screen, and without
+                            // this the first line of it sits under the clock.
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Grip()
+                            content()
+                        }
 
-                    // The way out that is always on screen. The scrim dismisses on tap and
-                    // Android's back gesture dismisses (`SystemBack`, above) — but a sheet
-                    // tall enough to cover the scrim, on a platform with no back gesture (the
-                    // browser, iOS), left a phone user with no exit at all. The help sheet is
-                    // exactly that sheet.
-                    CloseButton(
-                        onDismiss = onDismiss,
-                        modifier = Modifier.align(Alignment.TopEnd),
-                    )
+                        // The way out that is always on screen. The scrim dismisses on tap and
+                        // Android's back gesture dismisses (`SystemBack`, above) — but a sheet
+                        // tall enough to cover the scrim, on a platform with no back gesture (the
+                        // browser, iOS), left a phone user with no exit at all. The help sheet is
+                        // exactly that sheet.
+                        CloseButton(
+                            onDismiss = onDismiss,
+                            modifier = Modifier.align(Alignment.TopEnd),
+                        )
+                    }
                 }
             }
         }

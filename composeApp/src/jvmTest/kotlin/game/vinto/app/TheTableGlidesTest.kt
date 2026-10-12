@@ -3,6 +3,7 @@ package game.vinto.app
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -33,6 +34,7 @@ import game.vinto.shapes.PositionPayload
 import kotlinx.coroutines.test.runTest
 import kotlin.math.abs
 import kotlin.test.Test
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -67,8 +69,10 @@ class TheTableGlidesTest {
         val after = face(LEFT)
         val railAfter = button(CHOICE)
 
-        // Where the plate was, as a share of the closed screen, laid over the open one.
-        val start = before.center.scaledFrom(CLOSED, OPEN)
+        // Where the plate was on the closed screen, laid over the open one's right-hand page: the
+        // Duo opens like a book into two pages the closed screen's shape, and the table the player
+        // was looking at starts out on the page their eyes were on, then spreads across both.
+        val start = before.center.ontoThePage(CLOSED, OPEN)
         assertTrue(
             after.center.distance(start) > MOVED,
             "the test is not testing anything: $LEFT's plate is where it was",
@@ -81,6 +85,31 @@ class TheTableGlidesTest {
         assertTrue(
             railFirst.center.distance(railAfter.center) > MOVED,
             "the rail jumped to its new edge: it started at ${railFirst.center}, already at ${railAfter.center}",
+        )
+    }
+
+    /**
+     * Opened, the closed table starts on the felt's right-hand half, not the screen's: an open fold
+     * stands its rail down the right, and laid over the screen's right half, a third of the closed
+     * table began under the rail — the opening read as a table sliding in from the edge rather than
+     * a book opening (seen in a film of the glide, 2026-10-12).
+     */
+    //
+    // Read off where a plate STARTS, not off whether a card lies past the felt's edge: a test sees a
+    // node's bounds clipped to the felt it is drawn in, so a card under the rail only looks smaller.
+    @Test
+    fun openingStartsTheTableOnTheFeltNotUnderTheRail() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
+        var screen by mutableStateOf(CLOSED)
+        show({ screen }, reduced = false)
+        val before = face(LEFT)
+
+        screen = OPEN
+        mainClock.advanceTimeByFrame()
+        val first = face(LEFT)
+        val onTheFelt = before.center.ontoThePage(CLOSED, OPEN)
+        assertTrue(
+            first.center.distance(onTheFelt) < ON_THE_PAGE,
+            "$LEFT's plate started at ${first.center}, not on the felt's right-hand half at $onTheFelt",
         )
     }
 
@@ -122,6 +151,52 @@ class TheTableGlidesTest {
         assertTrue(railFirst.center.distance(button(CHOICE).center) < STILL, "under reduced motion the rail travelled")
     }
 
+    /**
+     * On a phone with a hinge, the table opens with the hand that opens it.
+     *
+     * Apple's own: the wallpaper zooms as the Duo opens, driven by the hinge's angle, which iOS 27.1
+     * reports live (`onHingeChange`). Asked for on 2026-10-12 — "those cool [animations] used during
+     * apple presentation for duo". Half open, the spread follows the angle from where the table changed
+     * shape to flat, and holds still while the hinge does; flat, it finishes.
+     */
+    @Test
+    fun theHingeCarriesTheTableOpen() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
+        var screen by mutableStateOf(CLOSED)
+        val hinge = mutableStateOf<Hinge?>(null)
+        show({ screen }, reduced = false, hinge = hinge)
+
+        // The display changes over part way open.
+        hinge.value = Hinge(partiallyOpen = true, degrees = SWITCH_DEGREES)
+        screen = OPEN
+        mainClock.advanceTimeByFrame()
+        val first = face(LEFT)
+
+        // Halfway from there to flat, then further, each a moment apart: the hand still moving.
+        hinge.value = Hinge(partiallyOpen = true, degrees = (SWITCH_DEGREES + FLAT) / 2)
+        mainClock.advanceTimeBy(MOMENT_MS)
+        val half = face(LEFT)
+        hinge.value = Hinge(partiallyOpen = true, degrees = FURTHER)
+        mainClock.advanceTimeBy(MOMENT_MS)
+        val further = face(LEFT)
+
+        // And then the hand rests, half open: a book held open, which is a pose rather than a
+        // move, so the table finishes on its own rather than standing half spread for good.
+        mainClock.advanceTimeBy(SETTLED_MS)
+        val home = face(LEFT)
+
+        val whole = first.center.distance(home.center)
+        val gone = first.center.distance(half.center)
+        assertTrue(whole > MOVED, "the test is not testing anything: the plate did not move")
+        assertTrue(
+            gone > whole * MOST_OF_NOTHING && gone < whole * (1 - MOST_OF_NOTHING),
+            "half open, the plate had gone $gone of its $whole: it did not follow the hinge",
+        )
+        assertTrue(
+            further.center.distance(home.center) < half.center.distance(home.center),
+            "opened further, the plate did not go further",
+        )
+    }
+
     @Test
     fun aWindowResizedByAFewPointsIsTheSameTable() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
         var screen by mutableStateOf(OPEN)
@@ -138,12 +213,16 @@ class TheTableGlidesTest {
         )
     }
 
-    private fun ComposeUiTest.show(screen: () -> Pair<Dp, Dp>, reduced: Boolean) {
+    private fun ComposeUiTest.show(
+        screen: () -> Pair<Dp, Dp>,
+        reduced: Boolean,
+        hinge: State<Hinge?> = mutableStateOf(null),
+    ) {
         val (view, said) = drawn()
         mainClock.autoAdvance = false
         setContent {
             val (wide, high) = screen()
-            CompositionLocalProvider(LocalReducedMotion provides reduced) {
+            CompositionLocalProvider(LocalReducedMotion provides reduced, LocalHinge provides hinge) {
                 VintoTheme {
                     Box(modifier = Modifier.size(wide, high)) {
                         TableScreen(
@@ -176,6 +255,16 @@ class TheTableGlidesTest {
                 said.any { it.startsWith(label) }
             },
         ).fetchSemanticsNodes().first().boundsInRoot
+
+    /**
+     * The same share of the right-hand half of [to]'s felt as this point is of [from], in pixels at
+     * the test's density of 1: the page a table opened like a book starts on.
+     */
+    private fun Offset.ontoThePage(from: Pair<Dp, Dp>, to: Pair<Dp, Dp>): Offset {
+        val felt = assertNotNull(TableLayout.forScreen(to.first, to.second).feltSpan(to.first))
+        val half = felt.width.value / 2
+        return Offset(felt.left.value + half + x / from.first.value * half, y / from.second.value * to.second.value)
+    }
 
     /** The same share of [to] as this point is of [from], in pixels at the test's density of 1. */
     private fun Offset.scaledFrom(from: Pair<Dp, Dp>, to: Pair<Dp, Dp>): Offset =
@@ -219,6 +308,20 @@ class TheTableGlidesTest {
         /** Far enough to call it a move, and near enough to call it still, in pixels. */
         const val MOVED = 40f
         const val STILL = 2f
+
+        /** How near its page a plate is on the first frame of an opening: it has not left yet. */
+        const val ON_THE_PAGE = 20f
+
+        /** Where the display changes over as the Duo opens, and flat. */
+        const val SWITCH_DEGREES = 40f
+        const val FLAT = 180f
+
+        /** Half open is somewhere in the middle of the way, not at either end of it. */
+        const val MOST_OF_NOTHING = 0.2f
+        const val FURTHER = 150f
+
+        /** Less than the pause after which a hinge at rest lets the table finish. */
+        const val MOMENT_MS = 200L
 
         const val WINDOW_W = 1200
         const val WINDOW_H = 900

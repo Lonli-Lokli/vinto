@@ -218,6 +218,7 @@ fun SettingsScreen(
     /** The marketing version above it, pinnable for the reason [HomeScreen] gives. */
     version: String = LocalAppVersion.current,
 ) {
+    BehindTheBars(Behind.FELT)
     var pickingLanguage by remember { mutableStateOf(false) }
     var reporting by remember { mutableStateOf(false) }
 

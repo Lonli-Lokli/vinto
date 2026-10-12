@@ -3,14 +3,20 @@ package game.vinto.app
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,7 +25,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -38,6 +48,7 @@ import game.vinto.app.theme.LocalFeedback
 import game.vinto.app.theme.LocalSounds
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.VintoTheme
+import game.vinto.app.theme.feltGradient
 import game.vinto.app.theme.rememberFeedback
 import game.vinto.app.theme.rememberSounds
 import game.vinto.client.Analytics
@@ -141,6 +152,12 @@ fun App(
      * it. [MarketingScene] carries the reasoning and the list of states.
      */
     marketing: String? = null,
+    /**
+     * The edges the system keeps for itself, or null to ask the platform — which is every real
+     * launch. A headless render has no platform to ask, so the store shots and their tests say
+     * what the device would.
+     */
+    safeArea: PaddingValues? = null,
 ) {
     var settings by remember { mutableStateOf(Settings()) }
     var screen by remember { mutableStateOf<Screen>(Screen.Opening) }
@@ -173,7 +190,7 @@ fun App(
     }
 
     val dark = settings.theme.isDark()
-    SystemBars(dark)
+    val behind = barsOver(screen, dark)
     // The network, as the platform reports it: read once here, for the one screen that asks.
     // `UNKNOWN` until the platform has spoken, so no first frame says "offline" on nothing.
     val reachability by remember { platformReachability() }.collectAsState(Reachability.UNKNOWN)
@@ -182,6 +199,9 @@ fun App(
     InLanguage(settings.language) {
         VintoTheme(dark = dark) {
             ScaledForScreen {
+                // The edges the system keeps — and whether it keeps a status column down one of them,
+                // the closed iPhone Duo's, which [Edges] works out from these.
+                val insets = safeArea ?: WindowInsets.safeDrawing.asPaddingValues()
                 CompositionLocalProvider(
                     LocalFeedback provides rememberFeedback(settings.haptics),
                     LocalReducedMotion provides settings.motion.reduced(systemPrefersReducedMotion()),
@@ -199,63 +219,61 @@ fun App(
                     // colour, so the bars read as the edge of the table instead of a border around it
                     // — and since the rail now has a light half, `SystemBars` above turns the icons
                     // in them the right way round to be seen against it.
-                    Surface(modifier = Modifier.fillMaxSize(), color = Rail.fill) {
-                        Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-                            OnThisScreen(settings, screen, vault) {
-                                when (val here = screen) {
-                                    Screen.Opening -> OpeningScreen()
+                    Edges(insets, holdsATable = screen.holdsATable(), behind = behind) {
+                        OnThisScreen(settings, screen, vault) {
+                            when (val here = screen) {
+                                Screen.Opening -> OpeningScreen()
 
-                                    is Screen.Home -> HomeScreen(
-                                        settings = settings,
-                                        canContinue = here.canContinue,
-                                        go = homeActions(vault, seeds, settings) { screen = it },
-                                    )
+                                is Screen.Home -> HomeScreen(
+                                    settings = settings,
+                                    canContinue = here.canContinue,
+                                    go = homeActions(vault, seeds, settings) { screen = it },
+                                )
 
-                                    is Screen.Settings -> SettingsScreen(
-                                        settings = settings,
-                                        canForget = vault.loadGame() != null,
-                                        page = here.page,
-                                        onOpen = { screen = here.copy(page = it) },
-                                        onChange = { saveSettings(it, vault, sink) { s -> settings = s } },
-                                        onForget = {
-                                            vault.forgetGame()
-                                            screen = Screen.Home(canContinue = false)
-                                        },
-                                        onBack = { screen = here.backedOutOf(vault) },
-                                        report = reportFor(here.back),
-                                    )
+                                is Screen.Settings -> SettingsScreen(
+                                    settings = settings,
+                                    canForget = vault.loadGame() != null,
+                                    page = here.page,
+                                    onOpen = { screen = here.copy(page = it) },
+                                    onChange = { saveSettings(it, vault, sink) { s -> settings = s } },
+                                    onForget = {
+                                        vault.forgetGame()
+                                        screen = Screen.Home(canContinue = false)
+                                    },
+                                    onBack = { screen = here.backedOutOf(vault) },
+                                    report = reportFor(here.back),
+                                )
 
-                                    Screen.Teaching -> TeachScreen(
-                                        botDispatcher = Dispatchers.Default,
-                                        pace = settings.pace,
-                                        onSettings = { screen = Screen.Settings(back = here) },
-                                        onDone = {
-                                            screen = Screen.Home(canContinue = vault.loadGame() != null)
-                                        },
-                                    )
+                                Screen.Teaching -> TeachScreen(
+                                    botDispatcher = Dispatchers.Default,
+                                    pace = settings.pace,
+                                    onSettings = { screen = Screen.Settings(back = here) },
+                                    onDone = {
+                                        screen = Screen.Home(canContinue = vault.loadGame() != null)
+                                    },
+                                )
 
-                                    is Screen.Playing -> AtTheTable(
-                                        here = here,
-                                        pace = settings.pace,
-                                        onSettings = { screen = Screen.Settings(back = here) },
-                                        onQuit = { screen = Screen.Home(canContinue = true) },
-                                    )
+                                is Screen.Playing -> AtTheTable(
+                                    here = here,
+                                    pace = settings.pace,
+                                    onSettings = { screen = Screen.Settings(back = here) },
+                                    onQuit = { screen = Screen.Home(canContinue = true) },
+                                )
 
-                                    is OnlineWay -> OnlineFlow(
-                                        where = here,
-                                        connector = connector,
-                                        vault = vault,
-                                        enterRoom = door.enter,
-                                        go = { screen = it },
-                                    )
+                                is OnlineWay -> OnlineFlow(
+                                    where = here,
+                                    connector = connector,
+                                    vault = vault,
+                                    enterRoom = door.enter,
+                                    go = { screen = it },
+                                )
 
-                                    is Screen.InRoom -> RoomScreen(
-                                        room = here.room,
-                                        pace = settings.pace,
-                                        onSettings = { screen = Screen.Settings(back = here) },
-                                        onLeft = { screen = homeAfterLeaving(vault) },
-                                    )
-                                }
+                                is Screen.InRoom -> RoomScreen(
+                                    room = here.room,
+                                    pace = settings.pace,
+                                    onSettings = { screen = Screen.Settings(back = here) },
+                                    onLeft = { screen = homeAfterLeaving(vault) },
+                                )
                             }
                         }
                     }
@@ -264,6 +282,78 @@ fun App(
         }
     }
 }
+
+/**
+ * What is behind the system bars, and the padding that keeps the app out of their way.
+ *
+ * Behind them is the rail on a table, and the felt on the screens whose own ground is the felt: the
+ * screen's own gradient, laid over the same rows the screen spans, so its top colour carries on
+ * above it, its bottom colour below, and a status column down the side ([statusColumn]) is the
+ * felt beside it row for row ([BehindTheBars]). It was the top colour over the upper half of the
+ * window and the bottom colour over the lower, which a status bar never showed and the closed Duo's
+ * column did: two flat greens and a step halfway down.
+ *
+ * A status column is left unpadded for a table, which stands its header in it, and padded for every
+ * other screen, which keeps clear of it; [LocalStatusColumn] tells a table how wide it is, and is
+ * nothing to a screen already clear of it, so what it opens over the table — a sheet — keeps clear
+ * of it the same way. Each screen says what it has behind the bars through [LocalBehind].
+ */
+@Composable
+private fun Edges(
+    insets: PaddingValues,
+    holdsATable: Boolean,
+    behind: MutableState<Behind>,
+    content: @Composable () -> Unit,
+) {
+    val direction = LocalLayoutDirection.current
+    val column = statusColumn(insets.calculateTopPadding(), insets.calculateEndPadding(direction))
+    val onFelt = behind.value == Behind.FELT
+    val felt = MaterialTheme.colorScheme.feltGradient()
+    val end = when {
+        column == 0.dp -> insets.calculateEndPadding(direction)
+        holdsATable -> 0.dp
+        else -> column
+    }
+    Surface(
+        modifier = Modifier.fillMaxSize().drawBehind {
+            if (onFelt) {
+                val top = insets.calculateTopPadding().toPx()
+                val bottom = size.height - insets.calculateBottomPadding().toPx()
+                drawRect(Brush.verticalGradient(felt, startY = top, endY = bottom))
+            }
+        },
+        color = if (onFelt) Color.Transparent else Rail.fill,
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(
+                start = insets.calculateStartPadding(direction),
+                top = insets.calculateTopPadding(),
+                end = end,
+                bottom = insets.calculateBottomPadding(),
+            ),
+        ) {
+            val unpadded = if (holdsATable) column else 0.dp
+            CompositionLocalProvider(LocalBehind provides behind, LocalStatusColumn provides unpadded) {
+                content()
+            }
+        }
+    }
+}
+
+/**
+ * What [screen] has under the system bars ([Behind]): the rail until it says otherwise, asked again
+ * of every screen. Over the felt the bars' icons are drawn light, as they are in the dark theme.
+ */
+@Composable
+private fun barsOver(screen: Screen, dark: Boolean): MutableState<Behind> {
+    val behind = remember(screen) { mutableStateOf(Behind.RAIL) }
+    SystemBars(dark || behind.value == Behind.FELT)
+    return behind
+}
+
+/** The screens that hold a table, and so stand its header in a status column rather than clear of it. */
+private fun Screen.holdsATable(): Boolean =
+    this is Screen.Playing || this is Screen.Teaching || this is Screen.InRoom
 
 /** What each home button does — out of [App] only so the destination table stays readable. */
 private fun homeActions(

@@ -50,6 +50,7 @@ private const val BOB_PX = -10f
  */
 @Composable
 fun OpeningScreen() {
+    BehindTheBars(Behind.FELT)
     val still = LocalReducedMotion.current
     val bob = rememberInfiniteTransition(label = "opening")
     val lift by bob.animateFloat(

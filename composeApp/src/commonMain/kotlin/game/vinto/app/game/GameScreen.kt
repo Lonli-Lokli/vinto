@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.CountRefusals
 import game.vinto.app.LocalCounting
+import game.vinto.app.LocalStatusColumn
 import game.vinto.app.LocalVault
 import game.vinto.app.TextMark
 import game.vinto.app.art.Res
@@ -42,9 +45,11 @@ import game.vinto.app.drawFrown
 import game.vinto.app.elapsedMs
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
+import game.vinto.app.theme.LocalSheetSpan
 import game.vinto.app.theme.LocalSounds
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.Sfx
+import game.vinto.app.theme.SheetSpan
 import game.vinto.client.LocalGame
 import game.vinto.client.Pace
 import game.vinto.client.Question
@@ -125,12 +130,15 @@ fun GameScreen(
     @Suppress("DEPRECATION")
     val clipboard = LocalClipboardManager.current
 
+    // Where the score sheet rises: over the felt of a table on its side ([SheetSpan]).
+    var sheetSpan by remember { mutableStateOf<SheetSpan?>(null) }
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         // Decided once, from the screen. Everything about how large a card is drawn — on the
         // table and in flight — comes from here, so the two cannot disagree and neither can
         // change while a round is being played. The shape of the screen picks the
         // arrangement too: a rotation is the one thing that re-decides it mid-round.
-        val layout = TableLayout.forScreen(maxWidth, maxHeight)
+        val layout = TableLayout.forScreen(maxWidth, maxHeight, column = LocalStatusColumn.current)
+        SideEffect { sheetSpan = layout.feltSpan(maxWidth) }
 
         // The opening deal, played once per fresh deal: read before the effect that marks it
         // shown, and remembered per round so a rebuilt screen — a rotation — does not deal
@@ -206,19 +214,21 @@ fun GameScreen(
     )
 
     if (scoreOpen) {
-        SoloScore(
-            game = game,
-            round = round,
-            countRound = countRound,
-            onNextRound = {
-                scoreOpen = false
-                game.nextRound()
-            },
-            onQuit = {
-                scoreOpen = false
-                onQuit()
-            },
-        )
+        CompositionLocalProvider(LocalSheetSpan provides sheetSpan) {
+            SoloScore(
+                game = game,
+                round = round,
+                countRound = countRound,
+                onNextRound = {
+                    scoreOpen = false
+                    game.nextRound()
+                },
+                onQuit = {
+                    scoreOpen = false
+                    onQuit()
+                },
+            )
+        }
     }
 }
 

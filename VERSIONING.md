@@ -58,8 +58,10 @@ the two are split).
 **Stamp the build number** — always from `Scripts/build-number.sh`, never by hand:
 
 ```sh
-# iOS — App Store archive (needs a full clone, not a shallow checkout):
-xcodebuild archive \
+# iOS — App Store archive (needs a full clone, not a shallow checkout). Xcode 27.1 or later:
+# the app reads the iPhone Duo hinge (`onHingeChange`, iOS 27.1 SDK; ContentView.swift), and
+# this Mac keeps 27.0 as the default for other projects, so name the 27.1 one:
+DEVELOPER_DIR=/Applications/Xcode-27.1.app/Contents/Developer xcodebuild archive \
   -project iosApp/iosApp.xcodeproj -scheme iosApp -configuration Release \
   -destination 'generic/platform=iOS' -archivePath build/Vinto.xcarchive \
   -allowProvisioningUpdates \

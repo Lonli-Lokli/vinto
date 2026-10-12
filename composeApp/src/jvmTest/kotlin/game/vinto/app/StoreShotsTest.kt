@@ -1,13 +1,9 @@
 package game.vinto.app
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ImageComposeScene
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.graphics.toPixelMap
@@ -15,7 +11,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.use
-import game.vinto.app.theme.Rail
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.MemoryVault
 import game.vinto.client.Settings
@@ -30,7 +25,10 @@ import kotlin.test.assertTrue
 /**
  * The screenshots the stores ask for, rendered from the real screens.
  *
- *     ./gradlew :composeApp:jvmTest --tests '*StoreShotsTest*' -Dvinto.storeShots=true --rerun
+ *     ./gradlew :composeApp:jvmTest --tests '*StoreShotsTest*' -PstoreShots --rerun
+ *
+ * (`npm run capture-headless`.) A Gradle property, not `-Dvinto.storeShots`: the test runs in a JVM
+ * of its own, and the root build hands it `vinto.storeShots` from that property.
  *
  * **Skipped unless that property is set**, which is the difference between this and
  * [ScreenshotTest] beside it. That one is a *gate*: it renders four screens small and stands them
@@ -87,7 +85,12 @@ class StoreShotsTest {
                         LocalAppVersion provides slot.shown,
                         LocalAppBuild provides SHOWN_BUILD,
                     ) {
-                        App(seeds = { MARKETING_SEED }, vault = lightVault(), marketing = scene.id)
+                        App(
+                            seeds = { MARKETING_SEED },
+                            vault = lightVault(),
+                            marketing = scene.id,
+                            safeArea = slot.bars.asSafeArea(),
+                        )
                     }
                 }
             }
@@ -137,6 +140,8 @@ class StoreShotsTest {
      * column down its right edge where iOS 27.1 puts the status bar and the camera instead.
      */
     private data class Bars(val top: Dp, val bottom: Dp, val end: Dp = 0.dp) {
+        fun asSafeArea() = PaddingValues(top = top, bottom = bottom, end = end)
+
         companion object {
             val NONE = Bars(0.dp, 0.dp)
         }
@@ -154,20 +159,11 @@ class StoreShotsTest {
             height = slot.high,
             density = Density(slot.density),
         ) {
-            VintoTheme(dark = false) {
-                // The strips are the rail's colour, as they are on the phone: `App` paints the rail
-                // behind the insets it pads for. One flat colour, which is how zdymak finds the band
-                // it may draw a status bar into without touching a pixel of the app.
-                Surface(modifier = Modifier.fillMaxSize(), color = Rail.fill) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = slot.bars.top, bottom = slot.bars.bottom, end = slot.bars.end),
-                    ) {
-                        content()
-                    }
-                }
-            }
+            // The strips are the app's to paint, as they are on the phone — the rail behind a table,
+            // the felt behind a menu — because `App` is told them as its safe area ([Bars]). Each is
+            // one flat colour, which is how zdymak finds the band it may draw a status bar into
+            // without touching a pixel of the app.
+            VintoTheme(dark = false) { content() }
         }.use { scene ->
             // Fonts and card art arrive asynchronously, so the first frames are missing them.
             // Render a few and keep the last, whose time also sits past the opening animations —

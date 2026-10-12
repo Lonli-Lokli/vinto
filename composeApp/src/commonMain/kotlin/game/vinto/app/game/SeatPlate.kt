@@ -218,6 +218,9 @@ internal fun FaceOf(name: String, size: Dp) = Portrait(name = name, size = size)
 /** How a test finds [name]'s face on the felt. */
 internal fun faceTag(name: String): String = "face:$name"
 
+/** How a test finds a whole plate: this, then the name on it. */
+internal const val PLATE_TAG = "plate:"
+
 /**
  * The breath on the seat whose turn it is.
  *
@@ -963,7 +966,7 @@ fun SeatPlate(
     val said = pointed?.let { stringResource(it.spoken(), name) } ?: described
 
     val shape = RoundedCornerShape(PlateCorner)
-    Box(modifier = modifier) {
+    Box(modifier = modifier.testTag(PLATE_TAG + name)) {
         Surface(
             // A plate is a target — a Nine looks at one of these, a Jack swaps into one — so it
             // is at least a thumb tall even when the portrait inside it is not.

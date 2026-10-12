@@ -15,6 +15,31 @@ struct ComposeView: UIViewControllerRepresentable {
     }
 }
 
+/// The iPhone Duo's hinge, handed to the Compose table as it moves (`HingeBridge.kt`), so the
+/// table spreads across the opening phone with the hand that opens it, and the felt's lamp opens
+/// with it, as the wallpaper does. iOS 27.1's `onHingeChange`; on anything older, or a phone with
+/// no hinge, nothing is reported and the table glides on its own clock.
+///
+/// Building this needs the iOS 27.1 SDK — Xcode 27.1 or later (VERSIONING.md).
+struct FollowsTheHinge: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 27.1, *) {
+            content.onHingeChange { _, context in
+                if let hinge = context.hinge {
+                    HingeBridgeKt.hingeMoved(
+                        partiallyOpen: hinge.status == .partiallyOpen,
+                        degrees: hinge.angle.degrees
+                    )
+                } else {
+                    HingeBridgeKt.hingeGone()
+                }
+            }
+        } else {
+            content
+        }
+    }
+}
+
 struct ContentView: View {
     var body: some View {
         ComposeView()
@@ -26,5 +51,6 @@ struct ContentView: View {
             // ignored for the older reason: Compose has its own handler for it.
             .ignoresSafeArea(.container)
             .ignoresSafeArea(.keyboard)
+            .modifier(FollowsTheHinge())
     }
 }

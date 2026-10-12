@@ -138,10 +138,52 @@ a change of *kind* sets it off — which way the table lies, and whether the scr
 a desktop window dragged a few points stays still, and under reduced motion nothing travels.
 Held by `TheTableGlidesTest`, which also checks the names arrive after their cards.
 
-Not yet: the **hinge**. Half open, the fold divides the inner screen (a "division" region in
-iOS 27.1's `reservedRegions`, a `FoldingFeature` in Jetpack WindowManager), and a card table on
-a half-open phone wants the felt on one side of it and the rail on the other. That needs the
-platform's posture through an `expect`/`actual` and the iOS 27.1 SDK, and is the next step.
+**The opening is a page spread, and on iOS it follows the hinge** (2026-10-12: "those cool
+[animations] used during apple presentation for duo"). The Duo opens like a book into two pages
+the closed screen's shape — 466x678 closed, 951x669 open — so a table opening onto it starts out
+on the right-hand page at its own size and spreads across both (`pageOf`), rather than being
+stretched sideways. The page is the right half of the open table's *felt*, not of the screen: the
+open table stands its rail down the right, and a film of the glide showed a third of the closed
+table starting under it, a table sliding in from the edge rather than a book opening. And iOS 27.1 reports the hinge live (`onHingeChange`, handed to Compose by
+`FollowsTheHinge` in `ContentView.swift` and `HingeBridge.kt`): half open, the spread follows the
+angle from where the screen changed over to flat, the plates lagging the cards as they do on the
+clock, and the felt's lamp spreads with the opening the way Apple's wallpaper zooms. A hinge that
+rests a moment is a book held open, a pose rather than a move, and the table finishes on its own.
+Android reports a half-open fold but not its angle on most phones, so it keeps the clock. Building
+the iOS app now needs the iOS 27.1 SDK (VERSIONING.md).
+
+**The closed Duo's status column holds the header.** iOS 27.1 keeps no strip across the top of the
+closed Duo: its clock, connectivity and camera stand in a column down the right edge, 84 of 466
+points (measured on the Duo simulator), and its own toolbars stack their buttons in it. `App` tells
+a column from the insets (`statusColumn`), leaves it to the table, and keeps every other screen
+clear of it (`Edges`); the table stands its header there (`TableHeader(vertical)`) — the
+counter, the plan, the rules, the settings and the way out, from the foot, under a thumb, as marks
+without their words whatever the host, because 84 points has no room for "Leave the table" — and
+the felt gets the header's row (`TableLayout.column`).
+
+**And three things the store's screenshots showed** (`StoreShotErrorsTest`): green screens stood
+between two cream bars, because the app painted the rail behind the system bars on every screen —
+each screen now says what it has under them (`BehindTheBars`), and the felt's own top and bottom
+colours continue it; the talking coach's edge cut plates and piles in two — it gives up height to
+stop short of them now, or reaches past them if that stays on the felt and covers nothing the
+lesson is pointing at (`clearOf`); and where a side would cut one — the top seat's plate, on a
+tablet, stood just past a coach a paragraph wide — it widens to hold it. The coach measures its
+own head and foot for that, as the difference of two measured heights; worked out from the height
+it asked for, the number moved by a rounding whenever the coach did, which moved the coach, and a
+lesson never came to rest. And on a table on its side the score sheet straddled the felt and the
+rail and cut the rail's words — it rises over the felt now (`LocalSheetSpan`).
+
+Three more once those were fixed. The coach cleared plates and piles and still cut the side seats'
+cards, a sliver of each under its edge on a phone — it counts the cards now. The closed Duo's
+column beside the menu was two flat greens with a step halfway down, the felt's top and bottom
+colours over each half of the window; it is the screen's own gradient now, laid over the rows the
+screen spans, so the column is the felt beside it row for row. And a sheet over the closed Duo's
+table reached into the column, its ✕ where iOS draws the clock; a sheet keeps clear of it now, as
+every screen but a table does (`LocalStatusColumn`).
+
+Not yet: the **half-open layout**. Half open, the fold divides the inner screen (a "division"
+region in iOS 27.1's `reservedRegions`, a `FoldingFeature` in Jetpack WindowManager), and a card
+table on a half-open phone wants the felt on one side of it and the rail on the other.
 
 **A window theme of its own** (`values/themes.xml`). It was inheriting
 `Theme.Material.Light.NoActionBar`, which meant dark status-bar icons over a dark rail and a

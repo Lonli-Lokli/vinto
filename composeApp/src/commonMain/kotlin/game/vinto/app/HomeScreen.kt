@@ -117,6 +117,7 @@ fun HomeScreen(
     // store's build reads its own (`appVersion`), so a golden that read it would fail at a bump.
     version: String = LocalAppVersion.current,
 ) {
+    BehindTheBars(Behind.FELT)
     // A column of two, not a box with something pinned over it. The footer used to be one short
     // line and could safely overlay the menu; with a link beside it, it is a 44 dp tap target,
     // and at `fontScale = 2` it covered the bottom buttons — a press meant for one of them landed

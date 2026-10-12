@@ -28,6 +28,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,8 +52,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import game.vinto.app.Behind
+import game.vinto.app.BehindTheBars
 import game.vinto.app.CountConnectionTrouble
 import game.vinto.app.CountRefusals
+import game.vinto.app.LocalStatusColumn
 import game.vinto.app.UpdateNoticeDialog
 import game.vinto.app.UpdateTheApp
 import game.vinto.app.art.Res
@@ -99,8 +103,10 @@ import game.vinto.app.storeListingUrl
 import game.vinto.app.theme.BusyLine
 import game.vinto.app.theme.ButtonTone
 import game.vinto.app.theme.GameButton
+import game.vinto.app.theme.LocalSheetSpan
 import game.vinto.app.theme.Rail
 import game.vinto.app.theme.SeatSize
+import game.vinto.app.theme.SheetSpan
 import game.vinto.app.theme.Signal
 import game.vinto.app.theme.VintoSpinner
 import game.vinto.app.theme.WholeWords
@@ -123,6 +129,7 @@ import game.vinto.engine.tossInIsOpen
 import game.vinto.shapes.GamePhase
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
+import game.vinto.protocol.RoundResult as FiledRound
 
 /**
  * One room, hosted: the lobby until the deal, then the same table every local game uses.
@@ -188,6 +195,7 @@ private fun Table(
  */
 @Composable
 private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
+    BehindTheBars(Behind.FELT)
     val lobby by room.lobby.collectAsState()
     val connection by room.connection.collectAsState()
     CountConnectionTrouble(connection)
@@ -199,7 +207,9 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(MaterialTheme.colorScheme.feltGradient())),
+            .background(Brush.verticalGradient(MaterialTheme.colorScheme.feltGradient()))
+            // The lobby is not a table, so it keeps clear of a status column rather than using it.
+            .padding(end = LocalStatusColumn.current),
     ) {
         // Top-anchored, with the invitation and the way out at the foot of the screen.
         //
@@ -827,8 +837,11 @@ private fun RemoteGameScreen(
     // exactly the event being waited for, and needs no second message to say so.
     var agreed by remember(session) { mutableStateOf(false) }
 
+    // Where the score sheet rises: over the felt of a table on its side ([SheetSpan]).
+    var sheetSpan by remember { mutableStateOf<SheetSpan?>(null) }
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val layout = TableLayout.forScreen(maxWidth, maxHeight)
+        val layout = TableLayout.forScreen(maxWidth, maxHeight, column = LocalStatusColumn.current)
+        SideEffect { sheetSpan = layout.feltSpan(maxWidth) }
         // Captured here because the clock below is composed inside `CardStage`'s content
         // lambda, where this scope's receiver is no longer the one in reach.
         val roomWidth = maxWidth
@@ -889,39 +902,59 @@ private fun RemoteGameScreen(
         onLeft()
     }
 
-    // The just-finished round, from public facts: the wire delivered the scoring view; what
-    // it paid is derived by the tested rule in `roundPoints`. The room's own standings feed
-    // the cumulative column, minus this round if it has already been filed there.
     if (scoreOpen) {
-        val view = holder.current
-        val scores = view.scores.orEmpty()
-        val filed = standings.lastOrNull()?.scores == scores
-        val earlier = if (filed) standings.dropLast(1) else standings
-        StandingsSheet(
-            // Composed only once there is a result to show, so it is showing whenever it
-            // exists. `VintoSheet` animates from first composition, so this still rises.
-            open = true,
-            round = earlier.size + 1,
-            you = session.playerId,
-            result = RoundResult(
-                callerId = view.vintoCallerId,
-                hands = scores,
-                points = roundPoints(scores, view.vintoCallerId),
-                seats = view.players.map { it.id to it.nickname },
-            ),
-            standings = gameTotals(earlier.map { it.points }),
-            onNextRound = {
-                scoreOpen = false
-                agreed = true
-                room.nextRound()
-            },
-            onQuit = {
-                scoreOpen = false
-                room.quit()
-                onLeft()
-            },
-        )
+        CompositionLocalProvider(LocalSheetSpan provides sheetSpan) {
+            RoundSheet(
+                view = holder.current,
+                standings = standings,
+                you = session.playerId,
+                onNextRound = {
+                    scoreOpen = false
+                    agreed = true
+                    room.nextRound()
+                },
+                onQuit = {
+                    scoreOpen = false
+                    room.quit()
+                    onLeft()
+                },
+            )
+        }
     }
+}
+
+/**
+ * The just-finished round, from public facts: the wire delivered the scoring view; what it paid is
+ * derived by the tested rule in `roundPoints`. The room's own standings feed the cumulative column,
+ * minus this round if it has already been filed there.
+ */
+@Composable
+private fun RoundSheet(
+    view: PlayerView,
+    standings: List<FiledRound>,
+    you: String,
+    onNextRound: () -> Unit,
+    onQuit: () -> Unit,
+) {
+    val scores = view.scores.orEmpty()
+    val filed = standings.lastOrNull()?.scores == scores
+    val earlier = if (filed) standings.dropLast(1) else standings
+    StandingsSheet(
+        // Composed only once there is a result to show, so it is showing whenever it
+        // exists. `VintoSheet` animates from first composition, so this still rises.
+        open = true,
+        round = earlier.size + 1,
+        you = you,
+        result = RoundResult(
+            callerId = view.vintoCallerId,
+            hands = scores,
+            points = roundPoints(scores, view.vintoCallerId),
+            seats = view.players.map { it.id to it.nickname },
+        ),
+        standings = gameTotals(earlier.map { it.points }),
+        onNextRound = onNextRound,
+        onQuit = onQuit,
+    )
 }
 
 /**

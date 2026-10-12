@@ -78,6 +78,7 @@ fun DiscoverScreen(
     onJoin: (code: String) -> Unit,
     onBack: () -> Unit,
 ) {
+    BehindTheBars(Behind.FELT)
     var state by remember { mutableStateOf(DiscoveryState(loading = true)) }
     val scope = rememberCoroutineScope()
 

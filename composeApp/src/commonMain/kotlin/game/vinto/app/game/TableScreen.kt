@@ -60,6 +60,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
@@ -81,13 +82,17 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import game.vinto.app.Behind
+import game.vinto.app.BehindTheBars
 import game.vinto.app.Host
+import game.vinto.app.LocalHinge
 import game.vinto.app.LocalHost
 import game.vinto.app.LocalReducedMotion
 import game.vinto.app.Support
@@ -349,7 +354,15 @@ fun TableScreen(
     // recorded is then still the old table.
     val reshape = remember { Reshape() }
     val still = LocalReducedMotion.current
-    SideEffect { reshape.shapeIs(layout.shape, still) }
+    val hinge = LocalHinge.current
+    SideEffect {
+        reshape.hinge = hinge
+        reshape.layout = layout
+        reshape.shapeIs(layout.shape, still)
+    }
+
+    // The table's edges are the header and the rail: cream in light, slate in dark, as the bars.
+    BehindTheBars(Behind.RAIL)
 
     // The whole table in a box, so the arrival panel has something to sit *over*. Both branches
     // below filled the screen themselves and were the root; the box is the root now and they
@@ -374,97 +387,163 @@ private fun Table(
     modifier: Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize().onPlaced { reshape.table = it }) {
-        if (layout.landscape) {
-            // Centred, not stretched: the felt column is [TableLayout.feltWidth] wide — the
-            // whole remainder on a rotated phone, a capped table on a tablet or desktop — and
-            // the rail hugs it, so on a big screen the pair sits together in the middle of the
-            // app's dark surround rather than the controls drifting to one horizon and the
-            // seats to the other.
-            //
-            // The table and its rail are one object, and on a window taller than a table it sits in
-            // the middle of that window rather than being stretched down it. The band is the header
-            // plus the felt's own capped depth; what is left over is surround, above and below,
-            // exactly as the leftover width already is either side.
-            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .then(
-                            if (layout.feltHeight > 0.dp) {
-                                Modifier.height(HeaderHeight + layout.feltHeight)
-                            } else {
-                                Modifier.fillMaxHeight()
-                            },
-                        ),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    Column(modifier = Modifier.width(layout.feltWidth)) {
-                        TableHeader(
-                            state.view,
-                            state.round,
-                            onHelp,
-                            onSettings,
-                            onLeave,
-                            plan = state.table.planSummary,
-                            onMove = onMove,
-                            landscape = true,
-                        )
-                        FeltTable(
-                            state = state,
-                            sizes = layout.sizes,
-                            onMove = onMove,
-                            onHelp = onHelp,
-                            modifier = Modifier.weight(1f).padding(start = Edge, end = Edge, bottom = Edge),
-                        )
-                    }
-
-                    // The rail, standing at the side.
-                    Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
-                        ControlPanel(
-                            state = state,
-                            onMove = onMove,
-                            side = true,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                                .glides(reshape, RAIL_KEY, Glide.RAIL),
-                        )
-                    }
+        Row(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                if (layout.landscape) {
+                    OnItsSide(state, layout, onMove, onHelp, onSettings, onLeave, reshape)
+                } else {
+                    Upright(state, layout, onMove, onHelp, onSettings, onLeave, reshape)
                 }
             }
-        } else {
-            Column(modifier = modifier.fillMaxSize()) {
-                TableHeader(
-                    state.view,
-                    state.round,
-                    onHelp,
-                    onSettings,
-                    onLeave,
-                    plan = state.table.planSummary,
-                    onMove = onMove,
-                    landscape = false,
-                )
 
+            // The header stood up in the status column, where the system keeps one ([TableLayout.column]).
+            if (layout.column > 0.dp) HeaderInColumn(state, layout, onMove, onHelp, onSettings, onLeave)
+        }
+
+        TheCall(state)
+    }
+}
+
+/** The table on its side: the header and the felt in a column, the rail standing beside them. */
+@Composable
+private fun OnItsSide(
+    state: TableState,
+    layout: TableLayout,
+    onMove: (Move) -> Unit,
+    onHelp: (HelpTopic?) -> Unit,
+    onSettings: () -> Unit,
+    onLeave: (() -> Unit)?,
+    reshape: Reshape,
+) {
+    // Centred, not stretched: the felt column is [TableLayout.feltWidth] wide — the
+    // whole remainder on a rotated phone, a capped table on a tablet or desktop — and
+    // the rail hugs it, so on a big screen the pair sits together in the middle of the
+    // app's dark surround rather than the controls drifting to one horizon and the
+    // seats to the other.
+    //
+    // The table and its rail are one object, and on a window taller than a table it sits in
+    // the middle of that window rather than being stretched down it. The band is the header
+    // plus the felt's own capped depth; what is left over is surround, above and below,
+    // exactly as the leftover width already is either side.
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (layout.feltHeight > 0.dp) {
+                        Modifier.height(layout.header + layout.feltHeight)
+                    } else {
+                        Modifier.fillMaxHeight()
+                    },
+                ),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Column(modifier = Modifier.width(layout.feltWidth)) {
+                if (layout.column == 0.dp) {
+                    TableHeader(
+                        state.view,
+                        state.round,
+                        onHelp,
+                        onSettings,
+                        onLeave,
+                        plan = state.table.planSummary,
+                        onMove = onMove,
+                        landscape = true,
+                    )
+                }
                 FeltTable(
                     state = state,
                     sizes = layout.sizes,
                     onMove = onMove,
                     onHelp = onHelp,
-                    modifier = Modifier.weight(1f).padding(horizontal = Edge),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = Edge, end = Edge, bottom = Edge),
                 )
+            }
 
+            // The rail, standing at the side.
+            Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
                 ControlPanel(
                     state = state,
                     onMove = onMove,
+                    side = true,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(layout.railHeight)
+                        .weight(1f)
                         .glides(reshape, RAIL_KEY, Glide.RAIL),
                 )
             }
         }
+    }
+}
 
-        TheCall(state)
+/** The table upright: the header, the felt, and the rail under it. */
+@Composable
+private fun Upright(
+    state: TableState,
+    layout: TableLayout,
+    onMove: (Move) -> Unit,
+    onHelp: (HelpTopic?) -> Unit,
+    onSettings: () -> Unit,
+    onLeave: (() -> Unit)?,
+    reshape: Reshape,
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        if (layout.column == 0.dp) {
+            TableHeader(
+                state.view,
+                state.round,
+                onHelp,
+                onSettings,
+                onLeave,
+                plan = state.table.planSummary,
+                onMove = onMove,
+                landscape = false,
+            )
+        }
+
+        FeltTable(
+            state = state,
+            sizes = layout.sizes,
+            onMove = onMove,
+            onHelp = onHelp,
+            modifier = Modifier.weight(1f).padding(horizontal = Edge),
+        )
+
+        ControlPanel(
+            state = state,
+            onMove = onMove,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(layout.railHeight)
+                .glides(reshape, RAIL_KEY, Glide.RAIL),
+        )
+    }
+}
+
+/** The header, stood up in a status column the length of the screen. See [TableHeader]'s `vertical`. */
+@Composable
+private fun HeaderInColumn(
+    state: TableState,
+    layout: TableLayout,
+    onMove: (Move) -> Unit,
+    onHelp: (HelpTopic?) -> Unit,
+    onSettings: () -> Unit,
+    onLeave: (() -> Unit)?,
+) {
+    Box(modifier = Modifier.width(layout.column).fillMaxHeight()) {
+        TableHeader(
+            state.view,
+            state.round,
+            onHelp,
+            onSettings,
+            onLeave,
+            plan = state.table.planSummary,
+            onMove = onMove,
+            landscape = layout.landscape,
+            vertical = true,
+        )
     }
 }
 
@@ -1095,28 +1174,24 @@ internal fun TableHeader(
      * is exactly what `HeaderOrderTest` is for.
      */
     style: HeaderStyle = headerStyle(LocalHost.current, landscape),
+    /**
+     * Stood up in the status column a closed iPhone Duo keeps down its right edge, rather than laid
+     * across the top. iOS 27.1 puts its clock and camera at the top of that column and stacks a
+     * toolbar's buttons under them; the table's header does the same, and the felt gets the row.
+     */
+    vertical: Boolean = false,
 ) {
     val settings = stringResource(Res.string.header_settings)
     val leave = stringResource(Res.string.header_leave)
     val rules = stringResource(Res.string.header_rules)
-    val wideHeader = style.labelled
+    // Never words in a status column: it is 84 points across, and "Leave the table" is not.
+    val wideHeader = style.labelled && !vertical
     val name = stringResource(Res.string.app_name)
     val counter = stringResource(Res.string.table_round_turn, round, view.turnNumber)
 
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = HeaderEdge, vertical = Gap),
-        horizontalArrangement = Arrangement.spacedBy(Gap),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // The name and the counter, and they are what gives way when the row runs out.
-        //
-        // The weight is on *this* group rather than on a spacer between the two halves, and
-        // that is the whole of it: a Row with no give squeezes its children from the end, so
-        // the deck count — the last thing in the row — came out 36 points wide under a
-        // 44-point thumb, which `TouchTargetTest` reads as a target nobody can hit. A word
-        // may be clipped; a control may not.
-        HeaderName(name, counter.takeIf { style.counter }, modifier = Modifier.weight(1f))
-
+    // The controls, in their one order: the plan, the rules, the settings, the cup, and the way out
+    // last. Laid in a row across the top, or stood up in a status column (see [vertical]).
+    val controls: @Composable () -> Unit = {
         // Before the three glyphs, because it is the only one of the four that is about the
         // round rather than about the app.
         // **Labelled on every host, unlike the three glyphs beside it.** A gear and a question
@@ -1124,7 +1199,7 @@ internal fun TableHeader(
         // "not clear" — nothing on the screen said the switch was the way into the plan. It
         // costs four characters out of the wordmark's slack rather than out of another control,
         // because `HeaderName` is the one thing in this row carrying the weight.
-        plan?.let { PlanSwitch(LocalStage.current.planning, it, onMove) }
+        plan?.let { PlanSwitch(LocalStage.current.planning, it, onMove, stacked = vertical) }
 
         // The rules, in the one place on the screen that never moves.
         //
@@ -1180,6 +1255,44 @@ internal fun TableHeader(
             }
         }
     }
+
+    if (vertical) {
+        // The status column's own top is the system's — its clock, and on the iPhone Duo the camera
+        // — so the controls stand at its foot, under a thumb, and the round's counter over them.
+        Column(
+            modifier = Modifier.fillMaxSize().padding(vertical = Gap),
+            verticalArrangement = Arrangement.spacedBy(Gap, Alignment.Bottom),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (style.counter) {
+                Text(
+                    text = counter,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Rail.ink,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            controls()
+        }
+        return
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = HeaderEdge, vertical = Gap),
+        horizontalArrangement = Arrangement.spacedBy(Gap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // The name and the counter, and they are what gives way when the row runs out.
+        //
+        // The weight is on *this* group rather than on a spacer between the two halves, and
+        // that is the whole of it: a Row with no give squeezes its children from the end, so
+        // the deck count — the last thing in the row — came out 36 points wide under a
+        // 44-point thumb, which `TouchTargetTest` reads as a target nobody can hit. A word
+        // may be clipped; a control may not.
+        HeaderName(name, counter.takeIf { style.counter }, modifier = Modifier.weight(1f))
+        controls()
+    }
 }
 
 /**
@@ -1201,6 +1314,8 @@ private fun PlanSwitch(
     open: Boolean,
     summary: PlanSummary,
     onMove: (Move) -> Unit,
+    /** The label under the track rather than beside it: a status column is a thumb wide. */
+    stacked: Boolean = false,
 ) {
     val stage = LocalStage.current
     // A teammate rewrote your turn while the plan was closed — most often round the card you
@@ -1218,53 +1333,70 @@ private fun PlanSwitch(
         label = "plan",
     )
 
-    Row(
+    val switch = Modifier
+        .heightIn(min = TapTarget)
+        .toggleable(
+            value = open,
+            role = Role.Switch,
+            onValueChange = { onMove(if (open) Move.Ask(Question.None) else summary.open) },
+        )
+        .semantics { contentDescription = spoken }
+        .markedAs(stage, "choice:plan")
+        .padding(horizontal = Tight)
+    val parts: @Composable () -> Unit = { PlanSwitchFace(open, travel, changed) }
+    if (stacked) {
+        Column(
+            modifier = switch,
+            verticalArrangement = Arrangement.spacedBy(Tight),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) { parts() }
+    } else {
+        Row(
+            modifier = switch,
+            horizontalArrangement = Arrangement.spacedBy(Tight),
+            verticalAlignment = Alignment.CenterVertically,
+        ) { parts() }
+    }
+}
+
+/**
+ * What the plan's switch shows: the track and its thumb, the word, and the face of whoever changed
+ * your turn.
+ */
+@Composable
+private fun PlanSwitchFace(open: Boolean, travel: Dp, changed: String?) {
+    Box(
         modifier = Modifier
-            .heightIn(min = TapTarget)
-            .toggleable(
-                value = open,
-                role = Role.Switch,
-                onValueChange = { onMove(if (open) Move.Ask(Question.None) else summary.open) },
-            )
-            .semantics { contentDescription = spoken }
-            .markedAs(stage, "choice:plan")
-            .padding(horizontal = Tight),
-        horizontalArrangement = Arrangement.spacedBy(Tight),
-        verticalAlignment = Alignment.CenterVertically,
+            .size(SwitchTrack, SwitchHigh)
+            .clip(CircleShape)
+            .background(if (open) Signal.coalition else Rail.line)
+            .border(Hairline, Rail.edge, CircleShape),
+        contentAlignment = Alignment.CenterStart,
     ) {
         Box(
             modifier = Modifier
-                .size(SwitchTrack, SwitchHigh)
+                .padding(SwitchSeat)
+                .offset(x = travel)
+                .size(SwitchThumb)
                 .clip(CircleShape)
-                .background(if (open) Signal.coalition else Rail.line)
-                .border(Hairline, Rail.edge, CircleShape),
-            contentAlignment = Alignment.CenterStart,
-        ) {
-            Box(
-                modifier = Modifier
-                    .padding(SwitchSeat)
-                    .offset(x = travel)
-                    .size(SwitchThumb)
-                    .clip(CircleShape)
-                    .background(if (open) Rail.fill else Rail.ink),
-            )
-        }
-        Text(
-            stringResource(Res.string.label_plan_open).uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp,
-            color = Rail.ink,
+                .background(if (open) Rail.fill else Rail.ink),
         )
-        changed?.let { who ->
-            Box(
-                modifier = Modifier
-                    .size(SwitchFace)
-                    .border(SwitchNews, Signal.coalition, CircleShape)
-                    .clearAndSetSemantics { },
-            ) {
-                Avatar(name = who, size = SwitchFace)
-            }
+    }
+    Text(
+        stringResource(Res.string.label_plan_open).uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 1.sp,
+        color = Rail.ink,
+    )
+    changed?.let { who ->
+        Box(
+            modifier = Modifier
+                .size(SwitchFace)
+                .border(SwitchNews, Signal.coalition, CircleShape)
+                .clearAndSetSemantics { },
+        ) {
+            Avatar(name = who, size = SwitchFace)
         }
     }
 }
@@ -1325,6 +1457,10 @@ private fun Felt(
     val scheme = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(FeltCorner)
     val weave = rememberFeltWeave()
+    // The lamp over the table opens with the phone, as the wallpaper does on the iPhone Duo: spread
+    // wide while it is half open, settling to its own size as it lies flat. Read in the draw, so the
+    // hinge moving costs a redraw of the cloth and nothing else.
+    val hinge = LocalHinge.current
     val cloth = remember(scheme) { Brush.verticalGradient(scheme.feltGradient()) }
     BoxWithConstraints(
         modifier = modifier
@@ -1345,7 +1481,13 @@ private fun Felt(
                 val shade = scheme.feltShade()
                 onDrawBehind {
                     drawRect(weave)
-                    drawRect(lamp)
+                    val now = hinge.value
+                    val spread = if (now != null && now.partiallyOpen) {
+                        1f + LAMP_SPREAD * (1f - now.degrees / HINGE_FLAT).coerceIn(0f, 1f)
+                    } else {
+                        1f
+                    }
+                    scale(spread) { drawRect(lamp) }
                     drawRect(shade)
                 }
             }
@@ -2369,6 +2511,10 @@ private val NameRun.turn: Float
     }
 
 private const val QUARTER_TURN = 90f
+
+/** How far the lamp spreads past its own size while a folding phone is half open, and flat. */
+private const val LAMP_SPREAD = 0.35f
+private const val HINGE_FLAT = 180f
 
 /**
  * Takes no width in the layout, and draws its whole self from where it was put — rightwards from

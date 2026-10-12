@@ -3,6 +3,7 @@ package game.vinto.app.game
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.phoneHeldUpright
+import game.vinto.app.theme.SheetSpan
 
 /**
  * The smallest a card may be laid out at, whatever size its picture is drawn.
@@ -234,7 +235,8 @@ data class TableSizes(
          * whatever its contents ask for. The felt is the remainder, and the remainder is the
          * same in every phase of every turn.
          */
-        fun forScreen(screen: Dp): TableSizes = forHeight(screen - HeaderHeight - railHeight(screen))
+        fun forScreen(screen: Dp, header: Dp = HeaderHeight): TableSizes =
+            forHeight(screen - header - railHeight(screen))
     }
 }
 
@@ -296,7 +298,15 @@ data class TableLayout(
      * ([nameRun]), so a wide phone reads it across as a tablet does.
      */
     val phone: Boolean = true,
+    /**
+     * The status column the system keeps down the screen's end edge, when it keeps one, or zero.
+     * See [forScreen].
+     */
+    val column: Dp = 0.dp,
 ) {
+    /** The header row's height: none where the header stands in a status [column] instead. */
+    val header: Dp get() = if (column > 0.dp) 0.dp else HeaderHeight
+
     /**
      * The arrangement as a kind of table rather than as a set of numbers: which way it lies, and
      * whether it is a phone's. A change of this is a table changing shape — a fold opened, a tablet
@@ -304,6 +314,17 @@ data class TableLayout(
      * shape ([Reshape]). A window resized within one kind changes only numbers, and does not.
      */
     val shape: TableShape get() = TableShape(landscape, phone)
+
+    /**
+     * Where a sheet should rise over this table in a window [window] wide: over the felt of a table
+     * on its side, whose felt and rail sit centred together in what the status column leaves; and
+     * the whole window for a table upright, where the felt already is the window's width.
+     */
+    fun feltSpan(window: Dp): SheetSpan? {
+        if (!landscape) return null
+        val band = feltWidth + railWidth
+        return SheetSpan(left = ((window - column - band) / 2).coerceAtLeast(0.dp), width = feltWidth)
+    }
 
     companion object {
         /** The portrait arrangement, from the height alone — what every phone test uses. */
@@ -324,21 +345,31 @@ data class TableLayout(
          * an open iPhone Duo on its side, still come out on their side; `UnfoldedPhonesTest`
          * holds both halves.
          */
-        fun forScreen(width: Dp, height: Dp): TableLayout {
+        fun forScreen(width: Dp, height: Dp, column: Dp = 0.dp): TableLayout {
+            // Whether it is a phone is the screen's to say, whatever the system keeps of it.
             val phone = phoneHeldUpright(minOf(width, height).value.toInt())
-            val upright = forScreen(height).copy(phone = phone)
-            if (width <= height) return upright
-            val onItsSide = onItsSide(width, height).copy(phone = phone)
-            val uprightFelt = height - HeaderHeight - upright.railHeight
-            val uprightTable = minOf(width, uprightFelt * TABLE_ASPECT) * uprightFelt.value
+            // A status column takes its width from the table and its header from the top row:
+            // the header stands in it (`TableHeader(vertical)`), and the felt gets the row.
+            val header = if (column > 0.dp) 0.dp else HeaderHeight
+            val across = width - column
+            val upright = TableLayout(
+                TableSizes.forScreen(height, header),
+                railHeight(height),
+                phone = phone,
+                column = column,
+            )
+            if (across <= height) return upright
+            val onItsSide = onItsSide(across, height, header).copy(phone = phone, column = column)
+            val uprightFelt = height - header - upright.railHeight
+            val uprightTable = minOf(across, uprightFelt * TABLE_ASPECT) * uprightFelt.value
             val sideTable = onItsSide.feltWidth * onItsSide.feltHeight.value
             return if (uprightTable > sideTable) upright else onItsSide
         }
 
         /** The table on its side: the felt and its header in a column, the rail standing beside them. */
-        private fun onItsSide(width: Dp, height: Dp): TableLayout {
+        private fun onItsSide(width: Dp, height: Dp, header: Dp): TableLayout {
             // What there is to play on, before the table is cut out of it.
-            val available = height - HeaderHeight
+            val available = height - header
             val wide = minOf(width - railWidth(width), available * TABLE_ASPECT, TABLE_MAX_WIDTH)
             // And never deeper than a table is: the two caps together hold the felt's shape
             // between [TABLE_DEEPEST] and [TABLE_ASPECT], whatever shape the window is.
