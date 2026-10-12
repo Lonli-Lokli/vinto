@@ -393,7 +393,13 @@ private fun RailBody(
         // So a tall rail holds the same group at a phone's height and centres it on the felt it
         // stands beside. Nothing inside changes: the block still fills the group and the choices
         // still sit at its foot, which is what `RailFitsTest` measures.
-        val tall = rail.isFinite && rail > railGroup(rail)
+        //
+        // **Tall means room for both**: the group, and the log's strip under it. It meant only
+        // "taller than the group", and between about 340 and 700 points — an open iPhone Duo on
+        // its side, an iPad mini on its side — the group was centred over the strip's top and the
+        // log's first line was drawn across SWAP CARDS (`UnfoldedPhonesTest`). A rail with room
+        // for one but not both keeps the phone's arrangement, the log inside the block.
+        val tall = rail.isFinite && rail >= railGroup(rail) + LogTall + Gap
         val group = if (tall) Modifier.fillMaxWidth().height(railGroup(rail)) else Modifier.fillMaxSize()
 
         // **On a tall rail the log has a place of its own, at the foot, and never moves.**
@@ -404,30 +410,27 @@ private fun RailBody(
         // *never* the thing you are being asked about, and it is exactly the thing that was
         // being moved by every question. Outside the centred group it is furniture: same place,
         // same height, whatever the turn is doing.
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = group.align(Alignment.Center),
-                verticalArrangement = Arrangement.spacedBy(Gap),
-            ) {
-                RailBlock(
-                    state,
-                    table,
-                    inPlay,
-                    recent,
-                    crowded = crowded || tall,
-                    twoLines,
-                    modifier = Modifier.weight(1f),
-                )
-                RailFoot(table, footCap, side, onMove)
+        //
+        // The group is centred in what the strip leaves rather than in the whole rail, so the two
+        // can never meet whatever the rail's height.
+        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(Gap)) {
+            Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                Column(modifier = group, verticalArrangement = Arrangement.spacedBy(Gap)) {
+                    RailBlock(
+                        state,
+                        table,
+                        inPlay,
+                        recent,
+                        crowded = crowded || tall,
+                        twoLines,
+                        modifier = Modifier.weight(1f),
+                    )
+                    RailFoot(table, footCap, side, onMove)
+                }
             }
 
             if (tall) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .height(LogTall),
-                ) {
+                Box(modifier = Modifier.fillMaxWidth().height(LogTall)) {
                     RecentActions(recent)
                 }
             }

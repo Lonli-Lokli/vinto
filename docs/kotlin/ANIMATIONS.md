@@ -74,10 +74,14 @@ A flight is one word of several. These are all of them, and what drives each.
 | **Held up** | the rank a King borrowed is shown beside it | the scene | a `Borrowed` beat |
 | **Line** | a seat says something short | 1400ms | a `Say` beat |
 | **Breath** | a ring pulses slowly round a card that can be touched | continuous | not a beat: the card is tappable right now |
+| **Glide** | the whole table travels to a new shape: each hand and the piles from where they stood (as a share of the old screen) to their new place, the plates slowly after them, turning where the name changes direction, and the rail swinging round the felt's corner to its new edge | 550ms cards, 1.1s plates, 650ms rail | not a beat: the table changing *kind* — a fold opened or closed, a tablet turned, a window across the phone line (`Reshape`, `TheTableGlidesTest`). Nothing under reduced motion |
 
-Everything above except the **flip**, the **breath** and the **lift's duration** is
+Everything above except the **flip**, the **breath**, the **glide** and the **lift's duration** is
 choreographed — the engine says what happened, `choreograph` turns it into beats, and the
-table plays them in order. Those three are the table reacting to what it is drawing: a card
+table plays them in order. The glide is the screen rather than the game: nothing happened at the
+table, the table itself moved, and it moves only the picture — every piece is already laid out
+where it ends, so a flight that starts mid-glide aims at the right place. The other three are the
+table reacting to what it is drawing: a card
 that becomes visible turns over, a card that can be tapped breathes, and a card an action has
 taken up stays in the air, each for as long as that is true and not a frame longer. The
 lift's *rise* is still a beat — the table dwells on the moment — but its life belongs to the

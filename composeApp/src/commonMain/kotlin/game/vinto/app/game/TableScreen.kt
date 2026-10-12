@@ -38,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
@@ -69,6 +70,7 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -87,6 +89,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import game.vinto.app.Host
 import game.vinto.app.LocalHost
+import game.vinto.app.LocalReducedMotion
 import game.vinto.app.Support
 import game.vinto.app.TextMark
 import game.vinto.app.art.Res
@@ -341,10 +344,36 @@ fun TableScreen(
     // alike, so the one composable both screens go through is where it belongs.
     PlanRunner(state.table, onMove)
 
+    // The table changing shape glides to its new one ([Reshape]). Told the shape in a side effect,
+    // which lands after this composition and before its layout is placed: what the pieces last
+    // recorded is then still the old table.
+    val reshape = remember { Reshape() }
+    val still = LocalReducedMotion.current
+    SideEffect { reshape.shapeIs(layout.shape, still) }
+
     // The whole table in a box, so the arrival panel has something to sit *over*. Both branches
     // below filled the screen themselves and were the root; the box is the root now and they
-    // fill it, which changes no measurement and gives the overlay a parent that stacks.
-    Box(modifier = modifier.fillMaxSize()) {
+    // fill it, which changes no measurement and gives the overlay a parent that stacks. It is also
+    // what a glide is measured against, being the one thing that is the same in both shapes.
+    CompositionLocalProvider(LocalReshape provides reshape) {
+        Table(state, layout, onMove, onHelp, onSettings, onLeave, reshape, modifier)
+    }
+}
+
+/** The two arrangements, and the panel that sits over either. See [TableScreen]. */
+@Suppress("LongParameterList")
+@Composable
+private fun Table(
+    state: TableState,
+    layout: TableLayout,
+    onMove: (Move) -> Unit,
+    onHelp: (HelpTopic?) -> Unit,
+    onSettings: () -> Unit,
+    onLeave: (() -> Unit)?,
+    reshape: Reshape,
+    modifier: Modifier,
+) {
+    Box(modifier = modifier.fillMaxSize().onPlaced { reshape.table = it }) {
         if (layout.landscape) {
             // Centred, not stretched: the felt column is [TableLayout.feltWidth] wide — the
             // whole remainder on a rotated phone, a capped table on a tablet or desktop — and
@@ -383,6 +412,7 @@ fun TableScreen(
                         FeltTable(
                             state = state,
                             sizes = layout.sizes,
+                            phone = layout.phone,
                             onMove = onMove,
                             onHelp = onHelp,
                             modifier = Modifier.weight(1f).padding(start = Edge, end = Edge, bottom = Edge),
@@ -395,7 +425,10 @@ fun TableScreen(
                             state = state,
                             onMove = onMove,
                             side = true,
-                            modifier = Modifier.fillMaxWidth().weight(1f),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .glides(reshape, RAIL_KEY, Glide.RAIL),
                         )
                     }
                 }
@@ -416,6 +449,7 @@ fun TableScreen(
                 FeltTable(
                     state = state,
                     sizes = layout.sizes,
+                    phone = layout.phone,
                     onMove = onMove,
                     onHelp = onHelp,
                     modifier = Modifier.weight(1f).padding(horizontal = Edge),
@@ -424,7 +458,10 @@ fun TableScreen(
                 ControlPanel(
                     state = state,
                     onMove = onMove,
-                    modifier = Modifier.fillMaxWidth().height(layout.railHeight),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(layout.railHeight)
+                        .glides(reshape, RAIL_KEY, Glide.RAIL),
                 )
             }
         }
@@ -547,6 +584,8 @@ fun <T : Any> seatingFor(players: List<T>, viewer: T?): Seating<T> {
 private fun FeltTable(
     state: TableState,
     sizes: TableSizes,
+    /** Whether the screen is a phone — see [TableLayout.phone]. */
+    phone: Boolean,
     onMove: (Move) -> Unit,
     onHelp: (HelpTopic?) -> Unit,
     modifier: Modifier = Modifier,
@@ -597,6 +636,7 @@ private fun FeltTable(
                 view = view,
                 table = table,
                 sizes = sizes,
+                phone = phone,
                 onMove = onMove,
                 onHelp = onHelp,
             )
@@ -1350,7 +1390,15 @@ private fun TopSeat(
         // hand narrowing as it wrapped, and the plate sliding inwards with it, reported from a
         // phone as the avatars jumping to the centre — is held by the hand itself now: it is
         // never narrower than its dealt five ([Hand]).
-        Hand(seat, view, table, sizes.theirs, onMove, Modifier.weight(1f, fill = false), roomy = roomy)
+        Hand(
+            seat,
+            view,
+            table,
+            sizes.theirs,
+            onMove,
+            Modifier.weight(1f, fill = false).glides(LocalReshape.current, handKey(seat.id), Glide.CARDS),
+            roomy = roomy,
+        )
         Plate(seat, view, table, sizes, onMove)
     }
 }
@@ -1391,6 +1439,7 @@ private fun MiddleRow(
     view: PlayerView,
     table: Table,
     sizes: TableSizes,
+    phone: Boolean,
     onMove: (Move) -> Unit,
     onHelp: (HelpTopic?) -> Unit,
     modifier: Modifier = Modifier,
@@ -1421,9 +1470,11 @@ private fun MiddleRow(
             // ran clean across the piles. `HandLine` can only cap the lines it lays if somebody
             // has told it how much room across it has.
             val share = Modifier.weight(1f)
-            SideSeat(left, view, table, sizes, onTheLeft = true, onMove = onMove, modifier = share)
-            Piles(view, sizes, table.board, onHelp)
-            SideSeat(right, view, table, sizes, onTheLeft = false, onMove = onMove, modifier = share)
+            SideSeat(left, view, table, sizes, phone, onTheLeft = true, onMove = onMove, modifier = share)
+            Box(modifier = Modifier.glides(LocalReshape.current, PILES_KEY, Glide.CARDS)) {
+                Piles(view, sizes, table.board, onHelp)
+            }
+            SideSeat(right, view, table, sizes, phone, onTheLeft = false, onMove = onMove, modifier = share)
         }
     }
 }
@@ -1438,6 +1489,7 @@ private fun SideSeat(
     view: PlayerView,
     table: Table,
     sizes: TableSizes,
+    phone: Boolean,
     onTheLeft: Boolean,
     onMove: (Move) -> Unit,
     modifier: Modifier = Modifier,
@@ -1452,7 +1504,7 @@ private fun SideSeat(
         modifier = modifier,
         contentAlignment = if (onTheLeft) Alignment.CenterStart else Alignment.CenterEnd,
     ) {
-        SideColumn(seat, view, table, sizes, onTheLeft, onMove)
+        SideColumn(seat, view, table, sizes, phone, onTheLeft, onMove)
     }
 }
 
@@ -1593,14 +1645,24 @@ private fun SideColumn(
     view: PlayerView,
     table: Table,
     sizes: TableSizes,
+    phone: Boolean,
     onTheLeft: Boolean,
     onMove: (Move) -> Unit,
 ) {
     val count = seat.cards.size
+    // Along the rim on a phone, where the plate has to be a thumb wide; across anywhere with room,
+    // which is every screen that is not a phone (owner, 2026-10-12: "player name must be horizontal
+    // as we have plenty of space"). Measured like any plate, so the hand is laid round whichever.
+    val run = when {
+        !phone -> NameRun.ACROSS
+        onTheLeft -> NameRun.UP
+        else -> NameRun.DOWN
+    }
+    val reshape = LocalReshape.current
     SubcomposeLayout(modifier = Modifier.ringed(seat, view)) { constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
         val plate = subcompose(SidePart.PLATE) {
-            Plate(seat, view, table, sizes, onMove, if (onTheLeft) NameRun.UP else NameRun.DOWN)
+            Plate(seat, view, table, sizes, onMove, run, besideOnTheLeft = onTheLeft)
         }.measured(loose)
 
         val hand = sideHand(
@@ -1628,8 +1690,10 @@ private fun SideColumn(
         // same cards wherever the share has room; only a grown hand in a narrow share is drawn
         // smaller, and then because its second column needs the width.
         fun column(part: SidePart, from: Int, until: Int): Placeable? = subcompose(part) {
-            HandLine(vertical = true, countFromEnd = !onTheLeft) {
-                Cards(seat, view, table, hand.scale, onMove, turned = true, first = from, end = until)
+            Box(modifier = Modifier.glides(reshape, handKey(seat.id, part.name), Glide.CARDS)) {
+                HandLine(vertical = true, countFromEnd = !onTheLeft) {
+                    Cards(seat, view, table, hand.scale, onMove, turned = true, first = from, end = until)
+                }
             }
         }.measured(loose)
 
@@ -1727,7 +1791,7 @@ private fun NearSeat(
                 table,
                 if (mine) sizes.mine else sizes.theirs,
                 onMove,
-                Modifier.weight(1f, fill = false),
+                Modifier.weight(1f, fill = false).glides(LocalReshape.current, handKey(seat.id), Glide.CARDS),
                 // Your first row is the **lower** one: six along the bottom of the felt and the
                 // three that will not fit above them, which is where a person would put them.
                 firstRowBelow = true,
@@ -2187,6 +2251,12 @@ private fun Plate(
     sizes: TableSizes,
     onMove: (Move) -> Unit,
     run: NameRun = NameRun.ACROSS,
+    /**
+     * Which side seat this plate stands at, or null above and below the felt. A side plate is a
+     * column of its own beside the cards, so its quip overhangs inward instead of widening it —
+     * whichever way its name runs.
+     */
+    besideOnTheLeft: Boolean? = null,
 ) {
     val active = view.turnHolderId == seat.id
 
@@ -2219,14 +2289,17 @@ private fun Plate(
     // A side plate is a thumb wide and its quip is a sentence, so the quip overhangs rather than
     // widening the plate — which would take the width the cards beside it are laid in — and is
     // drawn over them for the second it is there. It hangs inward from the plate's rim edge.
-    val side = run != NameRun.ACROSS
+    val side = besideOnTheLeft != null
     Column(
         horizontalAlignment = when (run) {
             NameRun.ACROSS -> Alignment.CenterHorizontally
             NameRun.UP -> Alignment.Start
             NameRun.DOWN -> Alignment.End
         },
-        modifier = if (side) Modifier.zIndex(1f) else Modifier,
+        // The plate, with its name, is the piece that travels slowly when the table changes shape,
+        // and turns on the way when its name changes direction ([Reshape]).
+        modifier = (if (side) Modifier.zIndex(1f) else Modifier)
+            .glides(LocalReshape.current, "plate:${seat.id}", Glide.PLATE, run.turn),
     ) {
         // Three bots that only ever move cards are furniture. A line at the right moment —
         // announcing a Vinto, wincing at a penalty — is what makes the other seats read as
@@ -2237,7 +2310,7 @@ private fun Plate(
                 color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier
                     .padding(bottom = 2.dp)
-                    .then(if (side) Modifier.overhang(run == NameRun.UP) else Modifier),
+                    .then(besideOnTheLeft?.let { Modifier.overhang(fromStart = it) } ?: Modifier),
             ) {
                 Text(
                     it,
@@ -2267,6 +2340,25 @@ private fun Plate(
         )
     }
 }
+
+/**
+ * What each piece glides under ([Reshape]): the same name in either arrangement, so a seat's hand
+ * on a phone and the same seat's hand on the open fold are known to be one thing.
+ */
+private const val RAIL_KEY = "rail"
+private const val PILES_KEY = "piles"
+
+private fun handKey(seat: String, part: String = "") = "hand:$seat:$part"
+
+/** How far a plate's name is turned: a quarter either way at a phone's sides, and not at all elsewhere. */
+private val NameRun.turn: Float
+    get() = when (this) {
+        NameRun.ACROSS -> 0f
+        NameRun.UP -> -QUARTER_TURN
+        NameRun.DOWN -> QUARTER_TURN
+    }
+
+private const val QUARTER_TURN = 90f
 
 /**
  * Takes no width in the layout, and draws its whole self from where it was put — rightwards from

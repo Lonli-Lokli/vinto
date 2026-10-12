@@ -2,6 +2,7 @@ package game.vinto.app.game
 
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import game.vinto.app.phoneHeldUpright
 
 /**
  * The smallest a card may be laid out at, whatever size its picture is drawn.
@@ -284,21 +285,65 @@ data class TableLayout(
      * leftover width already does, and the whole table sits in the middle of the window.
      */
     val feltHeight: Dp = 0.dp,
+    /**
+     * Whether the screen is a phone's, by the one line the app draws between a phone and anything
+     * larger ([phoneHeldUpright]) — measured across the **screen**, not the felt.
+     *
+     * The side seats read their names along the rim on a phone, where width is the thing the felt
+     * has least of, and across everywhere else: "player name must be horizontal as we have plenty
+     * of space" (owner, 2026-10-12, of unfolded phones, tablets and desktops). An open fold's felt
+     * on its side can be under 600 points deep while the screen is a small tablet's, and it is the
+     * screen that says how the player is holding it.
+     */
+    val phone: Boolean = true,
 ) {
+    /**
+     * The arrangement as a kind of table rather than as a set of numbers: which way it lies, and
+     * whether it is a phone's. A change of this is a table changing shape — a fold opened, a tablet
+     * turned, a window dragged across the line — and is what sets the table gliding to its new
+     * shape ([Reshape]). A window resized within one kind changes only numbers, and does not.
+     */
+    val shape: TableShape get() = TableShape(landscape, phone)
+
     companion object {
         /** The portrait arrangement, from the height alone — what every phone test uses. */
         fun forScreen(screen: Dp): TableLayout =
             TableLayout(TableSizes.forScreen(screen), railHeight(screen))
 
-        /** The arrangement for a screen of this shape: portrait tall, landscape wide. */
-        fun forScreen(width: Dp, height: Dp): TableLayout = if (width > height) {
+        /**
+         * The arrangement for a screen of this shape: portrait tall, and on its side wide — when
+         * that is the bigger table.
+         *
+         * **Not simply whichever side is longer.** On its side the felt is held to a table's shape
+         * ([TABLE_DEEPEST]) and whatever is left becomes surround, so a screen that is nearly
+         * square — an open Galaxy Z Fold, a Pixel Fold — gave the cards a table two thirds of its
+         * width with empty bands above and below. Upright, the rail takes its share under the felt
+         * and the felt has the whole width above it. So both are worked out and the one with more
+         * usable felt is dealt: usable meaning no wider than [TABLE_ASPECT] times its depth, since
+         * width past that only spreads the seats apart. Every tablet and desktop on its side, and
+         * an open iPhone Duo on its side, still come out on their side; `UnfoldedPhonesTest`
+         * holds both halves.
+         */
+        fun forScreen(width: Dp, height: Dp): TableLayout {
+            val phone = phoneHeldUpright(minOf(width, height).value.toInt())
+            val upright = forScreen(height).copy(phone = phone)
+            if (width <= height) return upright
+            val onItsSide = onItsSide(width, height).copy(phone = phone)
+            val uprightFelt = height - HeaderHeight - upright.railHeight
+            val uprightTable = minOf(width, uprightFelt * TABLE_ASPECT) * uprightFelt.value
+            val sideTable = onItsSide.feltWidth * onItsSide.feltHeight.value
+            return if (uprightTable > sideTable) upright else onItsSide
+        }
+
+        /** The table on its side: the felt and its header in a column, the rail standing beside them. */
+        private fun onItsSide(width: Dp, height: Dp): TableLayout {
             // What there is to play on, before the table is cut out of it.
             val available = height - HeaderHeight
             val wide = minOf(width - railWidth(width), available * TABLE_ASPECT, TABLE_MAX_WIDTH)
             // And never deeper than a table is: the two caps together hold the felt's shape
             // between [TABLE_DEEPEST] and [TABLE_ASPECT], whatever shape the window is.
             val deep = minOf(available, wide / TABLE_DEEPEST)
-            TableLayout(
+            return TableLayout(
                 sizes = TableSizes.forHeight(deep),
                 railHeight = 0.dp,
                 landscape = true,
@@ -316,11 +361,12 @@ data class TableLayout(
                 feltWidth = wide,
                 feltHeight = deep,
             )
-        } else {
-            forScreen(height)
         }
     }
 }
+
+/** See [TableLayout.shape]. */
+data class TableShape(val landscape: Boolean, val phone: Boolean)
 
 /**
  * The widest a felt may be for its height. A real card table is wider than deep but not by

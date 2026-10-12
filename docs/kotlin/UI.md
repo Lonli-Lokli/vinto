@@ -102,6 +102,44 @@ asks again when a fold opens or closes. A phone's browser cannot be held upright
 the web still gets the sideways layout on a turned phone — `SidewaysPhoneTest` keeps it from
 breaking there. `LandscapeTableTest` holds the desktop window to the cap and the centring.
 
+**A phone that opens** (2026-10-12: "we must rethink our layout for folding phones including new
+iPhone duo"). Measured first, by rendering the real app at each open screen — the iPhone Duo
+(466x678 closed, 951x669 open on its side), the Galaxy Z Fold 7 (832x750 open) and the Pixel 9
+Pro Fold (923x891) — and three things were wrong that needed no hinge to show:
+
+- *The log lay over the buttons.* A side rail counted as tall whenever it was taller than its
+  controls, which centres them and pins the log to the foot; between about 340 and 700 points
+  nothing asked whether both fit, and on the open Duo and an iPad mini on its side the log's
+  first line crossed SWAP CARDS. Tall now means room for both, and the controls are centred in
+  what the log's strip leaves (`RailBody`).
+- *A nearly square screen was dealt the table on its side*, where the felt is held to a table's
+  shape and the rest is surround — an open Fold had a table two thirds of its width with empty
+  bands above and below. `TableLayout.forScreen` now works out both arrangements and deals the one
+  with more usable felt (no wider than `TABLE_ASPECT` times its depth). Every tablet and desktop
+  on its side, and the open Duo, still come out on their side.
+- *The side seats' names still ran up and down the rim with room to spare.* The owner: "player
+  name must be horizontal as we have plenty of space". So the turned name is a phone's
+  (`TableLayout.phone`, decided across the **screen** by `phoneHeldUpright`) and every other
+  screen gives the side seats the plate the seats above and below have.
+
+All three are held by `UnfoldedPhonesTest`.
+
+**And the table travels to its new shape** instead of being there in the next frame — the
+owner's "our names slowly moving into new position, plus some good animation of moving controls
+part". The layout is final at once; what moves is the picture (`Reshape`, `Modifier.glides`):
+each piece is drawn from where it stood, as a share of the old table laid over the new one, back
+to its place. The hands and the piles go first and briskly (550 ms); the plates start a moment
+later and slow all the way in (1.1 s), turning on the way where the name changes direction; the
+rail swings round the felt's corner to its new edge (650 ms) rather than crossing the cards. Only
+a change of *kind* sets it off — which way the table lies, and whether the screen is a phone — so
+a desktop window dragged a few points stays still, and under reduced motion nothing travels.
+Held by `TheTableGlidesTest`, which also checks the names arrive after their cards.
+
+Not yet: the **hinge**. Half open, the fold divides the inner screen (a "division" region in
+iOS 27.1's `reservedRegions`, a `FoldingFeature` in Jetpack WindowManager), and a card table on
+a half-open phone wants the felt on one side of it and the rail on the other. That needs the
+platform's posture through an `expect`/`actual` and the iOS 27.1 SDK, and is the next step.
+
 **A window theme of its own** (`values/themes.xml`). It was inheriting
 `Theme.Material.Light.NoActionBar`, which meant dark status-bar icons over a dark rail and a
 white flash before the first composition. `Theme.Vinto` is dark Material with the rail as its
