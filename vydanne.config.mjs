@@ -380,6 +380,22 @@ export default {
     },
   ],
 
+  /**
+   * What `bridge` carries from zdymak's output beyond the ordinary sets.
+   *
+   * The iPhone Duo set is ten pictures between the closed screen and the open one, and the folders
+   * are named so the set cannot quietly change: zdymak also knows the open screen upright and the
+   * closed one on its side, and rendering either would push the set past ten. Six closed, four open
+   * on its side (`zdymak.config.mjs`, `DUO_OPEN`), the closed six first.
+   *
+   * The header strip and the search picture (iOS 27) need nothing here: zdymak's `appstore-header`
+   * and `appstore-search` land in `fastlane/creative/<locale>/` by their own names, and
+   * `vydanne creative` places them through the App Asset Library.
+   */
+  bridge: {
+    apple: { iphoneduo: { dirs: ['appstore-iphone-duo-outer', 'appstore-iphone-duo-inner-landscape'] } },
+  },
+
   // Google Play. Package-scoped: vydanne only ever touches this packageName.
   google: {
     packageName: 'app.kupalinka.vinto',

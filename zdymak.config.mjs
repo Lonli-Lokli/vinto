@@ -6,7 +6,8 @@
  *   npx zdymak capture --platform android # drive the app and take the shots
  *   npx zdymak build --clean              # screenshots + videos for every device below
  *
- * Pinned to zdymak 0.25.0 — the version `.claude/skills/zdymak/SKILL.md` was vendored from.
+ * Pinned to zdymak 1.1.0 — the version `.claude/skills/zdymak/SKILL.md` was vendored from, and
+ * the first with the iOS 27 header and search targets, the iPhone Duo slot and `hand: 'below'`.
  * Behaviour here is version-specific (the output layout changed at 0.15), so bump both together.
  *
  * **The exception that stood here is closed.** `appstore-iap-review` was added to zdymak for this
@@ -54,6 +55,53 @@ const REEL_SEGMENTS = [
   { clip: './marketing/clips/score.mov', dur: 3.2 },
   { image: './marketing/captures/ios/lobby.png', dur: 2.4 },
 ];
+
+/**
+ * The narrative, and it is the game's own order of discovery rather than a feature list:
+ * what the goal is, what a turn costs you, that the app teaches itself, that other people
+ * can sit down, and what winning looks like.
+ *
+ * Each `id` is the screen it shows. They double as capture state names for the day the
+ * handle exists, which is why they are screens and not slogans.
+ *
+ * Declared out here because the iPhone Duo tells part of it twice: its one store set holds ten
+ * pictures between the closed screen and the open one (`DUO_OPEN`).
+ */
+const SCENES = [
+  { id: 'home', title: 'Hold less. Know more.', sub: 'Five cards. You may look at two.', move: 'pushInSlow' },
+  { id: 'table', title: 'Draw, or take the discard.', sub: 'Then swap, or play the card’s action.', move: 'driftUp' },
+  { id: 'teach', title: 'Learn by playing a round.', sub: 'Not by reading the rules.', move: 'pullBack' },
+  { id: 'lobby', title: 'Or sit down with friends.', sub: 'A six-character code is the whole invitation.', move: 'pushIn' },
+  { id: 'plan', title: 'The last round is a team effort.', sub: 'Plan it together. The caller cannot see it.', move: 'driftUp' },
+  { id: 'score', title: 'Call Vinto when you are lowest.', sub: '+3 if you are right. −1 if you are not.', move: 'pullBackSlow' },
+];
+
+/**
+ * The four the open Duo tells: the table, all of whose seats read across once it opens, and the
+ * three moments that happen on it. Six closed and four open is the set's limit of ten.
+ */
+const DUO_OPEN = SCENES.filter((s) => ['table', 'plan', 'score', 'lobby'].includes(s.id));
+
+/**
+ * The header strip and the search picture, as the owner chose them (2026-10-12) from mockups shown on
+ * a light and a dark App Store page at an iPhone's width:
+ *
+ *  - the words and the table as one centred group, and **the whole hand** — the 7, Ace, Joker, King and
+ *    Queen — rising from the bottom edge, centred, so no crop takes a card at the side. The first
+ *    header stood three cards in the left margin and lost the 7 to the canvas's edge;
+ *  - **the table alone** (`heroCrop`): the felt and its seats out of the 1280x720 tablet capture, without
+ *    the app's header and rail. Re-measure it if the landscape table's arrangement moves;
+ *  - **a walnut ground**, the table's wooden edge: a green felt on the screenshots' green matte vanished
+ *    ("both background and board are green"), and Apple takes one image for both a white and a black
+ *    page, so the ground is a mid tone that is neither.
+ */
+const CREATIVE = {
+  hero: 'table',
+  hand: 'below',
+  heroCrop: [13, 112, 1867, 1316],
+  fan: ['7', 'a', 'joker', 'k', 'q'].map((rank) => `./tools/brand/card-renders/card_${rank}.png`),
+  theme: { matteTop: '#7A4B2A', matteBottom: '#3E2414', glowAlpha: 0.2 },
+};
 
 export default {
   // The table's own palette, from `composeApp/.../theme/VintoTheme.kt` rather than picked to
@@ -111,22 +159,7 @@ export default {
   // iPhone bezel and an App Store one taken on Android would misrepresent the app.
   screenshotsDir: './marketing/captures/ios',
 
-  /**
-   * The narrative, and it is the game's own order of discovery rather than a feature list:
-   * what the goal is, what a turn costs you, that the app teaches itself, that other people
-   * can sit down, and what winning looks like.
-   *
-   * Each `id` is the screen it shows. They double as capture state names for the day the
-   * handle exists, which is why they are screens and not slogans.
-   */
-  scenes: [
-    { id: 'home', title: 'Hold less. Know more.', sub: 'Five cards. You may look at two.', move: 'pushInSlow' },
-    { id: 'table', title: 'Draw, or take the discard.', sub: 'Then swap, or play the card’s action.', move: 'driftUp' },
-    { id: 'teach', title: 'Learn by playing a round.', sub: 'Not by reading the rules.', move: 'pullBack' },
-    { id: 'lobby', title: 'Or sit down with friends.', sub: 'A six-character code is the whole invitation.', move: 'pushIn' },
-    { id: 'plan', title: 'The last round is a team effort.', sub: 'Plan it together. The caller cannot see it.', move: 'driftUp' },
-    { id: 'score', title: 'Call Vinto when you are lowest.', sub: '+3 if you are right. −1 if you are not.', move: 'pullBackSlow' },
-  ],
+  scenes: SCENES,
 
   // Nothing at the top level: each store gets its own encode from the `devices` block, because
   // Apple and Google want opposite things out of the same five scenes.
@@ -139,9 +172,53 @@ export default {
       // No `videos` here on purpose. A video built from this device's *screenshots* is a camera
       // move over stills, and the store slot it would fill wants footage from inside the app —
       // so the only preview this config makes is the `reel` above, from recorded clips.
+      // `statusBar: 'auto'`: the captures keep an empty strip of rail where the phone's status bar
+      // is (`StoreShotsTest`'s `Bars`), so the frame's Dynamic Island sits in it rather than over
+      // the header's "?" button — which it did on every iPhone shot until 1.4 — and zdymak draws a
+      // clean 9:41 into it. 'auto' only ever draws into a band it finds, never over the app.
       screenshots: [
-        { target: 'appstore-iphone-6.9', style: 'framed' },
-        { target: 'appstore-iphone-6.5', style: 'framed' },
+        { target: 'appstore-iphone-6.9', style: 'framed', theme: { statusBar: 'auto' } },
+        { target: 'appstore-iphone-6.5', style: 'framed', theme: { statusBar: 'auto' } },
+      ],
+    },
+
+    /**
+     * The iPhone Duo (App Store Connect's "iPhone Duo" set, from 2026-10): closed, and open on its
+     * side, which is how a book-style fold opens. One set of ten between them, so the open screen
+     * tells four of the six scenes (`DUO_OPEN`). Optional until April 2027 for builds on the iOS
+     * 27.1 SDK; made now because the phone goes on sale on 23 October and a shopper holding one
+     * should see the table it will actually get — on the open screen, side seats reading across.
+     */
+    // Closed, iOS 27.1 stands the status bar in a column down the right edge (measured on the Duo
+    // simulator), and zdymak only knows how to draw one across the top — where 'auto' would take the
+    // header's flat top rows for an empty band. So no bar is drawn: the column is the rail, as the app
+    // leaves it.
+    duoOuter: {
+      capturesDir: './marketing/captures/ios-duo-outer',
+      screenshots: [{ target: 'appstore-iphone-duo-outer', theme: { statusBar: false } }],
+    },
+    duoInner: {
+      capturesDir: './marketing/captures/ios-duo-inner',
+      scenes: DUO_OPEN,
+      screenshots: [{ target: 'appstore-iphone-duo-inner-landscape', theme: { statusBar: 'auto' } }],
+    },
+
+    /**
+     * The iOS 27 product page's header strip, and the picture search results show: one branded
+     * graphic each, from the app's own landscape table — a phone frame squeezed into a 21:9 strip
+     * is the wrong picture. The lockup and tagline sit inside Apple's own safe band (zdymak reads it
+     * from Apple's template), so the crop each device makes keeps the name.
+     *
+     * The hero is the Play tablet capture because it is the one landscape table there is: the app
+     * alone, at 1280x720 points, with no Android status bar in it. Uploaded through the App Asset
+     * Library (`vydanne creative`), reviewed on its own rather than with a version.
+     */
+    appstoreCreative: {
+      capturesDir: './marketing/captures/android-tablet',
+      scenes: [{ id: 'table' }],
+      screenshots: [
+        { target: 'appstore-header', ...CREATIVE },
+        { target: 'appstore-search', ...CREATIVE },
       ],
     },
     ipad: {

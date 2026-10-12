@@ -13,6 +13,7 @@
     "store:prepare": "vydanne prepare",
     "store:fill": "vydanne fill",
     "store:previews": "vydanne previews",
+    "store:creative": "vydanne creative",
     "store:locales": "vydanne locales",
     "store:appinfo": "vydanne appinfo",
     "store:age-rating": "vydanne age-rating",
@@ -53,7 +54,7 @@
   },
   "devDependencies": {
     "lefthook": "^2.1.12",
-    "vydanne": "^0.14.0",
-    "zdymak": "^0.25.0"
+    "vydanne": "^1.1.0",
+    "zdymak": "^1.1.0"
   }
 }
