@@ -1,15 +1,26 @@
 package game.vinto.app
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.use
+import game.vinto.app.theme.Rail
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.MemoryVault
+import game.vinto.client.Settings
+import game.vinto.client.ThemeChoice
+import game.vinto.client.saveSettings
 import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Image
 import java.io.File
@@ -76,7 +87,7 @@ class StoreShotsTest {
                         LocalAppVersion provides slot.shown,
                         LocalAppBuild provides SHOWN_BUILD,
                     ) {
-                        App(seeds = { MARKETING_SEED }, vault = MemoryVault(), marketing = scene.id)
+                        App(seeds = { MARKETING_SEED }, vault = lightVault(), marketing = scene.id)
                     }
                 }
             }
@@ -108,7 +119,25 @@ class StoreShotsTest {
         val density: Float,
         /** The version the home screen's footer says: the one this slot's store is selling. */
         val shown: String,
+        /**
+         * The strips the device keeps for itself — the status bar above, the home indicator below
+         * — which the app pads out of its way on a real screen (`WindowInsets.safeDrawing` in `App`)
+         * and a headless render does not have.
+         *
+         * Without them the header was drawn in the very top rows, and zdymak's frame laid its
+         * Dynamic Island over the "?" button in every iPhone shot on the store. With them the shot
+         * is the app as the phone shows it: an empty strip of rail where the clock goes, which
+         * `zdymak.config.mjs` fills with one (`statusBar`), and the island sitting in it.
+         */
+        val bars: Bars = Bars.NONE,
     )
+
+    /** A device's status bar and home indicator, in points. */
+    private data class Bars(val top: Dp, val bottom: Dp) {
+        companion object {
+            val NONE = Bars(0.dp, 0.dp)
+        }
+    }
 
     /**
      * One screen, in the light scheme, at store resolution.
@@ -122,7 +151,16 @@ class StoreShotsTest {
             height = slot.high,
             density = Density(slot.density),
         ) {
-            VintoTheme(dark = false) { content() }
+            VintoTheme(dark = false) {
+                // The strips are the rail's colour, as they are on the phone: `App` paints the rail
+                // behind the insets it pads for. One flat colour, which is how zdymak finds the band
+                // it may draw a status bar into without touching a pixel of the app.
+                Surface(modifier = Modifier.fillMaxSize(), color = Rail.fill) {
+                    Box(modifier = Modifier.fillMaxSize().padding(top = slot.bars.top, bottom = slot.bars.bottom)) {
+                        content()
+                    }
+                }
+            }
         }.use { scene ->
             // Fonts and card art arrive asynchronously, so the first frames are missing them.
             // Render a few and keep the last, whose time also sits past the opening animations —
@@ -137,6 +175,13 @@ class StoreShotsTest {
             File(slot.dir, "$name.png").writeBytes(png.bytes)
         }
     }
+
+    /**
+     * A vault that says light, because the theme the shots wear is the app's own setting and not the
+     * wrapper's: `App` follows the system unless told otherwise, and on a Mac in dark mode the whole
+     * set came out dark — against a listing that has been light since 2026-09-29.
+     */
+    private fun lightVault() = MemoryVault().apply { saveSettings(Settings(theme = ThemeChoice.LIGHT)) }
 
     /**
      * Refuses a shot of the opening splash.
@@ -195,8 +240,9 @@ class StoreShotsTest {
          * build that was three weeks old.
          */
         val SLOTS = listOf(
-            // App Store 6.9" (iPhone 16 Pro Max), and well over Play's 1080px phone floor.
-            Slot("iphone", "../marketing/captures/ios", 1290, 2796, 3f, APP_STORE_VERSION),
+            // App Store 6.9" (iPhone 16 Pro Max), and well over Play's 1080px phone floor. 430x932
+            // points, whose status bar under the Dynamic Island is 59 and whose home indicator is 34.
+            Slot("iphone", "../marketing/captures/ios", 1290, 2796, 3f, APP_STORE_VERSION, Bars(59.dp, 34.dp)),
             /*
              * App Store 13" iPad, portrait.
              *
@@ -207,6 +253,34 @@ class StoreShotsTest {
              * what an iPad Pro 13" actually reports.
              */
             Slot("ipad", "../marketing/captures/ios-ipad", 2064, 2752, 2f, APP_STORE_VERSION),
+            /*
+             * The iPhone Duo, closed and open, at Apple's own screenshot sizes for it (App Store
+             * Connect, 2026-10): the outer display upright, 466x678 points — an iPhone SE's height
+             * on a wider screen, which the phone's table fits — and the inner one the way it opens,
+             * on its side, 951x669, where the table turns and the side seats read across.
+             *
+             * Its bars are not published. These are the iPhone's own, provisional until measured on
+             * the Duo simulator (Xcode 27.1): a shot with too much strip is a shot, and one with too
+             * little is the island over a button again.
+             */
+            Slot(
+                "duo-outer",
+                "../marketing/captures/ios-duo-outer",
+                1398,
+                2034,
+                3f,
+                APP_STORE_VERSION,
+                Bars(59.dp, 34.dp),
+            ),
+            Slot(
+                "duo-inner",
+                "../marketing/captures/ios-duo-inner",
+                2853,
+                2007,
+                3f,
+                APP_STORE_VERSION,
+                Bars(32.dp, 20.dp),
+            ),
             /*
              * Play phone, 9:16.
              *
@@ -231,11 +305,13 @@ class StoreShotsTest {
          * screenshot that read them would change at every capture while the screen had not.
          *
          * **One version per store**, because the stores do not share one (VERSIONING.md): the
-         * App Store sells 1.2 and Play 1.1. It was a single "1.0" for both, which is what an
-         * App Store 1.2 listing would have shown on its home screen.
+         * shots made now go out with iOS 1.4 and Android 1.2. It was a single "1.0" for both,
+         * which is what an App Store 1.2 listing would have shown on its home screen — and then
+         * 1.2 and 1.1, still saying so after both stores had moved on. Move these with the
+         * release the shots are made for.
          */
-        const val APP_STORE_VERSION = "1.2"
-        const val PLAY_VERSION = "1.1"
+        const val APP_STORE_VERSION = "1.4"
+        const val PLAY_VERSION = "1.2"
         const val SHOWN_BUILD = "100"
 
         /** The same pinned seed `MarketingState` deals from, so a shot is the same shot twice. */
