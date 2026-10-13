@@ -22,6 +22,7 @@ import androidx.compose.ui.node.LayoutModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toSize
 import game.vinto.app.Hinge
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -96,7 +97,11 @@ class Reshape {
         if (before != null && before != next && !still) {
             was = HashMap(now)
             wasSize = table?.takeIf { it.isAttached }?.size?.toSize() ?: Size.Zero
-            openedAt = hinge?.value?.takeIf { it.partiallyOpen }?.degrees
+            // Only an opening is carried by the hinge: from where the screen changed over to flat.
+            // A table folding into a book or a laptop is going the other way, with no flat to
+            // reach, and following the hinge held it still until the hand rested; it glides on
+            // the clock instead.
+            openedAt = hinge?.value?.takeIf { it.partiallyOpen && !next.posture.folded }?.degrees
             change++
         }
     }
@@ -181,8 +186,9 @@ private class GlideNode(
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
         val placeable = measurable.measure(constraints)
         val density: Density = this
+        val direction = layoutDirection
         return layout(placeable.width, placeable.height) {
-            coordinates?.let { arrive(it, density) }
+            coordinates?.let { arrive(it, density, direction) }
             placeable.placeWithLayer(0, 0) {
                 val t = glide.easing.transform(progress.floatValue)
                 if (t < 1f) {
@@ -201,7 +207,7 @@ private class GlideNode(
     }
 
     /** Placed: note where, and if the table has just changed shape, start from where it was. */
-    private fun arrive(here: LayoutCoordinates, density: Density) {
+    private fun arrive(here: LayoutCoordinates, density: Density, direction: LayoutDirection) {
         val table = reshape.table?.takeIf { it.isAttached } ?: return
         if (!here.isAttached) return
         val box = table.size.toSize()
@@ -217,11 +223,13 @@ private class GlideNode(
         reshape.record(key, Spot(share, turn))
         if (start == null || home.width <= 0f || home.height <= 0f) return
         // Where the felt lies across the new table, in its pixels: on a table on its side, the
-        // felt and not the rail beside it.
+        // felt and not the rail beside it; in a book, the felt's own page.
+        val layout = reshape.layout
         val felt = with(density) {
-            reshape.layout?.feltSpan(box.width.toDp())?.let { it.left.toPx()..(it.left + it.width).toPx() }
+            layout?.feltSpan(direction)?.let { it.left.toPx()..(it.left + it.width).toPx() }
         }
-        if (!startFrom(start, home, pageOf(reshape.wasSize, box, felt))) return
+        val page = pageOf(reshape.wasSize, box, felt, book = layout?.posture == Posture.BOOK)
+        if (!startFrom(start, home, page)) return
 
         progress.floatValue = 0f
         running?.cancel()
@@ -326,15 +334,24 @@ private class GlideNode(
  * to its right, in the table's pixels): an open fold stands its rail down the right, and laid over
  * the screen's right half, a third of the closed table started under the rail and the opening read
  * as a table sliding in from the edge.
+ *
+ * **The whole of the felt in a [book]**, whose felt is a page of its own and already the closed
+ * screen's shape: the closed table lands on it at its own size, and only moves to its seats there.
+ * Half of it would have started the table squeezed into a quarter of the screen beside the crease.
  */
-internal fun pageOf(was: Size, now: Size, felt: ClosedFloatingPointRange<Float>? = null): Rect {
+internal fun pageOf(
+    was: Size,
+    now: Size,
+    felt: ClosedFloatingPointRange<Float>? = null,
+    book: Boolean = false,
+): Rect {
     val whole = Rect(0f, 0f, now.width, now.height)
     if (was.width <= 0f || was.height <= 0f || now.height <= 0f) return whole
     val widened = now.width / now.height / (was.width / was.height)
     if (widened !in PAGE_FROM..PAGE_TO) return whole
     val left = felt?.start ?: 0f
     val right = felt?.endInclusive ?: now.width
-    return Rect((left + right) / 2, 0f, right, now.height)
+    return Rect(if (book) left else (left + right) / 2, 0f, right, now.height)
 }
 
 /** How much wider for its height the new table must be to be the old one opened like a book. */

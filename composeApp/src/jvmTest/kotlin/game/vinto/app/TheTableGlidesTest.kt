@@ -261,7 +261,7 @@ class TheTableGlidesTest {
      * the test's density of 1: the page a table opened like a book starts on.
      */
     private fun Offset.ontoThePage(from: Pair<Dp, Dp>, to: Pair<Dp, Dp>): Offset {
-        val felt = assertNotNull(TableLayout.forScreen(to.first, to.second).feltSpan(to.first))
+        val felt = assertNotNull(TableLayout.forScreen(to.first, to.second).feltSpan())
         val half = felt.width.value / 2
         return Offset(felt.left.value + half + x / from.first.value * half, y / from.second.value * to.second.value)
     }

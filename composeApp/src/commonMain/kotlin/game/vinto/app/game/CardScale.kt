@@ -1,6 +1,8 @@
 package game.vinto.app.game
 
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpRect
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import game.vinto.app.phoneHeldUpright
 import game.vinto.app.theme.SheetSpan
@@ -267,15 +269,25 @@ data class TableSizes(
  *    height, spreading the side seats to opposite horizons with a void between them. So the
  *    felt is capped — by shape, and absolutely — and the felt-and-rail group is centred in
  *    what remains, sitting on the app's dark surround like a table in a room.
+ *
+ * And two more on a phone half open, where the fold is a line nothing may lie across: a **book**,
+ * its felt on one page and its rail on the other, and a **laptop**, the other three seats standing
+ * up above the fold and your own hand lying flat below it ([Posture]).
  */
 data class TableLayout(
     val sizes: TableSizes,
     val railHeight: Dp,
-    /** True when the rail stands beside the felt rather than under it. */
-    val landscape: Boolean = false,
+    /**
+     * How the table lies: upright, its rail under the felt; on its side, its rail beside it; or on a
+     * phone half open, a book or a laptop ([Posture]).
+     */
+    val posture: Posture = Posture.UPRIGHT,
     /** How wide the side rail is. Meaningful only when [landscape]. */
     val railWidth: Dp = 0.dp,
-    /** How wide the felt column is — capped, so a desktop table keeps a table's shape. */
+    /**
+     * How wide the felt column is — capped, so a desktop table keeps a table's shape. In a book, the
+     * felt's page.
+     */
     val feltWidth: Dp = 0.dp,
     /**
      * How deep the felt is drawn, or zero to take whatever height it is given.
@@ -298,38 +310,120 @@ data class TableLayout(
      * ([nameRun]), so a wide phone reads it across as a tablet does.
      */
     val phone: Boolean = true,
-    /**
-     * The status column the system keeps down the screen's end edge, when it keeps one, or zero.
-     * See [forScreen].
-     */
-    val column: Dp = 0.dp,
+    /** What the system keeps of the table's box: a status column, a strip, a fold ([Chrome]). */
+    val chrome: Chrome = Chrome.NONE,
+    /** The table box this was laid out for, so that what the system keeps can be placed in it. */
+    val width: Dp = 0.dp,
+    val height: Dp = 0.dp,
 ) {
-    /** The header row's height: none where the header stands in a status [column] instead. */
-    val header: Dp get() = if (column > 0.dp) 0.dp else HeaderHeight
+    /** True when the rail stands beside the felt rather than under it. */
+    val landscape: Boolean get() = posture != Posture.UPRIGHT
+
+    /** The status column the system keeps down one edge, where it keeps one, or zero. */
+    val column: Dp get() = chrome.column
+
+    /** The stretch of the status column the table's own controls may use, or null without one. */
+    val run: ColumnRun? get() = chrome.run(width, height)
 
     /**
-     * The arrangement as a kind of table rather than as a set of numbers: which way it lies, and
-     * whether it is a phone's. A change of this is a table changing shape — a fold opened, a tablet
-     * turned, a window dragged across the line — and is what sets the table gliding to its new
-     * shape ([Reshape]). A window resized within one kind changes only numbers, and does not.
+     * Whether the rail is the narrow stack: a table on its side beside a status column, the open
+     * iPhone Duo's, the closed one's turned on its side, and a book's rail page beside the column.
+     * The column holds the turn's choices there ([StatusColumn]), so the rail is left
+     * with the card, its words and the log, which read best one under another in a column a fifth of
+     * the screen wide — and the felt takes the width it gives up ([railNarrow]).
      */
-    val shape: TableShape get() = TableShape(landscape, phone)
+    val narrowRail: Boolean get() = landscape && column > 0.dp
+
+    /** The two halves a half-open phone's fold divides the box into, or null while it is flat. */
+    val pages: FoldPages? get() = chrome.pages(width, height)
 
     /**
-     * Where a sheet should rise over this table in a window [window] wide: over the felt of a table
-     * on its side, whose felt and rail sit centred together in what the status column leaves; and
-     * the whole window for a table upright, where the felt already is the window's width.
+     * The header row's height: none where the header stands in a status [column] instead, the
+     * system's own strip where it shares one ([Chrome.strip]), and a row of its own everywhere else.
      */
-    fun feltSpan(window: Dp): SheetSpan? {
-        if (!landscape) return null
-        val band = feltWidth + railWidth
-        return SheetSpan(left = ((window - column - band) / 2).coerceAtLeast(0.dp), width = feltWidth)
+    val header: Dp get() = headerOver(chrome)
+
+    /**
+     * The arrangement as a kind of table rather than as a set of numbers: how it lies, and whether it
+     * is a phone's. A change of this is a table changing shape — a fold opened, a tablet turned, a
+     * window dragged across the line — and is what sets the table gliding to its new shape
+     * ([Reshape]). A window resized within one kind changes only numbers, and does not.
+     */
+    val shape: TableShape get() = TableShape(posture, phone)
+
+    /** What a status column keeps of the box at its left edge, and at its right. */
+    private val keptLeft: Dp get() = if (chrome.columnOnRight) 0.dp else column
+    private val keptRight: Dp get() = if (chrome.columnOnRight) column else 0.dp
+
+    /**
+     * Where a sheet should rise over this table, read the way [direction] reads: over the felt of a
+     * table on its side, whose felt and rail sit centred together in what the status column leaves,
+     * and over a book's felt page, clear of the crease; the whole window for a table upright, where
+     * the felt already is the window's width, and for a laptop's, whose sheet rises from the foot
+     * across the felt and the rail alike.
+     */
+    fun feltSpan(direction: LayoutDirection = LayoutDirection.Ltr): SheetSpan? {
+        val felt = when (posture) {
+            Posture.UPRIGHT, Posture.LAPTOP -> return null
+            Posture.ON_ITS_SIDE, Posture.BOOK -> feltRect(direction)
+        }
+        return SheetSpan(left = felt.left, width = felt.right - felt.left)
+    }
+
+    /**
+     * Where the felt lies in the table's box, the margin round it included, by the side of the glass:
+     * the one place the shape of each arrangement is worked out for whatever has to lie over the felt
+     * rather than on it — a sheet ([feltSpan]), the lesson's coach, a glide's landing ([Reshape]).
+     *
+     * On a laptop, the felt above the fold, where the other three seats stand up; the felt your own
+     * hand lies on is [nearFelt]. On every other table the two are one felt.
+     */
+    fun feltRect(direction: LayoutDirection = LayoutDirection.Ltr): DpRect = when (posture) {
+        Posture.UPRIGHT -> DpRect(keptLeft, header, width - keptRight, height - railHeight)
+        Posture.ON_ITS_SIDE -> feltBeside(direction)
+        Posture.BOOK -> feltPage()
+        Posture.LAPTOP -> DpRect(keptLeft, header, width - keptRight, pages?.first?.bottom ?: height)
+    }
+
+    /**
+     * The felt your own hand lies on: under the fold of a laptop, beside its rail — on the right of
+     * it, or on the left where the language reads that way — and [feltRect] on every other table.
+     */
+    fun nearFelt(direction: LayoutDirection = LayoutDirection.Ltr): DpRect {
+        if (posture != Posture.LAPTOP) return feltRect(direction)
+        val top = pages?.second?.top ?: header
+        val left = keptLeft + if (direction == LayoutDirection.Rtl) railWidth else 0.dp
+        return DpRect(left, top, left + width - column - railWidth, height)
+    }
+
+    /**
+     * The felt of a table on its side: the felt and the rail are one band, centred across what the
+     * status column leaves and down what the header leaves, and the felt is the band's first part —
+     * the left of it, or the right where the language reads that way, as a row lays it out.
+     */
+    private fun feltBeside(direction: LayoutDirection): DpRect {
+        val centred = ((width - column - feltWidth - railWidth) / 2).coerceAtLeast(0.dp)
+        val band = if (feltHeight > 0.dp) ((height - header - feltHeight) / 2).coerceAtLeast(0.dp) else 0.dp
+        val left = keptLeft + centred + if (direction == LayoutDirection.Rtl) railWidth else 0.dp
+        val top = band + header
+        return DpRect(left, top, left + feltWidth, if (feltHeight > 0.dp) top + feltHeight else height)
+    }
+
+    /**
+     * A book's felt: the page away from the status column, the whole height of it. By the side of the
+     * glass, whichever way the language reads: the rail stands beside the column, and the column is
+     * where the system keeps it.
+     */
+    private fun feltPage(): DpRect {
+        val page = pages?.let { if (chrome.columnOnRight) it.first else it.second }
+            ?: return DpRect(keptLeft, 0.dp, width - keptRight, height)
+        return DpRect(page.left, 0.dp, page.right, height)
     }
 
     companion object {
         /** The portrait arrangement, from the height alone — what every phone test uses. */
         fun forScreen(screen: Dp): TableLayout =
-            TableLayout(TableSizes.forScreen(screen), railHeight(screen))
+            TableLayout(TableSizes.forScreen(screen), railHeight(screen), height = screen)
 
         /**
          * The arrangement for a screen of this shape: portrait tall, and on its side wide — when
@@ -344,22 +438,36 @@ data class TableLayout(
          * width past that only spreads the seats apart. Every tablet and desktop on its side, and
          * an open iPhone Duo on its side, still come out on their side; `UnfoldedPhonesTest`
          * holds both halves.
+         *
+         * [chrome] is what the system keeps of the box ([LocalChrome]): a status column takes its
+         * width from the table and its header from the top row, and on its side the rail beside it
+         * is the narrow stack ([narrowRail]). A fold the phone is half open at deals a book or a
+         * laptop ([halfOpen]) wherever its pages have room for one.
+         *
+         * **Never upright because the screen is a phone's.** Whether a phone may turn is the
+         * platform's to say ([phoneHeldUpright] on Android, the window on iOS); a closed iPhone Duo
+         * turned on its side is a phone's screen that iOS has turned, and it is dealt the table on
+         * its side like any other wide screen.
          */
-        fun forScreen(width: Dp, height: Dp, column: Dp = 0.dp): TableLayout {
+        fun forScreen(width: Dp, height: Dp, chrome: Chrome = Chrome.NONE): TableLayout {
             // Whether it is a phone is the screen's to say, whatever the system keeps of it.
             val phone = phoneHeldUpright(minOf(width, height).value.toInt())
-            // A status column takes its width from the table and its header from the top row:
-            // the header stands in it (`TableHeader(vertical)`), and the felt gets the row.
-            val header = if (column > 0.dp) 0.dp else HeaderHeight
-            val across = width - column
+            val header = headerOver(chrome)
+            halfOpen(width, height, chrome, header)?.let { folded ->
+                return folded.copy(phone = phone, chrome = chrome, width = width, height = height)
+            }
+            val across = width - chrome.column
             val upright = TableLayout(
                 TableSizes.forScreen(height, header),
                 railHeight(height),
                 phone = phone,
-                column = column,
+                chrome = chrome,
+                width = width,
+                height = height,
             )
             if (across <= height) return upright
-            val onItsSide = onItsSide(across, height, header).copy(phone = phone, column = column)
+            val onItsSide = onItsSide(across, height, header, narrow = chrome.column > 0.dp)
+                .copy(phone = phone, chrome = chrome, width = width, height = height)
             val uprightFelt = height - header - upright.railHeight
             val uprightTable = minOf(across, uprightFelt * TABLE_ASPECT) * uprightFelt.value
             val sideTable = onItsSide.feltWidth * onItsSide.feltHeight.value
@@ -367,17 +475,25 @@ data class TableLayout(
         }
 
         /** The table on its side: the felt and its header in a column, the rail standing beside them. */
-        private fun onItsSide(width: Dp, height: Dp, header: Dp): TableLayout {
+        private fun onItsSide(width: Dp, height: Dp, header: Dp, narrow: Boolean): TableLayout {
             // What there is to play on, before the table is cut out of it.
             val available = height - header
-            val wide = minOf(width - railWidth(width), available * TABLE_ASPECT, TABLE_MAX_WIDTH)
+            val least = if (narrow) railNarrow(width) else railWidth(width)
+            val wide = minOf(width - least, available * TABLE_ASPECT, TABLE_MAX_WIDTH)
             // And never deeper than a table is: the two caps together hold the felt's shape
             // between [TABLE_DEEPEST] and [TABLE_ASPECT], whatever shape the window is.
-            val deep = minOf(available, wide / TABLE_DEEPEST)
+            //
+            // **Except beside a status column**, where the felt takes the whole height. The cap is
+            // for a tall desktop window, whose spare height is surround; an iPhone Duo's is the
+            // screen, and capped, the open one's felt and rail sat in the middle of it with fifty
+            // points of empty rail above and below — reported from the simulator, with the owner's
+            // words for what a phone's screen must not do: leave empty space. Nearly square there,
+            // and its cards dealt for the height it has.
+            val deep = if (narrow) available else minOf(available, wide / TABLE_DEEPEST)
             return TableLayout(
                 sizes = TableSizes.forHeight(deep),
                 railHeight = 0.dp,
-                landscape = true,
+                posture = Posture.ON_ITS_SIDE,
                 // **The rail takes what the felt could not**, rather than a share of its own.
                 //
                 // The felt is capped by its shape, so on a wide window there was width left over
@@ -388,16 +504,94 @@ data class TableLayout(
                 //
                 // Giving the remainder to the rail spends it where there is something to spend
                 // it on. Still clamped: past [RAIL_WIDEST] a control panel stops being a panel.
-                railWidth = (width - wide).coerceIn(railWidth(width), RAIL_WIDEST),
+                //
+                // **Except the narrow stack**, which keeps its fifth: its choices are in the status
+                // column, and a stack of card, words and log twice as wide is only emptier.
+                railWidth = if (narrow) least else (width - wide).coerceIn(least, RAIL_WIDEST),
                 feltWidth = wide,
                 feltHeight = deep,
             )
+        }
+
+        /**
+         * The table on a phone half open, or null while it lies flat or closed, or where its fold
+         * leaves a page too small to hold its half of the table: then it is dealt as it would be flat.
+         */
+        private fun halfOpen(width: Dp, height: Dp, chrome: Chrome, header: Dp): TableLayout? {
+            val pages = chrome.pages(width, height) ?: return null
+            return when (chrome.folded) {
+                Posture.BOOK -> book(pages, height, chrome)
+                Posture.LAPTOP -> laptop(pages, width, height, chrome, header)
+                Posture.UPRIGHT, Posture.ON_ITS_SIDE, null -> null
+            }
+        }
+
+        /**
+         * Half open like a book: the felt on one page, the rail and the status column on the other,
+         * and nothing on the crease between them.
+         *
+         * The felt has the page away from the column — the left one on the iPhone Duo, whose column
+         * stands down its right edge — and the whole height of it: in a book the header stands in the
+         * column, or with no column at the top of the rail's page ([Book]). The rail has the rest of
+         * the other page, a column of the card, its words and the log read top to bottom.
+         *
+         * A page is about the closed screen's shape, so its cards are dealt for its height as far as
+         * its width allows ([BOOK_DEEPEST]): a felt 470 points across holding a desktop's cards
+         * would have its side seats' plates over the piles.
+         */
+        private fun book(pages: FoldPages, height: Dp, chrome: Chrome): TableLayout? {
+            val (felt, rail) = with(pages) { if (chrome.columnOnRight) first to second else second to first }
+            val feltWide = felt.right - felt.left
+            val railWide = rail.right - rail.left - chrome.column
+            if (feltWide < PAGE_LEAST || railWide < NARROW_MIN) return null
+            return TableLayout(
+                sizes = TableSizes.forHeight(minOf(height, feltWide * BOOK_DEEPEST)),
+                railHeight = 0.dp,
+                posture = Posture.BOOK,
+                railWidth = railWide,
+                feltWidth = feltWide,
+                feltHeight = height,
+            )
+        }
+
+        /**
+         * Half open like a laptop (owner, 2026-10-13): the other three seats stand up on the upper
+         * half, as across a table from you, and your own hand, the piles and the turn's choices lie
+         * flat on the lower half, where your hands are — the rail beside the felt there, as on a
+         * table on its side. The header stays in the strip at the top ([TopRow]).
+         *
+         * Dealt the cards the same screen is dealt flat, so folding it moves the table and does not
+         * resize it: a seat that glides to its new half arrives the size it left.
+         */
+        private fun laptop(
+            pages: FoldPages,
+            width: Dp,
+            height: Dp,
+            chrome: Chrome,
+            header: Dp,
+        ): TableLayout? {
+            val above = pages.first.bottom - header
+            val below = pages.second.bottom - pages.second.top
+            if (above < PAGE_LEAST || below < PAGE_LEAST) return null
+            return TableLayout(
+                sizes = TableSizes.forScreen(height, header),
+                railHeight = 0.dp,
+                posture = Posture.LAPTOP,
+                railWidth = railWidth(width - chrome.column),
+            )
+        }
+
+        /** None in a status column, the system's strip where the header shares it, a row of its own else. */
+        private fun headerOver(chrome: Chrome): Dp = when {
+            chrome.column > 0.dp -> 0.dp
+            chrome.strip > 0.dp -> chrome.strip
+            else -> HeaderHeight
         }
     }
 }
 
 /** See [TableLayout.shape]. */
-data class TableShape(val landscape: Boolean, val phone: Boolean)
+data class TableShape(val posture: Posture, val phone: Boolean)
 
 /**
  * The widest a felt may be for its height. A real card table is wider than deep but not by
@@ -427,6 +621,19 @@ private const val TABLE_DEEPEST = 1.25f
  */
 private val TABLE_MAX_WIDTH = 1800.dp
 
+/**
+ * How much deeper than it is wide a book's felt may be, for the cards it is dealt: as deep as its
+ * page wherever the page is not much narrower than that, as on the iPhone Duo's (470 across, 649
+ * deep), and no deeper where it is. A felt is never dealt cards for depth its width cannot seat.
+ */
+private const val BOOK_DEEPEST = 1.2f
+
+/**
+ * The least a half-open phone's page must hold for its half of the table: a book's felt across, a
+ * laptop's either half down. A fold that leaves less deals the table as it would be flat.
+ */
+private val PAGE_LEAST = 300.dp
+
 /** The strip above the felt: the wordmark, the round, the help, the bug, the deck count. */
 val HeaderHeight = 44.dp
 
@@ -452,6 +659,21 @@ fun railHeight(screen: Dp): Dp = (screen * RAIL_FRACTION).coerceIn(RAIL_MIN, RAI
  * width, so the clamp range that fits them under the felt fits them beside it unchanged.
  */
 fun railWidth(screen: Dp): Dp = (screen * RAIL_FRACTION).coerceIn(RAIL_MIN, RAIL_MAX)
+
+/**
+ * How wide the side rail is beside a status column: the narrow stack ([TableLayout.narrowRail]).
+ *
+ * A fifth of what the column leaves, clamped. The open iPhone Duo on its side stands the turn's
+ * choices in its column, and what is left of the rail — the card, its words, the log — is one
+ * column of things read top to bottom, which wants a card's width and a line of words rather than a
+ * phone's; at a third of the screen, as before, the felt gave up width to a panel with nothing in
+ * its lower half. 184 holds a rank grid three chips to a row, each a thumb wide (`RankGrid`).
+ */
+fun railNarrow(screen: Dp): Dp = (screen * NARROW_FRACTION).coerceIn(NARROW_MIN, NARROW_MAX)
+
+private const val NARROW_FRACTION = 0.21f
+private val NARROW_MIN = 184.dp
+private val NARROW_MAX = 232.dp
 
 private const val RAIL_FRACTION = 0.31f
 private val RAIL_MIN = 240.dp

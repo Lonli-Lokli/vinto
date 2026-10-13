@@ -15,8 +15,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,12 +35,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -102,8 +104,11 @@ private fun rising(open: Boolean): MutableTransitionState<Boolean> =
 
 /**
  * Where across the window a sheet should rise: over the felt of a table lying on its side, so it
- * covers cloth and cards rather than cutting the rail's words in half. Null — the default — is the
- * whole window.
+ * covers cloth and cards rather than cutting the rail's words in half, and over a book's felt page,
+ * clear of its crease. Null — the default — is the whole window.
+ *
+ * [left] is from the left of the table's box, by the side of the glass, whichever way the language
+ * reads: the felt lies where the table laid it, and a status column on the left is part of that box.
  */
 data class SheetSpan(val left: Dp, val width: Dp)
 
@@ -121,20 +126,27 @@ fun VintoSheet(open: Boolean, onDismiss: () -> Unit, content: @Composable () -> 
     Scrim(open = open, onDismiss = onDismiss)
 
     // Over the felt, where a table lying on its side says where that is ([LocalSheetSpan]); across
-    // the window otherwise — less a status column, which the closed iPhone Duo's table leaves to its
-    // header and the sheet leaves to the clock and the camera ([LocalStatusColumn]). Consumed, so a
-    // platform that reports the column as a system bar too does not see it kept clear twice below.
+    // the window otherwise — less a status column, which the closed iPhone Duo's table stands its
+    // controls in and the sheet leaves to the clock and the camera ([LocalStatusColumn]), on whichever
+    // edge of the glass it is. Consumed, so a platform that reports the column as a system bar too
+    // does not see it kept clear twice below.
     val span = LocalSheetSpan.current
-    val column = PaddingValues(end = LocalStatusColumn.current)
+    val column = LocalStatusColumn.current
+    // The span is measured from the table box's left edge, and the column's own padding has already
+    // moved this box past a column standing on the left.
+    val columnLeft = column.calculateLeftPadding(LocalLayoutDirection.current)
     Box(
         modifier = Modifier.fillMaxSize().padding(column).consumeWindowInsets(column),
-        contentAlignment = Alignment.BottomStart,
+        contentAlignment = AbsoluteAlignment.BottomLeft,
     ) {
         Box(
             modifier = if (span == null) {
                 Modifier.fillMaxSize()
             } else {
-                Modifier.padding(start = span.left).width(span.width).fillMaxHeight()
+                Modifier
+                    .absolutePadding(left = (span.left - columnLeft).coerceAtLeast(0.dp))
+                    .width(span.width)
+                    .fillMaxHeight()
             },
             contentAlignment = Alignment.BottomCenter,
         ) {

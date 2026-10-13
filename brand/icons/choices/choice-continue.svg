@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- CONTINUE: one chevron, onward. The toss-in window is over for you and the round goes on. -->
+  <!-- One pen for every mark in the set: 2 of 24, round ends and joins, black, no fill — the
+       pill tints it to its own ink, so the mark is the button's colour in both themes. -->
+  <path d="M9 5 L16 12 L9 19" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

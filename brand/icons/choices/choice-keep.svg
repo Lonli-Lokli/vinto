@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- KEEP IT: a card with a tick on it. The drawn card goes into an empty hand as it is.
+       Larger than the other cards, since the tick has to read inside it. -->
+  <!-- One pen for every mark in the set: 2 of 24, round ends and joins, black, no fill — the
+       pill tints it to its own ink, so the mark is the button's colour in both themes. -->
+  <path d="M7 2 H17 A2 2 0 0 1 19 4 V20 A2 2 0 0 1 17 22 H7 A2 2 0 0 1 5 20 V4 A2 2 0 0 1 7 2 Z" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8.5 12.5 L11 15 L15.5 9.5" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

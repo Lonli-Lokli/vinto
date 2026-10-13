@@ -619,6 +619,18 @@
     <string name="choice_continue">Далей</string>
     <string name="choice_call_vinto">Абвясціць Vinto</string>
     <string name="choice_done">Гатова</string>
+    <string name="pill_draw">Узяць</string>
+    <string name="pill_use">Разыграць</string>
+    <string name="pill_swap">Памяняць</string>
+    <string name="pill_keep">Пакінуць</string>
+    <string name="pill_discard">Скінуць</string>
+    <string name="pill_down">Пакласці</string>
+    <string name="pill_leave">Пакінуць</string>
+    <string name="pill_continue">Далей</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">Гатова</string>
+    <string name="pill_start">Пачаць</string>
+    <string name="pill_back">Назад</string>
 
     <string name="log_you">Вы</string>
     <string name="log_drew_known">Вы ўзялі %1$s</string>

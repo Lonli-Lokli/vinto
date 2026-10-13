@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- JUST SWAP: the exchange alone, two arrows passing, with no cards. It sits with the ranks it is
+       the alternative to, where Swap's two cards would say a second time that a swap is happening. -->
+  <!-- One pen for every mark in the set: 2 of 24, round ends and joins, black, no fill — the
+       pill tints it to its own ink, so the mark is the button's colour in both themes. -->
+  <path d="M4 8 H19" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M15.5 4.5 L19 8 L15.5 11.5" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M20 16 H5" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8.5 12.5 L5 16 L8.5 19.5" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

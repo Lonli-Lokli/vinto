@@ -1,10 +1,10 @@
 package game.vinto.app
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
@@ -46,26 +46,15 @@ fun BehindTheBars(behind: Behind) {
 }
 
 /**
- * The status column the system keeps down the screen's end edge, or zero where it keeps a bar
- * across the top instead — which is every phone but one.
+ * The padding that keeps clear of a status column, on the edge it stands at, for what has to keep
+ * clear of it itself: whatever opens over a table — a sheet — and the room's lobby, which shares a
+ * table's screen. Nothing on every other screen, which the app has already kept clear of it.
  *
- * The closed iPhone Duo is the one: iOS 27.1 stands its clock, its connectivity and the camera in a
- * column down the right edge, 84 of 466 points (measured on the Duo simulator, Xcode 27.1), and
- * reserves nothing at the top. Apple's own toolbars stack their buttons in it, under the status, and
- * so does the table's header ([LocalStatusColumn]). Told from the insets alone — a wide end inset
- * with nothing above — so it needs nothing from the platform but what every screen already asks.
+ * The closed iPhone Duo is the one phone with a column: iOS 27.1 stands its clock, its connectivity
+ * and the camera down the right edge, 84 of 466 points (measured on the Duo simulator, Xcode 27.1),
+ * and reserves nothing at the top. A table stands its own controls in it ([game.vinto.app.game.Chrome],
+ * which says how a column is told from the insets). A padding rather than a width, because it is on
+ * the right of the glass whichever way the language reads, and an end padding put it on the left of
+ * an Arabic or a Hebrew screen.
  */
-internal fun statusColumn(top: Dp, end: Dp): Dp = if (end >= ColumnFrom && top < ColumnTopMost) end else 0.dp
-
-/** Narrower than this, an end inset is a rounded corner or a cut-out rather than a column. */
-private val ColumnFrom = 56.dp
-
-/** And a screen with a real bar across the top keeps its status there. */
-private val ColumnTopMost = 24.dp
-
-/**
- * The status column's width, where a screen has to keep clear of it itself: a table, which stands
- * its header there, and whatever opens over a table, a sheet. Zero where there is no column, and
- * on every other screen, which the app has already kept clear of it.
- */
-val LocalStatusColumn = staticCompositionLocalOf { 0.dp }
+val LocalStatusColumn = staticCompositionLocalOf { PaddingValues(0.dp) }

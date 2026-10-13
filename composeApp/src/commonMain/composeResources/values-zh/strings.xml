@@ -603,6 +603,18 @@
     <string name="choice_continue">继续</string>
     <string name="choice_call_vinto">喊 Vinto</string>
     <string name="choice_done">完成</string>
+    <string name="pill_draw">摸牌</string>
+    <string name="pill_use">使用</string>
+    <string name="pill_swap">交换</string>
+    <string name="pill_keep">留下</string>
+    <string name="pill_discard">弃牌</string>
+    <string name="pill_down">放下</string>
+    <string name="pill_leave">保持不动</string>
+    <string name="pill_continue">继续</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">完成</string>
+    <string name="pill_start">开始</string>
+    <string name="pill_back">返回</string>
 
     <string name="log_you">你</string>
     <string name="log_drew_known">你摸到了 %1$s</string>

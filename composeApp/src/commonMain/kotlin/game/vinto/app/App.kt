@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -37,8 +35,11 @@ import game.vinto.app.crash.CrashSurface
 import game.vinto.app.crash.Crashes
 import game.vinto.app.crash.SentryPlatform
 import game.vinto.app.game.GameScreen
+import game.vinto.app.game.LocalChrome
 import game.vinto.app.game.RoomScreen
 import game.vinto.app.game.TeachScreen
+import game.vinto.app.game.chromeOf
+import game.vinto.app.game.sidesOf
 import game.vinto.app.link.Invitations
 import game.vinto.app.link.invitationsAskFirst
 import game.vinto.app.link.roomCodeFrom
@@ -288,15 +289,20 @@ fun App(
  *
  * Behind them is the rail on a table, and the felt on the screens whose own ground is the felt: the
  * screen's own gradient, laid over the same rows the screen spans, so its top colour carries on
- * above it, its bottom colour below, and a status column down the side ([statusColumn]) is the
- * felt beside it row for row ([BehindTheBars]). It was the top colour over the upper half of the
- * window and the bottom colour over the lower, which a status bar never showed and the closed Duo's
- * column did: two flat greens and a step halfway down.
+ * above it, its bottom colour below, and a status column down the side is the felt beside it row for
+ * row ([BehindTheBars]). It was the top colour over the upper half of the window and the bottom
+ * colour over the lower, which a status bar never showed and the closed Duo's column did: two flat
+ * greens and a step halfway down.
  *
- * A status column is left unpadded for a table, which stands its header in it, and padded for every
- * other screen, which keeps clear of it; [LocalStatusColumn] tells a table how wide it is, and is
- * nothing to a screen already clear of it, so what it opens over the table — a sheet — keeps clear
- * of it the same way. Each screen says what it has behind the bars through [LocalBehind].
+ * Every screen keeps clear of the edges but a table, which is told what the system keeps there
+ * rather than padded away from all of it ([chromeOf]): a status column down one edge, the iPhone
+ * Duo's, or a status strip with the clock in its corner, where it stands its own controls, and where
+ * in either the clock and the camera stand ([LocalReserved]). [LocalChrome] tells the table, in its
+ * box's coordinates; [LocalStatusColumn] tells whatever opens over it — a sheet — the padding that
+ * leaves the column to the system, and is nothing to a screen already clear of it. The edges are
+ * taken by the side of the glass, left and right, never start and end: the Duo's column is on its
+ * right whichever way the language reads. Each screen says what it has behind the bars through
+ * [LocalBehind].
  */
 @Composable
 private fun Edges(
@@ -305,35 +311,34 @@ private fun Edges(
     behind: MutableState<Behind>,
     content: @Composable () -> Unit,
 ) {
-    val direction = LocalLayoutDirection.current
-    val column = statusColumn(insets.calculateTopPadding(), insets.calculateEndPadding(direction))
+    val sides = sidesOf(insets, LocalLayoutDirection.current)
+    val framed = chromeOf(sides, LocalReserved.current.value, table = holdsATable)
+    val pad = framed.padding
     val onFelt = behind.value == Behind.FELT
     val felt = MaterialTheme.colorScheme.feltGradient()
-    val end = when {
-        column == 0.dp -> insets.calculateEndPadding(direction)
-        holdsATable -> 0.dp
-        else -> column
-    }
     Surface(
         modifier = Modifier.fillMaxSize().drawBehind {
             if (onFelt) {
-                val top = insets.calculateTopPadding().toPx()
-                val bottom = size.height - insets.calculateBottomPadding().toPx()
+                val top = sides.top.toPx()
+                val bottom = size.height - sides.bottom.toPx()
                 drawRect(Brush.verticalGradient(felt, startY = top, endY = bottom))
             }
         },
         color = if (onFelt) Color.Transparent else Rail.fill,
     ) {
         Box(
-            modifier = Modifier.fillMaxSize().padding(
-                start = insets.calculateStartPadding(direction),
-                top = insets.calculateTopPadding(),
-                end = end,
-                bottom = insets.calculateBottomPadding(),
+            modifier = Modifier.fillMaxSize().absolutePadding(
+                left = pad.left,
+                top = pad.top,
+                right = pad.right,
+                bottom = pad.bottom,
             ),
         ) {
-            val unpadded = if (holdsATable) column else 0.dp
-            CompositionLocalProvider(LocalBehind provides behind, LocalStatusColumn provides unpadded) {
+            CompositionLocalProvider(
+                LocalBehind provides behind,
+                LocalChrome provides framed.chrome,
+                LocalStatusColumn provides framed.chrome.clearOfColumn,
+            ) {
                 content()
             }
         }

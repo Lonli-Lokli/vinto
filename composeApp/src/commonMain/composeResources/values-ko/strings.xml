@@ -602,6 +602,18 @@
     <string name="choice_continue">계속</string>
     <string name="choice_call_vinto">Vinto 외치기</string>
     <string name="choice_done">완료</string>
+    <string name="pill_draw">뽑기</string>
+    <string name="pill_use">사용</string>
+    <string name="pill_swap">바꾸기</string>
+    <string name="pill_keep">가지기</string>
+    <string name="pill_discard">버리기</string>
+    <string name="pill_down">내려놓기</string>
+    <string name="pill_leave">그대로</string>
+    <string name="pill_continue">계속</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">완료</string>
+    <string name="pill_start">시작</string>
+    <string name="pill_back">뒤로</string>
 
     <string name="log_you">나</string>
     <string name="log_drew_known">뽑은 카드: %1$s</string>

@@ -602,6 +602,18 @@
     <string name="choice_continue">চালিয়ে যান</string>
     <string name="choice_call_vinto">Vinto ডাকুন</string>
     <string name="choice_done">সম্পন্ন</string>
+    <string name="pill_draw">তুলুন</string>
+    <string name="pill_use">ব্যবহার</string>
+    <string name="pill_swap">বদলান</string>
+    <string name="pill_keep">রেখে দিন</string>
+    <string name="pill_discard">বাতিল</string>
+    <string name="pill_down">রেখে দিন</string>
+    <string name="pill_leave">থাক</string>
+    <string name="pill_continue">চালিয়ে যান</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">সম্পন্ন</string>
+    <string name="pill_start">শুরু</string>
+    <string name="pill_back">পেছনে</string>
 
     <string name="log_you">আপনি</string>
     <string name="log_drew_known">আপনি তুলেছেন %1$s</string>

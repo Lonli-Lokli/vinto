@@ -628,6 +628,18 @@
     <string name="choice_continue">Lanjutkan</string>
     <string name="choice_call_vinto">Panggil Vinto</string>
     <string name="choice_done">Selesai</string>
+    <string name="pill_draw">Ambil</string>
+    <string name="pill_use">Gunakan</string>
+    <string name="pill_swap">Tukar</string>
+    <string name="pill_keep">Simpan</string>
+    <string name="pill_discard">Buang</string>
+    <string name="pill_down">Letakkan</string>
+    <string name="pill_leave">Biarkan</string>
+    <string name="pill_continue">Lanjutkan</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">Selesai</string>
+    <string name="pill_start">Mulai</string>
+    <string name="pill_back">Kembali</string>
 
     <!-- The move log. -->
     <string name="log_you">Anda</string>

@@ -13,10 +13,12 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import game.vinto.app.game.FELT_TAG
 import game.vinto.app.game.LOG_LINE
 import game.vinto.app.game.TableLayout
 import game.vinto.app.game.TableScreen
@@ -25,12 +27,14 @@ import game.vinto.app.theme.VintoTheme
 import game.vinto.client.Say
 import game.vinto.client.tableFor
 import game.vinto.client.teachingSession
+import game.vinto.engine.CardView
 import game.vinto.engine.PlayerView
 import game.vinto.shapes.GameAction
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -132,6 +136,68 @@ class UnfoldedPhonesTest {
         }
     }
 
+    /**
+     * Open on its side, the Duo keeps the status column it has closed, and the turn's choices stand in
+     * it. The rail beside the felt is then one narrow stack (owner, 2026-10-13) — the drawn card, the
+     * words about it under the card, the log under the words — and the felt takes the width the rail
+     * gives up. Two columns and a foot in a fifth of the screen would leave the card a thumb wide, the
+     * prompt broken at every second word, and a foot with nothing in it.
+     */
+    @Test
+    fun onAnOpenDuoTheRailIsOneNarrowStack() = runDesktopComposeUiTest(Duos.OPEN_W, Duos.OPEN_H) {
+        val (view, said) = Duos.drawn()
+        val layout = Duos.open()
+        assertTrue(layout.narrowRail, "beside a status column the rail is not the narrow stack")
+        assertEquals(
+            Duos.OPEN_W.dp - Duos.COLUMN.dp - layout.railWidth,
+            layout.feltWidth,
+            "the felt does not take the width the rail gives up",
+        )
+        showTable(view, said, layout)
+
+        val railLeft = Duos.OPEN_COLUMN_LEFT - layout.railWidth.value
+        val rank = (view.pendingAction?.card as CardView.Visible).card.rank.serialName
+        val card = whereIs("in play: $rank")
+        val words = onAllNodes(isHeading()).fetchSemanticsNodes()
+            .single { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { "drew" in it.text } }
+            .boundsInRoot
+        val log = onAllNodes(hasTestTag(LOG_LINE), useUnmergedTree = true).fetchSemanticsNodes().map { it.boundsInRoot }
+        assertTrue(log.isNotEmpty(), "the stack has no log in it")
+
+        (listOf(card, words) + log).forEach { at ->
+            assertTrue(
+                at.left >= railLeft - EDGE && at.right <= Duos.OPEN_COLUMN_LEFT + EDGE,
+                "$at is not in the narrow rail ($railLeft..${Duos.OPEN_COLUMN_LEFT})",
+            )
+        }
+        assertTrue(card.bottom <= words.top + EDGE, "the words $words are not under the card $card")
+        assertTrue(words.bottom <= log.minOf { it.top } + EDGE, "the log is not under the words $words")
+        CHOICES.forEach { name ->
+            assertTrue(button(name).left >= Duos.OPEN_COLUMN_LEFT - EDGE, "$name is not in the status column")
+        }
+    }
+
+    /**
+     * And the felt takes the screen's whole height beside the narrow stack. Held to a table's shape,
+     * as a tall desktop window's felt is, the open Duo's felt and rail sat in the middle of the screen
+     * with fifty points of empty rail above and below them — and the owner's word for a phone's screen
+     * is that nothing of it is left empty. Nearly square, then, with its cards dealt for that height.
+     */
+    @Test
+    fun onAnOpenDuoTheFeltTakesTheScreensWholeHeight() = runDesktopComposeUiTest(Duos.OPEN_W, Duos.OPEN_H) {
+        val (view, said) = Duos.drawn()
+        val layout = Duos.open()
+        assertEquals(Duos.OPEN_H.dp, layout.feltHeight, "beside the status column the felt is held to a table's shape")
+        showTable(view, said, layout)
+
+        val felt = onAllNodes(hasTestTag(FELT_TAG), useUnmergedTree = true).fetchSemanticsNodes().single().boundsInRoot
+        assertTrue(felt.top <= EDGE, "the felt starts ${felt.top} points down the screen")
+        assertTrue(
+            felt.bottom >= Duos.OPEN_H - FELT_MARGIN - EDGE,
+            "the felt stops ${Duos.OPEN_H - felt.bottom} points short of the foot of the screen",
+        )
+    }
+
     private fun ComposeUiTest.nameOf(who: String): Rect =
         onAllNodes(hasText(who), useUnmergedTree = true).fetchSemanticsNodes().single().boundsInRoot
 
@@ -188,6 +254,10 @@ class UnfoldedPhonesTest {
 
     private companion object {
         val CHOICES = listOf("Swap Cards", "Discard")
+        const val EDGE = 1f
+
+        /** The margin the felt keeps from the foot of the screen, as from its other edges. */
+        const val FELT_MARGIN = 6f
         val NAMES = listOf("Dusty Pebble", "Clever Harbour", "Golden Lantern", "Patient Sparrow")
 
         /** The next seat round sits on the left, the last on the right. */

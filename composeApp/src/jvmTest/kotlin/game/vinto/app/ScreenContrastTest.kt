@@ -30,6 +30,7 @@ import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.game.HelpSheet
 import game.vinto.app.game.LocalStage
@@ -198,6 +199,32 @@ class ScreenContrastTest {
             judged(
                 scheme,
                 shown(dark, "the rail asking for a rank") { table(view, Question.CallRank(0)) },
+            )
+        }
+    }
+
+    /**
+     * The closed iPhone Duo's status column: the way out, the rules and the settings as marks, the
+     * round's counter, and the turn's choices as pills, each a mark over one word in its own tone —
+     * with the narrower rail beside the felt that the column leaves.
+     */
+    @Test
+    fun theClosedDuosStatusColumnCanBeRead() {
+        val (view, said) = Duos.drawn()
+        val layout = Duos.closed()
+        eachScheme { dark, scheme ->
+            judged(
+                scheme,
+                shown(dark, "the closed Duo's status column", layout.width, layout.height) {
+                    TableScreen(
+                        state = TableState(view, tableFor(view), null, said, 1),
+                        layout = layout,
+                        onMove = {},
+                        onHelp = {},
+                        onSettings = {},
+                        onLeave = {},
+                    )
+                },
             )
         }
     }
@@ -471,14 +498,20 @@ class ScreenContrastTest {
         check(true, "dark")
     }
 
-    /** One screen, composed the way [App] frames every screen: on the rail, phone-sized. */
-    private fun shown(dark: Boolean, what: String, content: @Composable () -> Unit): List<String> {
+    /** One screen, composed the way [App] frames every screen: on the rail, phone-sized unless told. */
+    private fun shown(
+        dark: Boolean,
+        what: String,
+        width: Dp = PHONE_W,
+        height: Dp = PHONE_H,
+        content: @Composable () -> Unit,
+    ): List<String> {
         var found: List<String> = emptyList()
         runComposeUiTest {
             setContent {
                 VintoTheme(dark = dark) {
                     Surface(color = Rail.fill) {
-                        Box(modifier = Modifier.size(PHONE_W, PHONE_H)) { content() }
+                        Box(modifier = Modifier.size(width, height)) { content() }
                     }
                 }
             }

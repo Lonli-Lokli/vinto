@@ -114,6 +114,15 @@ fun GameButton(
      * about an ordinary button.
      */
     selected: Boolean? = null,
+    /**
+     * What the button is called aloud, where that is more than the word drawn on it.
+     *
+     * A pill in the closed iPhone Duo's status column carries one word under a mark — SWAP — and
+     * is spoken by the whole name of the move, "Swap Cards", as the rail's button for it is. The
+     * name has to contain the drawn word (WCAG 2.5.3), so somebody reading the pill can say it to
+     * Voice Control; the caller keeps that, and it is the [label] itself everywhere else.
+     */
+    said: String = label,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val held by interaction.collectIsPressedAsState()
@@ -174,7 +183,7 @@ fun GameButton(
                     VintoSpinner(
                         size = if (compact) CompactSpinner else Spinner,
                         colour = tone.ink,
-                        description = label,
+                        description = said,
                     )
                 } else {
                     leadingContent?.invoke()
@@ -183,7 +192,7 @@ fun GameButton(
                     leading?.let {
                         Text(it, fontSize = LabelSize, modifier = Modifier.clearAndSetSemantics { })
                     }
-                    Stamp(label, compact)
+                    Stamp(label, compact, said)
                 }
             }
 
@@ -323,13 +332,13 @@ private fun faceOf(
  * that reads like a stamp is part of a table.
  */
 @Composable
-private fun Stamp(label: String, compact: Boolean) {
+private fun Stamp(label: String, compact: Boolean, said: String) {
     Text(
         text = label.uppercase(),
         // Stamped for the eye, spoken as it was written: a screen reader handed
         // "PLAY IT — FORCE OPPONENT TO DRAW" may spell it, and the caps are a property of the
         // plaque rather than of the words.
-        modifier = Modifier.semantics { contentDescription = label },
+        modifier = Modifier.semantics { contentDescription = said },
         fontWeight = FontWeight.Bold,
         fontSize = if (compact) CompactLabel else LabelSize,
         // A compact label is one line in a row of fixed height, so its line is measured in its

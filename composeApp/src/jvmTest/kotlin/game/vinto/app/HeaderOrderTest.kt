@@ -5,10 +5,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.dp
 import game.vinto.app.art.Res
 import game.vinto.app.art.header_leave
@@ -25,7 +28,8 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * The way out of a room is the rightmost control, in every shape the header has.
+ * The way out of a room is the rightmost control, in every shape the header has — and in a status
+ * column, the first under the clock and the camera.
  *
  * Leaving is where a row of controls ends — and it is the one control a misplaced thumb should be
  * least likely to find, which is an argument for the far end and against anywhere in the middle.
@@ -35,6 +39,11 @@ import kotlin.test.assertTrue
  *
  * Asserted in POINTS rather than by reading the source, because "last in the Row" and "rightmost
  * on the screen" are the same thing only while nothing reorders or right-aligns.
+ *
+ * Stood up in the closed iPhone Duo's status column the row turns on end, and the way out goes to
+ * the top rather than the foot (owner, 2026-10-13): the foot is where a thumb rests and where the
+ * turn's choices stand, and the first thing in a column of controls is the place a player looks for
+ * the way back out of a screen.
  */
 @OptIn(ExperimentalTestApi::class)
 class HeaderOrderTest {
@@ -90,7 +99,28 @@ class HeaderOrderTest {
         assertTrue(wrong.isEmpty(), "the way out is not where a row of controls ends:\n" + wrong.joinToString("\n"))
     }
 
+    @Test
+    fun theWayOutIsTheFirstControlUnderTheCamera() = runDesktopComposeUiTest(Duos.CLOSED_W, Duos.CLOSED_H) {
+        val (view, said) = Duos.drawn()
+        showTable(view, said, Duos.closed())
+
+        val leave = whereIs(LEAVE)
+        assertTrue(leave.top >= Duos.CAMERA_FOOT, "the way out is up among the clock and the camera: $leave")
+        val others = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick))
+            .fetchSemanticsNodes()
+            .filter { it.boundsInRoot.left >= Duos.CLOSED_COLUMN_LEFT && it.calledAloud() != LEAVE }
+        assertTrue(others.isNotEmpty(), "the column holds nothing but the way out")
+        others.forEach { control ->
+            assertTrue(
+                control.boundsInRoot.top >= leave.bottom,
+                "\"${control.calledAloud()}\" stands above the way out in the status column",
+            )
+        }
+    }
+
     private companion object {
+        const val LEAVE = "Leave the table"
+
         /** Wide enough that every shape draws every control it has, labels included. */
         val WIDE = 900.dp
 

@@ -631,6 +631,18 @@
     <string name="choice_continue">Devam et</string>
     <string name="choice_call_vinto">Vinto Çağır</string>
     <string name="choice_done">Bitti</string>
+    <string name="pill_draw">Çek</string>
+    <string name="pill_use">Kullan</string>
+    <string name="pill_swap">Değiştir</string>
+    <string name="pill_keep">Sakla</string>
+    <string name="pill_discard">At</string>
+    <string name="pill_down">Bırak</string>
+    <string name="pill_leave">Bırak</string>
+    <string name="pill_continue">Devam</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">Bitti</string>
+    <string name="pill_start">Başlat</string>
+    <string name="pill_back">Geri</string>
 
     <!-- The move log. -->
     <string name="log_you">Siz</string>

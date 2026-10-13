@@ -26,6 +26,8 @@ struct FollowsTheHinge: ViewModifier {
         if #available(iOS 27.1, *) {
             content.onHingeChange { _, context in
                 if let hinge = context.hinge {
+                    // A phone with a hinge may turn, whatever its model (`Orientations`).
+                    Orientations.hingeReported()
                     HingeBridgeKt.hingeMoved(
                         partiallyOpen: hinge.status == .partiallyOpen,
                         degrees: hinge.angle.degrees
@@ -34,6 +36,48 @@ struct FollowsTheHinge: ViewModifier {
                     HingeBridgeKt.hingeGone()
                 }
             }
+        } else {
+            content
+        }
+    }
+}
+
+/// What iOS reserves in the window right now, as the text `ReservedBridgeKt.reservedChanged`
+/// reads (`Reserved.parse` in Kotlin): each region `left,top,width,height`, `;` between them.
+@available(iOS 27.1, *)
+struct RegionsNow: Equatable {
+    let occlusions: String
+    let division: String
+
+    init(_ proxy: GeometryProxy) {
+        occlusions = Self.encoded(proxy.reservedRegions(kind: .occlusion))
+        division = Self.encoded(proxy.reservedRegions(kind: .division))
+    }
+
+    private static func encoded(_ regions: [ReservedRegion]) -> String {
+        regions.filter(\.isActive)
+            .map { region in
+                let frame: CGRect = region.frame
+                return "\(frame.minX),\(frame.minY),\(frame.width),\(frame.height)"
+            }
+            .joined(separator: ";")
+    }
+}
+
+/// The iPhone Duo's reserved regions, handed to the Compose table (`ReservedBridge.kt`): where the
+/// clock and the camera stand in its status column, so the table's controls start under them and
+/// stop short of them, and where the fold runs while it is half open, so no card lies on it. An
+/// inset says only how wide the column is. Read through a geometry reader over the whole window,
+/// so the regions arrive in the window's coordinates, which are Compose's; nothing on older iOS.
+struct ReportsReservedRegions: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 27.1, *) {
+            GeometryReader { proxy in
+                content.onChange(of: RegionsNow(proxy), initial: true) { _, now in
+                    ReservedBridgeKt.reservedChanged(occlusions: now.occlusions, division: now.division)
+                }
+            }
+            .ignoresSafeArea()
         } else {
             content
         }
@@ -52,5 +96,6 @@ struct ContentView: View {
             .ignoresSafeArea(.container)
             .ignoresSafeArea(.keyboard)
             .modifier(FollowsTheHinge())
+            .modifier(ReportsReservedRegions())
     }
 }

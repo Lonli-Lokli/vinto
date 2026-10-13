@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,6 +39,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.LayoutDirection
@@ -45,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.Counting
 import game.vinto.app.LocalCounting
-import game.vinto.app.LocalStatusColumn
 import game.vinto.app.art.Res
 import game.vinto.app.art.chapter_covered
 import game.vinto.app.art.chapter_to_come
@@ -200,8 +201,8 @@ fun TeachScreen(
     val play = rememberActor(holder)
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val layout = TableLayout.forScreen(maxWidth, maxHeight, column = LocalStatusColumn.current)
-        val room = Room(layout, maxWidth, maxHeight, LocalLayoutDirection.current)
+        val layout = TableLayout.forScreen(maxWidth, maxHeight, LocalChrome.current)
+        val room = Room(layout, LocalLayoutDirection.current)
 
         CardStage(
             frames = holder.frames,
@@ -364,26 +365,47 @@ private fun cutsOn(stage: Stage, view: PlayerView, lesson: Lesson?): Cuts {
  */
 private fun Slot.clearOf(cuts: Cuts, room: Room, chrome: Dp?): Slot {
     if (chrome == null || this !is Slot.End) return this
-    // The coach's own end, and where the body would begin if the head and the foot were both
-    // there: its far edge is that and the body.
+    // The felt this end of the coach lies on — on a laptop, the half it is on — and the coach's own
+    // end, and where the body would begin if the head and the foot were both there: its far edge is
+    // that and the body.
+    val felt = room.end(top)
     val grows = if (top) Grows.DOWN else Grows.UP
-    val near = if (top) room.feltTop + Pad else room.feltBottom - Pad
+    val near = ownEnd(cuts, felt)
     val from = near + chrome * grows.sign
-    val settled = farEdgeClear(cuts, room, from, grows)
-    return settled.sidesClear(cuts, room, near, far = from + settled.body * grows.sign)
+    val gap = (near - if (top) felt.top else felt.bottom) * grows.sign
+    val settled = farEdgeClear(cuts, felt, from, grows).copy(gap = gap)
+    return settled.sidesClear(cuts, felt, near, far = from + settled.body * grows.sign)
 }
 
-/** [clearOf]'s far edge, from [from] where the body begins: see [clearEdge]. */
-private fun Slot.End.farEdgeClear(cuts: Cuts, room: Room, from: Dp, grows: Grows): Slot.End {
-    val far = if (top) room.feltBottom else room.feltTop
+/**
+ * Where the coach’s own end lies on [felt]: a [Pad] in from the felt’s edge, unless something stands
+ * across that line, and then just past it, so that is covered whole too. With no header over the felt
+ * (the closed iPhone Duo stands its header in the status column), the seat opposite starts nine points
+ * down, and a coach a [Pad] down covered all of its plate but a sliver.
+ */
+private fun Slot.End.ownEnd(cuts: Cuts, felt: DpRect): Dp {
+    val usual = if (top) felt.top + Pad else felt.bottom - Pad
+    val across = cuts.things.filter { it.top < usual && it.bottom > usual }
+    if (across.isEmpty()) return usual
+    return if (top) {
+        (across.minOf { it.top } - Tight).coerceAtLeast(felt.top)
+    } else {
+        (across.maxOf { it.bottom } + Tight).coerceAtMost(felt.bottom)
+    }
+}
+
+/** [clearOf]'s far edge, from [from] where the body begins, on [felt]: see [clearEdge]. */
+private fun Slot.End.farEdgeClear(cuts: Cuts, felt: DpRect, from: Dp, grows: Grows): Slot.End {
+    val far = if (top) felt.bottom else felt.top
     val edge = clearEdge(cuts, from, from + body * grows.sign, far, grows) ?: return this
     return copy(body = (edge - from) * grows.sign)
 }
 
 /** And its sides, against whatever lies level with the coach, from [near] to [far]: see [widthClear]. */
-private fun Slot.End.sidesClear(cuts: Cuts, room: Room, near: Dp, far: Dp): Slot.End {
+private fun Slot.End.sidesClear(cuts: Cuts, felt: DpRect, near: Dp, far: Dp): Slot.End {
     val level = cuts.things.filter { it.top < maxOf(near, far) && it.bottom > minOf(near, far) }
-    val wider = widthClear(level, room.centre, minOf(width, room.across), most = room.across)
+    val across = felt.right - felt.left - Pad * 2
+    val wider = widthClear(level, (felt.left + felt.right) / 2, minOf(width, across), most = across)
     return if (wider == null) this else copy(width = wider)
 }
 
@@ -391,9 +413,11 @@ private fun Slot.End.sidesClear(cuts: Cuts, room: Room, near: Dp, far: Dp): Slot
  * How wide a coach centred at [centre], now [width] across, must be to hold whole whatever of
  * [level] its sides would cut: a [Tight] past the furthest of them. Widened rather than narrowed,
  * because what it half-covers it is already most of the way over, and a narrower coach is a taller
- * one — on a tablet it is the top seat's plate, standing just past a coach a paragraph wide. Null
- * when its sides cut nothing, or when holding them would take more than [most]; either way it keeps
- * its width.
+ * one — on a tablet it is the top seat’s plate, standing just past a coach a paragraph wide. When
+ * that would take more than [most], narrowed instead to stop a [Tight] short of them, so long as
+ * [CoachNarrowest] is left to read: on the open iPhone Duo a side seat’s card reached a single point
+ * under the coach’s edge, and the felt had no room to cover it. Null when its sides cut nothing, or
+ * neither will do; either way it keeps its width.
  */
 private fun widthClear(level: List<DpRect>, centre: Dp, width: Dp, most: Dp): Dp? {
     // Under the coach in part: in under it, and out past one of its sides.
@@ -401,13 +425,23 @@ private fun widthClear(level: List<DpRect>, centre: Dp, width: Dp, most: Dp): Dp
         val (left, right) = centre - half to centre + half
         return level.filter { it.left < right && it.right > left && (it.left < left || it.right > right) }
     }
-    var half = width / 2
-    if (cut(half).isEmpty()) return null
-    while (cut(half).isNotEmpty()) {
-        half = cut(half).maxOf { maxOf(it.right - centre, centre - it.left) } + Tight
+    if (cut(width / 2).isEmpty()) return null
+    var wide = width / 2
+    while (cut(wide).isNotEmpty()) {
+        wide = cut(wide).maxOf { maxOf(it.right - centre, centre - it.left) } + Tight
     }
-    return (half * 2).takeIf { it <= most }
+    if (wide * 2 <= most) return wide * 2
+    var narrow = width / 2
+    while (cut(narrow).isNotEmpty() && narrow * 2 >= CoachNarrowest) {
+        // Short of each, on the side it stands out past.
+        val stops = cut(narrow).map { if (it.left < centre - narrow) centre - it.right else it.left - centre }
+        narrow = stops.min() - Tight
+    }
+    return (narrow * 2).takeIf { it >= CoachNarrowest }
 }
+
+/** The narrowest a coach may be made to stop short of a card: below it, a paragraph wraps to a column. */
+private val CoachNarrowest = 240.dp
 
 /** Which way a coach grows from the end of the felt it lies at, and so the sign of a step that way. */
 private enum class Grows(val sign: Float) { DOWN(1f), UP(-1f) }
@@ -476,51 +510,53 @@ private class Hooks(
     val onDone: () -> Unit,
 )
 
-/** The shape of the screen, and what follows from it for a coach lying on the felt. */
-private class Room(val layout: TableLayout, wide: Dp, screen: Dp, direction: LayoutDirection) {
-    /** What the coach keeps clear of at the felt's end: the rail on its side, and a status column. */
-    val endKept: Dp = (if (layout.landscape) layout.railWidth else 0.dp) + layout.column
+/**
+ * The shape of the screen, and what follows from it for a coach lying on the felt.
+ *
+ * Where the felt is comes from the table's own arrangement ([TableLayout.feltRect]) rather than being
+ * worked out again here, by the side of the glass: the coach kept clear of "the end" of the window,
+ * which on a right-to-left screen is its left, and lay over the iPhone Duo's status column there. It
+ * is the same rectangle the table lays its felt in on its side, in a book, turned, and on a desktop
+ * whose felt and rail sit centred in the window.
+ *
+ * A laptop's felt is two, one either side of the fold: a coach at the top lies on the upper half and
+ * one at the foot on the lower, and neither reaches across the crease ([end]).
+ */
+private class Room(val layout: TableLayout, direction: LayoutDirection) {
+    /** The felt a coach at the top lies on: the whole felt, or a laptop's upper half. */
+    private val far: DpRect = layout.feltRect(direction)
 
-    /** How wide a coach lying at an end of the felt may be, at most. */
-    val across: Dp = wide - Pad * 2 - endKept
+    /** And one at the foot: the whole felt again, or a laptop's lower half, beside its rail. */
+    private val near: DpRect = layout.nearFelt(direction)
 
-    /** Where it is centred, from the left of the window: the middle of [across]. */
-    val centre: Dp = if (direction == LayoutDirection.Ltr) (wide - endKept) / 2 else (wide + endKept) / 2
+    /** The table's box, which the coach is laid in. */
+    val width: Dp = layout.width
+    val height: Dp = layout.height
 
-    /**
-     * How far down the window the table's band starts.
-     *
-     * Zero in portrait and on any landscape screen the felt fills. Above that, the felt is
-     * capped at a table's depth and the band — header and felt together — is centred in what is
-     * left, so the coach has to come down with it. It was pinned to the top of the *window*,
-     * which put it in the surround above the table on a tall desktop.
-     */
-    private val bandTop: Dp =
-        if (layout.landscape && layout.feltHeight > 0.dp) {
-            ((screen - layout.header - layout.feltHeight) / 2).coerceAtLeast(0.dp)
-        } else {
-            0.dp
-        }
-
-    /** Where the felt begins: under the header, wherever the band put it. */
-    val feltTop: Dp = bandTop + layout.header
-
-    /** And ends: at the rail in portrait, at the foot of the band with the rail beside it. */
-    val feltBottom: Dp = if (layout.landscape) {
-        if (layout.feltHeight > 0.dp) feltTop + layout.feltHeight else screen
-    } else {
-        screen - layout.railHeight
-    }
-
-    /** What the coach must clear at the top and bottom of the window to lie on the felt. */
-    val clearAbove: Dp = feltTop
-    val clearBelow: Dp = screen - feltBottom
+    /** Where the felt begins, under the header and wherever a centred band put it, and where it ends. */
+    val feltTop: Dp = far.top
+    val feltBottom: Dp = near.bottom
 
     /**
      * The talking coach fits the felt it lies on: on a short phone, or a phone on its side,
      * the body gives up height rather than pushing "Go on" under the rail.
      */
-    val talkBody: Dp = minOf(TalkMax, maxOf(CoachMax, feltBottom - feltTop - TalkChrome))
+    val talkBody: Dp =
+        minOf(TalkMax, maxOf(CoachMax, minOf(far.bottom - far.top, near.bottom - near.top) - TalkChrome))
+
+    /** The felt a coach lies on at the [top] end, or at the foot. */
+    fun end(top: Boolean): DpRect = if (top) far else near
+
+    /**
+     * A playing coach's band ([bandOf]) kept to the felt your hand lies on. Only a laptop needs it: its
+     * side seats stand above the fold, so nothing beside your hand bounds the band, and it would reach
+     * across the rail standing beside that felt.
+     */
+    fun besideYourHand(band: Rect, density: Density): Rect {
+        if (layout.posture != Posture.LAPTOP) return band
+        val (left, right) = with(density) { near.left.toPx() to near.right.toPx() }
+        return Rect(maxOf(band.left, left), band.top, minOf(band.right, right), band.bottom)
+    }
 }
 
 /**
@@ -646,7 +682,7 @@ private sealed interface Slot {
      * At an end of the felt, the top or the bottom, with a talk body of this height; centred, and
      * at most [width] across — a paragraph's width, unless it has to hold a plate whole ([clearOf]).
      */
-    data class End(val top: Boolean, val body: Dp, val width: Dp = CoachWidth) : Slot
+    data class End(val top: Boolean, val body: Dp, val width: Dp = CoachWidth, val gap: Dp = Pad) : Slot
 
     /** The room, in the stage's pixels: left and right edges, and the hand's top as bottom. */
     data class Band(val room: Rect) : Slot
@@ -675,6 +711,7 @@ private fun slotFor(stage: Stage, lesson: Lesson?, view: PlayerView, room: Room,
     }
 
     val band = bandOf(stage, view, depth = with(density) { BandDepth.toPx() })
+        ?.let { room.besideYourHand(it, density) }
     val wide = band != null && band.width >= with(density) { BandMin.toPx() }
     return if (band != null && wide) Slot.Band(band) else Slot.End(top = true, room.talkBody)
 }
@@ -721,19 +758,24 @@ private fun bandOf(stage: Stage, view: PlayerView, depth: Float): Rect? {
  * very buttons the lessons point at. And a speech bubble, not a banner: on a desktop the
  * felt is most of a metre wide, and a line of coaching stretched across all of it is
  * unreadable in the way a newspaper set as one column would be.
+ *
+ * By the side of the glass, as the felt is ([Room]): a status column stands where the system keeps
+ * it whichever way the language reads, and so does a book's felt page.
  */
-private fun BoxScope.overFelt(slot: Slot.End, room: Room): Modifier = Modifier
-    .align(if (slot.top) Alignment.TopCenter else Alignment.BottomCenter)
-    .padding(horizontal = Pad)
-    .padding(end = room.endKept)
-    // Measured off the felt rather than off the window, because since the felt is capped at a
-    // table's depth the two are no longer the same rectangle on a tall screen. Only a [Tight] gap
-    // at the far end, which the coach reaches only to cover a plate there whole ([clearEdge]).
-    .padding(
-        top = room.clearAbove + if (slot.top) Pad else Tight,
-        bottom = room.clearBelow + if (slot.top) Tight else Pad,
-    )
-    .widthIn(max = slot.width)
+private fun BoxScope.overFelt(slot: Slot.End, room: Room): Modifier {
+    val felt = room.end(slot.top)
+    return Modifier
+        .align(if (slot.top) Alignment.TopCenter else Alignment.BottomCenter)
+        .absolutePadding(left = felt.left + Pad, right = room.width - felt.right + Pad)
+        // Measured off the felt rather than off the window, because since the felt is capped at a
+        // table's depth the two are no longer the same rectangle on a tall screen. Only a [Tight] gap
+        // at the far end, which the coach reaches only to cover a plate there whole ([clearEdge]).
+        .padding(
+            top = felt.top + if (slot.top) slot.gap else Tight,
+            bottom = room.height - felt.bottom + if (slot.top) Tight else slot.gap,
+        )
+        .widthIn(max = slot.width)
+}
 
 /**
  * Lays the coach across [room], its bottom resting just above the hand.

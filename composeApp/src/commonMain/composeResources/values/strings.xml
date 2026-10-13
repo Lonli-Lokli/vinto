@@ -932,6 +932,26 @@
     <string name="choice_call_vinto">Call Vinto</string>
     <string name="choice_done">Done</string>
 
+    <!-- The same choices as pills in the closed iPhone Duo's status column: one short word each,
+         under a drawn mark, on a pill 72 points across, so one word that fits it is the whole
+         job. Each is a word of its choice's full name above (choice_*), which is what a screen
+         reader says for the pill: the name spoken has to contain the word shown (WCAG 2.5.3), so
+         keep each one a word of that name in your translation. pill_use serves both "Use Action"
+         and "Use %1$s" (the card taken from the pile); pill_swap both "Swap Cards" and "Just Swap";
+         pill_down is "Put it down". -->
+    <string name="pill_draw">Draw</string>
+    <string name="pill_use">Use</string>
+    <string name="pill_swap">Swap</string>
+    <string name="pill_keep">Keep</string>
+    <string name="pill_discard">Discard</string>
+    <string name="pill_down">Down</string>
+    <string name="pill_leave">Leave</string>
+    <string name="pill_continue">Continue</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">Done</string>
+    <string name="pill_start">Start</string>
+    <string name="pill_back">Back</string>
+
     <!-- The move log.
          %1$s is who did it — a nickname, or the translated word for "you" below. A rank
          (%2$s where present) is a mark on a card rather than a word, so it is never

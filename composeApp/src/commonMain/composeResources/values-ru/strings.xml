@@ -624,6 +624,18 @@
     <string name="choice_continue">Дальше</string>
     <string name="choice_call_vinto">Объявить Vinto</string>
     <string name="choice_done">Готово</string>
+    <string name="pill_draw">Взять</string>
+    <string name="pill_use">Сыграть</string>
+    <string name="pill_swap">Поменять</string>
+    <string name="pill_keep">Оставить</string>
+    <string name="pill_discard">Сбросить</string>
+    <string name="pill_down">Положить</string>
+    <string name="pill_leave">Оставить</string>
+    <string name="pill_continue">Дальше</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">Готово</string>
+    <string name="pill_start">Начать</string>
+    <string name="pill_back">Назад</string>
 
     <string name="log_you">Вы</string>
     <string name="log_drew_known">Вы взяли %1$s</string>

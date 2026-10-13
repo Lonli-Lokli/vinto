@@ -603,6 +603,18 @@
     <string name="choice_continue">Kontynuuj</string>
     <string name="choice_call_vinto">Zawołaj Vinto</string>
     <string name="choice_done">Gotowe</string>
+    <string name="pill_draw">Dobierz</string>
+    <string name="pill_use">Użyj</string>
+    <string name="pill_swap">Zamień</string>
+    <string name="pill_keep">Zachowaj</string>
+    <string name="pill_discard">Odrzuć</string>
+    <string name="pill_down">Odłóż</string>
+    <string name="pill_leave">Zostaw</string>
+    <string name="pill_continue">Kontynuuj</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">Gotowe</string>
+    <string name="pill_start">Rozpocznij</string>
+    <string name="pill_back">Wstecz</string>
 
     <string name="log_you">Ty</string>
     <string name="log_drew_known">Dobierasz %1$s</string>

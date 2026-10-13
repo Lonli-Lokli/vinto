@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -182,6 +183,20 @@ private val RailCard = CardScale(56.dp, 78.dp)
  */
 private const val RailCardShare = 0.4f
 
+/**
+ * The narrow stack's card ([RailStack]): at most this share of the height above the stack's foot,
+ * and of its width. A card being decided about, larger than a hand's, and the words and the log
+ * under it keep the rest.
+ */
+private const val StackCardShare = 0.4f
+private const val StackCardWidth = 0.6f
+
+/** And the two cards a Jack or a Queen is aimed at, which share the stack's whole width with their mark. */
+private const val StackPairShare = 1f
+
+/** The stack's log runs down to its foot, so its well may be deeper than a phone's. */
+private const val StackLogLines = 20
+
 /** The mark between the two aimed cards, which is what says they exchange places. */
 private val SwapMarkWidth = 14.dp
 private val SwapMarkHeight = 12.dp
@@ -257,13 +272,17 @@ fun ControlPanel(
     onMove: (Move) -> Unit,
     modifier: Modifier = Modifier,
     /**
-     * True when the rail stands beside the felt (landscape) rather than under it. The size
-     * comes from the caller's modifier either way; what this decides is which edge of the
-     * rail touches the felt, and so which edge wears the moulding.
+     * Where the rail stands against the felt: under it, or beside it ([RailShape]). The size comes
+     * from the caller's modifier either way; what this decides is which edge of the rail touches
+     * the felt, and so which edge wears the moulding — and, for the narrow stack beside a status
+     * column, how what is in it is laid out.
      */
-    side: Boolean = false,
+    shape: RailShape = RailShape.UNDER,
+    /** Where the turn's choices are drawn: here, or in a status column, which leaves the rail none. */
+    choices: ChoicesAt = ChoicesAt.RAIL,
 ) {
     val table = state.table
+    val side = shape != RailShape.UNDER
     val edge = MaterialTheme.colorScheme.feltEdge()
     Surface(
         modifier = modifier
@@ -349,9 +368,30 @@ fun ControlPanel(
                 modifier = Modifier.fillMaxSize().padding(horizontal = PanelPad).widthIn(max = RailMost),
             )
         } else {
-            RailBody(state, table, inPlay, recent, crowded, promptLine, twoLines, side, onMove)
+            val how = RailHow(shape, choices)
+            RailBody(state, table, inPlay, recent, crowded, promptLine, twoLines, how, onMove)
         }
     }
+}
+
+/** Where the rail stands against the felt, and so how what is in it is laid out. */
+enum class RailShape {
+    /** Under the felt, the table upright: two columns over a foot. */
+    UNDER,
+
+    /** Beside the felt, the table on its side: the same two columns, the moulding down its edge. */
+    BESIDE,
+
+    /**
+     * Beside the felt and a status column too, in a fifth of the screen: one stack, read from the
+     * top ([RailStack]). The open iPhone Duo on its side.
+     */
+    STACK,
+}
+
+/** How the rail is being drawn: its [shape], and where the turn's [choices] are. */
+private data class RailHow(val shape: RailShape, val choices: ChoicesAt) {
+    val side: Boolean get() = shape != RailShape.UNDER
 }
 
 /** The two columns and the foot: everything the rail draws, laid out by the rule above. */
@@ -365,9 +405,14 @@ private fun RailBody(
     crowded: Boolean,
     promptLine: Dp,
     twoLines: Dp,
-    side: Boolean,
+    how: RailHow,
     onMove: (Move) -> Unit,
 ) {
+    if (how.shape == RailShape.STACK) {
+        RailStack(state, table, inPlay, recent, how.choices, onMove)
+        return
+    }
+
     // Never wider than [RailMost], centred: under a portrait tablet's felt the whole width was the
     // phone's controls stretched — two buttons each wider than a phone.
     BoxWithConstraints(
@@ -425,7 +470,7 @@ private fun RailBody(
                         twoLines,
                         modifier = Modifier.weight(1f),
                     )
-                    RailFoot(table, footCap, side, onMove)
+                    RailFoot(table, footCap, how.side, onMove, choices = how.choices)
                 }
             }
 
@@ -478,14 +523,7 @@ private fun RailBlock(
             if (aim != null) {
                 railPairFor(block, room, caption)?.let { AimedPair(aim, it, caption) }
             } else if (inPlay != null) {
-                railCardFor(block, room)?.let { cardScale ->
-                    val label = when (inPlay) {
-                        is CardView.Visible ->
-                            stringResource(Res.string.card_in_play, inPlay.card.rank.serialName)
-                        CardView.Hidden -> stringResource(Res.string.card_the_deck)
-                    }
-                    CardFace(card = inPlay, scale = cardScale, label = label)
-                }
+                railCardFor(block, room)?.let { InPlayCard(inPlay, it) }
             }
             Column(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -517,6 +555,105 @@ private fun RailBlock(
 }
 
 /**
+ * The narrow rail beside an open iPhone Duo's felt: one stack, read from the top ([RailShape.STACK]).
+ *
+ * The owner's, 2026-10-13: the drawn card, then what it is and what the table is asking, then the
+ * log, so that no part of the rail stands empty. Beside a status column the turn's choices stand in
+ * the column ([ChoicesAt.COLUMN]) and the rail is a fifth of the screen, where a phone's two columns
+ * and a foot left the card a thumb wide beside a prompt broken at every second word, over a foot
+ * with nothing in it. A picker the column cannot hold — a King's ranks, the rank put down by a swap
+ * and the Just Swap that is its alternative — stays here, at the foot ([RailFoot]), and takes its
+ * room first, so the answers are never under the edge; what is above it shares what is left
+ * ([StackAbove]).
+ */
+@Composable
+private fun RailStack(
+    state: TableState,
+    table: Table,
+    inPlay: CardView?,
+    recent: List<Say>,
+    choices: ChoicesAt,
+    onMove: (Move) -> Unit,
+) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(PanelPad)) {
+        val rail = maxHeight
+        val promptLine = with(LocalDensity.current) { (PromptSize * PromptLineFactor).toDp() }
+        // As in the phone's rail: the foot may never take the prompt's first line.
+        val footCap =
+            if (rail.isFinite) (rail - promptLine - Gap).coerceAtLeast(promptLine) else Dp.Unspecified
+        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(Gap)) {
+            // Weighted, so the foot below is measured first and this takes what it leaves.
+            StackAbove(state, table, inPlay, recent, Modifier.fillMaxWidth().weight(1f))
+            RailFoot(table, footCap, side = true, onMove = onMove, narrow = true, choices = choices)
+        }
+    }
+}
+
+/**
+ * Everything in the stack above its foot: the card, the words about it, the log.
+ *
+ * The card takes a share of the height and no more than a share of the width, and is drawn whole or
+ * not at all, as it is in a phone's rail; the words come under it, scrolling within what is left
+ * after the card; the log takes the rest, to the foot.
+ */
+@Composable
+private fun StackAbove(
+    state: TableState,
+    table: Table,
+    inPlay: CardView?,
+    recent: List<Say>,
+    modifier: Modifier,
+) {
+    BoxWithConstraints(modifier = modifier) {
+        val above = maxHeight
+        val room = maxWidth
+        val caption = with(LocalDensity.current) { (AimSize * LogLineFactor).toDp() } * AimCaptionLines
+        val cardRoom = if (above.isFinite) above * StackCardShare else RailCard.height
+        val aim = table.aim
+        val pair = aim?.let { railPairFor(cardRoom, room, caption, share = StackPairShare) }
+        val shown = inPlay?.takeIf { aim == null }
+        val card = shown?.let { railCardFor(cardRoom, room, share = StackCardWidth) }
+        val taken = pair?.let { it.height + caption } ?: card?.height ?: 0.dp
+        val wordsCap = if (above.isFinite) (above - taken - Gap).coerceAtLeast(0.dp) else Dp.Unspecified
+        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(Gap)) {
+            StackCard(aim, pair, shown, card, caption)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = wordsCap)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(Gap),
+            ) {
+                Heading(table = table, teaching = state.teaching, shown = (inPlay as? CardView.Visible)?.card)
+                table.planLine?.let { PlanLineText(it) }
+                Answer(state)
+            }
+            Box(modifier = Modifier.fillMaxWidth().weight(1f)) { RecentActions(recent, most = StackLogLines) }
+        }
+    }
+}
+
+/**
+ * The stack's card: the two a Jack or a Queen is aimed at, or the card in play — each only where
+ * [StackAbove] found room to draw it whole.
+ */
+@Composable
+private fun StackCard(aim: Aim?, pair: CardScale?, shown: CardView?, card: CardScale?, caption: Dp) {
+    if (aim != null && pair != null) AimedPair(aim, pair, caption)
+    if (shown != null && card != null) InPlayCard(shown, card)
+}
+
+/** The card in play, named as the card being decided about — or as the deck, before the draw. */
+@Composable
+private fun InPlayCard(inPlay: CardView, scale: CardScale) {
+    val label = when (inPlay) {
+        is CardView.Visible -> stringResource(Res.string.card_in_play, inPlay.card.rank.serialName)
+        CardView.Hidden -> stringResource(Res.string.card_the_deck)
+    }
+    CardFace(card = inPlay, scale = scale, label = label)
+}
+
+/**
  * The grid of answers, when there is one, and the choices under it — pinned, and never the
  * whole rail. It keeps one row's room even with nothing to press — "Raph is playing" — so the
  * block above it, and the log in it, are the same size on every turn of the round: a box that
@@ -526,7 +663,21 @@ private fun RailBlock(
  * a rank; an Ace and the coalition name a player.
  */
 @Composable
-private fun RailFoot(table: Table, footCap: Dp, side: Boolean, onMove: (Move) -> Unit) {
+private fun RailFoot(
+    table: Table,
+    footCap: Dp,
+    side: Boolean,
+    onMove: (Move) -> Unit,
+    /** The narrow stack's foot, a fifth of the screen wide: its grids keep a thumb's width a chip. */
+    narrow: Boolean = false,
+    /**
+     * Where the choices are. In a status column the foot is not drawn at all: the choices are the
+     * whole of what it holds then — a set with a picker in it stays here ([choicesAt]) — and an empty
+     * row kept for them is a row the card and the log can use.
+     */
+    choices: ChoicesAt = ChoicesAt.RAIL,
+) {
+    if (choices == ChoicesAt.COLUMN) return
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -534,8 +685,8 @@ private fun RailFoot(table: Table, footCap: Dp, side: Boolean, onMove: (Move) ->
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(Gap),
     ) {
-        RankGrid(table.ranks, LocalStage.current, onMove)
-        SeatGrid(table.seats, onMove)
+        RankGrid(table.ranks, LocalStage.current, onMove, narrow)
+        SeatGrid(table.seats, onMove, narrow)
         Choices(table, side, onMove)
     }
 }
@@ -552,9 +703,9 @@ private fun speakerKey(who: Speaker): String = when (who) {
  * share of the rail's width the words need — and not at all when the block is shorter than
  * a card in your own hand, which is the size a face stops being readable at.
  */
-private fun railCardFor(block: Dp, width: Dp): CardScale? {
+private fun railCardFor(block: Dp, width: Dp, share: Float = RailCardShare): CardScale? {
     val tallest = if (block.isFinite) block else RailCard.height
-    val height = minOf(tallest, width * RailCardShare * (RailCard.height / RailCard.width))
+    val height = minOf(tallest, width * share * (RailCard.height / RailCard.width))
     if (height < RailCard.height) return null
     return CardScale(height * (RailCard.width / RailCard.height), height)
 }
@@ -568,9 +719,9 @@ private fun railCardFor(block: Dp, width: Dp): CardScale? {
  * rank and a colour, which is what the player is comparing. Below that the pair is dropped
  * whole rather than drawn as two slivers.
  */
-private fun railPairFor(block: Dp, width: Dp, caption: Dp): CardScale? {
+private fun railPairFor(block: Dp, width: Dp, caption: Dp, share: Float = RailCardShare): CardScale? {
     val tallest = (if (block.isFinite) block else RailCard.height) - caption
-    val each = (width * RailCardShare - SwapMarkWidth - Half * 2) / 2
+    val each = (width * share - SwapMarkWidth - Half * 2) / 2
     val height = minOf(tallest, each * (RailCard.height / RailCard.width))
     if (height < TapTarget) return null
     return CardScale(height * (RailCard.width / RailCard.height), height)
@@ -983,7 +1134,7 @@ private fun worthSaying(detail: Detail, teaching: Boolean): Boolean {
  * *before* yours as its newest line, which read as the log having missed your draw.
  */
 @Composable
-private fun RecentActions(recent: List<Say>) {
+private fun RecentActions(recent: List<Say>, most: Int = LogLines) {
     if (recent.isEmpty()) return
 
     // A plain loop rather than `map`: `said` is a composable, and a composable call inside
@@ -1006,7 +1157,7 @@ private fun RecentActions(recent: List<Say>) {
     // with nothing readable in it. On one phone that is always the same number of lines,
     // which is what keeps the box a fixed size from one move to the next.
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val lines = logDepth(room = maxHeight, lineHeight = lineHeight)
+        val lines = logDepth(room = maxHeight, lineHeight = lineHeight, most = most)
         if (lines < 1) return@BoxWithConstraints
 
         KeepTheTailInView(listState, rendered, lines)
@@ -1160,11 +1311,24 @@ internal fun foldedByActor(lines: List<Pair<Speaker, String>>): List<List<String
 }
 
 /** How many lines of log fit in [room], up to the well's greatest depth; none when less than one. */
-private fun logDepth(room: Dp, lineHeight: Dp): Int =
-    if (room.isFinite) minOf(LogLines, ((room - Gap * 2) / lineHeight).toInt()) else LogLines
+private fun logDepth(room: Dp, lineHeight: Dp, most: Int): Int =
+    if (room.isFinite) minOf(most, ((room - Gap * 2) / lineHeight).toInt()) else most
 
+/**
+ * One of the turn's choices: a button across the rail, or — given its [pill] — a pill in a status
+ * column, a mark over one short word ([ChoicePill]).
+ */
 @Composable
-private fun ChoiceButton(choice: Choice, onMove: (Move) -> Unit, modifier: Modifier = Modifier) {
+internal fun ChoiceButton(
+    choice: Choice,
+    onMove: (Move) -> Unit,
+    modifier: Modifier = Modifier,
+    pill: Pill? = null,
+) {
+    if (pill != null) {
+        ChoicePill(choice, pill, onMove, modifier)
+        return
+    }
     GameButton(
         label = labelled(choice.label),
         tone = choice.tone.paint(),
@@ -1185,6 +1349,34 @@ private fun ChoiceButton(choice: Choice, onMove: (Move) -> Unit, modifier: Modif
         // `GameButton` already draws a spinner in the label's place and swallows its own taps;
         // this is the one line that was missing to make the in-flight move visible on the
         // control the player pressed. Read off the stage for the same reason the card does.
+        busy = LocalStage.current.acting,
+    )
+}
+
+/**
+ * A choice as a pill in a status column: the move's own mark over one short word, in the move's own
+ * tone, and spoken by its whole name ([pillSaid]) — "Swap Cards" for a pill that says SWAP, which is
+ * what the rail's button for it is called, so the lesson and Voice Control know it by one name.
+ */
+@Composable
+private fun ChoicePill(choice: Choice, pill: Pill, onMove: (Move) -> Unit, modifier: Modifier) {
+    val word = stringResource(pill.word)
+    GameButton(
+        label = word,
+        said = pillSaid(word, labelled(choice.label)),
+        tone = choice.tone.paint(),
+        onClick = { onMove(choice.move) },
+        // Marked as the rail's button is, so the lesson's pointer finds it wherever it stands.
+        modifier = modifier
+            .size(PillWide, PillHigh)
+            .markedAs(LocalStage.current, "choice:${keyOf(choice.label)}"),
+        // A drawn mark in the ink the button wears, dimmed with it, and silent: the word under it
+        // and the name it is spoken by already say what it is.
+        leadingContent = {
+            Icon(painterResource(pill.icon), contentDescription = null, modifier = Modifier.size(PillMark))
+        },
+        stacked = true,
+        compact = true,
         busy = LocalStage.current.acting,
     )
 }
@@ -1221,16 +1413,32 @@ internal fun Tone.paint(): ButtonTone = when (this) {
  * and one of them is always excluded, the player themselves for an Ace and the caller for the
  * coalition.
  */
+@Composable
+internal fun SeatGrid(
+    seats: List<SeatChoice>,
+    onMove: (Move) -> Unit,
+    /** In the narrow stack, where three to a row would cut the portraits: as many as hold one whole. */
+    narrow: Boolean = false,
+) {
+    if (seats.isEmpty()) return
+    if (!narrow) {
+        SeatRows(seats, onMove, SEATS_PER_ROW)
+        return
+    }
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        SeatRows(seats, onMove, minOf(SEATS_PER_ROW, across(maxWidth, SeatLeast)))
+    }
+}
+
+/** The seats on offer, [perRow] to a row. See [SeatGrid]. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun SeatGrid(seats: List<SeatChoice>, onMove: (Move) -> Unit) {
-    if (seats.isEmpty()) return
-
+private fun SeatRows(seats: List<SeatChoice>, onMove: (Move) -> Unit, perRow: Int) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Half),
         verticalArrangement = Arrangement.spacedBy(Half),
-        maxItemsInEachRow = SEATS_PER_ROW,
+        maxItemsInEachRow = perRow,
     ) {
         seats.forEach { seat ->
             // Keyed on the seat's own name rather than on what the button calls them: the
@@ -1295,16 +1503,37 @@ private fun SeatFace(portrait: DrawableResource) {
  * here knows which rail it is: the model says whether a rank is in the claim, the same way it
  * says whether one is muted.
  */
+@Composable
+internal fun RankGrid(
+    ranks: List<RankChoice>,
+    stage: Stage,
+    onMove: (Move) -> Unit,
+    /**
+     * In the narrow stack beside an open Duo's felt, a fifth of the screen across, where seven to a
+     * row would be chips a third of a thumb wide: there a row holds as many as are a thumb wide each.
+     */
+    narrow: Boolean = false,
+) {
+    if (ranks.isEmpty()) return
+    val designed = if (ranks.size <= ACTION_RANKS) ACTION_RANKS_PER_ROW else RANKS_PER_ROW
+    if (!narrow) {
+        RankRows(ranks, stage, onMove, designed)
+        return
+    }
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        RankRows(ranks, stage, onMove, minOf(designed, across(maxWidth, TapTarget)))
+    }
+}
+
+/** The ranks on offer, [perRow] to a row. See [RankGrid]. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun RankGrid(ranks: List<RankChoice>, stage: Stage, onMove: (Move) -> Unit) {
-    if (ranks.isEmpty()) return
-
+private fun RankRows(ranks: List<RankChoice>, stage: Stage, onMove: (Move) -> Unit, perRow: Int) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Half),
         verticalArrangement = Arrangement.spacedBy(Half),
-        maxItemsInEachRow = if (ranks.size <= 8) ACTION_RANKS_PER_ROW else RANKS_PER_ROW,
+        maxItemsInEachRow = perRow,
     ) {
         ranks.forEach { rank ->
             GameButton(
@@ -1324,8 +1553,14 @@ internal fun RankGrid(ranks: List<RankChoice>, stage: Stage, onMove: (Move) -> U
     }
 }
 
+/** How many things at least [each] wide fit across [width], [Half] apart; never none. */
+private fun across(width: Dp, each: Dp): Int = ((width + Half) / (each + Half)).toInt().coerceAtLeast(1)
+
 /** Seven and seven: the fourteen ranks, in two rows that fill the rail's width. */
 private const val RANKS_PER_ROW = 7
+
+/** The swap declaration's action ranks: a grid of no more than this many is theirs. */
+private const val ACTION_RANKS = 8
 
 /** Four and four: the eight action ranks of the swap declaration. */
 private const val ACTION_RANKS_PER_ROW = 4
@@ -1342,6 +1577,9 @@ private const val SEATS_PER_ROW = 3
  * it, so the width is the tile's rather than what is left after the label.
  */
 private val SeatFaceSize = 56.dp
+
+/** The narrowest a seat button is where it is narrowed: its portrait, and the button's edge either side. */
+private val SeatLeast = 64.dp
 
 /** How many times a hint is given before it waits to be asked for. */
 private const val FreelyOffered = 2

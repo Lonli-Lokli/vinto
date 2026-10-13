@@ -637,6 +637,18 @@
     <string name="choice_continue">続ける</string>
     <string name="choice_call_vinto">Vintoを宣言</string>
     <string name="choice_done">完了</string>
+    <string name="pill_draw">引く</string>
+    <string name="pill_use">使う</string>
+    <string name="pill_swap">交換</string>
+    <string name="pill_keep">残す</string>
+    <string name="pill_discard">捨てる</string>
+    <string name="pill_down">置く</string>
+    <string name="pill_leave">そのまま</string>
+    <string name="pill_continue">続ける</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">完了</string>
+    <string name="pill_start">始める</string>
+    <string name="pill_back">戻る</string>
 
     <!-- The move log. -->
     <string name="log_you">自分</string>

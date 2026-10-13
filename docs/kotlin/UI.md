@@ -152,14 +152,73 @@ rests a moment is a book held open, a pose rather than a move, and the table fin
 Android reports a half-open fold but not its angle on most phones, so it keeps the clock. Building
 the iOS app now needs the iOS 27.1 SDK (VERSIONING.md).
 
-**The closed Duo's status column holds the header.** iOS 27.1 keeps no strip across the top of the
+**The Duo's status column holds the table's controls.** iOS 27.1 keeps no strip across the top of the
 closed Duo: its clock, connectivity and camera stand in a column down the right edge, 84 of 466
-points (measured on the Duo simulator), and its own toolbars stack their buttons in it. `App` tells
-a column from the insets (`statusColumn`), leaves it to the table, and keeps every other screen
-clear of it (`Edges`); the table stands its header there (`TableHeader(vertical)`) — the
-counter, the plan, the rules, the settings and the way out, from the foot, under a thumb, as marks
-without their words whatever the host, because 84 points has no room for "Leave the table" — and
-the felt gets the header's row (`TableLayout.column`).
+points (measured on the Duo simulator), and its own toolbars stack their buttons in it; open on its
+side it keeps the same column with only the clock in it. `App` tells a column from the insets, by
+the side of the glass rather than the end, so a right-to-left screen finds it too (`sidesOf`,
+`chromeOf`); it leaves the column to the table and keeps every other screen clear of it. And iOS
+says where in the column its own things stand (`reservedRegions`, handed over as `Reserved`), so
+the controls start under the camera rather than at a guess (`Chrome.run`).
+
+The order is the owner's (2026-10-13), top down: **the way out** first, just under the clock and
+the camera, where a column of controls begins and where no resting thumb finds it; **the rules and
+the settings**, what a top bar would hold; **the round and turn**; **the plan's switch** in a final
+round; then room, and **the turn's choices at the foot**, under the thumb, as pills — 72 by 70, a
+drawn mark over one short word, spoken by the move's whole name so the word shown is in the name said
+(`StatusColumn`, `ColumnChoices.kt`). The one most often taken stands lowest — Discard under
+Swap under Use the action, Draw under Use from the pile — and Call Vinto is always the highest pill,
+because it ends the round for everybody. A set goes to the column whole or not at all: a picker —
+a King's fourteen ranks, naming the rank a swap put down with Just Swap beside it, a seat to name,
+the plan — keeps its whole set in the rail, and so does a set with a sentence for a choice or more
+pills than the column holds (`choicesAt`, `pillsThatFit`). While the column holds them the rail
+draws no choices at all, and the row it kept for them goes to the card and the log. The marks are
+SVG masters (`brand/icons/choices/`), strokes only so each pill tints its mark to its own ink.
+
+**Beside the column the rail is one narrow stack.** Open on its side, with the choices in the column,
+the rail is left a card, the words about it and the log, and a phone's two columns and a foot in it
+was a card a thumb wide beside a prompt broken at every other word, over an empty foot. So the rail
+is a fifth of what the column leaves (184 to 232 points, `railNarrow`) and reads from the top: the
+card, the words under it, the log down to the foot (`RailStack`); the felt takes the width the rail
+gives up. A picker that stays in the rail takes its room at the stack's foot first, its chips three
+to a row so each is a thumb wide, and the card and the log give way above it. Held by
+`TheStatusColumnTest`, `TheDuosEdgesTest`, `HeaderOrderTest`, `UnfoldedPhonesTest` and
+`RailFitsTest`. And beside a column the felt takes the screen's whole height: held to a table's
+shape, as a tall desktop window's is, the open Duo's felt and rail sat in the middle of the screen
+with fifty points of empty rail above and below, and a phone's screen leaves nothing empty (owner).
+
+**Open upright, the header stands in iOS's strip.** The open Duo held upright keeps an 80-point strip
+across the top with the clock and the connectivity in its right-hand corner. A header under it was a
+second row of chrome taken from the felt, so the table shares the strip (`Chrome.strip`): the
+wordmark and the counter at its left, the rules, the settings and the way out after them — the way
+out last, short of the clock (`TopRow`, `stripEnd`) — and the felt starts right under the strip.
+Only a strip with something reported in it, all at its far end, is shared: an iPhone's island in the
+middle of its strip, or a strip nothing has been said about, is kept clear of as before.
+
+**Half open, nothing lies on the crease.** iOS reports the fold as a line about eight points wide
+(`Reserved.division`), and a card across it is a card bent in two. Held like a **book**, its spine up
+the middle, the felt has the page away from the status column, the whole height of it, with cards
+dealt for that page (`TableLayout.forScreen`, `Book`); the rail is the narrow stack on the other page
+beside the column, and the score sheet rises over the felt's page alone (`feltSpan`). Held like a
+**laptop**, its hinge across the middle, the owner's arrangement: the other three seats stand up on
+the upper half, as across a table, and your own hand, the piles and the turn's choices lie flat on
+the lower half, where your hands are, the rail beside them (`Laptop`, `FeltPart`). The side seats
+keep their columns up there — a dealt hand along each rim is 236 points and the half leaves the
+middle about 290 — so every seat stays in its chair, and folding the phone glides each piece to its
+half under the name it has flat. Where a fold leaves a page too small for its half, the table is
+dealt as it would be flat.
+
+**Turned, the closed Duo lies on its side like Apple's apps** (owner). iOS keeps its column down one
+edge, the camera at one end; the table lies on its side beside it with the narrow stack and the felt
+the whole height, the column's controls starting under whatever iOS reports at its top and the pills
+stopping above the camera at its foot (`Chrome.run`) — on either edge, since nothing here is a
+measured constant. Whether a phone may turn is the platform's to say; the layout never stands a
+turned phone back up. Where the felt lies in each of these — on its side, centred on a desktop, a
+book's page, a laptop's two halves, turned with the column on the left — is worked out once
+(`TableLayout.feltRect`) for everything that lies over it: the lesson's coach, which keeps to the felt
+by the side of the glass and so no longer lies over a column on a right-to-left screen, the score
+sheet, and where a glide lands (`Reshape`). Held by `TheDuoHalfOpenTest`, `TheDuoTurnsTest`,
+`TheDuosEdgesTest` and `StoreShotErrorsTest`.
 
 **And three things the store's screenshots showed** (`StoreShotErrorsTest`): green screens stood
 between two cream bars, because the app painted the rail behind the system bars on every screen —

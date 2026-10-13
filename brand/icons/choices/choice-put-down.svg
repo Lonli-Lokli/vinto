@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- PUT IT DOWN: a card laid flat on the table, seen at an angle, and the arrow it came down by.
+       Face down is the point: a card that was looked at, or one with nothing to aim at, goes back. -->
+  <!-- One pen for every mark in the set: 2 of 24, round ends and joins, black, no fill — the
+       pill tints it to its own ink, so the mark is the button's colour in both themes. -->
+  <path d="M2.5 20.5 L6.5 14.5 H21.5 L17.5 20.5 Z" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12 2.5 V10" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M9.2 7.2 L12 10 L14.8 7.2" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

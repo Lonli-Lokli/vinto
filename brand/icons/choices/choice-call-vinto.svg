@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- CALL VINTO: the trophy the rail's Call Vinto button has always worn (drawTrophy in
+       DrawnMarks.kt), its bowl, two handles, stem and foot, here drawn in outline. -->
+  <!-- One pen for every mark in the set: 2 of 24, round ends and joins, black, no fill — the
+       pill tints it to its own ink, so the mark is the button's colour in both themes. -->
+  <path d="M6.72 3.36 H17.28 Q17.28 12 12 13.92 Q6.72 12 6.72 3.36 Z" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M6.72 9.36 A2.64 2.64 0 0 1 6.72 4.08" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M17.28 4.08 A2.64 2.64 0 0 1 17.28 9.36" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12 13.92 V17.76" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M7.2 17.76 H16.8 V20.64 H7.2 Z" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

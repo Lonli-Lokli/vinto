@@ -32,13 +32,33 @@ class PhonesStayUprightTest {
         }
     }
 
-    /** iOS says it per device family: iPhones upright only, iPads every way including upside down. */
+    /**
+     * iOS says it per device family, iPads every way including upside down — and for a phone, per
+     * phone: upright, unless it folds. The closed iPhone Duo on its side keeps its whole height,
+     * since iOS stands its status bar in a column down the side, and Apple's apps turn with it
+     * (owner, 2026-10-13). So the phone list names the landscapes, and the app delegate, which iOS
+     * asks first, grants them only to a phone that folds.
+     */
     @Test
-    fun iPhonesAreUprightAndIpadsTurnEveryWay() {
+    fun iPhonesAreUprightUnlessTheyFoldAndIpadsTurnEveryWay() {
         val plist = File(
             "../iosApp/iosApp/Info.plist",
         ).also { assertTrue(it.exists(), "the Info.plist moved") }.readText()
-        assertEquals(listOf("UIInterfaceOrientationPortrait"), orientations(plist, "UISupportedInterfaceOrientations"))
+        assertEquals(
+            setOf(
+                "UIInterfaceOrientationPortrait",
+                "UIInterfaceOrientationLandscapeLeft",
+                "UIInterfaceOrientationLandscapeRight",
+            ),
+            orientations(plist, "UISupportedInterfaceOrientations").toSet(),
+        )
+        val app = File(
+            "../iosApp/iosApp/iOSApp.swift",
+        ).also { assertTrue(it.exists(), "iOSApp.swift moved") }.readText()
+        assertTrue("supportedInterfaceOrientationsFor" in app, "nothing narrows the phone list down per phone")
+        assertTrue("foldable ? .allButUpsideDown : .portrait" in app, "a phone that does not fold may turn")
+        assertTrue("\"iPhone19,4\"" in app, "the iPhone Duo is not known to fold")
+        assertTrue("Orientations.hingeReported()" in File("../iosApp/iosApp/ContentView.swift").readText())
         assertEquals(
             setOf(
                 "UIInterfaceOrientationPortrait",

@@ -644,6 +644,18 @@
     <string name="choice_continue">Continuer</string>
     <string name="choice_call_vinto">Appeler Vinto</string>
     <string name="choice_done">Terminé</string>
+    <string name="pill_draw">Piocher</string>
+    <string name="pill_use">Utiliser</string>
+    <string name="pill_swap">Échanger</string>
+    <string name="pill_keep">Garder</string>
+    <string name="pill_discard">Défausser</string>
+    <string name="pill_down">Poser</string>
+    <string name="pill_leave">Laisser</string>
+    <string name="pill_continue">Continuer</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">Terminé</string>
+    <string name="pill_start">Démarrer</string>
+    <string name="pill_back">Retour</string>
 
     <!-- The move log. -->
     <string name="log_you">Vous</string>

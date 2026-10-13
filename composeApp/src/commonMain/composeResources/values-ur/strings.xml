@@ -619,6 +619,18 @@
     <string name="choice_continue">جاری رکھیں</string>
     <string name="choice_call_vinto">Vinto کہیں</string>
     <string name="choice_done">ہو گیا</string>
+    <string name="pill_draw">نکالیں</string>
+    <string name="pill_use">استعمال</string>
+    <string name="pill_swap">بدلیں</string>
+    <string name="pill_keep">رکھ لیں</string>
+    <string name="pill_discard">پھینکیں</string>
+    <string name="pill_down">نیچے</string>
+    <string name="pill_leave">چھوڑ دیں</string>
+    <string name="pill_continue">جاری رکھیں</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">ہو گیا</string>
+    <string name="pill_start">شروع</string>
+    <string name="pill_back">واپس</string>
 
     <string name="log_you">آپ</string>
     <string name="log_drew_known">آپ نے %1$s نکالا</string>

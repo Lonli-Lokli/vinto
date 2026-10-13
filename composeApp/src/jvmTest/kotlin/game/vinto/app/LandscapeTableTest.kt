@@ -56,8 +56,10 @@ class LandscapeTableTest {
 
         val tall = TableLayout.forScreen(LAND_H, LAND_W)
         assertFalse(tall.landscape, "the same phone upright is portrait")
+        // Told the width it has no argument for — the layout carries the screen's size since the
+        // fold's pages are cut from it — and otherwise the same answer.
         assertEquals(
-            TableLayout.forScreen(LAND_W),
+            TableLayout.forScreen(LAND_W).copy(width = LAND_H),
             tall,
             "the two-argument portrait answer is the one-argument answer",
         )

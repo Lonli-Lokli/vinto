@@ -85,10 +85,18 @@
          landscape is a real table (`TableLayout` in `CardScale.kt`), so it keeps it.
 
          Upside-down is iPad-only. A phone held upside down puts the earpiece at the bottom and
-         is almost always an accident; a tablet has no wrong way up. -->
+         is almost always an accident; a tablet has no wrong way up.
+
+         ONE PHONE TURNS: one that folds. The closed iPhone Duo on its side keeps its whole height,
+         because iOS stands its status bar in a column down the side instead of across the top,
+         and Apple's own apps turn with it (owner, 2026-10-13). So the phone list names the
+         landscapes too, and `Orientations` in `iOSApp.swift` — which iOS asks before this list —
+         grants them only to a phone that folds and holds every other phone upright. -->
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
     <key>UISupportedInterfaceOrientations~ipad</key>
     <array>

@@ -23,13 +23,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import game.vinto.app.CountRefusals
 import game.vinto.app.LocalCounting
-import game.vinto.app.LocalStatusColumn
 import game.vinto.app.LocalVault
 import game.vinto.app.TextMark
 import game.vinto.app.art.Res
@@ -78,6 +78,17 @@ private val Pad = 12.dp
  * `LocalGame.resume` picks it up where it stood.
  */
 private fun wayOut(onQuit: () -> Unit): () -> Unit = onQuit
+
+/**
+ * Tells [onSpan] where a sheet over [layout]'s table rises ([TableLayout.feltSpan]), after each
+ * composition: over the felt wherever the table laid it, which on its side is the other end of the
+ * rail where the language reads right to left.
+ */
+@Composable
+internal fun TellTheSheet(layout: TableLayout, onSpan: (SheetSpan?) -> Unit) {
+    val span = layout.feltSpan(LocalLayoutDirection.current)
+    SideEffect { onSpan(span) }
+}
 
 /**
  * A game: rounds, one after another, with the score carried between them.
@@ -137,8 +148,8 @@ fun GameScreen(
         // table and in flight — comes from here, so the two cannot disagree and neither can
         // change while a round is being played. The shape of the screen picks the
         // arrangement too: a rotation is the one thing that re-decides it mid-round.
-        val layout = TableLayout.forScreen(maxWidth, maxHeight, column = LocalStatusColumn.current)
-        SideEffect { sheetSpan = layout.feltSpan(maxWidth) }
+        val layout = TableLayout.forScreen(maxWidth, maxHeight, LocalChrome.current)
+        TellTheSheet(layout) { sheetSpan = it }
 
         // The opening deal, played once per fresh deal: read before the effect that marks it
         // shown, and remembered per round so a rebuilt screen — a rotation — does not deal

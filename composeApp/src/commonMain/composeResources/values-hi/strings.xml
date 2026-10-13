@@ -630,6 +630,18 @@
     <string name="choice_continue">जारी रखें</string>
     <string name="choice_call_vinto">Vinto पुकारें</string>
     <string name="choice_done">पूरा हुआ</string>
+    <string name="pill_draw">उठाएं</string>
+    <string name="pill_use">इस्तेमाल</string>
+    <string name="pill_swap">बदलें</string>
+    <string name="pill_keep">रखें</string>
+    <string name="pill_discard">छोड़ें</string>
+    <string name="pill_down">नीचे</string>
+    <string name="pill_leave">रहने दें</string>
+    <string name="pill_continue">जारी रखें</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">पूरा हुआ</string>
+    <string name="pill_start">शुरू</string>
+    <string name="pill_back">वापस</string>
 
     <!-- The move log. -->
     <string name="log_you">आप</string>

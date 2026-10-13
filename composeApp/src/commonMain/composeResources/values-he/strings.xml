@@ -603,6 +603,18 @@
     <string name="choice_continue">המשך</string>
     <string name="choice_call_vinto">הכרזת Vinto</string>
     <string name="choice_done">סיום</string>
+    <string name="pill_draw">משיכה</string>
+    <string name="pill_use">שימוש</string>
+    <string name="pill_swap">החלפה</string>
+    <string name="pill_keep">השארה</string>
+    <string name="pill_discard">השלכה</string>
+    <string name="pill_down">הניחו</string>
+    <string name="pill_leave">השאירו</string>
+    <string name="pill_continue">המשך</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">סיום</string>
+    <string name="pill_start">התחלה</string>
+    <string name="pill_back">חזרה</string>
 
     <string name="log_you">אתם</string>
     <string name="log_drew_known">משכתם את %1$s</string>

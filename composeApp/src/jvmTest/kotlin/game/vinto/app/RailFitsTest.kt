@@ -12,9 +12,12 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -204,6 +207,49 @@ class RailFitsTest {
         )
     }
 
+    /**
+     * The open Duo's narrow stack, asked for a King's rank: the picker stays in the rail, with its way
+     * out, and the stack gives it the room first — at the system's own text size every chip and
+     * "Put it down" are whole on the screen, a thumb wide each, three to a row.
+     */
+    @Test
+    fun aKingsRanksAreWholeInTheNarrowStack() = runDesktopComposeUiTest(Duos.OPEN_W, Duos.OPEN_H) {
+        val layout = Duos.open()
+        showTable(Duos.kingNaming(), emptyList(), layout)
+        val railLeft = Duos.OPEN_COLUMN_LEFT - layout.railWidth.value
+        KINGS_ANSWERS.forEach { name ->
+            val node = nodesNamed(name).single()
+            val shown = node.boundsInRoot
+            assertTrue(
+                shown.height >= node.size.height - 1 && shown.bottom <= Duos.OPEN_H * node.density(),
+                "$name is not wholly on screen: showing ${shown.height} of ${node.size.height}",
+            )
+            assertTrue(
+                shown.left >= (railLeft - 1) * node.density() &&
+                    shown.right <= (Duos.OPEN_COLUMN_LEFT + 1) * node.density(),
+                "$name left the narrow rail: $shown",
+            )
+            assertTrue(node.size.width >= TAP * node.density(), "$name is ${node.size.width} wide, under a thumb")
+        }
+    }
+
+    /**
+     * And at a doubled system font, where fourteen chips, the words and the way out are more than the
+     * stack's height: every one of them can still be reached, and is still a thumb wide — the foot
+     * scrolls within its room rather than its chips shrinking.
+     */
+    @Test
+    fun aKingsRanksCanAllBeReachedInTheNarrowStackAtADoubledFont() =
+        runDesktopComposeUiTest(Duos.OPEN_W, Duos.OPEN_H) {
+            showTable(Duos.kingNaming(), emptyList(), Duos.open(), fontScale = 2f)
+            KINGS_ANSWERS.forEach { name ->
+                val node = onNode(hasClickAction() and hasContentDescription(name))
+                node.performScrollTo().assertIsDisplayed()
+                val size = node.fetchSemanticsNode().size
+                assertTrue(size.width >= TAP && size.height >= TAP, "$name is ${size.width}x${size.height}")
+            }
+        }
+
     /** A plan with every lane filled and one nod short of agreed: the fullest the board gets. */
     private fun standingPlan(view: PlayerView): CoalitionPlan {
         val coalition = view.players.filter { it.id != view.vintoCallerId }.map { it.id }
@@ -305,6 +351,12 @@ class RailFitsTest {
 
     private companion object {
         val CHOICES = setOf("Swap Cards", "Discard")
+
+        /** A King's fourteen ranks, and the way out beside them. */
+        val KINGS_ANSWERS = Rank.entries.map { it.serialName } + "Put it down"
+
+        /** A thumb, in points. */
+        const val TAP = 44f
 
         /**
          * The way out, and now the whole of the window's row.

@@ -28,7 +28,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -209,7 +208,7 @@ private fun LobbyScreen(room: RemoteRoom, onLeft: () -> Unit) {
             .fillMaxSize()
             .background(Brush.verticalGradient(MaterialTheme.colorScheme.feltGradient()))
             // The lobby is not a table, so it keeps clear of a status column rather than using it.
-            .padding(end = LocalStatusColumn.current),
+            .padding(LocalStatusColumn.current),
     ) {
         // Top-anchored, with the invitation and the way out at the foot of the screen.
         //
@@ -840,8 +839,8 @@ private fun RemoteGameScreen(
     // Where the score sheet rises: over the felt of a table on its side ([SheetSpan]).
     var sheetSpan by remember { mutableStateOf<SheetSpan?>(null) }
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val layout = TableLayout.forScreen(maxWidth, maxHeight, column = LocalStatusColumn.current)
-        SideEffect { sheetSpan = layout.feltSpan(maxWidth) }
+        val layout = TableLayout.forScreen(maxWidth, maxHeight, LocalChrome.current)
+        TellTheSheet(layout) { sheetSpan = it }
         // Captured here because the clock below is composed inside `CardStage`'s content
         // lambda, where this scope's receiver is no longer the one in reach.
         val roomWidth = maxWidth

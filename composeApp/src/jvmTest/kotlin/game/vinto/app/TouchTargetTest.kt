@@ -17,6 +17,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -329,6 +330,22 @@ class TouchTargetTest {
         }
     }
 
+    /**
+     * The closed iPhone Duo's status column: the way out, the rules and the settings as marks, and the
+     * turn's choices as pills — at the system's own text size and at twice it, where a pill keeps its
+     * size and its word gets smaller rather than the pill getting shorter.
+     */
+    @Test
+    fun everythingInTheStatusColumnCanBeHit() = listOf(1f, 2f).forEach { fontScale ->
+        runDesktopComposeUiTest(Duos.CLOSED_W, Duos.CLOSED_H) {
+            val (view, said) = Duos.drawn()
+            showTable(view, said, Duos.closed(), fontScale = fontScale)
+            val column = tapTargets().filter { (_, tap) -> tap.at.x >= Duos.CLOSED_COLUMN_LEFT }
+            assertTrue(column.size >= COLUMN_CONTROLS, "the column holds ${column.map { it.first }}")
+            column.forEach { (what, tap) -> assertTrue(tap.bigEnough, tooSmall(what, tap) + " at ${fontScale}x") }
+        }
+    }
+
     /** And the header, whose controls are the smallest things drawn. */
     @Test
     fun theHeaderControlsCanBeHit() = eachTapTarget(Question.None, header = true) { what, tap ->
@@ -434,6 +451,9 @@ class TouchTargetTest {
         // The swap declaration offers only the ranks with an action to win; the King's
         // fourteen use the same GameButton in the same grid, just seven to a row.
         val RANKS = listOf("7", "8", "9", "10", "J", "Q", "K", "A")
+
+        /** The way out, the rules, the settings, and the drawn card's two choices. */
+        const val COLUMN_CONTROLS = 5
 
         /** The two buttons under a rank grid: the last things the rail has room for. */
         val ANSWERS = listOf("Just Swap", "Back")

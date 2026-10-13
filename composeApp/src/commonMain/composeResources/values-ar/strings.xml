@@ -627,6 +627,18 @@
     <string name="choice_continue">متابعة</string>
     <string name="choice_call_vinto">نادِ بـ Vinto</string>
     <string name="choice_done">تم</string>
+    <string name="pill_draw">اسحب</string>
+    <string name="pill_use">استخدم</string>
+    <string name="pill_swap">بادل</string>
+    <string name="pill_keep">احتفظ</string>
+    <string name="pill_discard">تخلّص</string>
+    <string name="pill_down">ضعها</string>
+    <string name="pill_leave">اتركهما</string>
+    <string name="pill_continue">متابعة</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">تم</string>
+    <string name="pill_start">ابدأ</string>
+    <string name="pill_back">رجوع</string>
 
     <!-- The move log. -->
     <string name="log_you">أنت</string>

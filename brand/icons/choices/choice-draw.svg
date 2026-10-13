@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- DRAW: a card lifting off the deck, the arrow on it pointing the way it goes. The deck is a bar
+       seen edge on, as the pile is in the other marks: the arrow is what tells drawing from playing. -->
+  <!-- One pen for every mark in the set: 2 of 24, round ends and joins, black, no fill — the
+       pill tints it to its own ink, so the mark is the button's colour in both themes. -->
+  <path d="M4.5 18.5 H19.5 A1.5 1.5 0 0 1 21 20 V20.5 A1.5 1.5 0 0 1 19.5 22 H4.5 A1.5 1.5 0 0 1 3 20.5 V20 A1.5 1.5 0 0 1 4.5 18.5 Z" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8.5 2 H15.5 A1.5 1.5 0 0 1 17 3.5 V13.5 A1.5 1.5 0 0 1 15.5 15 H8.5 A1.5 1.5 0 0 1 7 13.5 V3.5 A1.5 1.5 0 0 1 8.5 2 Z" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12 12 V5.5" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M9.5 8 L12 5.5 L14.5 8" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

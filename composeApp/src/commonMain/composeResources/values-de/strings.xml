@@ -605,6 +605,18 @@
     <string name="choice_continue">Weiter</string>
     <string name="choice_call_vinto">Vinto rufen</string>
     <string name="choice_done">Fertig</string>
+    <string name="pill_draw">Ziehen</string>
+    <string name="pill_use">Nutzen</string>
+    <string name="pill_swap">Tauschen</string>
+    <string name="pill_keep">Behalten</string>
+    <string name="pill_discard">Ablegen</string>
+    <string name="pill_down">Ablegen</string>
+    <string name="pill_leave">Lassen</string>
+    <string name="pill_continue">Weiter</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">Fertig</string>
+    <string name="pill_start">Starten</string>
+    <string name="pill_back">Zurück</string>
 
     <string name="log_you">Du</string>
     <string name="log_drew_known">Du hast %1$s gezogen</string>

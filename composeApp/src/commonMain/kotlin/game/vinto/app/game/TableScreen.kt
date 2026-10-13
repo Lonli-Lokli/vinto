@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,6 +48,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -58,8 +60,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -82,7 +86,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -373,7 +376,19 @@ fun TableScreen(
     }
 }
 
-/** The two arrangements, and the panel that sits over either. See [TableScreen]. */
+/**
+ * One table, laid out: what it shows, the shape it was dealt, where the turn's choices stand, and
+ * what it glides on. Handed whole to the arrangement that draws it, because those four always travel
+ * together and the arrangements already take the four ways out of the screen beside them.
+ */
+internal data class Laid(
+    val state: TableState,
+    val layout: TableLayout,
+    val choices: ChoicesAt,
+    val reshape: Reshape,
+)
+
+/** The arrangements, the status column beside them, and the panel that sits over any of them. */
 @Suppress("LongParameterList")
 @Composable
 private fun Table(
@@ -387,34 +402,59 @@ private fun Table(
     modifier: Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize().onPlaced { reshape.table = it }) {
-        Row(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                if (layout.landscape) {
-                    OnItsSide(state, layout, onMove, onHelp, onSettings, onLeave, reshape)
-                } else {
-                    Upright(state, layout, onMove, onHelp, onSettings, onLeave, reshape)
-                }
+        // The status column the system keeps down one edge, where it keeps one: the table stands its
+        // own controls there ([StatusColumn]), and the turn's choices too when they fit ([choicesAt]).
+        val run = layout.run
+        val fontScale = LocalDensity.current.fontScale
+        val choices = run?.let { column ->
+            choicesAt(state.table, pillsThatFit(column, plan = state.table.planSummary != null, fontScale))
+        } ?: ChoicesAt.RAIL
+        val laid = Laid(state, layout, choices, reshape)
+        Box(modifier = Modifier.fillMaxSize().clearOf(run)) {
+            when (layout.posture) {
+                Posture.UPRIGHT -> Upright(laid, onMove, onHelp, onSettings, onLeave)
+                Posture.ON_ITS_SIDE -> OnItsSide(laid, onMove, onHelp, onSettings, onLeave)
+                // A phone half open, its fold a line nothing of the table's may lie across.
+                Posture.BOOK -> Book(laid, onMove, onHelp, onSettings, onLeave)
+                Posture.LAPTOP -> Laptop(laid, onMove, onHelp, onSettings, onLeave)
             }
+        }
 
-            // The header stood up in the status column, where the system keeps one ([TableLayout.column]).
-            if (layout.column > 0.dp) HeaderInColumn(state, layout, onMove, onHelp, onSettings, onLeave)
+        run?.let { column ->
+            val edge = if (column.onRight) AbsoluteAlignment.TopRight else AbsoluteAlignment.TopLeft
+            StatusColumn(
+                laid = laid,
+                run = column,
+                onMove = onMove,
+                onHelp = onHelp,
+                onSettings = onSettings,
+                onLeave = onLeave,
+                modifier = Modifier.align(edge),
+            )
         }
 
         TheCall(state)
     }
 }
 
+/** Keeps the arrangement clear of a status column, on whichever edge of the glass it stands. */
+private fun Modifier.clearOf(run: ColumnRun?): Modifier = when {
+    run == null -> this
+    run.onRight -> absolutePadding(right = run.width)
+    else -> absolutePadding(left = run.width)
+}
+
 /** The table on its side: the header and the felt in a column, the rail standing beside them. */
 @Composable
 private fun OnItsSide(
-    state: TableState,
-    layout: TableLayout,
+    laid: Laid,
     onMove: (Move) -> Unit,
     onHelp: (HelpTopic?) -> Unit,
     onSettings: () -> Unit,
     onLeave: (() -> Unit)?,
-    reshape: Reshape,
 ) {
+    val state = laid.state
+    val layout = laid.layout
     // Centred, not stretched: the felt column is [TableLayout.feltWidth] wide — the
     // whole remainder on a rotated phone, a capped table on a tablet or desktop — and
     // the rail hugs it, so on a big screen the pair sits together in the middle of the
@@ -439,18 +479,7 @@ private fun OnItsSide(
             horizontalArrangement = Arrangement.Center,
         ) {
             Column(modifier = Modifier.width(layout.feltWidth)) {
-                if (layout.column == 0.dp) {
-                    TableHeader(
-                        state.view,
-                        state.round,
-                        onHelp,
-                        onSettings,
-                        onLeave,
-                        plan = state.table.planSummary,
-                        onMove = onMove,
-                        landscape = true,
-                    )
-                }
+                if (layout.column == 0.dp) TopRow(laid, onMove, onHelp, onSettings, onLeave)
                 FeltTable(
                     state = state,
                     sizes = layout.sizes,
@@ -462,16 +491,18 @@ private fun OnItsSide(
                 )
             }
 
-            // The rail, standing at the side.
+            // The rail, standing at the side — and beside a status column, the narrow stack: the
+            // column holds the choices, and the card, its words and the log read one under another.
             Column(modifier = Modifier.width(layout.railWidth).fillMaxHeight()) {
                 ControlPanel(
                     state = state,
                     onMove = onMove,
-                    side = true,
+                    shape = if (layout.narrowRail) RailShape.STACK else RailShape.BESIDE,
+                    choices = laid.choices,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .glides(reshape, RAIL_KEY, Glide.RAIL),
+                        .glides(laid.reshape, RAIL_KEY, Glide.RAIL),
                 )
             }
         }
@@ -481,27 +512,16 @@ private fun OnItsSide(
 /** The table upright: the header, the felt, and the rail under it. */
 @Composable
 private fun Upright(
-    state: TableState,
-    layout: TableLayout,
+    laid: Laid,
     onMove: (Move) -> Unit,
     onHelp: (HelpTopic?) -> Unit,
     onSettings: () -> Unit,
     onLeave: (() -> Unit)?,
-    reshape: Reshape,
 ) {
+    val state = laid.state
+    val layout = laid.layout
     Column(modifier = Modifier.fillMaxSize()) {
-        if (layout.column == 0.dp) {
-            TableHeader(
-                state.view,
-                state.round,
-                onHelp,
-                onSettings,
-                onLeave,
-                plan = state.table.planSummary,
-                onMove = onMove,
-                landscape = false,
-            )
-        }
+        if (layout.column == 0.dp) TopRow(laid, onMove, onHelp, onSettings, onLeave)
 
         FeltTable(
             state = state,
@@ -514,25 +534,38 @@ private fun Upright(
         ControlPanel(
             state = state,
             onMove = onMove,
+            choices = laid.choices,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(layout.railHeight)
-                .glides(reshape, RAIL_KEY, Glide.RAIL),
+                .glides(laid.reshape, RAIL_KEY, Glide.RAIL),
         )
     }
 }
 
-/** The header, stood up in a status column the length of the screen. See [TableHeader]'s `vertical`. */
+/**
+ * The header row across the top of the table — or, where the system shares its own status strip
+ * ([Chrome.strip]), in that strip, ending where the clock begins.
+ *
+ * The open iPhone Duo held upright keeps an 80-point strip across its top with the clock in the
+ * corner, and a header under it was 44 more points of the felt's height given to a second row of
+ * chrome. Beside the clock it costs the felt nothing. The strip is clear on the left of the glass
+ * ([chromeOf] shares no other), so the header keeps to the left whichever way the language reads —
+ * its wordmark and counter first, and the way out last, short of the clock. Half open like a laptop
+ * the strip is the same strip, and the header stays in it ([Laptop]).
+ */
 @Composable
-private fun HeaderInColumn(
-    state: TableState,
-    layout: TableLayout,
+internal fun TopRow(
+    laid: Laid,
     onMove: (Move) -> Unit,
     onHelp: (HelpTopic?) -> Unit,
     onSettings: () -> Unit,
     onLeave: (() -> Unit)?,
 ) {
-    Box(modifier = Modifier.width(layout.column).fillMaxHeight()) {
+    val state = laid.state
+    val layout = laid.layout
+    val chrome = layout.chrome
+    val header: @Composable () -> Unit = {
         TableHeader(
             state.view,
             state.round,
@@ -541,9 +574,19 @@ private fun HeaderInColumn(
             onLeave,
             plan = state.table.planSummary,
             onMove = onMove,
-            landscape = layout.landscape,
-            vertical = true,
+            // A laptop's rail stands beside a felt, but its screen is upright, and so is its header.
+            landscape = layout.landscape && layout.posture != Posture.LAPTOP,
         )
+    }
+    if (chrome.strip > 0.dp) {
+        Box(
+            modifier = Modifier.fillMaxWidth().height(chrome.strip),
+            contentAlignment = AbsoluteAlignment.CenterLeft,
+        ) {
+            Box(modifier = Modifier.width(chrome.stripEnd)) { header() }
+        }
+    } else {
+        header()
     }
 }
 
@@ -656,14 +699,31 @@ fun <T : Any> seatingFor(players: List<T>, viewer: T?): Seating<T> {
     )
 }
 
-/** The felt and its four seats — the part of the table that is the same in both shapes. */
+/**
+ * Which of the felt a [FeltTable] draws: the whole table, or one half of a laptop's ([Laptop]) — the
+ * other three seats, standing up above the fold, or your own seat and the piles, lying flat below it.
+ */
+internal enum class FeltPart { WHOLE, OTHERS, OURS }
+
+/** How a test finds the felt. */
+internal const val FELT_TAG = "felt"
+
+/**
+ * The felt and its four seats — the part of the table that is the same in every shape — or, on a
+ * laptop, the half of them its [part] says.
+ *
+ * Split by leaving out, never by laying out again: each half draws its seats and its piles with the
+ * pieces the whole felt draws them with, under the same names, so a seat folding onto its half
+ * glides there as the one piece it is ([glides]).
+ */
 @Composable
-private fun FeltTable(
+internal fun FeltTable(
     state: TableState,
     sizes: TableSizes,
     onMove: (Move) -> Unit,
     onHelp: (HelpTopic?) -> Unit,
     modifier: Modifier = Modifier,
+    part: FeltPart = FeltPart.WHOLE,
 ) {
     // While the plan is open the felt draws the table the transport is parked on rather than
     // the live one (design D1): the plan's whole content is *where cards go*, and a picture of
@@ -702,21 +762,33 @@ private fun FeltTable(
             modifier = Modifier.fillMaxSize().padding(Gap),
             verticalArrangement = Arrangement.spacedBy(Gap),
         ) {
-            TopSeat(seating.top, view, table, sizes, onMove, roomy)
+            if (part != FeltPart.OURS) {
+                TopSeat(seating.top, view, table, sizes, onMove, roomy)
+                MiddleRow(
+                    modifier = Modifier.weight(1f),
+                    left = seating.left,
+                    right = seating.right,
+                    view = view,
+                    table = table,
+                    sizes = sizes,
+                    onMove = onMove,
+                    onHelp = onHelp,
+                    piles = part == FeltPart.WHOLE,
+                )
+            } else {
+                // The piles in the middle of what your seat leaves, as they are in the middle of
+                // the whole table.
+                Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.glides(LocalReshape.current, PILES_KEY, Glide.CARDS)) {
+                        Piles(view, sizes, table.board, onHelp)
+                    }
+                }
+            }
 
-            MiddleRow(
-                modifier = Modifier.weight(1f),
-                left = seating.left,
-                right = seating.right,
-                view = view,
-                table = table,
-                sizes = sizes,
-                onMove = onMove,
-                onHelp = onHelp,
-            )
-
-            seating.near?.let {
-                NearSeat(it, view, table, sizes, onMove, mine = it.id == mine?.id, roomy = roomy)
+            if (part != FeltPart.OTHERS) {
+                seating.near?.let {
+                    NearSeat(it, view, table, sizes, onMove, mine = it.id == mine?.id, roomy = roomy)
+                }
             }
         }
     }
@@ -1174,109 +1246,10 @@ internal fun TableHeader(
      * is exactly what `HeaderOrderTest` is for.
      */
     style: HeaderStyle = headerStyle(LocalHost.current, landscape),
-    /**
-     * Stood up in the status column a closed iPhone Duo keeps down its right edge, rather than laid
-     * across the top. iOS 27.1 puts its clock and camera at the top of that column and stacks a
-     * toolbar's buttons under them; the table's header does the same, and the felt gets the row.
-     */
-    vertical: Boolean = false,
 ) {
-    val settings = stringResource(Res.string.header_settings)
-    val leave = stringResource(Res.string.header_leave)
-    val rules = stringResource(Res.string.header_rules)
-    // Never words in a status column: it is 84 points across, and "Leave the table" is not.
-    val wideHeader = style.labelled && !vertical
+    val wide = style.labelled
     val name = stringResource(Res.string.app_name)
     val counter = stringResource(Res.string.table_round_turn, round, view.turnNumber)
-
-    // The controls, in their one order: the plan, the rules, the settings, the cup, and the way out
-    // last. Laid in a row across the top, or stood up in a status column (see [vertical]).
-    val controls: @Composable () -> Unit = {
-        // Before the three glyphs, because it is the only one of the four that is about the
-        // round rather than about the app.
-        // **Labelled on every host, unlike the three glyphs beside it.** A gear and a question
-        // mark are marks anybody can read; a lit pill is not, and reported from a phone as
-        // "not clear" — nothing on the screen said the switch was the way into the plan. It
-        // costs four characters out of the wordmark's slack rather than out of another control,
-        // because `HeaderName` is the one thing in this row carrying the weight.
-        plan?.let { PlanSwitch(LocalStage.current.planning, it, onMove, stacked = vertical) }
-
-        // The rules, in the one place on the screen that never moves.
-        //
-        // It used to sit in the control panel beside the prompt, which meant it slid up and
-        // down with whatever the panel was asking — a fourteen-chip King grid one moment, one
-        // button the next. A control that is always available and never changes belongs in
-        // the header, where nothing else changes either.
-        HeaderChip(
-            onClick = { onHelp(null) },
-            description = rules,
-            wide = wideHeader,
-            modifier = Modifier.markedAs(LocalStage.current, Target.HELP),
-        ) {
-            Text(
-                text = "?",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = Rail.ink,
-            )
-        }
-
-        // The settings, from the table rather than only from the front door.
-        //
-        // Pace is the setting a player wants to change *while* something is too slow or too
-        // fast to sit through, and it was reachable only from the home screen — so changing it
-        // meant abandoning the round it was annoying you in, which is a price nobody pays; they
-        // put the phone down instead. Theme and haptics are the same shape of want. Going there
-        // and coming back returns to this exact table, mid-round, with nothing lost.
-        // The same dressed circle as the "?" beside it. These were colour emoji, which
-        // made the header three different design languages in a row — an outlined glyph,
-        // then whatever the platform's emoji font felt like. Drawn glyphs in the rail's
-        // own ink are one decision made once.
-        HeaderGlyph(onClick = onSettings, description = settings, wide = wideHeader) { ink ->
-            drawGear(ink)
-        }
-
-        if (style.cup) SupportGlyph(wide = wideHeader)
-
-        // The way out, LAST IN THE ROW WHATEVER ELSE IS IN IT, and `HeaderOrderTest` holds it
-        // there for every shape the header has — including the web's, where the cup arrives
-        // between the settings and this and would be the obvious thing to append after.
-        //
-        // Android answers the back gesture and is handed no [onLeave] at all; the web, the
-        // desktop and iOS answer nothing, and a solo round there could only be left by
-        // finishing it — the score sheet's "Quit" was the single exit in the app. Nothing is
-        // lost by taking it: the round is saved on every move, and the menu offers it back.
-        //
-        // Rightmost because leaving is where a row of controls ends, and because it is the
-        // one of them a misplaced thumb should be least likely to find.
-        onLeave?.let { go ->
-            HeaderGlyph(onClick = go, description = leave, wide = wideHeader) { ink ->
-                drawExit(ink)
-            }
-        }
-    }
-
-    if (vertical) {
-        // The status column's own top is the system's — its clock, and on the iPhone Duo the camera
-        // — so the controls stand at its foot, under a thumb, and the round's counter over them.
-        Column(
-            modifier = Modifier.fillMaxSize().padding(vertical = Gap),
-            verticalArrangement = Arrangement.spacedBy(Gap, Alignment.Bottom),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            if (style.counter) {
-                Text(
-                    text = counter,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Rail.ink,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            controls()
-        }
-        return
-    }
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = HeaderEdge, vertical = Gap),
@@ -1291,8 +1264,84 @@ internal fun TableHeader(
         // 44-point thumb, which `TouchTargetTest` reads as a target nobody can hit. A word
         // may be clipped; a control may not.
         HeaderName(name, counter.takeIf { style.counter }, modifier = Modifier.weight(1f))
-        controls()
+
+        // The controls, in their one order: the plan, the rules, the settings, the cup, and the
+        // way out last.
+        //
+        // The plan before the three glyphs, because it is the only one of the four that is about
+        // the round rather than about the app. **Labelled on every host, unlike the three glyphs
+        // beside it.** A gear and a question mark are marks anybody can read; a lit pill is not,
+        // and reported from a phone as "not clear" — nothing on the screen said the switch was the
+        // way into the plan. It costs four characters out of the wordmark's slack rather than out
+        // of another control, because `HeaderName` is the one thing in this row carrying the weight.
+        plan?.let { PlanSwitch(LocalStage.current.planning, it, onMove) }
+        RulesChip(onHelp, wide)
+        SettingsChip(onSettings, wide)
+        if (style.cup) SupportGlyph(wide = wide)
+
+        // The way out, LAST IN THE ROW WHATEVER ELSE IS IN IT, and `HeaderOrderTest` holds it
+        // there for every shape the header has — including the web's, where the cup arrives
+        // between the settings and this and would be the obvious thing to append after.
+        //
+        // Rightmost because leaving is where a row of controls ends, and because it is the
+        // one of them a misplaced thumb should be least likely to find. (In a status column it is
+        // the first thing under the clock, for the same two reasons turned on end: [StatusColumn].)
+        onLeave?.let { LeaveChip(it, wide) }
     }
+}
+
+/**
+ * The rules, in the one place on the screen that never moves — the header, or a status column.
+ *
+ * It used to sit in the control panel beside the prompt, which meant it slid up and down with
+ * whatever the panel was asking — a fourteen-chip King grid one moment, one button the next. A
+ * control that is always available and never changes belongs where nothing else changes either.
+ */
+@Composable
+internal fun RulesChip(onHelp: (HelpTopic?) -> Unit, wide: Boolean) {
+    HeaderChip(
+        onClick = { onHelp(null) },
+        description = stringResource(Res.string.header_rules),
+        wide = wide,
+        modifier = Modifier.markedAs(LocalStage.current, Target.HELP),
+    ) {
+        Text(
+            text = "?",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = Rail.ink,
+        )
+    }
+}
+
+/**
+ * The settings, from the table rather than only from the front door.
+ *
+ * Pace is the setting a player wants to change *while* something is too slow or too fast to sit
+ * through, and it was reachable only from the home screen — so changing it meant abandoning the
+ * round it was annoying you in, which is a price nobody pays; they put the phone down instead.
+ * Theme and haptics are the same shape of want. Going there and coming back returns to this exact
+ * table, mid-round, with nothing lost. A drawn gear in the rail's own ink, where it was a colour
+ * emoji that every platform drew differently.
+ */
+@Composable
+internal fun SettingsChip(onSettings: () -> Unit, wide: Boolean) {
+    val settings = stringResource(Res.string.header_settings)
+    HeaderGlyph(onClick = onSettings, description = settings, wide = wide) { ink -> drawGear(ink) }
+}
+
+/**
+ * The way out of the round.
+ *
+ * Android answers the back gesture and is handed no way out at all; the web, the desktop and iOS
+ * answer nothing, and a solo round there could only be left by finishing it — the score sheet's
+ * "Quit" was the single exit in the app. Nothing is lost by taking it: the round is saved on every
+ * move, and the menu offers it back.
+ */
+@Composable
+internal fun LeaveChip(onLeave: () -> Unit, wide: Boolean) {
+    val leave = stringResource(Res.string.header_leave)
+    HeaderGlyph(onClick = onLeave, description = leave, wide = wide) { ink -> drawExit(ink) }
 }
 
 /**
@@ -1310,7 +1359,7 @@ internal fun TableHeader(
  * (`TouchTargetTest`).
  */
 @Composable
-private fun PlanSwitch(
+internal fun PlanSwitch(
     open: Boolean,
     summary: PlanSummary,
     onMove: (Move) -> Unit,
@@ -1464,8 +1513,11 @@ private fun Felt(
     val cloth = remember(scheme) { Brush.verticalGradient(scheme.feltGradient()) }
     BoxWithConstraints(
         modifier = modifier
-            .clip(shape)
-            .background(cloth)
+            .testTag(FELT_TAG)
+            // The cloth is clipped to the felt’s rounded corners, and what lies on it is not: at rest
+            // every piece is inside anyway, and a piece gliding to a new shape of table ([Reshape])
+            // starts where it was, which a folding phone puts outside the felt’s new page. Clipped, it
+            // was hidden for the length of the glide and appeared from the page’s edge.
             // Three passes over the same cloth, and together they are the difference between
             // a green rectangle and a lit surface: the lamp above the middle of the table,
             // the shadow the rim throws back onto the felt just inside it, and the rim.
@@ -1479,16 +1531,21 @@ private fun Felt(
             .drawWithCache {
                 val lamp = scheme.feltLamp(size.minDimension)
                 val shade = scheme.feltShade()
+                val outline = shape.createOutline(size, layoutDirection, this@drawWithCache)
+                val edge = Path().apply { addOutline(outline) }
                 onDrawBehind {
-                    drawRect(weave)
-                    val now = hinge.value
-                    val spread = if (now != null && now.partiallyOpen) {
-                        1f + LAMP_SPREAD * (1f - now.degrees / HINGE_FLAT).coerceIn(0f, 1f)
-                    } else {
-                        1f
+                    clipPath(edge) {
+                        drawRect(cloth)
+                        drawRect(weave)
+                        val now = hinge.value
+                        val spread = if (now != null && now.partiallyOpen) {
+                            1f + LAMP_SPREAD * (1f - now.degrees / HINGE_FLAT).coerceIn(0f, 1f)
+                        } else {
+                            1f
+                        }
+                        scale(spread) { drawRect(lamp) }
+                        drawRect(shade)
                     }
-                    scale(spread) { drawRect(lamp) }
-                    drawRect(shade)
                 }
             }
             .border(Rim, scheme.feltEdge(), shape),
@@ -1568,7 +1625,10 @@ private fun Modifier.ringed(seat: PlayerSeatView, view: PlayerView): Modifier = 
     .border(CallerRing, callersEdge(seat.id == view.vintoCallerId), CallerShape)
     .padding(CallerPad)
 
-/** Left hand, piles, right hand — the widest row, and the one that has to fit a phone. */
+/**
+ * Left hand, piles, right hand — the widest row, and the one that has to fit a phone. Without its
+ * [piles] on a laptop's upper half, where the piles lie flat below the fold with your own hand.
+ */
 @Composable
 private fun MiddleRow(
     left: PlayerSeatView?,
@@ -1579,6 +1639,7 @@ private fun MiddleRow(
     onMove: (Move) -> Unit,
     onHelp: (HelpTopic?) -> Unit,
     modifier: Modifier = Modifier,
+    piles: Boolean = true,
 ) {
     // Centred rather than top-aligned: the middle row takes whatever height the panel leaves,
     // and top-aligning it pools all the spare felt into one gap under the side seats.
@@ -1607,8 +1668,10 @@ private fun MiddleRow(
             // has told it how much room across it has.
             val share = Modifier.weight(1f)
             SideSeat(left, view, table, sizes, onTheLeft = true, onMove = onMove, modifier = share)
-            Box(modifier = Modifier.glides(LocalReshape.current, PILES_KEY, Glide.CARDS)) {
-                Piles(view, sizes, table.board, onHelp)
+            if (piles) {
+                Box(modifier = Modifier.glides(LocalReshape.current, PILES_KEY, Glide.CARDS)) {
+                    Piles(view, sizes, table.board, onHelp)
+                }
             }
             SideSeat(right, view, table, sizes, onTheLeft = false, onMove = onMove, modifier = share)
         }
@@ -2497,7 +2560,7 @@ private fun Plate(
  * What each piece glides under ([Reshape]): the same name in either arrangement, so a seat's hand
  * on a phone and the same seat's hand on the open fold are known to be one thing.
  */
-private const val RAIL_KEY = "rail"
+internal const val RAIL_KEY = "rail"
 private const val PILES_KEY = "piles"
 
 private fun handKey(seat: String, part: String = "") = "hand:$seat:$part"

@@ -22,6 +22,8 @@ import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import game.vinto.app.game.COACH_TAG
+import game.vinto.app.game.Chrome
+import game.vinto.app.game.LocalChrome
 import game.vinto.app.game.PLATE_TAG
 import game.vinto.app.game.StandingsSheet
 import game.vinto.app.game.TableLayout
@@ -55,7 +57,8 @@ import kotlin.test.assertTrue
  *  1. **The closed iPhone Duo left a column empty.** iOS 27.1 stands its status bar and camera in
  *     a column down the right edge (84 of 466 points, measured on the Duo simulator) and the app
  *     padded the whole column away. Apple's own toolbars stack their buttons in it, under the
- *     status; the table's header now stands there, and the felt gets the header's row.
+ *     status; the table's controls now stand there — the way out first, under the camera, then the
+ *     rules and the settings — and the felt gets the header's row.
  *  2. **The coach cut a plate in two.** Talking, it lies at an end of the felt at a height of its
  *     own, and its edge ran through whatever was there: a sliver of a plate under "Go on" on a
  *     phone, half of Ember's plate and of the draw pile on a tablet.
@@ -81,7 +84,8 @@ class StoreShotErrorsTest {
     @Test
     fun theClosedDuosHeaderStandsInTheStatusColumn() = runDesktopComposeUiTest(DUO_W, DUO_H) {
         val view = teachingSession().view.value
-        val layout = TableLayout.forScreen(DUO_W.dp, DUO_APP_H.dp, column = COLUMN.dp)
+        // The column as iOS reports it, its clock and camera in its top 150 points.
+        val layout = TableLayout.forScreen(DUO_W.dp, DUO_APP_H.dp, Duos.CLOSED)
         setContent {
             VintoTheme {
                 Box(modifier = Modifier.size(DUO_W.dp, DUO_APP_H.dp)) {
@@ -99,10 +103,15 @@ class StoreShotErrorsTest {
         waitForIdle()
 
         val app = (DUO_W - COLUMN).toFloat()
-        listOf("Rules", "Settings", "Leave the table").forEach { name ->
+        // In the owner's order, top down: the way out, the rules, the settings.
+        val controls = listOf("Leave the table", "Rules", "Settings").map { name ->
             val control = described(name)
             assertTrue(control.left >= app - EDGE, "\"$name\" is not in the status column: $control")
             assertTrue(control.top >= STATUS_RESERVE, "\"$name\" is up among the status and the camera: $control")
+            control
+        }
+        controls.zipWithNext().forEach { (above, below) ->
+            assertTrue(above.bottom <= below.top, "the column's controls are out of order: $controls")
         }
         // No header row: the seat opposite starts at the top of the felt.
         assertTrue(described("Tide, card 1").top < NO_HEADER, "the felt still sits under a header row")
@@ -141,7 +150,7 @@ class StoreShotErrorsTest {
     fun onAClosedDuoASheetKeepsClearOfTheStatusColumn() = runDesktopComposeUiTest(DUO_W, DUO_APP_H) {
         setContent {
             VintoTheme {
-                CompositionLocalProvider(LocalStatusColumn provides COLUMN.dp) {
+                CompositionLocalProvider(LocalStatusColumn provides PaddingValues.Absolute(right = COLUMN.dp)) {
                     Box(modifier = Modifier.size(DUO_W.dp, DUO_APP_H.dp)) { Standings() }
                 }
             }
@@ -157,11 +166,25 @@ class StoreShotErrorsTest {
 
     @Test
     fun theCoachCoversWhollyOrNotAtAll() {
-        SCREENS.forEach { (screen, size) ->
-            runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
-                setContent {
-                    VintoTheme {
-                        Box(modifier = Modifier.size(size.first, size.second)) {
+        SCREENS.forEach { (screen, size) -> coachOn(screen, size.first, size.second, Chrome.NONE) }
+    }
+
+    /**
+     * And on every shape the iPhone Duo takes, where the felt is not where it is on any other phone: a
+     * status column down one edge, closed, open and turned on either side; a strip across the top; a
+     * fold down the middle or across it, which the coach may not lie on either.
+     */
+    @Test
+    fun theCoachCoversWhollyOrNotAtAllOnTheDuo() {
+        DUO_SCREENS.forEach { (screen, shape) -> coachOn(screen, shape.wide, shape.high, shape.chrome) }
+    }
+
+    private fun coachOn(screen: String, wide: Dp, high: Dp, chrome: Chrome) =
+        runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
+            setContent {
+                VintoTheme {
+                    CompositionLocalProvider(LocalChrome provides chrome) {
+                        Box(modifier = Modifier.size(wide, high)) {
                             TeachScreen(
                                 botDispatcher = Dispatchers.Default,
                                 pace = Pace.STEADY,
@@ -171,30 +194,33 @@ class StoreShotErrorsTest {
                         }
                     }
                 }
-                waitForIdle()
-                val coach = onAllNodes(hasTestTag(COACH_TAG), useUnmergedTree = true).fetchSemanticsNodes()
-                assertTrue(coach.isNotEmpty(), "on a $screen the coach is not talking")
-                val panel = coach.first().boundsInRoot
-                val things = onAllNodes(
-                    SemanticsMatcher("a plate") { it.tag().startsWith(PLATE_TAG) },
-                    useUnmergedTree = true,
-                )
+            }
+            waitForIdle()
+            val coach = onAllNodes(hasTestTag(COACH_TAG), useUnmergedTree = true).fetchSemanticsNodes()
+            assertTrue(coach.isNotEmpty(), "on a $screen the coach is not talking")
+            val panel = coach.first().boundsInRoot
+            val things = onAllNodes(
+                SemanticsMatcher("a plate") { it.tag().startsWith(PLATE_TAG) },
+                useUnmergedTree = true,
+            )
+                .fetchSemanticsNodes()
+                .map { it.tag() to it.boundsInRoot } +
+                // The seats' cards too: on a phone it was a sliver of each side seat's card
+                // that stood under the coach's edge.
+                onAllNodes(SemanticsMatcher("a card") { it.said().contains(", card ") })
                     .fetchSemanticsNodes()
-                    .map { it.tag() to it.boundsInRoot } +
-                    // The seats' cards too: on a phone it was a sliver of each side seat's card
-                    // that stood under the coach's edge.
-                    onAllNodes(SemanticsMatcher("a card") { it.said().contains(", card ") })
-                        .fetchSemanticsNodes()
-                        .map { it.said() to it.boundsInRoot } +
-                    listOfNotNull(deck()?.let { "the deck" to it })
-                things.forEach { (what, r) ->
-                    val cut = r.overlaps(panel) && !panel.holds(r)
-                    // Everything, so a failure says what the coach had to find its way between.
-                    assertTrue(!cut, "on a $screen the coach $panel cuts $what $r in two, among $things")
-                }
+                    .map { it.said() to it.boundsInRoot } +
+                listOfNotNull(deck()?.let { "the deck" to it })
+            things.forEach { (what, r) ->
+                val cut = r.overlaps(panel) && !panel.holds(r)
+                // Everything, so a failure says what the coach had to find its way between.
+                assertTrue(!cut, "on a $screen the coach $panel cuts $what $r in two, among $things")
+            }
+            chrome.division?.let { fold ->
+                val crease = Rect(fold.left.value, fold.top.value, fold.right.value, fold.bottom.value)
+                assertTrue(!panel.overlaps(crease), "on a $screen the coach $panel lies on the crease $crease")
             }
         }
-    }
 
     // 3. A felt screen is felt behind the bars too.
 
@@ -233,7 +259,7 @@ class StoreShotErrorsTest {
     @Test
     fun onATableOnItsSideTheScoreSheetRisesOverTheFelt() = runDesktopComposeUiTest(OPEN_W, OPEN_H) {
         val layout = TableLayout.forScreen(OPEN_W.dp, OPEN_H.dp)
-        val span = assertNotNull(layout.feltSpan(OPEN_W.dp), "a table on its side has a felt to centre on")
+        val span = assertNotNull(layout.feltSpan(), "a table on its side has a felt to centre on")
         setContent {
             VintoTheme {
                 CompositionLocalProvider(LocalSheetSpan provides span) {
@@ -257,7 +283,7 @@ class StoreShotErrorsTest {
 
     @Test
     fun anUprightTableHasNoFeltToCentreOn() {
-        assertTrue(TableLayout.forScreen(PHONE_W.dp, PHONE_H.dp).feltSpan(PHONE_W.dp) == null)
+        assertTrue(TableLayout.forScreen(PHONE_W.dp, PHONE_H.dp).feltSpan() == null)
     }
 
     /** A round's score sheet, open: the Vinto call held, 5 against 16. */
@@ -312,8 +338,8 @@ class StoreShotErrorsTest {
         /** How far beside the column to read the screen, and the step its heights are read in. */
         const val BESIDE = 4
 
-        /** Where iOS's own clock and connectivity end in the column, and the app's part begins. */
-        const val STATUS_RESERVE = 200f
+        /** Where iOS's own clock, connectivity and camera end in the column, and the app's part begins. */
+        const val STATUS_RESERVE = Duos.CAMERA_FOOT
         const val NO_HEADER = 30f
 
         const val PHONE_W = 430
@@ -338,5 +364,20 @@ class StoreShotErrorsTest {
         )
         const val WINDOW_W = 1400
         const val WINDOW_H = 1400
+
+        val DUO_SCREENS: Map<String, DuoShape> = mapOf(
+            "closed iPhone Duo, its column" to DuoShape(Duos.CLOSED_W.dp, Duos.CLOSED_H.dp, Duos.CLOSED),
+            "open iPhone Duo on its side" to DuoShape(Duos.OPEN_W.dp, Duos.OPEN_H.dp, Duos.OPEN),
+            "open iPhone Duo upright" to DuoShape(Duos.UPRIGHT_W.dp, Duos.UPRIGHT_H.dp, Duos.UPRIGHT),
+            "iPhone Duo half open like a book" to DuoShape(Duos.OPEN_W.dp, Duos.OPEN_H.dp, Duos.BOOK),
+            "iPhone Duo half open like a laptop" to DuoShape(Duos.UPRIGHT_W.dp, Duos.UPRIGHT_H.dp, Duos.LAPTOP),
+            "closed iPhone Duo turned, its column on the right" to
+                DuoShape(Duos.TURNED_W.dp, Duos.TURNED_H.dp, Duos.turnedColumn(onRight = true)),
+            "closed iPhone Duo turned, its column on the left" to
+                DuoShape(Duos.TURNED_W.dp, Duos.TURNED_H.dp, Duos.turnedColumn(onRight = false)),
+        )
     }
+
+    /** A screen the table is laid out on, and what the system keeps of it. */
+    private class DuoShape(val wide: Dp, val high: Dp, val chrome: Chrome)
 }

@@ -632,6 +632,18 @@
     <string name="choice_continue">Continua</string>
     <string name="choice_call_vinto">Chiama Vinto</string>
     <string name="choice_done">Fatto</string>
+    <string name="pill_draw">Pesca</string>
+    <string name="pill_use">Usa</string>
+    <string name="pill_swap">Scambia</string>
+    <string name="pill_keep">Tieni</string>
+    <string name="pill_discard">Scarta</string>
+    <string name="pill_down">Giù</string>
+    <string name="pill_leave">Lasciale</string>
+    <string name="pill_continue">Continua</string>
+    <string name="pill_vinto">Vinto</string>
+    <string name="pill_done">Fatto</string>
+    <string name="pill_start">Inizia</string>
+    <string name="pill_back">Indietro</string>
 
     <!-- The move log. -->
     <string name="log_you">Tu</string>
