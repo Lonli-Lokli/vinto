@@ -312,12 +312,12 @@ class StoreShotsTest {
          * screenshot that read them would change at every capture while the screen had not.
          *
          * **One version per store**, because the stores do not share one (VERSIONING.md): the
-         * shots made now go out with iOS 1.4 and Android 1.2. It was a single "1.0" for both,
+         * shots made now go out with iOS 1.5 and Android 1.2. It was a single "1.0" for both,
          * which is what an App Store 1.2 listing would have shown on its home screen — and then
          * 1.2 and 1.1, still saying so after both stores had moved on. Move these with the
          * release the shots are made for.
          */
-        const val APP_STORE_VERSION = "1.4"
+        const val APP_STORE_VERSION = "1.5"
         const val PLAY_VERSION = "1.2"
         const val SHOWN_BUILD = "100"
 
