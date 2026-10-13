@@ -393,7 +393,17 @@ export default {
    * `vydanne creative` places them through the App Asset Library.
    */
   bridge: {
-    apple: { iphoneduo: { dirs: ['appstore-iphone-duo-outer', 'appstore-iphone-duo-inner-landscape'] } },
+    // The Duo's ten, folder by folder in this order (zdymak.config.mjs, `duo`): closed, then open.
+    apple: {
+      iphoneduo: {
+        dirs: [
+          'appstore-iphone-duo-outer',
+          'appstore-iphone-duo-outer-landscape',
+          'appstore-iphone-duo-inner-landscape',
+          'appstore-iphone-duo-inner',
+        ],
+      },
+    },
   },
 
   // Google Play. Package-scoped: vydanne only ever touches this packageName.

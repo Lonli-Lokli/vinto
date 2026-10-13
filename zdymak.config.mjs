@@ -63,9 +63,6 @@ const REEL_SEGMENTS = [
  *
  * Each `id` is the screen it shows. They double as capture state names for the day the
  * handle exists, which is why they are screens and not slogans.
- *
- * Declared out here because the iPhone Duo tells part of it twice: its one store set holds ten
- * pictures between the closed screen and the open one (`DUO_OPEN`).
  */
 const SCENES = [
   { id: 'home', title: 'Hold less. Know more.', sub: 'Five cards. You may look at two.', move: 'pushInSlow' },
@@ -77,10 +74,27 @@ const SCENES = [
 ];
 
 /**
- * The four the open Duo tells: the table, all of whose seats read across once it opens, and the
- * three moments that happen on it. Six closed and four open is the set's limit of ten.
+ * The iPhone Duo's set: ten pictures, the most it holds, and every way the phone is held —
+ * closed, closed and turned, open flat both ways, and half open like a book and like a laptop
+ * (owner, 2026-10-13: "show how the app will look in all views").
+ *
+ * Shot on the iOS 27.1 simulator itself, not drawn: iOS paints its own clock and status column at
+ * 9:41, and the posture is set by script with the hinge and orientation events Device Hub sends. A
+ * half-open phone photographs flat, as its screen sees it: the table split at the fold.
+ *
+ * Ordered across the four screen shapes by vydanne's bridge, which takes the folders in the order it
+ * lists them: closed, closed and turned, open on its side (flat, then a book), open upright (flat,
+ * then a laptop). No plan: staged on a Debug build it takes two and a half minutes, and in the open
+ * Duo's narrow rail its hint creeps sideways, so any still of it reads as a line cut off.
  */
-const DUO_OPEN = SCENES.filter((s) => ['table', 'plan', 'score', 'lobby'].includes(s.id));
+const duo = (posture, scene) => ({
+  id: `${posture}-${scene}`,
+  image: `./marketing/captures/ios-duo-${posture}/${scene}.png`,
+});
+const DUO_CLOSED = [duo('closed', 'table'), duo('closed', 'teach'), duo('closed', 'home')];
+const DUO_TURNED = [duo('closed-turned', 'table')];
+const DUO_OPEN = [duo('open', 'table'), duo('open', 'score'), duo('open', 'lobby'), duo('half-book', 'table')];
+const DUO_UPRIGHT = [duo('open-upright', 'table'), duo('half-laptop', 'table')];
 
 /**
  * The header strip and the search picture, as the owner chose them (2026-10-12) from mockups shown on
@@ -183,24 +197,30 @@ export default {
     },
 
     /**
-     * The iPhone Duo (App Store Connect's "iPhone Duo" set, from 2026-10): closed, and open on its
-     * side, which is how a book-style fold opens. One set of ten between them, so the open screen
-     * tells four of the six scenes (`DUO_OPEN`). Optional until April 2027 for builds on the iOS
-     * 27.1 SDK; made now because the phone goes on sale on 23 October and a shopper holding one
-     * should see the table it will actually get — on the open screen, side seats reading across.
+     * The iPhone Duo (App Store Connect's "iPhone Duo" set, from 2026-10): the screens as they are,
+     * each at its own size, since the closed one and the open one are different shapes and each is
+     * held two ways. Optional until April 2027 for builds on the iOS 27.1 SDK; made now because the
+     * phone goes on sale on 23 October. No bar is drawn: the simulator's captures carry iOS's own.
      */
-    // Closed, iOS 27.1 stands the status bar in a column down the right edge (measured on the Duo
-    // simulator), and zdymak only knows how to draw one across the top — where 'auto' would take the
-    // header's flat top rows for an empty band. So no bar is drawn: the column is the rail, as the app
-    // leaves it.
-    duoOuter: {
-      capturesDir: './marketing/captures/ios-duo-outer',
+    duoClosed: {
+      capturesDir: './marketing/captures/ios-duo-closed',
+      scenes: DUO_CLOSED,
       screenshots: [{ target: 'appstore-iphone-duo-outer', theme: { statusBar: false } }],
     },
-    duoInner: {
-      capturesDir: './marketing/captures/ios-duo-inner',
+    duoTurned: {
+      capturesDir: './marketing/captures/ios-duo-closed-turned',
+      scenes: DUO_TURNED,
+      screenshots: [{ target: 'appstore-iphone-duo-outer-landscape', theme: { statusBar: false } }],
+    },
+    duoOpen: {
+      capturesDir: './marketing/captures/ios-duo-open',
       scenes: DUO_OPEN,
-      screenshots: [{ target: 'appstore-iphone-duo-inner-landscape', theme: { statusBar: 'auto' } }],
+      screenshots: [{ target: 'appstore-iphone-duo-inner-landscape', theme: { statusBar: false } }],
+    },
+    duoUpright: {
+      capturesDir: './marketing/captures/ios-duo-open-upright',
+      scenes: DUO_UPRIGHT,
+      screenshots: [{ target: 'appstore-iphone-duo-inner', theme: { statusBar: false } }],
     },
 
     /**
