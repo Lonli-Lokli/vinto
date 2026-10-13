@@ -129,7 +129,7 @@
     <string name="settings_support_buy">Podziękuj (%1$s)</string>
     <string name="settings_support_link">Podziękuj</string>
     <string name="settings_support_link_detail">Otwiera stronę, na której wybierasz kwotę. Wersje na telefony tego nie umożliwiają: płatności obsługuje tam sklep, a jego zasady ustalają cenę.</string>
-    <string name="settings_support_unavailable">Tutaj jeszcze niedostępne. Nic z tego poziomu nie da się zrobić — potrzebny jest sklep, a najpierw pojawi się on w telefonach.</string>
+    <string name="settings_support_unavailable">Tutaj jeszcze niedostępne. Nic z tego poziomu nie da się zrobić: potrzebny jest sklep, a najpierw pojawi się on w telefonach.</string>
     <string name="settings_support_thanks">Dziękujemy. Naprawdę.</string>
     <string name="settings_support_given">Podziękowań: %1$d</string>
     <string name="settings_explain">Więcej o %1$s</string>
@@ -161,7 +161,7 @@
     <string name="difficulty_hard">Trudny</string>
 
     <string name="settings_pace">Tempo</string>
-    <string name="settings_pace_detail">Jak szybko stół pokazuje to, co się stało. Trzy boty wykonują swoje ruchy między jednym stuknięciem a następnym — to określa, jak długo możesz je obserwować.</string>
+    <string name="settings_pace_detail">Jak szybko stół pokazuje to, co się stało. Trzy boty wykonują swoje ruchy między jednym stuknięciem a następnym. To ustawienie określa, jak długo możesz je obserwować.</string>
     <string name="pace_calm">Spokojne</string>
     <string name="pace_steady">Miarowe</string>
     <string name="pace_brisk">Żwawe</string>
@@ -303,7 +303,7 @@
     <string name="score_column_round">runda</string>
     <string name="score_column_game">gra</string>
     <string name="score_you_called">Wołasz Vinto, więc twoja ręka zostaje zestawiona z najlepszą ręką reszty.</string>
-    <string name="score_they_called">%1$s ogłasza Vinto — ta ręka zostaje zestawiona z twoją najlepszą.</string>
+    <string name="score_they_called">%1$s ogłasza Vinto, więc ta ręka zostaje zestawiona z twoją najlepszą.</string>
     <string name="score_deck_ended">Nikt nie zawołał Vinto. Talia się skończyła, więc runda dobiegła końca i policzono wszystkie ręce.</string>
     <string name="score_next_round">Rozdaj kolejną rundę</string>
     <string name="score_stop">Zakończ tutaj</string>
@@ -395,7 +395,7 @@
     <string name="beat_session_title">I to jest jedna runda</string>
     <string name="beat_session_body">Partia to kolejne rundy, jedna po drugiej, z punktami przenoszonymi między nimi. Gra się do czasu, który ktoś ustala z góry, zwykle pół godziny. Gdy czas minie, trwająca runda jest dokańczana. Kto ma najwięcej punktów, jest pierwszy i dostaje 5 punktów gry, drugi 3, trzeci 2. Wygranie rundy daje 3 punkty, niezależnie od tego, czy wygrasz ją przewagą jednego punktu, czy dwudziestu.</string>
     <string name="beat_scoring_title">Wszystkie ręce zostają odkryte</string>
-    <string name="beat_scoring_body">Ręka wołającego zostaje zestawiona z najlepszą ręką pozostałych. Niższa — wołający dostaje +3, a każdy inny traci 1. Remis liczy się jako wygrana wołającego: +3 dla niego, nikt nic nie traci. Pokonana — wołający traci 1, a każdy inny dostaje +3.</string>
+    <string name="beat_scoring_body">Ręka wołającego zostaje zestawiona z najlepszą ręką pozostałych. Jeśli jest niższa, wołający dostaje +3, a każdy inny traci 1. Remis liczy się jako wygrana wołającego: +2 dla niego, nikt nic nie traci. Jeśli zostaje pokonana, wołający traci 1, a każdy inny dostaje +3.</string>
     <string name="beat_vinto_body">To zakład, że ta ręka jest najniższa przy stole. Kończy rundę: każdy inny dostaje dokładnie jedną turę więcej, a potem wszystkie ręce zostają odkryte.</string>
     <string name="beat_vinto_title">%1$s ogłasza Vinto</string>
 
@@ -466,7 +466,7 @@
     <string name="detail_king_declared">Król ogłosił %1$s: %2$s</string>
     <string name="detail_tap_to_say">Stuknij dowolną kartę, aby powiedzieć, czym według Ciebie jest: Twoją, kogoś z koalicji albo przeciwnika.</string>
     <string name="detail_name_the_ranks">Stuknij każdą rangę, którą może być, albo tylko jedną, jeśli nie ma wątpliwości.</string>
-    <string name="detail_right_plays">Trafnie — akcja zostaje rozegrana; błędnie — kosztuje kartę.</string>
+    <string name="detail_right_plays">Gdy trafisz, akcja zostaje rozegrana; gdy nie, kosztuje to kartę.</string>
     <string name="detail_wrong_costs">Błędna nazwa kosztuje kartę karną.</string>
     <string name="detail_barred_card">Zgadywanie tej karty się nie powiodło, więc jest ona teraz niedostępna. Następna karta, która wyląduje, to świeża szansa.</string>
     <string name="detail_barred">Zgadywanie się nie powiodło, a w ostatniej rundzie to oznacza koniec dorzucania do końca rundy.</string>
@@ -497,7 +497,7 @@
     <string name="ask_which_card_king_points_at">Na którą kartę wskazuje Król? Dotknij jej.</string>
     <string name="ask_who_should_draw">Kto dobiera kartę?</string>
     <string name="detail_touch_the_card">Dotknij karty na stole.</string>
-    <string name="detail_claim_was_wrong">Krok tu powstał na twierdzeniu, które karty od tamtej pory obaliły. To gra działa poprawnie, nie pomyłka — ktoś zapamiętał kartę inaczej, niż ona leży.</string>
+    <string name="detail_claim_was_wrong">Krok tu powstał na twierdzeniu, które karty od tamtej pory obaliły. To nie pomyłka, tylko gra działa poprawnie: ktoś zapamiętał kartę inaczej, niż ona leży.</string>
     <!-- Over the felt while the plan is being played back as ghosts: nothing on the table has moved. -->
     <string name="ask_what_will_you_do">Co zrobisz w swojej turze?</string>
     <string name="ask_what_should_they_do">Co zrobić w turze %1$s?</string>

@@ -38,7 +38,7 @@
     <string name="trouble_refused">房间服务拒绝了这个请求。</string>
     <string name="trouble_update_needed">此版本过旧，无法进行联机对战。请从应用商店更新。</string>
     <string name="notice_update_title">更新应用</string>
-    <string name="notice_update_available">有新版本可用。方便时请更新——当前版本仍可正常游玩。</string>
+    <string name="notice_update_available">有新版本可用。方便时请更新，当前版本仍可正常游玩。</string>
     <string name="label_update">更新</string>
     <string name="label_not_now">暂不更新</string>
     <string name="trouble_broken">房间服务出了点问题。请稍后再试。</string>
@@ -129,7 +129,7 @@
     <string name="settings_support_buy">说声谢谢（%1$s）</string>
     <string name="settings_support_link">表达谢意</string>
     <string name="settings_support_link_detail">会打开一个可以自选金额的页面。手机版做不到这一点：付款由应用商店处理，价格也由它的规则决定。</string>
-    <string name="settings_support_unavailable">这里暂时还不能用。这个页面无法解决——需要先有应用商店，而手机版会先支持。</string>
+    <string name="settings_support_unavailable">这里暂时还不能用，在这个页面也无法解决。这需要应用商店，手机版会先有。</string>
     <string name="settings_support_thanks">谢谢你，真心的。</string>
     <string name="settings_support_given">已表达谢意：%1$d 次</string>
     <string name="settings_explain">了解更多关于 %1$s 的信息</string>
@@ -395,7 +395,7 @@
     <string name="beat_session_title">这就是一局</string>
     <string name="beat_session_body">一场游戏由一局接一局组成，分数在局与局之间累计。时长由大家事先约定，通常是半小时。时间一到，正在进行的这一局打完为止。分数最高的人得 5 个游戏分，第二名得 3 个，第三名得 2 个。赢下一局得 3 分，不论你是只赢一分还是赢二十分。</string>
     <string name="beat_scoring_title">所有手牌翻开</string>
-    <string name="beat_scoring_body">喊牌者的手牌会拿来对抗其他人中最好的一手。更低的话，喊牌者得 +3 分，其余每人各扣 1 分。打平算喊牌者赢：+3 分，其他人都不扣分。被超过的话，喊牌者扣 1 分，其余每人都得 +3 分。</string>
+    <string name="beat_scoring_body">喊牌者的手牌会拿来对抗其他人中最好的一手。更低的话，喊牌者得 +3 分，其余每人各扣 1 分。打平算喊牌者赢：+2 分，其他人都不扣分。被超过的话，喊牌者扣 1 分，其余每人都得 +3 分。</string>
     <string name="beat_vinto_body">这是一次赌注：赌自己的手牌是全桌最低。它会结束这一局：其他所有人各自再打一回合，然后所有手牌翻开。</string>
     <string name="beat_vinto_title">%1$s 喊了 Vinto</string>
 

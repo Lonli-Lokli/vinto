@@ -423,7 +423,7 @@
     <string name="beat_session_title">Y eso es una ronda</string>
     <string name="beat_session_body">Una partida son varias rondas seguidas, y los puntos pasan de una a otra. Se juega a un tiempo acordado de antemano, y media hora es lo habitual. Cuando se acaba el tiempo, se termina la ronda en curso. Quien tenga más puntos queda primero y se lleva 5 puntos de partida, el segundo 3 y el tercero 2. Ganar una ronda da 3 puntos, ya sea que la ganes por un punto o por veinte.</string>
     <string name="beat_scoring_title">Todas las manos quedan boca arriba</string>
-    <string name="beat_scoring_body">La mano de quien cantó se compara con la mejor mano entre los demás. Más baja, y quien cantó se lleva +3 mientras los demás pierden 1 cada uno. Empate cuenta como de quien cantó: +3 para ellos, nadie pierde nada. Superada, y quien cantó pierde 1 mientras cada uno de los demás se lleva +3.</string>
+    <string name="beat_scoring_body">La mano de quien cantó se compara con la mejor mano entre los demás. Más baja, y quien cantó se lleva +3 mientras los demás pierden 1 cada uno. Empate cuenta como de quien cantó: +2 para ellos, nadie pierde nada. Superada, y quien cantó pierde 1 mientras cada uno de los demás se lleva +3.</string>
     <string name="beat_vinto_body">Esa es la apuesta de que su mano es la más baja de la mesa. Termina la ronda: todos los demás juegan exactamente un turno más, y luego todas las manos se voltean.</string>
     <string name="beat_vinto_title">%1$s cantó Vinto</string>
 

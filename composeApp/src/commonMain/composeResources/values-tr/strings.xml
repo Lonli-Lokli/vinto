@@ -417,7 +417,7 @@
     <string name="beat_session_title">Ve bu bir tur</string>
     <string name="beat_session_body">Bir oyun, art arda gelen turlardır ve puanlar aralarında taşınır. Önceden anlaşılan bir süreye göre oynanır, yarım saat olağandır. Süre dolunca devam eden tur bitirilir. En çok puanı olan oyuncu birinci olarak 5, ikinci olarak 3, üçüncü olarak 2 oyun puanı alır. Bir turu kazanmak 3 puan getirir, bir puan farkla da kazansanız yirmi puan farkla da.</string>
     <string name="beat_scoring_title">Her el açılır</string>
-    <string name="beat_scoring_body">Çağıranın eli herkesin arasındaki en iyi ele karşı değerlendirilir. Daha düşükse, çağıran +3 alır, herkes 1'er kaybeder. Berabere çağıranın lehine sayılır: ona +3, kimse kaybetmez. Yenilirse, çağıran 1 kaybeder, diğerlerinin her biri +3 alır.</string>
+    <string name="beat_scoring_body">Çağıranın eli herkesin arasındaki en iyi ele karşı değerlendirilir. Daha düşükse, çağıran +3 alır, herkes 1'er kaybeder. Berabere çağıranın lehine sayılır: ona +2, kimse kaybetmez. Yenilirse, çağıran 1 kaybeder, diğerlerinin her biri +3 alır.</string>
     <string name="beat_vinto_body">Bu, elinin masadaki en düşük olduğuna dair bir bahis. Turu bitirir: diğer herkes tam olarak bir el daha oynar, sonra her el açılır.</string>
     <string name="beat_vinto_title">%1$s Vinto çağırdı</string>
 

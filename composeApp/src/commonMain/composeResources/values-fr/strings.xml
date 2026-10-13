@@ -417,7 +417,7 @@
     <string name="beat_session_title">Et voilà, c’est une manche</string>
     <string name="beat_session_body">Une partie, ce sont des manches, l’une après l’autre, avec les points reportés de l’une à l’autre. Elle se joue jusqu’à une durée convenue à l’avance, une demi-heure en général. Une fois le temps écoulé, la manche en cours se termine. La personne qui a le plus de points arrive première pour 5 points de partie, deuxième pour 3, troisième pour 2. Gagner une manche rapporte 3 points, que vous l’ayez gagnée d’un point ou de vingt.</string>
     <string name="beat_scoring_title">Chaque main est révélée</string>
-    <string name="beat_scoring_body">La main de la personne qui a appelé Vinto est opposée à la meilleure main de tous les autres. Plus basse, et elle prend +3 pendant que chacun des autres perd 1 point. À égalité, elle gagne : +3 pour elle, rien de perdu par personne. Battue, elle perd 1 pendant que chacun des autres prend +3.</string>
+    <string name="beat_scoring_body">La main de la personne qui a appelé Vinto est opposée à la meilleure main de tous les autres. Plus basse, et elle prend +3 pendant que chacun des autres perd 1 point. À égalité, elle gagne : +2 pour elle, rien de perdu par personne. Battue, elle perd 1 pendant que chacun des autres prend +3.</string>
     <string name="beat_vinto_body">C’est le pari que sa main est la plus basse de la table. Cela met fin à la manche : tous les autres jouent encore exactement un tour, puis chaque main est retournée.</string>
     <string name="beat_vinto_title">%1$s a appelé Vinto</string>
 

@@ -409,7 +409,7 @@
     <string name="beat_session_title">E isso é uma rodada</string>
     <string name="beat_session_body">Um jogo é feito de rodadas, uma depois da outra, com os pontos levados de uma para a outra. O jogo vai até um horário combinado antes, e meia hora é o comum. Quando o tempo acaba, a rodada em andamento é concluída. Quem tem mais pontos fica em primeiro com 5 pontos de jogo, em segundo com 3, em terceiro com 2. Ganhar uma rodada vale 3 pontos, seja ganhando por um ponto ou por vinte.</string>
     <string name="beat_scoring_title">Todas as mãos viradas para cima</string>
-    <string name="beat_scoring_body">A mão de quem chamou é comparada com a melhor mão entre todos os outros. Se for menor, quem chamou ganha +3 e todos os outros perdem 1 cada. Empate conta para quem chamou: +3 para ele e ninguém perde nada. Se for batida, quem chamou perde 1 e cada um dos outros ganha +3.</string>
+    <string name="beat_scoring_body">A mão de quem chamou é comparada com a melhor mão entre todos os outros. Se for menor, quem chamou ganha +3 e todos os outros perdem 1 cada. Empate conta para quem chamou: +2 para ele e ninguém perde nada. Se for batida, quem chamou perde 1 e cada um dos outros ganha +3.</string>
     <string name="beat_vinto_body">É a aposta de que a sua mão é a mais baixa da mesa. Ela encerra a rodada: todos os outros jogam exatamente mais uma vez, e então todas as mãos são viradas.</string>
     <string name="beat_vinto_title">%1$s chamou Vinto</string>
 

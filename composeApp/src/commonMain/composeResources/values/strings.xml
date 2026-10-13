@@ -511,7 +511,7 @@
     <string name="beat_session_title">And that is one round</string>
     <string name="beat_session_body">A game is rounds, one after another, with those points carried between them. It is played to a time somebody agrees beforehand, and half an hour is usual. When the time is up, the round in progress is finished. Whoever has the most points comes first for 5 game points, second for 3, third for 2. Winning a round scores 3 points, whether you won it by one point or by twenty.</string>
     <string name="beat_scoring_title">Every hand goes face up</string>
-    <string name="beat_scoring_body">The caller's hand is set against the best hand among everybody else. Lower, and the caller takes +3 while everybody else loses 1 each. Level counts as the caller's: +3 to them, nothing lost by anyone. Beaten, and the caller loses 1 while every one of the others takes +3.</string>
+    <string name="beat_scoring_body">The caller's hand is set against the best hand among everybody else. Lower, and the caller takes +3 while everybody else loses 1 each. Level counts as the caller's: +2 to them, nothing lost by anyone. Beaten, and the caller loses 1 while every one of the others takes +3.</string>
     <string name="beat_vinto_body">That is the bet that their hand is the lowest at the table. It ends the round: everybody else gets exactly one more turn, and then every hand is turned over.</string>
     <string name="beat_vinto_title">%1$s called Vinto</string>
 

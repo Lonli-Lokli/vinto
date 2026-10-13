@@ -97,7 +97,7 @@ class LanguagePickerTest {
         open("Язык: Русский")
 
         // Scrolled to for the same reason as everything else here: twelfth of twenty-two.
-        onNodeWithContentDescription("Русский — выбран").performScrollTo().assertIsDisplayed()
+        onNodeWithContentDescription("Русский, выбран").performScrollTo().assertIsDisplayed()
     }
 
     // ------------------------------------------------------------------ the harness

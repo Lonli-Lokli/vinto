@@ -414,7 +414,7 @@
     <string name="beat_session_title">Ed ecco un round</string>
     <string name="beat_session_body">Una partita è fatta di round, uno dopo l’altro, con i punti riportati da uno all’altro. Si gioca fino a un tempo concordato prima, di solito mezz’ora. Quando il tempo scade, il round in corso si conclude. Chi ha più punti arriva primo e prende 5 punti partita, il secondo 3, il terzo 2. Vincere un round vale 3 punti, che tu lo vinca per un punto o per venti.</string>
     <string name="beat_scoring_title">Ogni mano viene scoperta</string>
-    <string name="beat_scoring_body">La mano di chi ha chiamato viene confrontata con la migliore tra tutte le altre. Se è più bassa, chi ha chiamato prende +3 mentre tutti gli altri perdono 1 ciascuno. In caso di pareggio vince chi ha chiamato: +3, e nessuno perde nulla. Se viene battuta, chi ha chiamato perde 1 mentre ognuno degli altri prende +3.</string>
+    <string name="beat_scoring_body">La mano di chi ha chiamato viene confrontata con la migliore tra tutte le altre. Se è più bassa, chi ha chiamato prende +3 mentre tutti gli altri perdono 1 ciascuno. In caso di pareggio vince chi ha chiamato: +2, e nessuno perde nulla. Se viene battuta, chi ha chiamato perde 1 mentre ognuno degli altri prende +3.</string>
     <string name="beat_vinto_body">È la scommessa che la propria mano sia la più bassa al tavolo. Conclude il round: tutti gli altri hanno esattamente un altro turno, poi ogni mano viene scoperta.</string>
     <string name="beat_vinto_title">%1$s ha chiamato Vinto</string>
 

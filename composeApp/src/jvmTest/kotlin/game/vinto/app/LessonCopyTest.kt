@@ -10,6 +10,7 @@ import game.vinto.client.Gloss
 import game.vinto.client.Speaker
 import game.vinto.client.Teaches
 import game.vinto.shapes.Rank
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -139,6 +140,39 @@ class LessonCopyTest {
         )
     }
 
+    /**
+     * A tie pays the caller 2, where a win pays 3 (`RoundScoringTest.aTieGoesToTheCaller`). The
+     * lesson said +3 for both, in every language, until two of its translators noticed (2026-10-13):
+     * the class comment's case again, a scoring rule taught wrong to a player who believes it.
+     */
+    @Test
+    fun theScoringLessonPaysATieTwo() = runComposeUiTest {
+        val words = read { taughtBody(Teaches.Scoring) }
+        val tie = words.substringAfter("Level").substringBefore(".")
+        assertTrue(tie.contains("+2"), "a tie pays the caller 2: $tie")
+        assertTrue(!tie.contains("+3"), "a tie is not paid as a win: $tie")
+    }
+
+    /**
+     * The same rule in every language: one +2 and two +3s, the tie and the two wins. Digits are read
+     * by value, since Bengali writes its own (+২).
+     */
+    @Test
+    fun everyLanguageTeachesATieAsTwo() {
+        val wrong = scoringLessons().mapNotNull { (language, words) ->
+            val plain = words
+                .map { if (it.isDigit()) Character.forDigit(Character.digit(it, RADIX), RADIX) else it }
+                .joinToString("")
+            val twos = plain.windowed(2).count { it == "+2" }
+            val threes = plain.windowed(2).count { it == "+3" }
+            if (twos == 1 && threes == 2) null else "$language: +2×$twos, +3×$threes"
+        }
+        assertTrue(
+            wrong.isEmpty(),
+            "a tie pays the caller 2 and a win 3, in every language:\n${wrong.joinToString("\n")}",
+        )
+    }
+
     @Test
     fun thePlayerIsToldWhenTheyMayCall() = runComposeUiTest {
         val words = read { taughtBody(Teaches.YourTurnToCall) }
@@ -263,5 +297,32 @@ class LessonCopyTest {
         val lines by read
         assertTrue(lines.none { it.isBlank() }, "a gloss came back empty: $lines")
         assertEquals(Gloss.entries.size, lines.distinct().size, "two glosses say the same thing")
+    }
+
+    private fun scoringLessons(): List<Pair<String, String>> {
+        var here: File? = File(System.getProperty("user.dir"))
+        var resources: File? = null
+        while (here != null && resources == null) {
+            resources = listOf(
+                File(here, "composeApp/src/commonMain/composeResources"),
+                File(here, "src/commonMain/composeResources"),
+            ).firstOrNull { it.isDirectory }
+            here = here.parentFile
+        }
+        val found = resources
+            ?.listFiles { file -> file.isDirectory && file.name.startsWith("values") }
+            .orEmpty()
+            .map { File(it, "strings.xml") }
+            .filter { it.isFile }
+            .mapNotNull { xml ->
+                SCORING.find(xml.readText())?.let { xml.parentFile.name to it.groupValues[1] }
+            }
+        assertTrue(found.isNotEmpty(), "no scoring lesson found from ${System.getProperty("user.dir")}")
+        return found
+    }
+
+    private companion object {
+        const val RADIX = 10
+        val SCORING = Regex("""<string name="beat_scoring_body">(.*?)</string>""")
     }
 }

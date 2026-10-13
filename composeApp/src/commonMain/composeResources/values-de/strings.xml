@@ -17,7 +17,7 @@
     <string name="home_unofficial">Inoffizielle App. Das Original gibt es auf vinto.game</string>
     <string name="home_unofficial_action">vinto.game öffnen, die offizielle Seite des Kartenspiels</string>
     <string name="home_other_games">Weitere Spiele</string>
-    <string name="home_other_games_action">kupalinka.app öffnen – die anderen Spiele desselben Studios</string>
+    <string name="home_other_games_action">kupalinka.app öffnen, die anderen Spiele desselben Studios</string>
 
     <string name="online_screen_title">Online spielen</string>
     <string name="online_nickname">Dein Name am Tisch</string>
@@ -395,7 +395,7 @@
     <string name="beat_session_title">Und das war eine Runde</string>
     <string name="beat_session_body">Ein Spiel besteht aus mehreren Runden nacheinander, wobei die Punkte mitgenommen werden. Es wird auf eine Zeit gespielt, die man vorher vereinbart; eine halbe Stunde ist üblich. Läuft die Zeit ab, wird die laufende Runde noch zu Ende gespielt. Die Person mit den meisten Punkten bekommt 5 Spielpunkte, die zweite 3, die dritte 2. Gewinnst du eine Runde, bekommst du 3 Punkte, ob mit einem Punkt Vorsprung oder mit zwanzig.</string>
     <string name="beat_scoring_title">Jede Hand wird aufgedeckt</string>
-    <string name="beat_scoring_body">Die Hand der rufenden Person wird der besten Hand aller anderen gegenübergestellt. Niedriger: +3 für die rufende Person, −1 für alle anderen. Gleichstand zählt für die rufende Person: +3, niemand verliert etwas. Geschlagen: −1 für die rufende Person, +3 für jede der anderen.</string>
+    <string name="beat_scoring_body">Die Hand der rufenden Person wird der besten Hand aller anderen gegenübergestellt. Niedriger: +3 für die rufende Person, −1 für alle anderen. Gleichstand zählt für die rufende Person: +2, niemand verliert etwas. Geschlagen: −1 für die rufende Person, +3 für jede der anderen.</string>
     <string name="beat_vinto_body">Das ist die Wette, dass die eigene Hand die niedrigste am Tisch ist. Es beendet die Runde: Alle anderen bekommen genau noch einen Zug, dann werden alle Hände aufgedeckt.</string>
     <string name="beat_vinto_title">%1$s hat Vinto gerufen</string>
 

@@ -17,7 +17,7 @@
     <string name="home_unofficial">비공식 앱이에요. 원작은 vinto.game에 있어요</string>
     <string name="home_unofficial_action">카드 게임 Vinto!의 공식 홈페이지, vinto.game 열기</string>
     <string name="home_other_games">다른 게임 보기</string>
-    <string name="home_other_games_action">kupalinka.app 열기 — 같은 제작자의 다른 게임</string>
+    <string name="home_other_games_action">같은 제작자의 다른 게임이 있는 kupalinka.app 열기</string>
 
     <string name="online_screen_title">온라인 플레이</string>
     <string name="online_nickname">테이블에서 쓸 이름</string>
@@ -317,7 +317,7 @@
     <string name="report_subject">Vinto 문제 신고</string>
 
     <string name="beat_only_look_title">단 한 번의 확인</string>
-    <string name="beat_only_look_body">라운드가 시작되기 전, 누구나 자기 카드 중 두 장을 한 번 볼 수 있어요. 이제부터 게임은 기억이에요 — 내 기억과 다른 세 사람의 기억이 겨루는 거예요.</string>
+    <string name="beat_only_look_body">라운드가 시작되기 전, 누구나 자기 카드 중 두 장을 한 번 볼 수 있어요. 이제부터 게임은 기억이에요. 내 기억과 다른 세 사람의 기억이 겨루는 거예요.</string>
     <string name="beat_peeks_end_body">카드가 다시 뒤집혀요. 어디에 무엇이 있었는지 기억해 두세요. 다른 사람들도 각자 두 장씩 이미 봤어요.</string>
     <string name="beat_name_only_seen_title">본 카드만 말하세요</string>
     <string name="beat_name_only_seen_body">이 카드는 본 적이 있어서 무엇인지 알아요. 정확히 말하면 그 카드의 능력을 공짜로 써요. 틀리면 페널티 카드를 받아요. 그러니 확신하는 카드만 말하세요.</string>
@@ -331,7 +331,7 @@
     <string name="beat_final_play_ace">Ace는 한 사람이 덱에서 카드를 뒤집힌 채로 뽑게 만들어요. 카드가 한 장 늘면 그만큼 점수가 불리해져요. 선언자의 카드는 손댈 수 없어서 지금은 나를 겨눌 수 없고, 연합 쪽으로 향해요. 누가 뽑는지 지켜보세요.</string>
     <string name="beat_final_play_king">King은 카드 하나를 가리키고 이름을 대는데, 정확해야 해요. 맞으면 그 카드는 있던 손에서 빠지고 능력이 실행돼요. 틀리면 모두가 진짜 카드를 보고 말한 사람이 페널티 카드를 받아요. 보통은 이미 본 카드를 말해요. 자기 손에서 없애고 싶은 카드일 때가 많아요. 마지막 라운드의 King은 연합만 쓰는 도구예요. 선언자는 아무것도 던져 넣을 수 없어서 King이 부르는 숫자는 연합의 손에서만 나갈 수 있어요.</string>
     <string name="beat_final_play_look">9나 10은 다른 사람 손의 카드 한 장을 봐요. 마지막 라운드에서는 내 손에 손댈 수 없으니 연합이 자기 패를 알아내는 방법이에요. 한 명이 알아낸 것은 모두 쓸 수 있어요.</string>
-    <string name="beat_final_play_other">무슨 일이 일어나는지 지켜보세요 — 아직 쥐어본 적 없는 카드고, 테이블 아래 최근 수 기록에 무슨 일이 있었는지 적혀 있어요.</string>
+    <string name="beat_final_play_other">아직 쥐어본 적 없는 카드니까 어떻게 되는지 지켜보세요. 테이블 아래 최근 수 기록에 무슨 일이 있었는지 적혀 있어요.</string>
     <string name="beat_swap_them_title">바꾸세요</string>
     <string name="beat_swap_them_body">둘 다 봤어요. 상대 카드가 내 카드보다 낮으니 바꾸세요. 내 카드는 그쪽으로, 그쪽 카드는 내게 와요. 그 뒤로는 무엇을 쥐고 있는지 정확히 알게 돼요.</string>
     <string name="beat_leave_them_title">그대로 두세요</string>
@@ -395,8 +395,8 @@
     <string name="beat_session_title">그게 한 라운드예요</string>
     <string name="beat_session_body">한 게임은 라운드가 이어지는 거예요. 점수를 누적하면서 미리 정한 시간만큼 하는데 보통 삼십 분이에요. 시간이 다 되면 진행 중인 라운드를 마쳐요. 점수가 가장 높은 사람이 1등으로 5게임점, 2등이 3점, 3등이 2점을 받아요. 라운드에서 이기면 3점을 받아요. 1점 차로 이기든 20점 차로 이기든 똑같아요.</string>
     <string name="beat_scoring_title">모든 손이 공개돼요</string>
-    <string name="beat_scoring_body">선언자의 손은 나머지 중 최고의 손과 겨뤄요. 선언자가 낮으면 +3점을 받고 나머지는 각각 -1점이에요. 동점이면 선언자가 이긴 것으로 쳐요 — 선언자는 +3점, 아무도 잃지 않아요. 선언자가 지면 -1점을 받고 나머지는 각각 +3점을 받아요.</string>
-    <string name="beat_vinto_body">테이블에서 자기 손이 가장 낮다는 데 거는 내기예요. 이게 라운드를 끝내요 — 나머지 모두 정확히 한 턴씩 더 두고, 그다음 모든 손이 공개돼요.</string>
+    <string name="beat_scoring_body">선언자의 손은 나머지 중 최고의 손과 겨뤄요. 선언자가 낮으면 +3점을 받고 나머지는 각각 -1점이에요. 동점이면 선언자가 이긴 것으로 쳐요. 선언자는 +2점을 받고, 아무도 잃지 않아요. 선언자가 지면 -1점을 받고 나머지는 각각 +3점을 받아요.</string>
+    <string name="beat_vinto_body">테이블에서 자기 손이 가장 낮다는 데 거는 내기예요. 이걸로 라운드가 끝나요. 나머지는 모두 정확히 한 턴씩 더 두고, 그다음 모든 손이 공개돼요.</string>
     <string name="beat_vinto_title">%1$s 님이 Vinto를 외쳤어요</string>
 
     <string name="beat_toss_in_also">%1$s 님이 방금 던졌어요. </string>
@@ -497,7 +497,7 @@
     <string name="ask_which_card_king_points_at">킹이 가리킬 카드는 무엇인가요? 카드를 탭하세요.</string>
     <string name="ask_who_should_draw">누가 카드를 뽑아야 하나요?</string>
     <string name="detail_touch_the_card">테이블 위의 카드를 탭하세요.</string>
-    <string name="detail_claim_was_wrong">여기까지의 계획은 이제 카드가 아니라고 밝혀진 말 위에 세워진 거예요. 그건 실수가 아니라 게임이 원래 그렇게 돌아가는 거예요 — 누군가 카드를 실제와 다르게 기억한 거죠.</string>
+    <string name="detail_claim_was_wrong">여기까지의 계획은 이제 카드가 아니라고 밝혀진 말 위에 세워진 거예요. 그건 실수가 아니라 게임이 원래 그렇게 돌아가는 거예요. 누군가 카드를 실제와 다르게 기억한 거죠.</string>
     <string name="ask_what_will_you_do">이번 차례에 무엇을 할까요?</string>
     <string name="ask_what_should_they_do">%1$s 님은 이번 차례에 무엇을 해야 할까요?</string>
     <string name="ask_where_will_your_card_come_from">카드를 어디서 가져올까요?</string>

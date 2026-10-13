@@ -410,7 +410,7 @@
     <string name="beat_session_title">Dan itulah satu ronde</string>
     <string name="beat_session_body">Satu permainan terdiri dari ronde demi ronde, dengan poin yang dibawa di antaranya. Permainan dimainkan sampai waktu yang disepakati sebelumnya, biasanya setengah jam. Saat waktu habis, ronde yang berjalan diselesaikan. Pemilik poin terbanyak menjadi yang pertama dengan 5 poin permainan, kedua 3, ketiga 2. Memenangkan satu ronde bernilai 3 poin, baik Anda menang dengan selisih satu poin maupun dua puluh.</string>
     <string name="beat_scoring_title">Setiap tangan dibuka</string>
-    <string name="beat_scoring_body">Tangan pemanggil diadu dengan tangan terbaik di antara semua orang lain. Lebih rendah, dan pemanggil mendapat +3 sementara semua orang lain kehilangan 1 masing-masing. Seri dihitung sebagai milik pemanggil: +3 untuk mereka, tidak ada yang hilang dari siapa pun. Kalah, dan pemanggil kehilangan 1 sementara setiap orang lain mendapat +3.</string>
+    <string name="beat_scoring_body">Tangan pemanggil diadu dengan tangan terbaik di antara semua orang lain. Lebih rendah, dan pemanggil mendapat +3 sementara semua orang lain kehilangan 1 masing-masing. Seri dihitung sebagai milik pemanggil: +2 untuk mereka, tidak ada yang hilang dari siapa pun. Kalah, dan pemanggil kehilangan 1 sementara setiap orang lain mendapat +3.</string>
     <string name="beat_vinto_body">Itu adalah taruhan bahwa tangan mereka yang terendah di meja. Ini mengakhiri ronde: semua orang lain mendapat tepat satu giliran lagi, lalu semua tangan dibuka.</string>
     <string name="beat_vinto_title">%1$s memanggil Vinto</string>
 
