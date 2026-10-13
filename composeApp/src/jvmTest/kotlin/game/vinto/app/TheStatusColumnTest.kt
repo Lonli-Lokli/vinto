@@ -150,8 +150,9 @@ class TheStatusColumnTest {
         assertEquals(run, Duos.closed().run, "the closed Duo's column runs from under its camera to its foot")
         assertEquals(4, pillsThatFit(run, plan = false, fontScale = 1f))
         assertEquals(3, pillsThatFit(run, plan = true, fontScale = 1f))
-        // A doubled system font grows the counter and the switch's word, and the pills give way first.
-        assertEquals(3, pillsThatFit(run, plan = false, fontScale = 2f))
+        // A doubled system font grows the counter and the switch's word: four still stand under the
+        // counter alone, and beside the switch a pill gives way.
+        assertEquals(4, pillsThatFit(run, plan = false, fontScale = 2f))
         assertEquals(2, pillsThatFit(run, plan = true, fontScale = 2f))
     }
 

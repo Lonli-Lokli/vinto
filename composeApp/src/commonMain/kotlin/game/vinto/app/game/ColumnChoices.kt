@@ -151,7 +151,7 @@ internal val PillHigh = 70.dp
 internal val PillMark = 26.dp
 
 /** Between the column's controls. */
-internal val ColumnGap = 8.dp
+internal val ColumnGap = 6.dp
 
 /** The controls above the pills: the way out, the rules and the settings, each a thumb ([TapTarget]). */
 private const val FIXED_CONTROLS = 3

@@ -8,6 +8,8 @@ import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import game.vinto.app.game.Posture
+import game.vinto.app.game.TableLayout
+import game.vinto.app.game.pillsThatFit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -93,6 +95,41 @@ class TheDuoTurnsTest {
                     }
             }
         }
+    }
+
+    /**
+     * With the regions iOS really reports for the turned Duo, its column has the room for a drawn card’s
+     * two choices under the thumb, whichever way it is turned: the first simulator captures had them
+     * fall back into the rail.
+     */
+    @Test
+    fun theTurnedClosedDuoHoldsADrawnCardsChoicesInItsColumn() {
+        listOf("turned with the column on the left" to Duos.TURNED_LEFT, "and on the right" to Duos.TURNED_RIGHT)
+            .forEach { (side, chrome) ->
+                runDesktopComposeUiTest(Duos.TURNED_W, Duos.TURNED_REAL_H) {
+                    val (view, said) = Duos.drawn()
+                    val layout = TableLayout.forScreen(Duos.TURNED_W.dp, Duos.TURNED_REAL_H.dp, chrome)
+                    val run = assertNotNull(layout.run, "no column $side")
+                    showTable(view, said, layout)
+                    val columnLeft = if (chrome.columnOnRight) Duos.TURNED_W - Duos.COLUMN else 0
+                    val choices = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick))
+                        .fetchSemanticsNodes()
+                        .map { it.calledAloud() to it.boundsInRoot }
+                        .filter { it.first in CHOICES }
+                    assertEquals(
+                        CHOICES.size,
+                        choices.size,
+                        "the choices are missing $side: run ${run.top}..${run.bottom}",
+                    )
+                    choices.forEach { (what, at) ->
+                        assertTrue(
+                            at.between(columnLeft, columnLeft + Duos.COLUMN),
+                            "$what $at is not in the column $side (run ${run.top}..${run.bottom}, " +
+                                "fit ${pillsThatFit(run, plan = false, fontScale = 1f)})",
+                        )
+                    }
+                }
+            }
     }
 
     private fun DpRect.inPixels(): Rect = Rect(left.value, top.value, right.value, bottom.value)

@@ -103,6 +103,24 @@ internal object Duos {
     private const val CLOCK_TOP = 8
     private const val CLOCK_FOOT = 44
 
+    /**
+     * The closed Duo turned, as iOS 27.1 reported it on the simulator (2026-10-13), in the table box’s
+     * coordinates: the screen keeps 17 points at the top and 34 at the foot as well as the column, so
+     * the box is 678x415. One way, the column runs down the left with its status in the window’s top 82
+     * and the camera inside that; the other way, down the right with the status and the camera at the
+     * column’s foot.
+     */
+    const val TURNED_REAL_H = 415
+    val TURNED_LEFT = Chrome(
+        column = COLUMN.dp,
+        columnOnRight = false,
+        occlusions = listOf(DpRect(29.dp, 12.dp, 66.dp, 49.dp), DpRect(0.dp, (-17).dp, 84.dp, 65.dp)),
+    )
+    val TURNED_RIGHT = Chrome(
+        column = COLUMN.dp,
+        occlusions = listOf(DpRect(612.dp, 382.dp, 649.dp, 419.dp), DpRect(594.dp, 367.dp, 678.dp, 449.dp)),
+    )
+
     fun closed(): TableLayout = TableLayout.forScreen(CLOSED_W.dp, CLOSED_H.dp, CLOSED)
 
     fun open(): TableLayout = TableLayout.forScreen(OPEN_W.dp, OPEN_H.dp, OPEN)
