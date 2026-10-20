@@ -111,12 +111,10 @@ targets:
           # release, as the store build, with the scenes (composeApp's `captureFramework`).
           KOTLIN_FRAMEWORK_BUILD_TYPE: release
 
-    # The scheme `xcodebuild -scheme iosApp` builds, archives and now TESTS. Declared here so the
-    # UI test bundle below is in its Test action; without a scheme in this file Xcode autocreates
-    # one per target and the tests are reachable only by a scheme nobody committed.
-    scheme:
-      testTargets:
-        - iosAppUITests
+    # The scheme `xcodebuild -scheme iosApp` builds and archives (Release). Its UI tests moved to
+    # iosApp-capture below: they open the app's screens through the capture handle, which only the
+    # Capture configuration has.
+    scheme: {}
 
     preBuildScripts:
       - name: SwiftLint (strict)
@@ -249,3 +247,22 @@ targets:
         TEST_TARGET_NAME: iosApp
         TARGETED_DEVICE_FAMILY: "1,2"
 
+schemes:
+  # The capture build (gulnya/claude/capture-build.md): what zdymak builds for the store screenshots, and where the
+  # UI tests run, since they reach each screen through the capture handle (Harness.swift). Every action is Capture.
+  iosApp-capture:
+    build:
+      targets:
+        iosApp: all
+    run:
+      config: Capture
+    test:
+      config: Capture
+      targets:
+        - iosAppUITests
+    profile:
+      config: Capture
+    analyze:
+      config: Capture
+    archive:
+      config: Capture
