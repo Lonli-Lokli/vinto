@@ -216,6 +216,16 @@ targets:
             sentry-cli debug-files upload --org echo-xl --project vinto \
               --include-sources "$DWARF_DSYM_FOLDER_PATH"
           fi
+      - name: Capture check
+        basedOnDependencyAnalysis: false
+        script: |
+          # Capture code ships in no store build (gulnya/claude/capture-build.md): this build, in every configuration,
+          # is searched by gulnya's capture-check.mjs once it is assembled; a build without ../gulnya or Node fails.
+          # Release and Debug must hold the shared capture id nowhere; Capture must hold it in its code.
+          # An Xcode phase reads no shell profile, so nvm's node (this Mac's only one) is added when none is on PATH.
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          command -v node >/dev/null 2>&1 || PATH="$PATH:$(ls -d "$HOME"/.nvm/versions/node/*/bin 2>/dev/null | tail -1)"
+          exec node "$SRCROOT/../../gulnya/tools/capture-check.mjs" "$TARGET_BUILD_DIR/$WRAPPER_NAME"
 
   # The accessibility evidence behind every Apple Accessibility Nutrition Label in
   # `vydanne.config.mjs`. XCUITest reads the same accessibility tree VoiceOver and Voice Control
