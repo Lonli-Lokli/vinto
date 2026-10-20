@@ -31,6 +31,8 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import game.vinto.app.capture.Staged
+import game.vinto.app.capture.stagedGame
 import game.vinto.app.game.HelpSheet
 import game.vinto.app.game.LocalStage
 import game.vinto.app.game.RoomScreen
@@ -299,7 +301,9 @@ class LargeTextTest {
             test.waitForIdle()
         }
 
-        fun app(scene: String) = show { App(seeds = { SEED }, vault = MemoryVault(), marketing = scene) }
+        fun app(scene: String) = show {
+            Staged(scene) { App(seeds = { SEED }, vault = MemoryVault(), firstScreen = it) }
+        }
 
         fun waitFor(words: String) = test.waitUntil(timeoutMillis = STAGE_TIMEOUT_MS) {
             test.onAllNodesWithText(words, substring = true, ignoreCase = true).fetchSemanticsNodes().isNotEmpty()

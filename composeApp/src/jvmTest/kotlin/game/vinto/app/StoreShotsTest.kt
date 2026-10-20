@@ -11,6 +11,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.use
+import game.vinto.app.capture.MarketingScene
+import game.vinto.app.capture.Staged
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.MemoryVault
 import game.vinto.client.Settings
@@ -85,12 +87,14 @@ class StoreShotsTest {
                         LocalAppVersion provides slot.shown,
                         LocalAppBuild provides SHOWN_BUILD,
                     ) {
-                        App(
-                            seeds = { MARKETING_SEED },
-                            vault = lightVault(),
-                            marketing = scene.id,
-                            safeArea = slot.bars.asSafeArea(),
-                        )
+                        Staged(scene.id) {
+                            App(
+                                seeds = { MARKETING_SEED },
+                                vault = lightVault(),
+                                firstScreen = it,
+                                safeArea = slot.bars.asSafeArea(),
+                            )
+                        }
                     }
                 }
             }

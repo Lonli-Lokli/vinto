@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import game.vinto.app.capture.Staged
 import game.vinto.app.game.COACH_TAG
 import game.vinto.app.game.Chrome
 import game.vinto.app.game.LocalChrome
@@ -229,12 +230,14 @@ class StoreShotErrorsTest {
         listOf<String?>(null, "lobby", "table").forEach { scene ->
             runDesktopComposeUiTest(PHONE_W, PHONE_H) {
                 setContent {
-                    App(
-                        seeds = { SEED },
-                        vault = MemoryVault().apply { saveSettings(Settings(theme = ThemeChoice.LIGHT)) },
-                        marketing = scene,
-                        safeArea = PaddingValues(top = BAR_TOP.dp, bottom = BAR_BOTTOM.dp),
-                    )
+                    Staged(scene) {
+                        App(
+                            seeds = { SEED },
+                            vault = MemoryVault().apply { saveSettings(Settings(theme = ThemeChoice.LIGHT)) },
+                            firstScreen = it,
+                            safeArea = PaddingValues(top = BAR_TOP.dp, bottom = BAR_BOTTOM.dp),
+                        )
+                    }
                 }
                 waitForIdle()
                 val pixels = onRoot().captureToImage().toPixelMap()

@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import game.vinto.app.capture.Staged
 import game.vinto.app.game.Chrome
 import game.vinto.app.game.ColumnRun
 import game.vinto.app.game.FoldPages
@@ -159,12 +160,14 @@ class TheDuosEdgesTest {
                     LocalReserved provides mutableStateOf(OPEN_UPRIGHT_CLOCK),
                     LocalHost provides Host.PHONE,
                 ) {
-                    App(
-                        seeds = { SEED },
-                        vault = MemoryVault().apply { saveSettings(Settings(theme = ThemeChoice.LIGHT)) },
-                        marketing = "table",
-                        safeArea = PaddingValues(top = Duos.STRIP.dp, bottom = HOME.dp),
-                    )
+                    Staged("table") {
+                        App(
+                            seeds = { SEED },
+                            vault = MemoryVault().apply { saveSettings(Settings(theme = ThemeChoice.LIGHT)) },
+                            firstScreen = it,
+                            safeArea = PaddingValues(top = Duos.STRIP.dp, bottom = HOME.dp),
+                        )
+                    }
                 }
             }
             // The staged round deals before it settles, and its cards land a moment after the screen.

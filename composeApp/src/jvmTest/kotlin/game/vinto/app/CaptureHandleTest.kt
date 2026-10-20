@@ -7,6 +7,10 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runComposeUiTest
+import game.vinto.app.capture.MarketingScene
+import game.vinto.app.capture.Staged
+import game.vinto.app.capture.demoGame
+import game.vinto.app.capture.playOn
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.MemoryVault
 import kotlinx.coroutines.delay
@@ -149,7 +153,9 @@ class CaptureHandleTest {
      * for a composition with no work left, and one that is playing a round always has some.
      */
     private fun ComposeUiTest.open(marketing: String?, settle: Boolean = true) {
-        setContent { VintoTheme { App(seeds = { SEED }, vault = MemoryVault(), marketing = marketing) } }
+        setContent {
+            VintoTheme { Staged(marketing) { App(seeds = { SEED }, vault = MemoryVault(), firstScreen = it) } }
+        }
         if (settle) waitForIdle()
     }
 
