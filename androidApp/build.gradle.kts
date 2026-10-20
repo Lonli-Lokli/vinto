@@ -193,6 +193,17 @@ android {
         // care that two platforms share one, and forcing lockstep would mean burning a version on
         // one platform to match the other.
         versionName = MARKETING_VERSION
+
+        // Two constants the `capture` build type below turns off, and nothing else does. R8 folds
+        // each, so the store builds keep the code they guard and the capture build loses it: no
+        // crash reports from a build that only ever photographs scenes (`VintoApplication`), and
+        // no Play Billing connection from an app id with no products (`MainActivity`).
+        buildConfigField("boolean", "CRASH_REPORTS", "true")
+        buildConfigField("boolean", "STORE", "true")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     compileOptions {
@@ -277,6 +288,78 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("release")
                 ?: signingConfigs.getByName("debug")
+        }
+
+        /**
+         * The capture build: the only one with the store screenshots' scenes in it.
+         *
+         * App Store guideline 2.5.19 is about what sits in a binary, so no store build and no
+         * debug build carries the scenes or the handle that opens them (gulnya
+         * capture-debug-only, `gulnya/claude/capture-build.md`). This one does: optimised like
+         * release, under its own id so it installs beside the store app and can never be
+         * uploaded as it (vydanne refuses an id that is not its config's), signed with the debug
+         * key, sending no crash report and asking no store. `CaptureActivity` is its entry, from
+         * `src/capture`; the scenes come from `composeApp/src/captureMain` (the source set below).
+         */
+        create("capture") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".capture"
+            versionNameSuffix = "-capture"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            buildConfigField("boolean", "CRASH_REPORTS", "false")
+            buildConfigField("boolean", "STORE", "false")
+        }
+    }
+
+    // `composeApp` is a single-variant KMP library (`com.android.kotlin.multiplatform.library` has
+    // no build types), so the scenes cannot be a build type of its own: this module compiles them
+    // into the capture build alone, against `composeApp`'s public API (`App`, `Opening`).
+    sourceSets.named("capture") {
+        kotlin.directories.add(rootProject.file("composeApp/src/captureMain/kotlin").path)
+    }
+}
+
+// After `android { }`, which is what creates the capture build type's configurations. The scenes
+// stage real games, so they name the session, the engine's actions and coroutines, which reach
+// this module through `composeApp` at run time only.
+dependencies {
+    "captureImplementation"(project(":shared:client"))
+    "captureImplementation"(libs.kotlinx.coroutines.core)
+    "captureImplementation"(libs.compose.runtime)
+}
+
+/**
+ * Capture code ships in no store build (gulnya/claude/capture-build.md).
+ *
+ * Every APK and AAB this module packages, in every variant, is searched by gulnya's
+ * capture-check.mjs inside the task that writes it, so no flag, property or excluded task drops
+ * the check, and a build without ../gulnya or Node fails. A store or debug build must not hold the
+ * shared capture id anywhere; the capture build must hold it in its code, which proves the search
+ * sees it there. Node from Homebrew, else the newest nvm install (this Mac's), else PATH's.
+ */
+val captureCheck = rootDir.resolve("../gulnya/tools/capture-check.mjs")
+androidComponents.onVariants { variant ->
+    val name = variant.name.replaceFirstChar(Char::uppercase)
+    tasks.matching { it.name == "package$name" || it.name == "sign${name}Bundle" }.configureEach {
+        val script = captureCheck
+        val built = outputs.files
+        val nvm = File(System.getProperty("user.home"), ".nvm/versions/node")
+        inputs.file(script).withPropertyName("captureCheck")
+        doLast {
+            val files = built.asFileTree.matching { include("**/*.apk", "**/*.aab") }.files
+            if (files.isEmpty()) throw GradleException("capture-check: $name packaged no APK or AAB to check")
+            val nodes = listOf(File("/opt/homebrew/bin/node"), File("/usr/local/bin/node")) +
+                nvm.listFiles().orEmpty().sortedDescending().map { File(it, "bin/node") }
+            val node = nodes.firstOrNull { it.canExecute() }?.path ?: "node"
+            files.forEach { file ->
+                // Its report goes through Gradle's log: a daemon's own stdout reaches no build log.
+                val process = ProcessBuilder(node, script.path, file.path).redirectErrorStream(true).start()
+                val report = process.inputStream.bufferedReader().readText().trimEnd()
+                val exit = process.waitFor()
+                logger.lifecycle(report)
+                if (exit != 0) throw GradleException("capture-check refused ${file.name} (exit $exit)")
+            }
         }
     }
 }
@@ -411,8 +494,10 @@ sentry {
     projectName.set("vinto")
     autoUploadProguardMapping.set(true)
 
-    // A debug build is not minified, so there is no mapping to upload and nothing to read back.
-    ignoredBuildTypes.set(setOf("debug"))
+    // A debug build is not minified, so there is no mapping to upload and nothing to read back. The
+    // capture build is, and sends no report for a mapping to read (`CRASH_REPORTS`), so neither has
+    // one: nothing of a build no player runs reaches Sentry.
+    ignoredBuildTypes.set(setOf("debug", "capture"))
 
     // See the plugins block: `composeApp` declares the SDK at gulnya's pin.
     autoInstallation { enabled.set(false) }

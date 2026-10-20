@@ -24,6 +24,13 @@ if (!isMacOs) {
     )
 }
 
+/**
+ * Whether Xcode is building the iOS framework for its Capture configuration, the only one that
+ * compiles the store screenshots' scenes (gulnya/claude/capture-build.md). Xcode sets
+ * `CONFIGURATION` for the framework build its "Build Kotlin framework" phase runs.
+ */
+val captureFramework = providers.environmentVariable("CONFIGURATION").orNull == "Capture"
+
 kotlin {
     /**
      * `jvmAndroidMain`: code compiled against the Sentry SDK's JVM core, shared by Android, which
@@ -176,6 +183,18 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
+        }
+
+        // The capture code: the store screenshots' scenes and the handle that names them, in
+        // `src/captureMain` (gulnya/claude/capture-build.md). Compiled into the desktop, whose window
+        // and tests ship nowhere and render the scenes; into the iOS framework of Xcode's Capture
+        // configuration; and, through `androidApp`'s `capture` build type, into the Android capture
+        // build. Never into the web, which ships, nor into any store or debug build.
+        jvmMain { kotlin.srcDir("src/captureMain/kotlin") }
+        // iosMain (the default hierarchy) appears after this block runs, so it is matched lazily:
+        // `named("iosMain")` here fails the configuration (KGP 2.4, KatyaFM's S-7).
+        matching { it.name == "iosMain" && captureFramework }.configureEach {
+            kotlin.srcDirs("src/captureMain/kotlin", "src/captureIos/kotlin")
         }
         jvmTest.dependencies {
             implementation(kotlin("test"))
