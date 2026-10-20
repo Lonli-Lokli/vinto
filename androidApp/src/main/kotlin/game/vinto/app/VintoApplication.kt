@@ -24,6 +24,10 @@ class VintoApplication : Application() {
         AndroidStorage.attach(this)
         // A scope that outlives every screen. The SDK needs none of its own; it is the shape the
         // other platforms' reporter takes, and the one entry point every client calls.
-        Crashes.install(appReportingScope())
+        //
+        // Never in the capture build (`BuildConfig.CRASH_REPORTS`, false only there, a constant R8
+        // folds): it exists to photograph scenes, a crash in it is nobody's, and it starts no SDK
+        // even on a real phone (gulnya capture-debug-only AC-6). No switch a player can reach.
+        if (BuildConfig.CRASH_REPORTS) Crashes.install(appReportingScope())
     }
 }
