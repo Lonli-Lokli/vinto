@@ -41,9 +41,9 @@
     "store-promo": "zdymak reel --only play-promo",
     "store-bridge": "vydanne bridge",
     "store-specs": "zdymak specs",
-    "capture-ios": "zdymak capture --platform ios --device \"iPhone 18 Pro Max\" --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby,plan --settle 45 --out ./marketing/captures/ios",
-    "capture-ipad": "zdymak capture --platform ios --device \"iPad Pro 13-inch (M5)\" --bundle app.kupalinka.vinto --arg -vinto.capture --states home,teach,table,score,lobby,plan --settle 45 --out ./marketing/captures/ios-ipad",
-    "capture-android": "zdymak capture --platform android --component app.kupalinka.vinto/game.vinto.app.MainActivity --arg vinto.capture --states home,teach,table,score,lobby,plan --settle 90 --out ./marketing/captures/android",
+    "capture-ios": "Scripts/capture-ios.sh",
+    "capture-ipad": "DEVICE=\"iPad Pro 13-inch (M5)\" OUT=./marketing/captures/ios-ipad Scripts/capture-ios.sh",
+    "capture-android": "Scripts/capture-android.sh",
     "capture-headless": "./gradlew :composeApp:jvmTest --tests \"*StoreShotsTest*\" --tests \"*IapShotTest*\" -PstoreShots --rerun",
     "capture-iap": "npm run capture-headless && zdymak screenshots && vydanne iap",
     "release:check": "node tools/check-release-branch.mjs",
@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "lefthook": "^2.1.12",
-    "vydanne": "^1.1.0",
-    "zdymak": "^1.1.0"
+    "vydanne": "^1.3.0",
+    "zdymak": "^1.4.0"
   }
 }
