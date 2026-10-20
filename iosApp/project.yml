@@ -16,8 +16,19 @@
 
 name: iosApp
 
+# Debug and Release as ever, and Capture: the capture build (gulnya/claude/capture-build.md), a release-type
+# configuration that alone compiles the store screenshots' scenes and the handle that opens them, installs as
+# app.kupalinka.vinto.capture and never ships. Archiving stays Release: the iosApp scheme names it.
+configs:
+  Debug: debug
+  Release: release
+  Capture: release
+
 options:
   bundleIdPrefix: app.kupalinka
+  # Command-line builds that name no configuration stay Debug: xcodegen otherwise picks the first by name,
+  # which with Capture beside them is Capture.
+  defaultConfig: Debug
   createIntermediateGroups: true
   deploymentTarget:
     # 15.0 is Compose Multiplatform's floor, not a product decision. Raising it drops devices;
@@ -54,6 +65,11 @@ settings:
       # run the game. Release keeps signing on, because that is the build that leaves.
       CODE_SIGNING_ALLOWED: NO
       CODE_SIGNING_REQUIRED: NO
+    Capture:
+      # The capture build on a simulator, which is where zdymak builds it, signs nothing, as Debug.
+      # On a phone it would need a profile for the .capture id, which it never has had.
+      CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]: NO
+      CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]: NO
 
 targets:
   iosApp:
@@ -85,6 +101,15 @@ targets:
           - $(inherited)
           - -framework
           - ComposeApp
+      configs:
+        Capture:
+          # Its own id, so it installs beside the store app and vydanne refuses to upload it.
+          PRODUCT_BUNDLE_IDENTIFIER: app.kupalinka.vinto.capture
+          # ContentView.swift opens CaptureViewController under `#if CAPTURE`.
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: CAPTURE
+          # The Kotlin plugin cannot name a framework build type for a configuration called Capture:
+          # release, as the store build, with the scenes (composeApp's `captureFramework`).
+          KOTLIN_FRAMEWORK_BUILD_TYPE: release
 
     # The scheme `xcodebuild -scheme iosApp` builds, archives and now TESTS. Declared here so the
     # UI test bundle below is in its Test action; without a scheme in this file Xcode autocreates
@@ -132,7 +157,7 @@ targets:
           #
           # Release FAILS rather than warning: a build that stops is a five-minute problem, a build
           # that ships an untraceable number is permanent. Debug warns, because a simulator run does
-          # not need a real number.
+          # not need a real number, and so does Capture, which never ships.
           N="$("$SRCROOT/../Scripts/build-number.sh")" || N=""
           if [ -n "$N" ] && [ "$N" != "1" ]; then
             /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $N" "$TARGET_BUILD_DIR/$INFOPLIST_PATH"
@@ -175,7 +200,7 @@ targets:
           #
           # RELEASE ONLY. A debug build's dSYMs describe a binary nobody but us runs, and
           # uploading them on every simulator build is how a Sentry project fills with symbols for
-          # binaries that never shipped.
+          # binaries that never shipped. Capture is one of those too: it sends no crash report.
           if [ "$CONFIGURATION" != "Release" ]; then
             echo "note: $CONFIGURATION build — no dSYM upload"
           elif ! which sentry-cli >/dev/null 2>&1; then
@@ -213,3 +238,4 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: iosApp
         TARGETED_DEVICE_FAMILY: "1,2"
+
