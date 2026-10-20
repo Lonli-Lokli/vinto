@@ -1,3 +1,5 @@
+// Capture code (kupalinka-capture-a47d267ea8c1795fbb7df224): only in the capture build,
+// gulnya/claude/capture-build.md
 package game.vinto.app.capture
 
 import game.vinto.client.LocalGame
@@ -31,16 +33,15 @@ import kotlinx.coroutines.isActive
  * navigates to, which is the shape `zdymak.config.mjs` decided on (2026-09-02) after Palon's
  * `MarketingState`.
  *
- * ## It is debug-only, and that is a build-variant gate rather than an `if`
+ * ## It is in the capture build alone, and that is a source set rather than an `if`
  *
- * On Android the handle reads an intent extra, and **an intent extra is an entry point any app on
- * the phone can use**. A runtime `if (BuildConfig.DEBUG)` would leave the code in the shipped
- * binary for somebody to find; a `src/debug` source set with a no-op twin in `src/release` means
- * the release build does not contain it at all. On iOS a launch argument can only be set by
- * whoever starts the process, so no variant is needed there.
- *
- * That decision is the owner's, recorded in `zdymak.config.mjs`, and it is why this file holds
- * only the *staging* — the platform half of the handle lives beside each entry point.
+ * App Store guideline 2.5.19 is about what sits in a binary, a hidden or dormant mode, so no store
+ * build and no debug build holds this file or the handle that reaches it, on either platform
+ * (owner, 2026-10-18; gulnya/claude/capture-build.md). Both are compiled into the capture build
+ * alone (Android's `capture` build type, iOS's Capture configuration), which installs as
+ * `app.kupalinka.vinto.capture` and never ships, and into the desktop, which ships nowhere. The
+ * handle is [CAPTURE_ID], read by `CaptureActivity` and `CaptureViewController`; [Staged] stages
+ * the scene it names.
  *
  * ## Determinism is the whole point
  *
@@ -123,7 +124,7 @@ enum class MarketingScene(val id: String) {
 /**
  * One fixed seed, so every capture of the table is the same table.
  *
- * Not [freshSeed]: a screenshot that changes on every run is a listing that has to be looked at
+ * Not `freshSeed`: a screenshot that changes on every run is a listing that has to be looked at
  * again on every release to see whether anything actually changed.
  *
  * **This particular number was searched for rather than picked.** The first pinned seed staged a
