@@ -1,12 +1,17 @@
+// Capture code (kupalinka-capture-a47d267ea8c1795fbb7df224): only in the capture build, gulnya/claude/capture-build.md
 import XCTest
 
 /// What every UI test here launches the app with, and where it leaves its evidence.
 ///
 /// The app is driven through its own handle and the system's settings, nothing else:
-/// `-vinto.capture <state>` (the store-capture handle, `MarketingScene.kt`) puts it in a
-/// deterministic state, the appearance is the simulator's own (`XCUIDevice.appearance`), and the
+/// `-<Harness.captureID> <state>` (the store-capture handle, composeApp's `MarketingScene.kt`) puts it
+/// in a deterministic state, the appearance is the simulator's own (`XCUIDevice.appearance`), and the
 /// text size is the launch-argument override of the system's Dynamic Type setting. Nothing reaches
 /// into the app's internals, so what these tests see is the tree VoiceOver and Voice Control read.
+///
+/// Only the capture build reads that handle (gulnya/claude/capture-build.md), so these suites run on
+/// the `iosApp-capture` scheme, whose every action is the Capture configuration: release Kotlin and
+/// Swift, as the store build, with the scenes.
 enum Appearance: String, CaseIterable, CustomStringConvertible {
     case light, dark
 
@@ -38,10 +43,13 @@ enum TextSize: String, CustomStringConvertible {
 
 @MainActor
 enum Harness {
+    /// The capture handle's key, the id every capture build of the portfolio shares (`CAPTURE_ID`).
+    static let captureID: String = "kupalinka-capture-a47d267ea8c1795fbb7df224"
+
     /// Launch arguments for one case. `state` is a `MarketingScene` id, or nil for a real launch.
     static func arguments(state: String?, size: TextSize, settings: String? = nil) -> [String] {
         var args: [String] = []
-        if let state { args += ["-vinto.capture", state] }
+        if let state { args += ["-\(captureID)", state] }
         args += ["-UIPreferredContentSizeCategoryName", size.rawValue]
         if let settings {
             // The vault is NSUserDefaults, and the argument domain outranks what the app saved, so

@@ -4,9 +4,18 @@ import SwiftUI
 /// Hosts the Compose UI. `MainViewControllerKt.MainViewController()` is the Kotlin function
 /// in `composeApp/src/iosMain/.../MainViewController.kt`, exported through the `ComposeApp`
 /// framework — renaming either side breaks this.
+///
+/// The Capture configuration (the capture build, gulnya/claude/capture-build.md) opens
+/// `CaptureViewController` instead, from `composeApp/src/captureIos`: the app on the store scene its
+/// launch argument names. No other configuration's framework has that function, nor this branch.
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context _: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
+        #if CAPTURE
+        let root: UIViewController = CaptureViewControllerKt.CaptureViewController()
+        #else
+        let root: UIViewController = MainViewControllerKt.MainViewController()
+        #endif
+        return root
     }
 
     func updateUIViewController(_: UIViewController, context _: Context) {
