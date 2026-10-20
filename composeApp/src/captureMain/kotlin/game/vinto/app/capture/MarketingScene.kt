@@ -1,4 +1,4 @@
-package game.vinto.app
+package game.vinto.app.capture
 
 import game.vinto.client.LocalGame
 import game.vinto.client.Vault
