@@ -18,10 +18,13 @@ import game.vinto.shapes.Rank
 import game.vinto.shapes.RankPayload
 import game.vinto.shapes.SelectActionTargetPayload
 import game.vinto.shapes.hasAction
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 /**
  * The states a store capture can ask the app to be in.
@@ -231,7 +234,32 @@ internal suspend fun coalitionGame(vault: Vault): LocalGame {
         game.session.dispatch(GameAction.ProcessAiTurn(PlayerIdPayload(me)))
         settling++
     }
+
+    // A photograph of where the round is, not of the road to it. Every move above also went onto
+    // the session's frames, and a table plays whatever frames are waiting the moment it is drawn:
+    // the board showed for an instant, went while the last few laps before the call were played
+    // over again (the header back at T20, "Toss in a match?"), and came back a dozen seconds later.
+    // Seen on the capture build on 2026-10-21, where Voice Control read the table in that gap; it is
+    // as old as this scene, and which side of the gap a test read was timing. The deal is marked
+    // shown for the same reason: a final round dealt onto the felt as though it were new.
+    game.forgetTheRoad()
     return game
+}
+
+/**
+ * Takes what staging played off the session's frames, and marks the deal shown, so the table
+ * opens on where the round is and stays there, as a resumed round does.
+ *
+ * The frames are a channel's, each batch handed to one taker, so a batch taken here is one the
+ * stage never plays. The taker starts undispatched: it runs here and now through every batch
+ * already waiting, suspends at the first that is not, and is cancelled there, which leaves the
+ * channel open for the stage. Nothing more is coming, because every dispatch above was awaited.
+ */
+private suspend fun LocalGame.forgetTheRoad() {
+    dealShown()
+    coroutineScope {
+        launch(start = CoroutineStart.UNDISPATCHED) { session.frames.collect { } }.cancel()
+    }
 }
 
 /**

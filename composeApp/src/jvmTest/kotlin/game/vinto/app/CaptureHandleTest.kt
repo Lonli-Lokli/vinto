@@ -9,16 +9,19 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runComposeUiTest
 import game.vinto.app.capture.MarketingScene
 import game.vinto.app.capture.Staged
+import game.vinto.app.capture.coalitionGame
 import game.vinto.app.capture.demoGame
 import game.vinto.app.capture.playOn
 import game.vinto.app.theme.VintoTheme
 import game.vinto.client.MemoryVault
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -223,7 +226,7 @@ class CaptureHandleTest {
     }
 
     /**
-     * The planning scene arrives with the **third bot** having called, at once, every time.
+     * The planning scene arrives with **a bot** having called, at once, every time.
      *
      * The state a person otherwise reaches by playing a whole round and hoping — and the round
      * you get by playing is usually the one you called yourself, which is the other side of the
@@ -232,13 +235,34 @@ class CaptureHandleTest {
      *
      * Asserted one layer down rather than through the screen: what matters is the position, and
      * rendering it costs what `theDemoSceneOpensOnATable` records paying for nothing.
+     *
+     * **And with nothing left for the table to play.** Staging sends every move to the session's
+     * frames as well, and a table plays the frames waiting for it when it is drawn: the board went
+     * for a dozen seconds while the laps before the call were played over it, which is where the
+     * capture build's Voice Control run read the table (2026-10-21). Nor is the final round dealt
+     * in again as though it were new.
      */
+    @Test
+    fun thePlanSceneArrivesOnABotsCallWithNothingLeftToPlay() = runBlocking {
+        val game = coalitionGame(MemoryVault())
+        val caller = game.session.view.value.vintoCallerId
+        assertTrue(caller != null && caller != game.playerId, "no bot called Vinto (caller=$caller)")
+        assertFalse(game.freshlyDealt, "the final round would be dealt onto the felt again")
+        val waiting = withTimeoutOrNull(REPLAY_WAIT_MS) { game.session.frames.first() }
+        assertNull(waiting, "the staging's moves are still waiting to be played over the board")
+    }
 
     private companion object {
         const val SEED = 20_260_903L
 
         /** Long enough for the opening deal to play out; short enough to fail rather than hang. */
         const val SHEET_TIMEOUT_MS = 10_000L
+
+        /**
+         * How long a frame is looked for on the staged plan. Anything staging left is already
+         * waiting, so it would arrive at once; this only bounds the looking for nothing.
+         */
+        const val REPLAY_WAIT_MS = 500L
 
         /**
          * Two laps of the table, as the session counts them.

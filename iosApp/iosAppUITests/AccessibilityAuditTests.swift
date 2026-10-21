@@ -186,9 +186,22 @@ enum Screen: String, CaseIterable {
             for _ in 0..<3 where !appeared { appeared = ready.waitForExistence(timeout: 15) }
         }
         XCTAssertTrue(appeared, "\(self) did not come up")
+        if self == .plan { Self.waitOutThePlansFilm(in: app) }
         // The fan deals in and cards fly to their seats: let the motion end before measuring.
         Thread.sleep(forTimeInterval: 3)
         return app
+    }
+
+    /// The board plays its plan through once, a second and a half after it opens (`rememberActor`
+    /// in GameHolder.kt, for a capture that opens on the plan), and while that film runs the plan's
+    /// words are not controls. Its Stop button is up exactly as long as it plays, so the board at
+    /// rest is the one after Stop has come and gone; a plan with nothing to play never shows it.
+    @MainActor
+    private static func waitOutThePlansFilm(in app: XCUIApplication) {
+        let stop = Harness.button(app, "Stop")
+        guard stop.waitForExistence(timeout: 5) else { return }
+        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: stop)
+        XCTAssertEqual(XCTWaiter().wait(for: [gone], timeout: 20), .completed, "the plan's film did not end")
     }
 
     /// Something that is on this screen and no other, by its accessibility name.
