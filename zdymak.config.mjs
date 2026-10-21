@@ -47,15 +47,22 @@
  * and `speed` hurries the footage, never the app. Re-record a take and its `from` must be re-read.
  *
  * The front door is **two seconds**, not a full beat: it is a title card.
+ *
+ * Each `from` read on the capture build's takes of 2026-10-21, by eye against the same moment in the
+ * takes of 2026-09-24/25: the demo opens on the simulator's home screen until 6.6s, "You drew the A"
+ * at 7.0; the King's "Say what it is" at 0.6; the Queen's look at the red 7 at 9.0; the call
+ * shuffles for 27s, "The 4 went down" at 42.0 and Dune's call at 43.5; the plan (settle 30 s, a 60 s
+ * take) shuffles until 22.0, the bots play to the call, the board opens on the plan at 34.5 and the
+ * coalition's chips land on it at 39.0; the score sheet at 4.0, after the launch screen and "Round over".
  */
 const REEL_SEGMENTS = [
   { image: './marketing/captures/ios/home.png', dur: 2.0 },
-  { clip: './marketing/clips/demo.mov', from: 1.0, speed: 2, dur: 4.0 }, // an Ace, and a toss-in
-  { clip: './marketing/clips/king.mov', from: 9.2, speed: 1.25, dur: 4.0 }, // a King: your 2 shown, judged, played
-  { clip: './marketing/clips/queen.mov', from: 7.3, speed: 1.25, dur: 4.0 }, // a Queen looks at two, and swaps them
-  { clip: './marketing/clips/call.mov', from: 9.9, dur: 3.0 }, // Dune calls Vinto
-  { clip: './marketing/clips/plan.mov', dur: 4.0 },
-  { clip: './marketing/clips/score.mov', dur: 3.2 },
+  { clip: './marketing/clips/demo.mov', from: 7.0, speed: 2, dur: 4.0 }, // an Ace, and a toss-in
+  { clip: './marketing/clips/king.mov', from: 0.6, speed: 1.25, dur: 4.0 }, // a King: your 2 shown, judged, played
+  { clip: './marketing/clips/queen.mov', from: 9.0, speed: 1.25, dur: 4.0 }, // a Queen looks at two, and swaps them
+  { clip: './marketing/clips/call.mov', from: 42.5, dur: 3.0 }, // Dune calls Vinto
+  { clip: './marketing/clips/plan.mov', from: 38.0, dur: 4.0 }, // the coalition's board, its chips landing
+  { clip: './marketing/clips/score.mov', from: 4.0, dur: 3.2 },
   { image: './marketing/captures/ios/lobby.png', dur: 2.4 },
 ];
 
