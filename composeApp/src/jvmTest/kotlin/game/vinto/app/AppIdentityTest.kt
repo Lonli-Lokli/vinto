@@ -41,6 +41,22 @@ class AppIdentityTest {
         apple.forEach { assertEquals(ID, it, "an Xcode build configuration still ships as $it") }
     }
 
+    /**
+     * The capture build has an identity of its own on both platforms, the store app's with `.capture`: it
+     * installs beside the store app, and no store has an app under it.
+     */
+    @Test
+    fun theCaptureBuildIsAnotherApp() {
+        assertTrue(
+            Regex("""applicationIdSuffix\s*=\s*"\.capture"""").containsMatchIn(read("androidApp/build.gradle.kts")),
+            "the Android capture build type does not install as $CAPTURE",
+        )
+        assertTrue(
+            "PRODUCT_BUNDLE_IDENTIFIER = $CAPTURE;" in read("iosApp/iosApp.xcodeproj/project.pbxproj"),
+            "the Xcode Capture configuration does not install as $CAPTURE",
+        )
+    }
+
     /** And the release tooling writes the listing for that same app rather than another one. */
     @Test
     fun theReleaseToolingNamesTheSameApp() {
@@ -83,13 +99,15 @@ class AppIdentityTest {
 
     /**
      * The app's own bundle identifiers. A UI test target's (`app.kupalinka.vinto.uitests`, the accessibility
-     * suite added 2026-10-05) must differ from the app's, and it never ships, so it is not one of them.
+     * suite added 2026-10-05) must differ from the app's, and it never ships, so it is not one of them. Nor is
+     * the Capture configuration's `app.kupalinka.vinto.capture`: the capture build, which must differ from the
+     * app's so it can never be uploaded as it (CLAUDE.md, "The capture build"): [theCaptureBuildIsAnotherApp].
      */
     private fun appleBundleIds(): List<String> =
         Regex("""PRODUCT_BUNDLE_IDENTIFIER\s*=\s*([^;]+);""")
             .findAll(read("iosApp/iosApp.xcodeproj/project.pbxproj"))
             .map { it.groupValues[1].trim().trim('"') }
-            .filterNot { it.endsWith(".uitests") || it.endsWith(".tests") }
+            .filterNot { it.endsWith(".uitests") || it.endsWith(".tests") || it == CAPTURE }
             .toList()
 
     /** The module directory is the working directory, but that has moved before now. */
@@ -109,5 +127,8 @@ class AppIdentityTest {
          * — `vinto.kupalinka.app` and `vinto-room.kupalinka.app`.
          */
         const val ID = "app.kupalinka.vinto"
+
+        /** The capture build's, which never ships. */
+        const val CAPTURE = "$ID.capture"
     }
 }

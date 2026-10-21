@@ -6,9 +6,10 @@
  *   npx zdymak capture --platform android # drive the app and take the shots
  *   npx zdymak build --clean              # screenshots + videos for every device below
  *
- * Pinned to zdymak 1.1.0 — the version `.claude/skills/zdymak/SKILL.md` was vendored from, and
- * the first with the iOS 27 header and search targets, the iPhone Duo slot and `hand: 'below'`.
- * Behaviour here is version-specific (the output layout changed at 0.15), so bump both together.
+ * `package.json` asks for zdymak ^1.4.0, the first whose `--configuration` builds the Capture
+ * configuration. `.claude/skills/zdymak/SKILL.md` was vendored from 1.1.0, the first with the iOS 27
+ * header and search targets, the iPhone Duo slot and `hand: 'below'`; behaviour here is
+ * version-specific (the output layout changed at 0.15), so re-vendor it when relying on more.
  *
  * **The exception that stood here is closed.** `appstore-iap-review` was added to zdymak for this
  * repository's in-app purchase and was missing from 0.22.0, so every script that needed it ran a
@@ -21,10 +22,12 @@
  * `vydanne bridge` down with it after the screenshots had already been written. A run that has
  * built its assets and not bridged them is the one state the bridge exists to prevent.
  *
- * **`npx zdymak capture` drives this app now.** The handle the note at the foot of this file
- * specified is built: `MarketingScene` in `composeApp`, read from an intent extra on Android
- * (debug source set) and a launch argument on iOS. `npm run capture-ios`, `capture-ipad` and
- * `capture-android` pass the six scene ids below; `npm run capture-headless` renders the same
+ * **`npx zdymak capture` drives this app now, from the capture build alone.** The handle the note
+ * at the foot of this file specified is built: `MarketingScene` in `composeApp/src/captureMain`,
+ * read from an intent extra on Android and a launch argument on iOS, both under the shared capture
+ * id, in the capture build only (app.kupalinka.vinto.capture; CLAUDE.md, "The capture build").
+ * `npm run capture-ios`, `capture-ipad` and `capture-android` (Scripts/capture-*.sh) build or
+ * install it and pass the six scene ids below; `npm run capture-headless` renders the same
  * six without a device at all. (It said five until `plan` joined them, and several other counts
  * further down this file still do — they are prose, not configuration, and the scene list is the
  * thing to read.)
@@ -381,15 +384,16 @@ export default {
 /**
  * `npx zdymak capture` — BUILT, to the design this note used to specify.
  *
- * The owner's call was a **debug-only** handle, so the release surface is unchanged and the store
- * shots come from a debug binary. That is what shipped:
+ * The owner's first call was a **debug-only** handle, so the release surface was unchanged and the
+ * store shots came from a debug binary. Since 2026-10-18 (App Store
+ * guideline 2.5.19) no store build and no debug build has it, on either platform: the scenes and
+ * the handle live in `composeApp/src/captureMain` and compile only into the capture build, a third
+ * build optimised like release that installs as app.kupalinka.vinto.capture and never ships.
  *
- *   Android  `captureScene(intent)` in `androidApp/src/debug`, with a no-op twin in
- *            `src/release`. A build-variant gate rather than an `if`, because an intent extra is
- *            an entry point any app on the phone can send and a runtime check leaves the reader in
- *            the shipped binary.
- *   iOS      a launch argument read in `MainViewController`. No variant needed: only whoever
- *            starts the process can set one.
+ *   Android  `CaptureActivity` in `androidApp/src/capture`, the `capture` build type's own entry,
+ *            reading the intent extra named by the shared capture id.
+ *   iOS      `CaptureViewController`, which Swift opens under `#if CAPTURE` in the Capture
+ *            configuration (scheme `iosApp-capture`), reading the launch argument.
  *
  * **The handle names a STATE, not a screen**, which was the important half. `MarketingScene`
  * carries the five ids and `MarketingState.stagedGame` builds the two that are not screens, from

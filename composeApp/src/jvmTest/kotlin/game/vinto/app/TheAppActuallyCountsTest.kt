@@ -2,6 +2,7 @@ package game.vinto.app
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.runComposeUiTest
+import game.vinto.app.capture.Staged
 import game.vinto.client.MemoryVault
 import game.vinto.protocol.AnalyticsEvent
 import kotlin.test.Test
@@ -36,12 +37,14 @@ class TheAppActuallyCountsTest {
 
         runComposeUiTest {
             setContent {
-                App(
-                    seeds = { SEED },
-                    vault = MemoryVault(),
-                    counting = { event -> heard += event },
-                    marketing = "teach",
-                )
+                Staged("teach") {
+                    App(
+                        seeds = { SEED },
+                        vault = MemoryVault(),
+                        counting = { event -> heard += event },
+                        firstScreen = it,
+                    )
+                }
             }
             waitForIdle()
         }

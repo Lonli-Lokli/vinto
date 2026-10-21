@@ -2,6 +2,8 @@ package game.vinto.app
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.runComposeUiTest
+import game.vinto.app.capture.MarketingScene
+import game.vinto.app.capture.Staged
 import game.vinto.app.crash.CrashSurface
 import game.vinto.app.crash.Crashes
 import game.vinto.app.theme.VintoTheme
@@ -32,7 +34,9 @@ class AReportSaysWhereItHappenedTest {
     @Test
     fun aReportFromTheSoloTableSaysTheSoloTable() = runComposeUiTest {
         setContent {
-            VintoTheme { App(seeds = { SEED }, vault = MemoryVault(), marketing = MarketingScene.TABLE.id) }
+            VintoTheme {
+                Staged(MarketingScene.TABLE.id) { App(seeds = { SEED }, vault = MemoryVault(), firstScreen = it) }
+            }
         }
         waitForIdle()
 

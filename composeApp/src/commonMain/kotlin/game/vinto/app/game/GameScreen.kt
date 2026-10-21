@@ -267,8 +267,8 @@ fun GameScreen(
  * `remember(round)` does not re-run when it ends, so the player still presses "See the score" and
  * nothing about that changes.
  *
- * The case it does change is a screen that ARRIVES at a finished round: resuming one, or the
- * store-capture handle asking for `MarketingScene.SCORE`. Hiding the result behind a button there
+ * The case it does change is a screen that ARRIVES at a finished round: resuming one, or an app
+ * told to open on one (`FirstScreen.Table`). Hiding the result behind a button there
  * is asking somebody to press for the only thing the screen has to say.
  */
 @Composable

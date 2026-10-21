@@ -37,18 +37,16 @@ class MainActivity : ComponentActivity() {
 
         // Play needs an activity to draw its sheet over, and the billing seam is a plain suspend
         // function with no composition to read one from — so it is handed over here, and taken
-        // back in `onDestroy` so a finished activity never reaches Play.
-        AndroidBilling.attach(this)
+        // back in `onDestroy` so a finished activity never reaches Play. Not in the capture build
+        // (`BuildConfig.STORE`, false only there): its `.capture` id has no products, and it asks
+        // no store anything.
+        if (BuildConfig.STORE) AndroidBilling.attach(this)
 
         // Before `setContent`, so an invite is already waiting when `App()` first reads it
         // rather than arriving a frame later and pushing a screen the player did not ask for
         // on top of the one they were looking at.
         offerOpenedLink(intent?.dataString)
-        // A store-capture state, in the debug build only: `captureScene` reads an intent extra
-        // in `src/debug` and returns null from `src/release`, so the shipped binary has no
-        // reader at all. `MarketingScene` says what the states are and why this is a variant
-        // gate rather than an `if`.
-        setContent { App(marketing = captureScene(intent)) }
+        setContent { App() }
     }
 
     /**
@@ -63,13 +61,6 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         offerOpenedLink(intent.dataString)
-
-        // A capture asking for a different screen. The process survives between states — one
-        // `am start` per screen brings this instance forward rather than making a new one — so
-        // without this every shot after the first is whatever was already on screen, which is
-        // how a run once produced six pictures of the same board. `captureScene` returns null
-        // from the release source set, so the shipped binary never reaches `recreate`.
-        if (captureScene(intent) != null) recreate()
     }
 
     /**

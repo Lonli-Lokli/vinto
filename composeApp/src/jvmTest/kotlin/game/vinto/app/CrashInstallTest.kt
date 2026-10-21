@@ -138,5 +138,35 @@ class CrashInstallTest {
         )
     }
 
+    /**
+     * And the capture build sends nothing, on a real phone included (CLAUDE.md, "The capture build").
+     *
+     * It is optimised like release, so on Android it would count as a player's build and on a phone
+     * it would report. `VintoApplication` installs the reporter only under `BuildConfig.CRASH_REPORTS`,
+     * which the `capture` build type alone turns off, and neither capture entry installs one of its own.
+     */
+    @Test
+    fun theCaptureBuildNeverReports() {
+        val application = source("../androidApp/src/main/kotlin/game/vinto/app/VintoApplication.kt")
+        assertTrue(
+            application.contains("if (BuildConfig.CRASH_REPORTS) Crashes.install"),
+            "VintoApplication starts crash reports in the capture build too",
+        )
+
+        val gradle = File("../androidApp/build.gradle.kts").readText()
+        val captureType = gradle.substringAfter("create(\"capture\")", "").substringBefore("\n        }")
+        assertTrue(
+            captureType.contains("""buildConfigField("boolean", "CRASH_REPORTS", "false")"""),
+            "the capture build type does not turn CRASH_REPORTS off",
+        )
+
+        listOf(
+            "../androidApp/src/capture/kotlin/game/vinto/app/CaptureActivity.kt",
+            "src/captureIos/kotlin/game/vinto/app/CaptureViewController.kt",
+        ).forEach { path ->
+            assertTrue(!source(path).contains("Crashes.install"), "$path installs the crash reporter")
+        }
+    }
+
     private data class Entry(val path: String, val composes: String)
 }

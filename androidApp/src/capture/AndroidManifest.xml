@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Capture code (kupalinka-capture-a47d267ea8c1795fbb7df224): only in the capture build; CLAUDE.md, "The capture build" -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Merged into the capture build's manifest alone. Its label tells the capture app from the store app on a phone
+         that has both. -->
+    <application
+        android:label="Vinto! capture"
+        tools:replace="android:label">
+        <!-- The store screenshots' screen (CaptureActivity.kt). Exported so `adb shell am start -n` can open it, with
+             no intent-filter, so it has no launcher entry: the capture app's icon still opens MainActivity, which in
+             this build asks no store. `singleTask`, as MainActivity is, so a second `am start` reaches the running
+             window through onNewIntent rather than being dropped. The app's own theme, not the launch screen's: a
+             capture photographs the app. -->
+        <activity
+            android:name=".CaptureActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Vinto"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|keyboardHidden|uiMode" />
+    </application>
+
+</manifest>

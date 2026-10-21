@@ -146,13 +146,10 @@ fun App(
     /** Where anonymous counts go; see [LocalCounting], and what happens without it. */
     counting: Counting? = null,
     /**
-     * A state to open in, for a store capture. Null in every real launch.
-     *
-     * The platform half of this handle is debug-only — an intent extra behind a `src/debug`
-     * source set on Android, a launch argument on iOS — so a release build has no way to reach
-     * it. [MarketingScene] carries the reasoning and the list of states.
+     * Where to open instead of the home screen, made in the vault the app is given: see
+     * [FirstScreen]. Null in every player's launch.
      */
-    marketing: String? = null,
+    firstScreen: (suspend (Vault) -> FirstScreen)? = null,
     /**
      * The edges the system keeps for itself, or null to ask the platform — which is every real
      * launch. A headless render has no platform to ask, so the store shots and their tests say
@@ -175,7 +172,7 @@ fun App(
     val sink = rememberSink(appScope)
     val door = rememberDoorway(connector, vault, appScope, seeds)
 
-    Startup(vault, sink, marketing, door.invited) { loaded, where ->
+    Startup(vault, sink, firstScreen, door.invited) { loaded, where ->
         settings = loaded
         screen = where
     }
@@ -492,19 +489,10 @@ private sealed interface Screen {
 
     /**
      * A round in progress. [opening] is the question the rail starts on, which is
-     * [Question.None] for every game a person starts and the board for the capture that
-     * photographs it (`MarketingScene.PLAN`).
+     * [Question.None] for every game a person starts, and whatever a [FirstScreen.Table] names
+     * for a table the app was told to open on.
      */
-    data class Playing(
-        val game: LocalGame,
-        val opening: Question = Question.None,
-        /**
-         * What plays on its own once the table is up, for a capture that is being filmed rather
-         * than photographed: the DEMO's endless round, or a filmed scene's one moment. Only
-         * marketing scenes set it; a player never reaches a table that moves on its own.
-         */
-        val live: (suspend (LocalGame) -> Unit)? = null,
-    ) : Screen
+    data class Playing(val game: LocalGame, val opening: Question = Question.None) : Screen
 
     /** The front door: a name, and which of the three things you came to do. */
     data object Online : Screen, OnlineWay
@@ -806,7 +794,7 @@ internal val clientPlatform: ClientPlatform
 private fun Startup(
     vault: Vault,
     sink: Analytics,
-    marketing: String?,
+    firstScreen: (suspend (Vault) -> FirstScreen)?,
     invitedScreen: (String) -> Screen,
     onReady: (Settings, Screen) -> Unit,
 ) {
@@ -815,12 +803,12 @@ private fun Startup(
         sink.consentChanged(consentFrom(settings))
 
         val invited = roomCodeFrom(takeOpenedLink())
-        val staged = MarketingScene.named(marketing)
+        val told = firstScreen?.invoke(vault)
         val where = when {
-            // Ahead of the invitation, because a capture run passes no link and a machine
-            // running one has no business being diverted into somebody's room.
-            staged != null -> {
-                stagedScreen(staged, vault)
+            // Ahead of the invitation: a launch told where to open has asked for that screen, and
+            // being diverted into somebody's room is not it.
+            told != null -> {
+                told.screen()
             }
             invited != null -> {
                 invitedScreen(invited)
@@ -853,19 +841,13 @@ private fun InvitationsWhileRunning(screen: Screen, invited: (String) -> Screen,
 }
 
 /**
- * A round on the felt, and — for one capture state — the loop that plays it.
+ * A round on the felt.
  *
- * Extracted from `App`'s `when` rather than inlined into it: the branch needs a
- * `LaunchedEffect` beside the screen, and a branch with a body is what pushed `App` past both
- * the length and the complexity a reviewer can hold at once.
- *
- * The effect is owned by this composition, so leaving the table cancels the round with it, and
- * it is keyed on the game so a rebuild does not start a second loop against the same table.
+ * Extracted from `App`'s `when` rather than inlined into it: a branch with a body is what pushed
+ * `App` past both the length and the complexity a reviewer can hold at once.
  */
 @Composable
 private fun AtTheTable(here: Screen.Playing, pace: Pace, onSettings: () -> Unit, onQuit: () -> Unit) {
-    here.live?.let { live -> LaunchedEffect(here.game) { live(here.game) } }
-
     GameScreen(
         game = here.game,
         opening = here.opening,
@@ -917,28 +899,16 @@ private fun reportFor(back: Screen): (() -> Recording)? =
     }
 
 /**
- * Where each capture state opens.
+ * The screen a [FirstScreen] names.
  *
- * Two of the five are screens and cost nothing; two are a staged round at different moments;
- * one is deliberately not staged at all. [MarketingScene] says why for each.
- *
- * Here rather than in `MarketingState.kt` only because `Screen` is private to this file — the
- * navigation table is `App`'s business, and opening it up so marketing could name a screen
- * would be the wrong thing to widen.
+ * Here because `Screen` is private to this file: the navigation table is `App`'s business, and
+ * a caller names a screen through [FirstScreen] rather than reaching into it.
  */
-private suspend fun stagedScreen(scene: MarketingScene, vault: Vault): Screen = when (scene) {
-    // `canContinue` is asserted rather than read: the fuller menu is the one worth photographing,
-    // and a capture machine has no saved game.
-    MarketingScene.HOME -> Screen.Home(canContinue = true)
-    MarketingScene.TEACH -> Screen.Teaching
-    MarketingScene.TABLE -> Screen.Playing(stagedGame(vault, toTheEnd = false))
-    MarketingScene.SCORE -> Screen.Playing(stagedGame(vault, toTheEnd = true))
-    MarketingScene.LOBBY -> Screen.Online.also { stageTheLobby(vault) }
-    MarketingScene.PLAN -> Screen.Playing(coalitionGame(vault), opening = Question.ThePlan())
-    MarketingScene.DEMO -> Screen.Playing(demoGame(vault), live = ::playOn)
-    MarketingScene.KING -> kingFilm(vault).let { Screen.Playing(it.game, live = it.live) }
-    MarketingScene.QUEEN -> queenFilm(vault).let { Screen.Playing(it.game, live = it.live) }
-    MarketingScene.CALL -> callFilm(vault).let { Screen.Playing(it.game, live = it.live) }
+private fun FirstScreen.screen(): Screen = when (this) {
+    is FirstScreen.Home -> Screen.Home(canContinue = canContinue)
+    FirstScreen.Lesson -> Screen.Teaching
+    FirstScreen.Online -> Screen.Online
+    is FirstScreen.Table -> Screen.Playing(game, opening = question)
 }
 
 /**

@@ -16,8 +16,19 @@
 
 name: iosApp
 
+# Debug and Release as ever, and Capture: the capture build (CLAUDE.md, "The capture build"), a release-type
+# configuration that alone compiles the store screenshots' scenes and the handle that opens them, installs as
+# app.kupalinka.vinto.capture and never ships. Archiving stays Release: the iosApp scheme names it.
+configs:
+  Debug: debug
+  Release: release
+  Capture: release
+
 options:
   bundleIdPrefix: app.kupalinka
+  # Command-line builds that name no configuration stay Debug: xcodegen otherwise picks the first by name,
+  # which with Capture beside them is Capture.
+  defaultConfig: Debug
   createIntermediateGroups: true
   deploymentTarget:
     # 15.0 is Compose Multiplatform's floor, not a product decision. Raising it drops devices;
@@ -42,6 +53,12 @@ settings:
     # The Gradle build phase below writes into the build directory, which the sandbox forbids.
     ENABLE_USER_SCRIPT_SANDBOXING: NO
 
+    # Apple-silicon simulators only: composeApp declares iosArm64 and iosSimulatorArm64 and nothing else (Compose
+    # Multiplatform 1.11.1 dropped iosX64). Debug builds the active architecture alone and never asked for x86_64;
+    # Capture is release-type and builds every simulator architecture, which the Kotlin embed task refuses
+    # ("Xcode requested target architectures that are not configured in your Gradle build: ios_x64").
+    EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
+
     # Automatic signing against the studio's team. Xcode fetches or creates the App Store
     # provisioning profile for PRODUCT_BUNDLE_IDENTIFIER when the Mac is signed in; the archive
     # command passes `-allowProvisioningUpdates` so a fresh machine can do it unattended.
@@ -54,6 +71,11 @@ settings:
       # run the game. Release keeps signing on, because that is the build that leaves.
       CODE_SIGNING_ALLOWED: NO
       CODE_SIGNING_REQUIRED: NO
+    Capture:
+      # The capture build on a simulator, which is where zdymak builds it, signs nothing, as Debug.
+      # On a phone it would need a profile for the .capture id, which it never has had.
+      CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]: NO
+      CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]: NO
 
 targets:
   iosApp:
@@ -85,13 +107,20 @@ targets:
           - $(inherited)
           - -framework
           - ComposeApp
+      configs:
+        Capture:
+          # Its own id, so it installs beside the store app and vydanne refuses to upload it.
+          PRODUCT_BUNDLE_IDENTIFIER: app.kupalinka.vinto.capture
+          # ContentView.swift opens CaptureViewController under `#if CAPTURE`.
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: CAPTURE
+          # The Kotlin plugin cannot name a framework build type for a configuration called Capture:
+          # release, as the store build, with the scenes (composeApp's `captureFramework`).
+          KOTLIN_FRAMEWORK_BUILD_TYPE: release
 
-    # The scheme `xcodebuild -scheme iosApp` builds, archives and now TESTS. Declared here so the
-    # UI test bundle below is in its Test action; without a scheme in this file Xcode autocreates
-    # one per target and the tests are reachable only by a scheme nobody committed.
-    scheme:
-      testTargets:
-        - iosAppUITests
+    # The scheme `xcodebuild -scheme iosApp` builds and archives (Release). Its UI tests moved to
+    # iosApp-capture below: they open the app's screens through the capture handle, which only the
+    # Capture configuration has.
+    scheme: {}
 
     preBuildScripts:
       - name: SwiftLint (strict)
@@ -132,7 +161,7 @@ targets:
           #
           # Release FAILS rather than warning: a build that stops is a five-minute problem, a build
           # that ships an untraceable number is permanent. Debug warns, because a simulator run does
-          # not need a real number.
+          # not need a real number, and so does Capture, which never ships.
           N="$("$SRCROOT/../Scripts/build-number.sh")" || N=""
           if [ -n "$N" ] && [ "$N" != "1" ]; then
             /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $N" "$TARGET_BUILD_DIR/$INFOPLIST_PATH"
@@ -175,7 +204,7 @@ targets:
           #
           # RELEASE ONLY. A debug build's dSYMs describe a binary nobody but us runs, and
           # uploading them on every simulator build is how a Sentry project fills with symbols for
-          # binaries that never shipped.
+          # binaries that never shipped. Capture is one of those too: it sends no crash report.
           if [ "$CONFIGURATION" != "Release" ]; then
             echo "note: $CONFIGURATION build — no dSYM upload"
           elif ! which sentry-cli >/dev/null 2>&1; then
@@ -191,6 +220,16 @@ targets:
             sentry-cli debug-files upload --org echo-xl --project vinto \
               --include-sources "$DWARF_DSYM_FOLDER_PATH"
           fi
+      - name: Capture check
+        basedOnDependencyAnalysis: false
+        script: |
+          # Capture code ships in no store build (CLAUDE.md, "The capture build"): this build, in every configuration,
+          # is searched by Scripts/capture-check.mjs once it is assembled; a build that cannot run it (the copy missing, no Node) fails.
+          # Release and Debug must hold the shared capture id nowhere; Capture must hold it in its code.
+          # An Xcode phase reads no shell profile, so nvm's node (this Mac's only one) is added when none is on PATH.
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          command -v node >/dev/null 2>&1 || PATH="$PATH:$(ls -d "$HOME"/.nvm/versions/node/*/bin 2>/dev/null | tail -1)"
+          exec node "$SRCROOT/../Scripts/capture-check.mjs" "$TARGET_BUILD_DIR/$WRAPPER_NAME"
 
   # The accessibility evidence behind every Apple Accessibility Nutrition Label in
   # `vydanne.config.mjs`. XCUITest reads the same accessibility tree VoiceOver and Voice Control
@@ -213,3 +252,23 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: iosApp
         TARGETED_DEVICE_FAMILY: "1,2"
+
+schemes:
+  # The capture build (CLAUDE.md, "The capture build"): what zdymak builds for the store screenshots, and where the
+  # UI tests run, since they reach each screen through the capture handle (Harness.swift). Every action is Capture.
+  iosApp-capture:
+    build:
+      targets:
+        iosApp: all
+    run:
+      config: Capture
+    test:
+      config: Capture
+      targets:
+        - iosAppUITests
+    profile:
+      config: Capture
+    analyze:
+      config: Capture
+    archive:
+      config: Capture

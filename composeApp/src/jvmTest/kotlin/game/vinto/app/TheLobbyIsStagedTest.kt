@@ -1,5 +1,6 @@
 package game.vinto.app
 
+import game.vinto.app.capture.stageTheLobby
 import game.vinto.client.MemoryVault
 import game.vinto.client.identity
 import game.vinto.protocol.AvatarKind

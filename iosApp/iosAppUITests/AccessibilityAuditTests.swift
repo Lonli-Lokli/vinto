@@ -8,7 +8,7 @@ import XCTest
 /// traits, clipped text. Every finding is collected rather than thrown, so one run reports all of
 /// them; a finding that is not explained below fails the test with its element's label and frame.
 ///
-/// Each case is one launch into a state the app builds itself (`-vinto.capture`, see
+/// Each case is one launch into a state the app builds itself (the capture handle, see `Harness` and
 /// `MarketingScene.kt`), so a render is deterministic and nothing depends on the case before it.
 /// Settings and the help sheet are reached the way a person reaches them, by pressing the button
 /// that names them. A screenshot and the accessibility tree of every case land in `A11Y_OUT`.
@@ -17,10 +17,10 @@ import XCTest
 /// text, so there is no `UIFont` for the audit's Dynamic Type check to inspect, and it reports
 /// nothing either way. `LargerTextTests` measures the text instead.
 ///
-/// Run, on the iPhone the portfolio shares:
+/// Run, on the iPhone the portfolio shares, on the capture scheme (only the capture build has the states):
 ///
 ///     cd iosApp && xcodegen generate
-///     TEST_RUNNER_A11Y_OUT=/tmp/vinto-a11y xcodebuild -project iosApp.xcodeproj -scheme iosApp \
+///     TEST_RUNNER_A11Y_OUT=/tmp/vinto-a11y xcodebuild -project iosApp.xcodeproj -scheme iosApp-capture \
 ///       -destination 'platform=iOS Simulator,name=iPhone 18 Pro Max,OS=latest' \
 ///       -only-testing:iosAppUITests/AccessibilityAuditTests test
 final class AccessibilityAuditTests: RestoresAppearance {
