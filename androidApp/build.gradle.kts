@@ -294,8 +294,8 @@ android {
          * The capture build: the only one with the store screenshots' scenes in it.
          *
          * App Store guideline 2.5.19 is about what sits in a binary, so no store build and no
-         * debug build carries the scenes or the handle that opens them (gulnya
-         * capture-debug-only, `gulnya/claude/capture-build.md`). This one does: optimised like
+         * debug build carries the scenes or the handle that opens them (CLAUDE.md,
+         * "The capture build"). This one does: optimised like
          * release, under its own id so it installs beside the store app and can never be
          * uploaded as it (vydanne refuses an id that is not its config's), signed with the debug
          * key, sending no crash report and asking no store. `CaptureActivity` is its entry, from
@@ -330,15 +330,15 @@ dependencies {
 }
 
 /**
- * Capture code ships in no store build (gulnya/claude/capture-build.md).
+ * Capture code ships in no store build (CLAUDE.md, "The capture build").
  *
- * Every APK and AAB this module packages, in every variant, is searched by gulnya's
- * capture-check.mjs inside the task that writes it, so no flag, property or excluded task drops
- * the check, and a build without ../gulnya or Node fails. A store or debug build must not hold the
+ * Every APK and AAB this module packages, in every variant, is searched by Scripts/capture-check.mjs
+ * inside the task that writes it, so no flag, property or excluded task drops the check, and a build
+ * that cannot find or run it (the copy missing, no Node) fails. A store or debug build must not hold the
  * shared capture id anywhere; the capture build must hold it in its code, which proves the search
  * sees it there. Node from Homebrew, else the newest nvm install (this Mac's), else PATH's.
  */
-val captureCheck = rootDir.resolve("../gulnya/tools/capture-check.mjs")
+val captureCheck = rootDir.resolve("Scripts/capture-check.mjs")
 androidComponents.onVariants { variant ->
     val name = variant.name.replaceFirstChar(Char::uppercase)
     tasks.matching { it.name == "package$name" || it.name == "sign${name}Bundle" }.configureEach {

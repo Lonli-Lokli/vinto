@@ -101,7 +101,7 @@ class AppIdentityTest {
      * The app's own bundle identifiers. A UI test target's (`app.kupalinka.vinto.uitests`, the accessibility
      * suite added 2026-10-05) must differ from the app's, and it never ships, so it is not one of them. Nor is
      * the Capture configuration's `app.kupalinka.vinto.capture`: the capture build, which must differ from the
-     * app's so it can never be uploaded as it (gulnya/claude/capture-build.md): [theCaptureBuildIsAnotherApp].
+     * app's so it can never be uploaded as it (CLAUDE.md, "The capture build"): [theCaptureBuildIsAnotherApp].
      */
     private fun appleBundleIds(): List<String> =
         Regex("""PRODUCT_BUNDLE_IDENTIFIER\s*=\s*([^;]+);""")

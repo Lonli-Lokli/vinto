@@ -1,4 +1,4 @@
-// Capture code (kupalinka-capture-a47d267ea8c1795fbb7df224): only in the capture build, gulnya/claude/capture-build.md
+// Capture code (kupalinka-capture-a47d267ea8c1795fbb7df224): only in the capture build; CLAUDE.md, "The capture build"
 import XCTest
 
 /// What every UI test here launches the app with, and where it leaves its evidence.
@@ -9,7 +9,7 @@ import XCTest
 /// text size is the launch-argument override of the system's Dynamic Type setting. Nothing reaches
 /// into the app's internals, so what these tests see is the tree VoiceOver and Voice Control read.
 ///
-/// Only the capture build reads that handle (gulnya/claude/capture-build.md), so these suites run on
+/// Only the capture build reads that handle (CLAUDE.md, "The capture build"), so these suites run on
 /// the `iosApp-capture` scheme, whose every action is the Capture configuration: release Kotlin and
 /// Swift, as the store build, with the scenes.
 enum Appearance: String, CaseIterable, CustomStringConvertible {

@@ -5,7 +5,7 @@ import SwiftUI
 /// in `composeApp/src/iosMain/.../MainViewController.kt`, exported through the `ComposeApp`
 /// framework — renaming either side breaks this.
 ///
-/// The Capture configuration (the capture build, gulnya/claude/capture-build.md) opens
+/// The Capture configuration (the capture build; CLAUDE.md, "The capture build") opens
 /// `CaptureViewController` instead, from `composeApp/src/captureIos`: the app on the store scene its
 /// launch argument names. No other configuration's framework has that function, nor this branch.
 struct ComposeView: UIViewControllerRepresentable {

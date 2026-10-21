@@ -98,8 +98,7 @@
   ## The capture build: the only build with the store scenes
 
   App Store guideline 2.5.19 is about what sits in a binary, so no store build and no debug build holds
-  the store screenshots' scenes or the handle that opens them (owner, 2026-10-18;
-  `../gulnya/claude/capture-build.md`). They live in `composeApp/src/captureMain` (package
+  the store screenshots' scenes or the handle that opens them (owner, 2026-10-18). They live in `composeApp/src/captureMain` (package
   `game.vinto.app.capture`: `MarketingScene`, `Staged`, and `CAPTURE_ID`, the id every app's capture
   build shares, which is also the handle key) and compile into three
   places only: the desktop (`jvmMain`, whose window and tests ship nowhere), Android's `capture` build
@@ -110,10 +109,14 @@
 
   The capture build installs as `app.kupalinka.vinto.capture`, is optimised like release, sends no
   crash report (`BuildConfig.CRASH_REPORTS`; `CaptureViewController` installs none) and asks no store
-  (`BuildConfig.STORE`; StoreKit is never attached). gulnya's `tools/capture-check.mjs` searches every
-  APK and AAB the app packages, and the iOS app in every configuration, inside the step that builds
-  it: a store or debug build holding the id fails, a capture build without it fails, and a build
-  without `../gulnya` or Node fails. No flag turns it off.
+  (`BuildConfig.STORE`; StoreKit is never attached). The rule, in full: capture code lives only in the
+  capture build, and the id `kupalinka-capture-a47d267ea8c1795fbb7df224` is the one every capture file carries.
+  `Scripts/capture-check.mjs` (a copy of the portfolio's check, with `Scripts/android-archive.mjs`; its header
+  names the portfolio commit it matches, and Vinto's build reads nothing outside this repo) runs after every APK and AAB the
+  app packages and after the iOS app in every configuration, inside the step that builds it: a store or debug
+  build holding the id fails, a capture build without it fails, and a build that cannot find or run the check
+  (the copy missing, no Node) fails. No flag turns it off. The capture build never sends a report and never
+  talks to a store.
 
   ```bash
   npm run capture-android        # installs the capture build, zdymak opens CaptureActivity per scene

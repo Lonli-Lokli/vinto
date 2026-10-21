@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Capture code (kupalinka-capture-a47d267ea8c1795fbb7df224): only for the capture build, gulnya/claude/capture-build.md
+# Capture code (kupalinka-capture-a47d267ea8c1795fbb7df224): only for the capture build; CLAUDE.md, "The capture build"
 # Vinto's Play screenshots, from the capture build (app.kupalinka.vinto.capture, the only build with the store
 # scenes): installs it on the attached device (`./gradlew :androidApp:installCapture`: R8 like release, the debug key;
 # INSTALL=0 keeps the one installed), then zdymak opens CaptureActivity once per scene under the shared capture id, the
 # intent extra it reads, and takes each shot with the clean status bar. CaptureActivity recreates itself on each new
 # scene, so no restart is needed between them. Extra arguments go to zdymak (`--record --states king,queen,call`).
 #
-# A heavy job (Gradle and a device): run it through gulnya's heavy lock, with the device claimed.
+# A heavy job (Gradle and a device): run it through this Mac's heavy-job lock, with the device claimed.
 #
 #   OUT=./marketing/captures/android-tablet Scripts/capture-android.sh --size 2560x1440 --density 320
 set -euo pipefail

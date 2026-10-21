@@ -281,7 +281,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Capture code ships in no store build (gulnya/claude/capture-build.md): this build, in every configuration,\n# is searched by gulnya's capture-check.mjs once it is assembled; a build without ../gulnya or Node fails.\n# Release and Debug must hold the shared capture id nowhere; Capture must hold it in its code.\n# An Xcode phase reads no shell profile, so nvm's node (this Mac's only one) is added when none is on PATH.\nexport PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\"\ncommand -v node >/dev/null 2>&1 || PATH=\"$PATH:$(ls -d \"$HOME\"/.nvm/versions/node/*/bin 2>/dev/null | tail -1)\"\nexec node \"$SRCROOT/../../gulnya/tools/capture-check.mjs\" \"$TARGET_BUILD_DIR/$WRAPPER_NAME\"\n";
+			shellScript = "# Capture code ships in no store build (CLAUDE.md, \"The capture build\"): this build, in every configuration,\n# is searched by Scripts/capture-check.mjs once it is assembled; a build that cannot run it (the copy missing, no Node) fails.\n# Release and Debug must hold the shared capture id nowhere; Capture must hold it in its code.\n# An Xcode phase reads no shell profile, so nvm's node (this Mac's only one) is added when none is on PATH.\nexport PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\"\ncommand -v node >/dev/null 2>&1 || PATH=\"$PATH:$(ls -d \"$HOME\"/.nvm/versions/node/*/bin 2>/dev/null | tail -1)\"\nexec node \"$SRCROOT/../Scripts/capture-check.mjs\" \"$TARGET_BUILD_DIR/$WRAPPER_NAME\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

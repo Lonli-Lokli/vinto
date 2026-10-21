@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Capture code (kupalinka-capture-a47d267ea8c1795fbb7df224): only for the capture build, gulnya/claude/capture-build.md
+# Capture code (kupalinka-capture-a47d267ea8c1795fbb7df224): only for the capture build; CLAUDE.md, "The capture build"
 # Vinto's App Store screenshots, from the capture build: zdymak builds the Capture configuration (scheme
 # iosApp-capture: release Kotlin and Swift with the store scenes, app.kupalinka.vinto.capture, unsigned for the
 # simulator) and installs it on DEVICE, then launches it once per scene with the launch argument
 # `-<shared capture id> <scene>`, which CaptureViewController reads, the status bar pinned at 9:41. No other build has
 # the scenes. BUILD=0 reuses the capture app already installed. Extra arguments go to zdymak.
 #
-# A heavy job (an Xcode build and a booted simulator): run it through gulnya's heavy lock, with the device claimed.
+# A heavy job (an Xcode build and a booted simulator): run it through this Mac's heavy-job lock, with the device claimed.
 # zdymak's --configuration needs zdymak 1.4.0 or later (package.json).
 #
 #   DEVICE="iPad Pro 13-inch (M5)" OUT=./marketing/captures/ios-ipad Scripts/capture-ios.sh

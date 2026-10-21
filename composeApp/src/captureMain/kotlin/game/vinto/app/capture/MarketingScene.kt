@@ -1,5 +1,5 @@
 // Capture code (kupalinka-capture-a47d267ea8c1795fbb7df224): only in the capture build,
-// gulnya/claude/capture-build.md
+// See CLAUDE.md, "The capture build".
 package game.vinto.app.capture
 
 import game.vinto.client.LocalGame
@@ -37,7 +37,7 @@ import kotlinx.coroutines.isActive
  *
  * App Store guideline 2.5.19 is about what sits in a binary, a hidden or dormant mode, so no store
  * build and no debug build holds this file or the handle that reaches it, on either platform
- * (owner, 2026-10-18; gulnya/claude/capture-build.md). Both are compiled into the capture build
+ * (owner, 2026-10-18; CLAUDE.md, "The capture build"). Both are compiled into the capture build
  * alone (Android's `capture` build type, iOS's Capture configuration), which installs as
  * `app.kupalinka.vinto.capture` and never ships, and into the desktop, which ships nowhere. The
  * handle is [CAPTURE_ID], read by `CaptureActivity` and `CaptureViewController`; [Staged] stages

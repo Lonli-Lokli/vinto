@@ -25,7 +25,7 @@
  * **`npx zdymak capture` drives this app now, from the capture build alone.** The handle the note
  * at the foot of this file specified is built: `MarketingScene` in `composeApp/src/captureMain`,
  * read from an intent extra on Android and a launch argument on iOS, both under the shared capture
- * id, in the capture build only (app.kupalinka.vinto.capture, gulnya/claude/capture-build.md).
+ * id, in the capture build only (app.kupalinka.vinto.capture; CLAUDE.md, "The capture build").
  * `npm run capture-ios`, `capture-ipad` and `capture-android` (Scripts/capture-*.sh) build or
  * install it and pass the six scene ids below; `npm run capture-headless` renders the same
  * six without a device at all. (It said five until `plan` joined them, and several other counts
@@ -385,7 +385,7 @@ export default {
  * `npx zdymak capture` — BUILT, to the design this note used to specify.
  *
  * The owner's first call was a **debug-only** handle, so the release surface was unchanged and the
- * store shots came from a debug binary. Since 2026-10-18 (gulnya capture-debug-only, App Store
+ * store shots came from a debug binary. Since 2026-10-18 (App Store
  * guideline 2.5.19) no store build and no debug build has it, on either platform: the scenes and
  * the handle live in `composeApp/src/captureMain` and compile only into the capture build, a third
  * build optimised like release that installs as app.kupalinka.vinto.capture and never ships.

@@ -16,7 +16,7 @@
 
 name: iosApp
 
-# Debug and Release as ever, and Capture: the capture build (gulnya/claude/capture-build.md), a release-type
+# Debug and Release as ever, and Capture: the capture build (CLAUDE.md, "The capture build"), a release-type
 # configuration that alone compiles the store screenshots' scenes and the handle that opens them, installs as
 # app.kupalinka.vinto.capture and never ships. Archiving stays Release: the iosApp scheme names it.
 configs:
@@ -217,13 +217,13 @@ targets:
       - name: Capture check
         basedOnDependencyAnalysis: false
         script: |
-          # Capture code ships in no store build (gulnya/claude/capture-build.md): this build, in every configuration,
-          # is searched by gulnya's capture-check.mjs once it is assembled; a build without ../gulnya or Node fails.
+          # Capture code ships in no store build (CLAUDE.md, "The capture build"): this build, in every configuration,
+          # is searched by Scripts/capture-check.mjs once it is assembled; a build that cannot run it (the copy missing, no Node) fails.
           # Release and Debug must hold the shared capture id nowhere; Capture must hold it in its code.
           # An Xcode phase reads no shell profile, so nvm's node (this Mac's only one) is added when none is on PATH.
           export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
           command -v node >/dev/null 2>&1 || PATH="$PATH:$(ls -d "$HOME"/.nvm/versions/node/*/bin 2>/dev/null | tail -1)"
-          exec node "$SRCROOT/../../gulnya/tools/capture-check.mjs" "$TARGET_BUILD_DIR/$WRAPPER_NAME"
+          exec node "$SRCROOT/../Scripts/capture-check.mjs" "$TARGET_BUILD_DIR/$WRAPPER_NAME"
 
   # The accessibility evidence behind every Apple Accessibility Nutrition Label in
   # `vydanne.config.mjs`. XCUITest reads the same accessibility tree VoiceOver and Voice Control
@@ -248,7 +248,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
 
 schemes:
-  # The capture build (gulnya/claude/capture-build.md): what zdymak builds for the store screenshots, and where the
+  # The capture build (CLAUDE.md, "The capture build"): what zdymak builds for the store screenshots, and where the
   # UI tests run, since they reach each screen through the capture handle (Harness.swift). Every action is Capture.
   iosApp-capture:
     build:

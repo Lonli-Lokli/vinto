@@ -1,5 +1,5 @@
 // Capture code (kupalinka-capture-a47d267ea8c1795fbb7df224): only in the capture build,
-// gulnya/claude/capture-build.md
+// See CLAUDE.md, "The capture build".
 package game.vinto.app
 
 import android.content.Intent

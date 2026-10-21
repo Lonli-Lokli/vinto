@@ -9,7 +9,7 @@ import game.vinto.client.Question
  * No player's launch passes one: every store build opens where it always has. It is how a caller
  * that stages the app says where to stand, and it names screens only. Which screens, and why, is
  * the caller's business, and in this repository that caller is the capture build alone
- * (`composeApp/src/captureMain`, gulnya/claude/capture-build.md), which no store build compiles.
+ * (`composeApp/src/captureMain`; CLAUDE.md, "The capture build"), which no store build compiles.
  */
 sealed interface FirstScreen {
     /** The home screen, offering to continue a game when [canContinue]. */

@@ -27,7 +27,7 @@ class VintoApplication : Application() {
         //
         // Never in the capture build (`BuildConfig.CRASH_REPORTS`, false only there, a constant R8
         // folds): it exists to photograph scenes, a crash in it is nobody's, and it starts no SDK
-        // even on a real phone (gulnya capture-debug-only AC-6). No switch a player can reach.
+        // even on a real phone (CLAUDE.md, "The capture build"). No switch a player can reach.
         if (BuildConfig.CRASH_REPORTS) Crashes.install(appReportingScope())
     }
 }
