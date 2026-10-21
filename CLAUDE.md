@@ -95,6 +95,34 @@
 
   Full command list, including iOS and the Worker gates: `docs/kotlin/README.md` §4.
 
+  ## The capture build: the only build with the store scenes
+
+  App Store guideline 2.5.19 is about what sits in a binary, so no store build and no debug build holds
+  the store screenshots' scenes or the handle that opens them (owner, 2026-10-18;
+  `../gulnya/claude/capture-build.md`). They live in `composeApp/src/captureMain` (package
+  `game.vinto.app.capture`: `MarketingScene`, `Staged`, and `CAPTURE_ID`, the id every app's capture
+  build shares, which is also the handle key) and compile into three
+  places only: the desktop (`jvmMain`, whose window and tests ship nowhere), Android's `capture` build
+  type (`androidApp/src/capture`: `CaptureActivity` and its manifest, with the scenes as a source
+  directory, since `composeApp` is a single-variant library), and iOS's Capture configuration
+  (`composeApp/src/captureIos`: `CaptureViewController`, which Swift opens under `#if CAPTURE`; scheme
+  `iosApp-capture`). Never the web. `commonMain` keeps only the neutral `FirstScreen` `App` opens on.
+
+  The capture build installs as `app.kupalinka.vinto.capture`, is optimised like release, sends no
+  crash report (`BuildConfig.CRASH_REPORTS`; `CaptureViewController` installs none) and asks no store
+  (`BuildConfig.STORE`; StoreKit is never attached). gulnya's `tools/capture-check.mjs` searches every
+  APK and AAB the app packages, and the iOS app in every configuration, inside the step that builds
+  it: a store or debug build holding the id fails, a capture build without it fails, and a build
+  without `../gulnya` or Node fails. No flag turns it off.
+
+  ```bash
+  npm run capture-android        # installs the capture build, zdymak opens CaptureActivity per scene
+  npm run capture-ios            # zdymak builds iosApp-capture (Capture) and launches each scene
+  npm run capture-headless       # the same scenes on the desktop, no device
+  ```
+
+  The XCUITests open each screen through the handle, so they run on `-scheme iosApp-capture`.
+
   ## Tooling is Kotlin or Node — never Python
 
   Anything written for this repository is Kotlin or Node.js. This is a portfolio-wide rule, not a
