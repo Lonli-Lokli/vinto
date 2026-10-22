@@ -96,10 +96,17 @@ const SCENES = [
  * lists them: closed, closed and turned, open on its side (flat, then a book), open upright (flat,
  * then a laptop). No plan: staged on a Debug build it takes two and a half minutes, and in the open
  * Duo's narrow rail its hint creeps sideways, so any still of it reads as a line cut off.
+ *
+ * **Captioned like the iPhone set** (owner, 2026-10-22: "iPhone duo ... lacks captions on
+ * screenshots"). `captionOf` gives each posture the caption of the scene it shows, the same words
+ * as the iPhone's, so the listing speaks with one voice and every locale's translation follows. The
+ * caption sits on the matte above the device, so it cannot touch what iOS draws inside the screen
+ * (the status column and its clock, the open phone's corner) or the fold.
  */
 const duo = (posture, scene) => ({
   id: `${posture}-${scene}`,
   image: `./marketing/captures/ios-duo-${posture}/${scene}.png`,
+  captionOf: scene,
 });
 const DUO_CLOSED = [duo('closed', 'table'), duo('closed', 'teach'), duo('closed', 'home')];
 const DUO_TURNED = [duo('closed-turned', 'table')];
@@ -211,6 +218,8 @@ export default {
      * each at its own size, since the closed one and the open one are different shapes and each is
      * held two ways. Optional until April 2027 for builds on the iOS 27.1 SDK; made now because the
      * phone goes on sale on 23 October. No bar is drawn: the simulator's captures carry iOS's own.
+     * Each is framed (zdymak infers the `duo` / `duo-inner` body) with its caption above it, as `duo`
+     * above says.
      */
     duoClosed: {
       capturesDir: './marketing/captures/ios-duo-closed',
@@ -258,15 +267,24 @@ export default {
       screenshots: [{ target: 'appstore-ipad-13', style: 'framed' }],
     },
 
-    // Google Play. The opposite rules: no device frames, no added text, no backgrounds on the
-    // uploaded shots. Two sets from one capture — `-plain` is what gets uploaded, the styled one
-    // is for the website — because a rejection here costs a review cycle.
+    /**
+     * Google Play's phone set: captioned, the same words as the iPhone set (owner, 2026-10-22:
+     * "android lacks captions on screenshots"). It was uploaded bare, on a reading of Play's rules
+     * that was the Wear OS one ("Not position the screenshots within device frames, or include
+     * additional text, graphics, or backgrounds"). For phones, Play's "Add preview assets" page
+     * (support.google.com/googleplay/android-developer/answer/9866151, read 2026-10-22) has taglines
+     * under "Highly recommended", not forbidden: "Add taglines only if necessary to convey the key
+     * characteristics of the app or game. Taglines should not take up more than 20% of the image."
+     * The same list asks to avoid "Device imagery", so this is `premium`, the screen on the felt
+     * matte with no device body; the caption's two pills cover well under a fifth of the picture.
+     * No call to action, no ranking or price, as that list also asks. vydanne's `bridge.play` uploads
+     * this folder (`play-phone/`).
+     */
     android: {
       capturesDir: './marketing/captures/android',
       // As with the iPhone: the promo is a `reel` entry from real footage, not a pan over stills.
       screenshots: [
-        { target: 'play-phone', dir: 'play-phone-plain', style: 'bleed', caption: false, theme: { anchor: 'top' } },
-        { target: 'play-phone', style: 'premium' }, // the styled set, for the site
+        { target: 'play-phone', style: 'premium' }, // the uploaded set, and the site's
         { target: 'play-feature-graphic' }, // required by Play even with no video
       ],
     },
@@ -282,6 +300,11 @@ export default {
      *
      * The app has a landscape arrangement (`TableLayout.forScreen`), and `StoreShotsTest` now
      * renders this directory at 1280x720 dp so the slot gets the screen it is actually for.
+     *
+     * **Bare, unlike the phone set, by Google's own instruction for this slot.** The "Large screens"
+     * part of Play's "Add preview assets" page (read 2026-10-22): "Exclude additional text that is not
+     * part of your core app experience, as this can get cut off on Play homepages on certain screen
+     * sizes." So the tablet keeps `caption: false` while the phone set is captioned.
      */
     androidTablet: {
       capturesDir: './marketing/captures/android-tablet',
