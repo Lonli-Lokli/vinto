@@ -97,21 +97,49 @@ const SCENES = [
  * then a laptop). No plan: staged on a Debug build it takes two and a half minutes, and in the open
  * Duo's narrow rail its hint creeps sideways, so any still of it reads as a line cut off.
  *
- * **Captioned like the iPhone set** (owner, 2026-10-22: "iPhone duo ... lacks captions on
- * screenshots"). `captionOf` gives each posture the caption of the scene it shows, the same words
- * as the iPhone's, so the listing speaks with one voice and every locale's translation follows. The
- * caption sits on the matte above the device, so it cannot touch what iOS draws inside the screen
- * (the status column and its clock, the open phone's corner) or the fold.
+ * **Captioned** (owner, 2026-10-22: "iPhone duo ... lacks captions on screenshots"). The caption
+ * sits on the matte above the device, so it cannot touch what iOS draws inside the screen (the
+ * status column and its clock, the open phone's corner) or the fold.
+ *
+ * **Every still has its own words.** Six of the ten show the table, and borrowing the iPhone's
+ * table caption put "Draw, or take the discard." on six pictures of one set, which reads as careless.
+ * So each table still says something true that its own picture shows: the choice on the closed
+ * phone, the three computer seats on the turned one, the whole table on the open one, a card's
+ * worth beside the table on the book, the move log under it upright, the others above your hand on
+ * the laptop. The other four take the iPhone scene's caption (`captionOf`) and every locale's
+ * translation of it. A table still does NOT borrow: with `captionOf` set, a locale's
+ * `captions/<lang>.json` would put the table's translated words back on all six. A translation of
+ * these six is keyed by the still's own id (`closed-table`, `half-book-table` and so on).
  */
-const duo = (posture, scene) => ({
+const duo = (posture, scene, caption) => ({
   id: `${posture}-${scene}`,
   image: `./marketing/captures/ios-duo-${posture}/${scene}.png`,
-  captionOf: scene,
+  ...(caption ?? { captionOf: scene }),
 });
-const DUO_CLOSED = [duo('closed', 'table'), duo('closed', 'teach'), duo('closed', 'home')];
-const DUO_TURNED = [duo('closed-turned', 'table')];
-const DUO_OPEN = [duo('open', 'table'), duo('open', 'score'), duo('open', 'lobby'), duo('half-book', 'table')];
-const DUO_UPRIGHT = [duo('open-upright', 'table'), duo('half-laptop', 'table')];
+const DUO_CLOSED = [
+  duo('closed', 'table', { title: 'Swap it in, or discard it.', sub: 'Everybody sees what goes on the pile.' }),
+  duo('closed', 'teach'),
+  duo('closed', 'home'),
+];
+const DUO_TURNED = [
+  duo('closed-turned', 'table', {
+    title: 'Play against three computer opponents.',
+    sub: 'Set them to Easy, Moderate or Hard.',
+  }),
+];
+const DUO_OPEN = [
+  duo('open', 'table', { title: 'The whole table at once.', sub: 'All four hands, the deck and the discard pile.' }),
+  duo('open', 'score'),
+  duo('open', 'lobby'),
+  duo('half-book', 'table', {
+    title: 'The card you draw says what it is worth.',
+    sub: 'A 2 is worth 2. A King is worth nothing.',
+  }),
+];
+const DUO_UPRIGHT = [
+  duo('open-upright', 'table', { title: 'Every move is written down.', sub: 'Read it when the cards move too fast.' }),
+  duo('half-laptop', 'table', { title: 'The others sit across from you.', sub: 'Your hand and the deck lie in front of you.' }),
+];
 
 /**
  * The header strip and the search picture, as the owner chose them (2026-10-12) from mockups shown on
