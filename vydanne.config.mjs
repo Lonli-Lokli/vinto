@@ -404,6 +404,12 @@ export default {
         ],
       },
     },
+    // Play's phone slot takes the CAPTIONED set (owner, 2026-10-22: "android lacks captions on
+    // screenshots"). Without this the bridge prefers a `play-phone-plain/` whenever one is on disk,
+    // and an old one left in store-assets would still be uploaded bare. Google's guidance allows a
+    // tagline on a phone shot; why, and why the tablet stays bare, is in zdymak.config.mjs (`android`,
+    // `androidTablet`). The tablet slot keeps the bridge's default, `play-tablet-plain/`.
+    play: { phoneScreenshots: 'play-phone' },
   },
 
   // Google Play. Package-scoped: vydanne only ever touches this packageName.
