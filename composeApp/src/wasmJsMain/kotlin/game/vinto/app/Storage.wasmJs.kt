@@ -1,9 +1,11 @@
 package game.vinto.app
 
+import game.vinto.client.ForgivingVault
 import game.vinto.client.Vault
 import kotlinx.browser.localStorage
 
-actual fun platformVault(): Vault = LocalStorageVault()
+/** Forgiving, because a browser may refuse storage by throwing from every call (`ForgivingVault`). */
+actual fun platformVault(): Vault = ForgivingVault(LocalStorageVault())
 
 private class LocalStorageVault : Vault {
     override fun read(key: String): String? = localStorage.getItem(key)

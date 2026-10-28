@@ -155,9 +155,13 @@ object Crashes {
      * they reach it as an unhandled rejection with the Kotlin stack already lost. Reporting
      * them explicitly is the difference between "the app is fine and the room never loads" and
      * a stack trace naming the line.
+     *
+     * **Never throws.** It runs inside a `CoroutineExceptionHandler`, and a handler that throws is
+     * what kotlinx.coroutines reports as "Exception while trying to handle coroutine exception" —
+     * the failure it was handed, buried under the reporter's own (Sentry 7817278407).
      */
     fun report(error: Throwable) {
-        reporter?.invoke(error)
+        runCatching { reporter?.invoke(error) }
     }
 
     /**
@@ -166,7 +170,8 @@ object Crashes {
      * Attached to the app scope, so a background coroutine that throws is reported rather than
      * printed to a console nobody is reading. It does **not** rethrow: the scope's job is
      * supervised and the app is still usable, which is exactly the case the fatal handler
-     * cannot see.
+     * cannot see. Supervised by [game.vinto.app.rememberAppScope], not by Compose: the scope
+     * `rememberCoroutineScope` makes cancels the Recomposer when one of its jobs fails.
      */
     fun handler(): CoroutineContext = CoroutineExceptionHandler { _, error -> report(error) }
 

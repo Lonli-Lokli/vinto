@@ -19,7 +19,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -163,11 +162,7 @@ fun App(
     // One connector for the app's lifetime, and a scope for the rooms it opens: a room's
     // socket loop belongs to the app, not to whichever screen happens to be showing it.
     val connector = remember { platformRoomConnector(ROOM_SERVICE) }
-    // With a handler, so a coroutine that fails out here is *reported* rather than printed to a
-    // console nobody is reading. Everything long-lived rides on this scope — the socket loop, the
-    // analytics sink, a room's reconnects — and those are exactly the failures that leave the app
-    // looking fine and doing nothing, which no fatal handler will ever see.
-    val appScope = rememberCoroutineScope { Crashes.handler() }
+    val appScope = rememberAppScope()
 
     val sink = rememberSink(appScope)
     val door = rememberDoorway(connector, vault, appScope, seeds)

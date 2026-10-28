@@ -193,6 +193,19 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
   and nothing is installed at all in a debug build. Fixable in two small pieces (install it in
   `MainActivity.onCreate` before `setContent`; set the DSN for release builds, DEPLOYMENT.md
   §7a) and recorded on task 8.2 rather than done.
+- **On Kotlin/Wasm a browser's exception is not an `Exception`.** A `DOMException` thrown by
+  `localStorage`, a socket or any `js(...)` body reaches Kotlin as `JsException`, which extends
+  `Throwable` directly, so every `catch (e: Exception)` in common code lets it through. (A
+  rejected promise is different: `await()` turns it into a plain `Exception`.) Worse, when the
+  thrown value has no `stack` — Chromium's own `DOMException` has none — its
+  `stackTraceToString()` throws `NullPointerException`. That is how the crash reporter used to
+  throw from inside a `CoroutineExceptionHandler` (Sentry 7817278407). Catch where the browser is
+  called — `ForgivingVault` is the pattern — and never assume a failure can be printed.
+- **`rememberCoroutineScope` is not supervised, and a failure in it stops the Recomposer.** Its
+  job is a plain `Job` under the Recomposer's effect job, so one coroutine that fails cancels the
+  effect job and the screen never draws again — with no crash on any platform if a handler
+  caught the failure, because the handler did its job. A long-lived scope needs a `SupervisorJob`
+  under it; `rememberAppScope` is one, held by `OneFailedJobLeavesTheAppRunningTest`.
 - **AGP 9 will not let an Android application be a KMP module, and there is no property that
   changes its mind.** `com.android.application` beside `org.jetbrains.kotlin.multiplatform`
   is refused outright with *"move the usage of 'com.android.application' into a separate
