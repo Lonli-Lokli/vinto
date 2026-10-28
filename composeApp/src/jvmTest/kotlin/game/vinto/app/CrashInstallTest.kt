@@ -114,8 +114,11 @@ class CrashInstallTest {
     @Test
     fun theAppScopeReportsWhatFailsOnIt() {
         val app = source("src/commonMain/kotlin/game/vinto/app/App.kt")
+        assertTrue(app.contains("rememberAppScope()"), "the app no longer takes its scope from rememberAppScope")
         assertTrue(
-            app.contains("rememberCoroutineScope { Crashes.handler() }"),
+            source(
+                "src/commonMain/kotlin/game/vinto/app/AppScope.kt",
+            ).contains("rememberCoroutineScope { Crashes.handler() }"),
             "the app scope has no exception handler, so anything failing on it is silent",
         )
     }

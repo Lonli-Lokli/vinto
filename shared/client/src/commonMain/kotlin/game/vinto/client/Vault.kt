@@ -22,3 +22,31 @@ class MemoryVault(private val entries: MutableMap<String, String> = mutableMapOf
     override fun write(key: String, value: String) { entries[key] = value }
     override fun erase(key: String) { entries.remove(key) }
 }
+
+/**
+ * A vault that answers even when the storage under it refuses.
+ *
+ * A browser can refuse `localStorage` outright — Firefox with cookies blocked, Safari's "block all
+ * cookies", a full quota — and it refuses by throwing, from every read. The web app read the vault
+ * before it drew anything, so a refusing browser kept the page on "Dealing…" for good, and the
+ * crash reporter, which reads the vault before it starts listening, never heard about it.
+ *
+ * So a refusal costs persistence and nothing else: what storage would not take is held here for
+ * the session and read back from here, and a key it never had reads as absent — which every caller
+ * already handles, because it is what a first launch looks like.
+ */
+class ForgivingVault(private val stored: Vault) : Vault {
+    /** What storage would not take this session, by key; null where it would not erase. */
+    private val refused = mutableMapOf<String, String?>()
+
+    override fun read(key: String): String? =
+        if (key in refused) refused[key] else runCatching { stored.read(key) }.getOrNull()
+
+    override fun write(key: String, value: String) {
+        if (runCatching { stored.write(key, value) }.isSuccess) refused.remove(key) else refused[key] = value
+    }
+
+    override fun erase(key: String) {
+        if (runCatching { stored.erase(key) }.isSuccess) refused.remove(key) else refused[key] = null
+    }
+}

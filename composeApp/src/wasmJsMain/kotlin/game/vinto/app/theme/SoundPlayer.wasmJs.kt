@@ -23,7 +23,9 @@ actual class SoundPlayer actual constructor() {
     actual fun play(sfx: Sfx) {
         players[sfx]?.let {
             it.currentTime = 0.0
-            it.play()
+            // Caught, because a refusal left alone is not ignored: a rejected promise nobody
+            // handles is an `unhandledrejection`, which the crash reporter files as a crash.
+            it.play().catch { null }
         }
     }
 

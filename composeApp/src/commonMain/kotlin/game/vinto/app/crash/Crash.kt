@@ -164,6 +164,11 @@ data class CrashReport(
     val type: String,
     val message: String,
     val frames: List<String> = emptyList(),
+    /**
+     * What caused this, and what was suppressed under it, oldest first — the order Sentry reads a
+     * chain in, with the failure this report is about after them.
+     */
+    val chained: List<ChainedException> = emptyList(),
     val place: CrashPlace = CrashPlace(),
 )
 
@@ -190,18 +195,10 @@ fun crashEnvelope(report: CrashReport): String = with(report) {
             append(parts.joinToString(","))
             append('}')
         }
-        append(""","exception":{"values":[{"type":""").append(json(type))
-        append(""","value":""").append(json(message))
-        if (frames.isNotEmpty()) {
-            append(""","stacktrace":{"frames":[""")
-            // Sentry wants the newest frame last; a Kotlin stack trace is newest first.
-            frames.asReversed().forEachIndexed { index, frame ->
-                if (index > 0) append(',')
-                appendFrame(parseFrame(frame))
-            }
-            append("""]}""")
-        }
-        append("""}]}""")
+        append(""","exception":{"values":[""")
+        chained.forEach { appendException(it.type, it.message, it.frames).append(',') }
+        appendException(type, message, frames)
+        append("""]}""")
         // No `debug_meta`. Only an R8 build has a mapping to name, and Android reports through the
         // SDK, which names its own. When this envelope named it, it put `debug_meta` after the
         // brace closing the event, where Sentry dropped it without a word (`CrashFramesTest`).
@@ -210,6 +207,26 @@ fun crashEnvelope(report: CrashReport): String = with(report) {
 
     val header = """{"event_id":"$eventId","sent_at":"$sentAtIso"}"""
     header + "\n" + """{"type":"event"}""" + "\n" + scrubReport(body)
+}
+
+/** One entry of `exception.values`. */
+private fun StringBuilder.appendException(
+    type: String,
+    message: String,
+    frames: List<String>,
+): StringBuilder {
+    append("""{"type":""").append(json(type))
+    append(""","value":""").append(json(message))
+    if (frames.isNotEmpty()) {
+        append(""","stacktrace":{"frames":[""")
+        // Sentry wants the newest frame last; a Kotlin stack trace is newest first.
+        frames.asReversed().forEachIndexed { index, frame ->
+            if (index > 0) append(',')
+            appendFrame(parseFrame(frame))
+        }
+        append("""]}""")
+    }
+    return append('}')
 }
 
 /**

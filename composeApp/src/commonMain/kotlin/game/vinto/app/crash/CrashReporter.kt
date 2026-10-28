@@ -52,8 +52,13 @@ class CrashReporter(
      */
     fun envelopeFor(error: Throwable): String? {
         if (target == null) return null
-        if (!budget.admits(error)) return null
+        val account = accountOf(error)
+        if (!budget.admits(account.type, account.message)) return null
 
+        val sections = traceSections(account.trace)
+        // The nearest first when trimming, and then the oldest first, which is how Sentry reads a
+        // chain: the failure the report is about comes last and names the issue.
+        val chained = sections.drop(1).take(MAX_CHAINED).asReversed()
         return crashEnvelope(
             CrashReport(
                 eventId = eventId(now()),
@@ -66,9 +71,10 @@ class CrashReporter(
                 os = os,
                 environment = environment,
                 surface = surface(),
-                type = error::class.simpleName ?: "Throwable",
-                message = error.message ?: "no message",
-                frames = error.stackTraceToString().lines().drop(1).take(MAX_FRAMES).map { it.trim() },
+                type = account.type,
+                message = account.message,
+                frames = sections.first().frames.take(MAX_FRAMES),
+                chained = chained.map { it.copy(frames = it.frames.take(MAX_FRAMES)) },
                 place = place(),
             ),
         )
@@ -104,6 +110,9 @@ class CrashReporter(
 
         /** Sentry truncates long traces anyway, and the top of the stack is the useful part. */
         const val MAX_FRAMES = 30
+
+        /** Causes and suppressed failures carried beside the one reported; past a few, it is a loop. */
+        const val MAX_CHAINED = 5
     }
 }
 
@@ -123,12 +132,16 @@ internal class ReportBudget {
     private val seen = mutableSetOf<String>()
 
     /** True for a failure worth a report — new, and within the budget — which it then counts. */
-    fun admits(error: Throwable): Boolean {
+    fun admits(error: Throwable): Boolean =
+        admits(error::class.simpleName ?: "Throwable", runCatching { error.message }.getOrNull().orEmpty())
+
+    /** The same, for a failure already read ([accountOf]) — a relayed one has no class to ask. */
+    fun admits(type: String, message: String): Boolean {
         if (spent >= BUDGET) return false
         // The same failure twice is one bug reported twice. A retry loop that throws the same
         // exception every second is the ordinary way a client burns a quota, and it is exactly
         // the shape of the socket loop the reporter watches.
-        if (!seen.add("${error::class.simpleName}:${error.message}")) return false
+        if (!seen.add("$type:$message")) return false
         spent++
         return true
     }
