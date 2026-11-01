@@ -8,6 +8,8 @@ quad-damage: no
 ## Who raised it
 > Create kirunak bug to use latest sentry cli everywhere
 
+> We must migrate all our portfolio
+
 owner, 2026-11-01, session session_01NYecnhWG2GNpDqMrxQwRSJ
 
 ## Why
@@ -25,6 +27,11 @@ it is `sentry sourcemap upload <directory>`, which takes a directory rather than
 stored default, and finally DSN detection and a guess from the directory name. The repository's rule is that org and
 project are always explicit, because a global default once sent one game's symbols into another game's project. A
 straight rename would hand that choice back to the guess.
+
+This is Vinto's share of a migration of the whole portfolio, `gulnya/use-the-new-sentry-cli`. That bug was written in
+the same session for the owner to file in gulnya, which the session could not reach. It decides once for every app:
+one pin, one org/project rule, a shared iOS archive upload, and one bug per app. Questions 1, 2, 4, 5 and 6 below apply
+those decisions here, and follow that bug wherever it decides otherwise.
 
 ## What was found
 - web: both workflows run `npm install -g @sentry/cli@3`, then the upload script, with `SENTRY_AUTH_TOKEN` from secrets [file .github/workflows/deploy-web.yml]
