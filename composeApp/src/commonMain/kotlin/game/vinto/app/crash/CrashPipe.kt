@@ -42,6 +42,11 @@ internal sealed interface CrashPipe {
          * page is not torn down by an unhandled rejection — and this does nothing.
          */
         val awaitSent: (Job?) -> Unit,
+        /**
+         * The modules this platform's frames can be looked up in, read when a report is made. Only
+         * the web has one: its WebAssembly, once the deploy has stamped it (`WasmImage`).
+         */
+        val images: () -> List<WasmImage> = { emptyList() },
     ) : CrashPipe
 
     /**

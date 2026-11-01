@@ -206,6 +206,18 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
   effect job and the screen never draws again — with no crash on any platform if a handler
   caught the failure, because the handler did its job. A long-lived scope needs a `SupervisorJob`
   under it; `rememberAppScope` is one, held by `OneFailedJobLeavesTheAppRunningTest`.
+- **The wasm source map in the build describes a module nobody runs.** The compiler maps the module
+  before `wasm-opt`, and the plugin copied that map past the optimiser unchanged, so it was
+  byte-identical in `kotlin/` and `optimized/` and every offset in it was wrong for what ships.
+  `wasm-opt` will carry a map through its passes if it is handed one — and stops with
+  `Assertion failed: isString()` on the compiler's, whose `sourcesContent` is all nulls.
+  `composeApp/build.gradle.kts` cleans it and passes it; the rewritten one is
+  `vinto-kmp-composeApp.wasm.optimized.map`. Measure a map with real V8 offsets before trusting it.
+- **Sentry's wasm reader refuses Kotlin's module.** `symbolic` records function types per
+  recursion group and functions name them per type index, so a Wasm GC module fails with
+  "function references unknown type". `sentry-cli debug-files check` says the same. The debug file
+  `tools/wasm-symbols.mjs` uploads therefore holds no code at all — `build_id` and DWARF only — and
+  `sentry-cli`, and `symbolic` itself, accept that. Do not "fix" it by uploading the full module.
 - **AGP 9 will not let an Android application be a KMP module, and there is no property that
   changes its mind.** `com.android.application` beside `org.jetbrains.kotlin.multiplatform`
   is refused outright with *"move the usage of 'com.android.application' into a separate

@@ -33,6 +33,8 @@ package game.vinto.app.crash
  *     Wasm          at <vinto-kmp:composeApp>.game.vinto.app.main
  *                       (https://…/a1b2.wasm:wasm-function[15659]:0x564a6e)
  *     Browser JS    at kotlin.createJsError (https://…/composeApp.js:2:500036)
+ *     Firefox       game.vinto.app.main@https://…/a1b2.wasm:wasm-function[15659]:0x564a6e
+ *                   kotlin.createJsError@https://…/composeApp.js:2:500036
  *
  * The two web shapes were read out of Chrome's console from the real production bundle rather
  * than reasoned about, and the reading changed the code: **V8 puts a space before the paren**,
@@ -112,6 +114,17 @@ private val scriptFrame = Regex("""^at\s+(\S+)\s+\((\S+?):(\d+):(\d+)\)$""")
 /** `at http://h/composeApp.js:2:531663` — V8 writes this when it has no name for the frame. */
 private val bareScriptFrame = Regex("""^at\s+(\S+?):(\d+):(\d+)$""")
 
+/**
+ * `game.vinto.app.main@http://h/a1b2.wasm:wasm-function[15659]:0x564a6e` — the same frame as
+ * Firefox writes it: the name first, an `@`, and no `at`. These were sent as unparsed text, so a
+ * crash in Firefox had no address for Sentry to look up and no name to title the issue after.
+ */
+private val geckoWasmFrame =
+    Regex("""^(?:<[^>]*>\.)?(.*?)@(\S+\.wasm):wasm-function\[\d+\]:(0x[0-9a-fA-F]+)$""")
+
+/** `kotlin.createJsError@http://h/composeApp.js:2:500036`, or `@…` with no name — Firefox and Safari. */
+private val geckoScriptFrame = Regex("""^(.*?)@(\S+?):(\d+):(\d+)$""")
+
 /** Takes one trimmed stack line apart, or gives up honestly. */
 internal fun parseFrame(raw: String): CrashFrame {
     jvmFrame.matchEntire(raw)?.let { m ->
@@ -128,7 +141,7 @@ internal fun parseFrame(raw: String): CrashFrame {
             address = m.groupValues[2],
         )
     }
-    wasmFrame.matchEntire(raw)?.let { m ->
+    (wasmFrame.matchEntire(raw) ?: geckoWasmFrame.matchEntire(raw))?.let { m ->
         return CrashFrame.Wasm(
             function = m.groupValues[1],
             module = m.groupValues[2].substringAfterLast('/'),
@@ -149,6 +162,14 @@ internal fun parseFrame(raw: String): CrashFrame {
             file = m.groupValues[1],
             line = m.groupValues[2].toIntOrNull(),
             column = m.groupValues[3].toIntOrNull(),
+        )
+    }
+    geckoScriptFrame.matchEntire(raw)?.let { m ->
+        return CrashFrame.Script(
+            function = m.groupValues[1].ifEmpty { null },
+            file = m.groupValues[2],
+            line = m.groupValues[3].toIntOrNull(),
+            column = m.groupValues[4].toIntOrNull(),
         )
     }
     return CrashFrame.Unparsed(raw)

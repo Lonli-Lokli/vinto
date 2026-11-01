@@ -110,6 +110,11 @@ kotlin {
         // not be quietly opted in to anything.
         compilerOptions {
             optIn.add("kotlin.js.ExperimentalWasmJsInterop")
+            // Library code keeps its mappings in the source map too, though its sources are not on
+            // this machine: a web crash's frames in coroutines or Compose then read as a file and a
+            // line rather than a bare name (`tools/wasm-symbols.mjs`). Only the map changes; the
+            // module is byte-identical with and without it, measured.
+            freeCompilerArgs.add("-Xwasm-source-map-include-mappings-from-unavailable-sources")
         }
     }
 
@@ -522,3 +527,47 @@ composeCompiler {
 tasks.withType<org.jetbrains.kotlin.gradle.targets.wasm.binaryen.BinaryenExec>().configureEach {
     binaryenArguments.add("-g")
 }
+
+/**
+ * A source map that describes the module that actually ships.
+ *
+ * The compiler writes `vinto-kmp-composeApp.wasm.map` for the module *before* `wasm-opt`, and the
+ * plugin copies that map past the optimiser unchanged — so the only map in the build described
+ * offsets that no longer exist, byte-identical in `kotlin/` and in `optimized/`. Handed the map,
+ * `wasm-opt` carries every location through its passes and writes one for its own output; it
+ * changes nothing about the code it emits (the module is byte-identical either way).
+ *
+ * That map is what `tools/wasm-symbols.mjs` turns into the debug file Sentry symbolicates web
+ * crashes with, so a Kotlin file and line reach the report and not only a function name. It is
+ * written beside the optimised module under its own name, `.optimized.map`, so nothing that copies
+ * the compiler's map along can overwrite it.
+ *
+ * The compiler's map is cleaned first: `sourcesContent` is a list of nulls, and `wasm-opt` stops on
+ * the first value that is not a string (`Assertion failed: isString()`).
+ */
+tasks.withType<org.jetbrains.kotlin.gradle.targets.wasm.binaryen.BinaryenExec>()
+    .matching { it.name == "compileProductionExecutableKotlinWasmJsOptimize" }
+    .configureEach {
+        val cleaned = temporaryDir
+        val optimised = outputDirectory
+        perFileBinaryenArguments.putAll(
+            provider {
+                inputFiles.files.associateWith { wasm ->
+                    listOf(
+                        "--input-source-map", cleaned.resolve("${wasm.name}.map").path,
+                        "--output-source-map", optimised.get().file("${wasm.name}.optimized.map").asFile.path,
+                    )
+                }
+            },
+        )
+        doFirst {
+            inputFiles.files.forEach { wasm ->
+                val map = File("${wasm.path}.map")
+                check(map.isFile) { "$map is missing, so the web build's crashes could not be read back to a line" }
+                @Suppress("UNCHECKED_CAST")
+                val json = groovy.json.JsonSlurper().parse(map) as MutableMap<String, Any?>
+                listOf("sourcesContent", "ignoreList", "x_google_ignoreList").forEach(json::remove)
+                cleaned.resolve("${wasm.name}.map").writeText(groovy.json.JsonOutput.toJson(json))
+            }
+        }
+    }

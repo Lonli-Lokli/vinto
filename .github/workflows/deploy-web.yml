@@ -178,7 +178,13 @@ jobs:
       # **A missing token fails the deploy.** It used to warn and carry on, and what that buys is
       # a live site whose every crash report is unreadable, behind a green pipeline. Publishing
       # something nobody can debug is worse than not publishing, so this stops.
-      - name: Upload the JavaScript source map to Sentry
+      # The wasm's build id, and the debug file Sentry reads its frames' lines from. Not gated on
+      # dryRun: it changes the module and index.html, and a dry run should build what would ship.
+      # It fails when the dist is not the module the source map describes (tools/wasm-symbols.mjs).
+      - name: Give the wasm its build id and debug file
+        run: node tools/wasm-symbols.mjs "$DIST"
+
+      - name: Upload the web build's symbols to Sentry
         if: ${{ !inputs.dryRun }}
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

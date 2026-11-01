@@ -1,25 +1,27 @@
 #!/usr/bin/env node
 /**
- * Send the web bundle's JavaScript source map to Sentry.
+ * Send the web bundle's symbols to Sentry: the JavaScript source map, and the WebAssembly debug file.
  *
  *     node tools/upload-web-sourcemaps.mjs [dist-dir]
  *
- * Run after `./gradlew :composeApp:wasmJsBrowserDistribution`. It publishes nothing itself, and
- * it is only half the job: **`strip-web-sourcemaps.mjs` has to run after it**, because a map
- * that reaches Sentry must not also reach the public asset store.
+ * Run after `./gradlew :composeApp:wasmJsBrowserDistribution` and `tools/wasm-symbols.mjs`. It
+ * publishes nothing itself, and it is only half the job: **`strip-web-sourcemaps.mjs` has to run
+ * after it**, because a map that reaches Sentry must not also reach the public asset store.
  *
- * ## What this does and does not buy
+ * ## The two kinds of frame
  *
- * A web crash reaches Sentry with two kinds of frame. The **wasm** frames carry our Kotlin
- * function names already, because the build keeps the wasm name section (`binaryenArguments` in
- * `composeApp/build.gradle.kts`); they need no upload and this script does not touch them. What
- * is minified is the **JavaScript glue** webpack emits — `composeApp.js`, one line, half a
- * megabyte — and those frames are what this makes readable.
+ * A web crash reaches Sentry with two kinds of frame, and each needs its own upload.
  *
- * There is no equivalent for `vinto-kmp-composeApp.wasm.map`: Sentry symbolicates WebAssembly
- * from DWARF debug files keyed by a `build_id` custom section, which Kotlin/Wasm does not emit,
- * and it does not read wasm source maps at all. That is why the name section is the mechanism
- * for the half of the stack that matters.
+ * The **JavaScript glue** webpack emits — `composeApp.js`, one line, half a megabyte — is read
+ * through its source map, matched by release and file name.
+ *
+ * The **wasm** frames hold our code. They carry Kotlin function names by themselves (the module
+ * keeps its name section), and a file and line only through a debug file: Sentry symbolicates
+ * WebAssembly from DWARF, filed under the module's `build_id`, and does not read wasm source maps.
+ * `wasm-symbols.mjs` stamps that id into the module and writes the DWARF from the map `wasm-opt`
+ * keeps for it; this uploads the result, with the Kotlin sources it names, so a frame shows the
+ * line itself. `--wait` holds the upload until Sentry has processed it, so a file it cannot use
+ * fails the deploy here rather than in the first crash report.
  *
  * ## Credentials
  *
@@ -74,6 +76,15 @@ function release() {
 // failure of this script and not of the build, and it should not leave the bundle half-injected.
 const RELEASE = release();
 
+// Written by tools/wasm-symbols.mjs. Checked before anything is sent, so a deploy that skipped it
+// fails with the reason rather than uploading half of what a crash needs.
+const SYMBOLS = 'composeApp/build/wasm-symbols/symbols.json';
+if (!existsSync(SYMBOLS)) {
+  console.error(`no ${SYMBOLS}: run node tools/wasm-symbols.mjs first, or every wasm frame stays a bare name.`);
+  process.exit(1);
+}
+const { debugFile, buildId } = JSON.parse(readFileSync(SYMBOLS, 'utf8'));
+
 // `composeApp.js` locally, `composeApp.<hash>.js` once the deploy has content-addressed it.
 const scripts = readdirSync(DIST).filter((f) => /^composeApp\..*js$/.test(f) && !f.endsWith('.map'));
 if (scripts.length !== 1) {
@@ -122,4 +133,18 @@ const args = [
   bundle, map,
 ];
 console.log(`sentry-cli ${args.join(' ')}`);
-process.exit(spawnSync('sentry-cli', args, { stdio: 'inherit' }).status ?? 1);
+const uploaded = spawnSync('sentry-cli', args, { stdio: 'inherit' });
+if (uploaded.status !== 0) process.exit(uploaded.status ?? 1);
+
+// Matched by the build id inside the file, not by release, so it needs neither --release nor a
+// URL. `--include-sources` bundles the Kotlin files the DWARF names, read from this checkout.
+const wasm = [
+  'debug-files', 'upload',
+  '--org', ORG,
+  '--project', PROJECT,
+  '--include-sources',
+  '--wait',
+  debugFile,
+];
+console.log(`sentry-cli ${wasm.join(' ')}   # build id ${buildId}`);
+process.exit(spawnSync('sentry-cli', wasm, { stdio: 'inherit' }).status ?? 1);

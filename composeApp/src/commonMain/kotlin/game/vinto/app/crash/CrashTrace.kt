@@ -96,8 +96,13 @@ private class Section(header: String) {
     val message = header.substringAfter(": ", missingDelimiterValue = NO_MESSAGE)
     val frames = mutableListOf<String>()
 
-    fun repeats(line: String): Boolean =
-        !line.startsWith(FRAME) && (line == type || line.startsWith("$type: "))
+    // A `JsException` says it twice under different names — Kotlin's header, then the engine's
+    // `TypeError: …` opening the JavaScript stack — so the message is matched as well as the type.
+    fun repeats(line: String): Boolean {
+        if (line.startsWith(FRAME)) return false
+        val saysItsMessage = message != NO_MESSAGE && line.endsWith(": $message")
+        return line == type || line.startsWith("$type: ") || saysItsMessage
+    }
 
     fun toChained() = ChainedException(type, message, frames.toList())
 }
