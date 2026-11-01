@@ -215,6 +215,12 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
   `Assertion failed: isString()` on the compiler's, whose `sourcesContent` is all nulls.
   `composeApp/build.gradle.kts` cleans it and passes it; the rewritten one is
   `vinto-kmp-composeApp.wasm.optimized.map`. Measure a map with real V8 offsets before trusting it.
+- **A provider that lists a task's inputs is evaluated before they exist.** With the configuration
+  cache on, `provider { inputFiles.files … }` runs when the cache entry is stored, before anything
+  has compiled. A machine with an old `build/` finds last time's files and works; a clean checkout
+  finds nothing. That is how wasm-opt got no source-map arguments on CI and every preview failed,
+  while every local build passed. Name the files, or read them in `doFirst`. To see it locally,
+  delete the outputs and `.gradle/configuration-cache` first.
 - **Sentry's wasm reader refuses Kotlin's module.** `symbolic` records function types per
   recursion group and functions name them per type index, so a Wasm GC module fails with
   "function references unknown type". `sentry-cli debug-files check` says the same. The debug file

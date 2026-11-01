@@ -544,30 +544,39 @@ tasks.withType<org.jetbrains.kotlin.gradle.targets.wasm.binaryen.BinaryenExec>()
  *
  * The compiler's map is cleaned first: `sourcesContent` is a list of nulls, and `wasm-opt` stops on
  * the first value that is not a string (`Assertion failed: isString()`).
+ *
+ * The arguments name the module rather than list the task's inputs. They were once built per file
+ * from `inputFiles`, and with the configuration cache that listing is taken before anything is
+ * compiled: on a clean checkout the directory is empty, so `wasm-opt` was handed no map and wrote
+ * none, while a machine with an earlier build in `build/` found the file and passed. CI is the
+ * clean checkout, so every preview failed in `tools/wasm-symbols.mjs`. Naming the module needs no
+ * listing, and the check below stops the build if the compiler ever emits another one.
  */
 tasks.withType<org.jetbrains.kotlin.gradle.targets.wasm.binaryen.BinaryenExec>()
     .matching { it.name == "compileProductionExecutableKotlinWasmJsOptimize" }
     .configureEach {
-        val cleaned = temporaryDir
+        val module = "${rootProject.name}-${project.name}.wasm"
+        val cleaned = temporaryDir.resolve("$module.map")
         val optimised = outputDirectory
-        perFileBinaryenArguments.putAll(
+        // A plain `provider`, not `outputDirectory.map`: a provider derived from the task's own output
+        // carries the task as its producer, and an argument that depends on its own task is a cycle.
+        binaryenArguments.addAll(
             provider {
-                inputFiles.files.associateWith { wasm ->
-                    listOf(
-                        "--input-source-map", cleaned.resolve("${wasm.name}.map").path,
-                        "--output-source-map", optimised.get().file("${wasm.name}.optimized.map").asFile.path,
-                    )
-                }
+                val map = optimised.get().file("$module.optimized.map").asFile
+                listOf("--input-source-map", cleaned.path, "--output-source-map", map.path)
             },
         )
         doFirst {
-            inputFiles.files.forEach { wasm ->
-                val map = File("${wasm.path}.map")
-                check(map.isFile) { "$map is missing, so the web build's crashes could not be read back to a line" }
-                @Suppress("UNCHECKED_CAST")
-                val json = groovy.json.JsonSlurper().parse(map) as MutableMap<String, Any?>
-                listOf("sourcesContent", "ignoreList", "x_google_ignoreList").forEach(json::remove)
-                cleaned.resolve("${wasm.name}.map").writeText(groovy.json.JsonOutput.toJson(json))
+            val names = inputFiles.files.map { it.name }
+            check(names == listOf(module)) {
+                "wasm-opt's source-map arguments name $module alone, and its inputs are $names. " +
+                    "Each module needs its own map, so this has to change before the build can ship."
             }
+            val map = File("${inputFiles.singleFile.path}.map")
+            check(map.isFile) { "$map is missing, so the web build's crashes could not be read back to a line" }
+            @Suppress("UNCHECKED_CAST")
+            val json = groovy.json.JsonSlurper().parse(map) as MutableMap<String, Any?>
+            listOf("sourcesContent", "ignoreList", "x_google_ignoreList").forEach(json::remove)
+            cleaned.writeText(groovy.json.JsonOutput.toJson(json))
         }
     }
