@@ -170,17 +170,31 @@ sealed interface RoomAnswer<out T> {
  * rather than the platform's.
  */
 suspend fun <T> answering(call: suspend () -> T): RoomAnswer<T> =
-    try {
-        RoomAnswer.Ok(call())
-    } catch (cancelled: kotlinx.coroutines.CancellationException) {
-        // Never swallowed: a cancelled call is the caller going away, not a failure to report.
-        throw cancelled
-    } catch (refused: RoomServiceException) {
-        RoomAnswer.Failed(refused.trouble, refused.message)
-    } catch (@Suppress("TooGenericExceptionCaught") _: Exception) {
+    recovering({ RoomAnswer.Ok(call()) }) { failed ->
         // The exception's own message is deliberately dropped — the same decision
         // `RemoteRoom.sendOrSay` makes for a write that fails, for the same reason.
-        RoomAnswer.Failed(RoomTrouble.OFFLINE, UNREACHABLE_SERVICE)
+        if (failed is RoomServiceException) {
+            RoomAnswer.Failed(failed.trouble, failed.message)
+        } else {
+            RoomAnswer.Failed(RoomTrouble.OFFLINE, UNREACHABLE_SERVICE)
+        }
+    }
+
+/**
+ * Runs [block], and answers [otherwise] for whatever it throws — except a cancellation, which is
+ * the caller going away and is never swallowed, and the machine itself failing (an `Error`), which
+ * no answer should paper over.
+ *
+ * Not `catch (e: Exception)`, which is what every one of these was. On Kotlin/Wasm a JavaScript
+ * exception arrives as `JsException`, and `JsException` extends `Throwable`, not `Exception`: so a
+ * browser's `TypeError` or `DOMException` went straight past every catch here and failed the
+ * coroutine that asked. Browse public rooms stopped answering for good the first time `fetch`
+ * threw where it was called (`ABrowserFailureIsAnAnswerTest`).
+ */
+internal inline fun <T> recovering(block: () -> T, otherwise: (Throwable) -> T): T =
+    runCatching(block).getOrElse { failed ->
+        if (failed is kotlinx.coroutines.CancellationException || failed is Error) throw failed
+        otherwise(failed)
     }
 
 /**

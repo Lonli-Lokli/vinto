@@ -17,7 +17,6 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.PlanEdit
 import game.vinto.shapes.TableTalk
 import game.vinto.shapes.actorId
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -288,14 +287,11 @@ class RemoteRoom(
      */
     fun quit() {
         sender.launch {
-            try {
-                // In the same coroutine as the close, and before it: `fire` would launch a second
-                // one and `leave` would then race it, dropping the very frame that says why.
-                socket?.send(encode(ClientMessage.Leave(token())))
-            } catch (_: Exception) {
-                // A send into a dying socket. The seat then behaves as it did before this
-                // existed — held, not lost — which is the right way for a best-effort exit to fail.
-            }
+            // In the same coroutine as the close, and before it: `fire` would launch a second
+            // one and `leave` would then race it, dropping the very frame that says why. A send
+            // into a dying socket fails quietly: the seat then behaves as it did before this
+            // existed — held, not lost — which is the right way for a best-effort exit to fail.
+            recovering({ socket?.send(encode(ClientMessage.Leave(token()))) }) { }
             leave()
         }
     }
@@ -338,7 +334,7 @@ class RemoteRoom(
         var attempt = 0
         var everConnected = false
         while (sender.isActive) {
-            try {
+            recovering({
                 _connection.value = if (attempt == 0) {
                     ConnectionState.Connecting
                 } else {
@@ -390,9 +386,7 @@ class RemoteRoom(
                         }
                     }
                 }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (@Suppress("TooGenericExceptionCaught") _: Exception) {
+            }) {
                 // The socket died while it was open — reading and writing still throw, since a
                 // stream that ends is not an answer. The rules below are the whole handling.
             }
@@ -525,24 +519,20 @@ class RemoteRoom(
      */
     private suspend fun sendOrSay(text: String): SendOutcome {
         val open = socket ?: return SendOutcome.Failed("not connected")
-        return try {
+        // Every platform fails its own way and there is no useful common supertype — not even
+        // `Exception`, which a browser's `JsException` is not ([recovering]). What matters is
+        // that this is the *only* place that has to know, and that what leaves it is a value the
+        // compiler makes the caller read.
+        //
+        // The exception's own message is deliberately dropped. This reason is *shown to the
+        // player*, and the messages are plumbing: OkHttp's send returns false when the socket has
+        // gone and this threw `error("socket closed")`, which is what a real game put on the felt
+        // in red under the prompt. It is the same fault `troubled()` exists for — true, addressed
+        // to somebody who works on this, and no use at all to somebody holding five cards.
+        return recovering({
             open.send(text)
             SendOutcome.Sent
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (@Suppress("TooGenericExceptionCaught", "SwallowedException") failed: Exception) {
-            // Every platform fails its own way and there is no useful common supertype. What
-            // matters is that this is the *only* place that has to know, and that what leaves
-            // it is a value the compiler makes the caller read.
-            //
-            // The exception's own message is deliberately dropped. This reason is *shown to
-            // the player*, and the messages are plumbing: OkHttp's send returns false when
-            // the socket has gone and this threw `error("socket closed")`, which is what a
-            // real game put on the felt in red under the prompt. It is the same fault
-            // `troubled()` exists for — true, addressed to somebody who works on this, and
-            // no use at all to somebody holding five cards.
-            SendOutcome.Failed(FAILED_TO_SEND)
-        }
+        }) { SendOutcome.Failed(FAILED_TO_SEND) }
     }
 
     private fun token(): String? = vault.seatToken(code)
@@ -568,11 +558,8 @@ class RemoteRoom(
 
     private fun fire(message: ClientMessage) {
         sender.launch {
-            try {
-                socket?.send(encode(message))
-            } catch (_: Exception) {
-                // A send into a dying socket; the reconnect loop is already on it.
-            }
+            // A send into a dying socket fails quietly; the reconnect loop is already on it.
+            recovering({ socket?.send(encode(message)) }) { }
         }
     }
 
