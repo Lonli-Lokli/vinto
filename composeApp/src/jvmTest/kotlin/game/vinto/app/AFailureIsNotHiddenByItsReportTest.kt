@@ -148,6 +148,33 @@ class AFailureIsNotHiddenByItsReportTest {
         assertTrue(only.frames().single().contains("game.vinto.app.main"), "the only frame was taken for a header")
     }
 
+    /**
+     * A browser error carried by a Kotlin `JsException` prints under two names: Kotlin's header,
+     * then the JavaScript engine's own (`TypeError: …`) opening its stack. Read off a real failure
+     * in a local build of the web client, where the second was sent as the newest "frame".
+     */
+    @Test
+    fun aJavaScriptErrorsOwnHeaderIsNotAFrame() {
+        val stack = listOf(
+            "kotlin.js.JsException: fetch refused by an extension",
+            "TypeError: fetch refused by an extension",
+            "    at window.fetch (http://localhost:8097/index.html:9:20)",
+            "    at <vinto-kmp:composeApp>.game.vinto.app.net.\$invokeCOROUTINE\$.doResume_53753 $WASM[1]:0x78df02)",
+        )
+        reporter.report(
+            relayedCrash(
+                name = "JsException",
+                message = "fetch refused by an extension",
+                stack = stack.joinToString("\n"),
+                fallback = "uncaught error",
+            ),
+        )
+
+        val frames = exceptions(sent.single()).single().frames()
+        assertEquals(2, frames.size, "the engine's header was sent as a frame: $frames")
+        assertTrue(frames.none { it.contains("TypeError") }, frames.toString())
+    }
+
     /** A promise rejected with a bare string has no name and no stack, and is still a report. */
     @Test
     fun aRejectionWithNothingButAStringIsStillNamed() {

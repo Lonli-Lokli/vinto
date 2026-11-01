@@ -108,6 +108,7 @@ object Crashes {
             nowIso = ::nowIso,
             surface = { surface() },
             place = { Where.now() },
+            images = pipe.images,
             post = { url, auth, body ->
                 postBeacon(url, body, contentType = "application/x-sentry-envelope", auth = auth)
             },

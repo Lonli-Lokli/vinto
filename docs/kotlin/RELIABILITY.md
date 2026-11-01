@@ -111,16 +111,37 @@ the same one three times:
 | Target | What makes the frames readable | Where |
 | --- | --- | --- |
 | Android | R8 `mapping.txt`, uploaded by the Sentry Gradle plugin. The event must **name the mapping's uuid** or the upload is ignored — read from `assets/sentry-debug-meta.properties`, not the manifest, since plugin 6.x | `ProguardUuid.android.kt`, `androidApp/build.gradle.kts` |
-| iOS | dSYMs, uploaded by a Release-only build phase. Sentry looks up the frame's `instruction_addr`, so **without addresses in the event an uploaded dSYM changes nothing** | `iosApp/project.yml` |
-| Web — wasm | The **WebAssembly name section**, kept in the module itself. `wasm-opt` strips it by default; `binaryenArguments.add("-g")` keeps it, at +432 KB gzipped. Nothing is uploaded and nothing has to match | `composeApp/build.gradle.kts` |
+| iOS | dSYMs, uploaded by a Release-only build phase. Sentry looks up the frame's `instruction_addr` **in the image `debug_meta` names**, and the hand-built envelope names none — so today an iOS frame is its `kfun:` name and no line. `sentry-cocoa` (`report-through-the-sentry-sdk` §3) sends the images | `iosApp/project.yml` |
+| Web — wasm, the name | The **WebAssembly name section**, kept in the module itself. `wasm-opt` strips it by default; `binaryenArguments.add("-g")` keeps it, at +432 KB gzipped | `composeApp/build.gradle.kts`, `tools/check-wasm-names.mjs` |
+| Web — wasm, the line | A **DWARF debug file** under the module's `build_id`, built from the source map `wasm-opt` keeps, uploaded with the Kotlin sources it names. The event names the module in `debug_meta` | `composeApp/build.gradle.kts`, `tools/wasm-symbols.mjs`, `tools/upload-web-sourcemaps.mjs` |
 | Web — JS glue | `composeApp.js.map`, uploaded to Sentry and then **deleted before the deploy** | `tools/upload-web-sourcemaps.mjs`, `tools/strip-web-sourcemaps.mjs` |
 
-The web row is two rows on purpose. A browser stack has both kinds of frame, and **the wasm ones
-are the ones holding our code** — those read correctly with no upload at all, because the names
-travel inside the `.wasm`. There is no upload that could replace them: Sentry symbolicates
-WebAssembly from DWARF keyed by a `build_id` custom section, which Kotlin/Wasm does not emit,
-and it does not read wasm source maps. `vinto-kmp-composeApp.wasm.map` exists in the build and
-is of no use to Sentry.
+The web rows are three on purpose. A browser stack has both kinds of frame, and **the wasm ones
+are the ones holding our code**. Their names travel inside the `.wasm`; their files and lines did
+not reach Sentry at all until 2026-10-28, and three things stood in the way, each of which looked
+like the end of the road:
+
+- **Sentry reads WebAssembly from DWARF, not from source maps**, filed under a `build_id` custom
+  section. Kotlin/Wasm writes no `build_id`, and the DWARF it can write (`-Xwasm-generate-dwarf`) is
+  version 5, on which `wasm-opt` stops (`unsupported DWARF version (5)`).
+- **The only source map was for a module nobody runs.** The compiler maps the module *before*
+  `wasm-opt`, and the plugin copied that map past the optimiser unchanged. Handed the map,
+  `wasm-opt` carries it through every pass and writes one for the module that ships — byte-identical
+  output, measured. The compiler's map has to be cleaned first: its `sourcesContent` is all nulls,
+  and `wasm-opt` stops on those too.
+- **Sentry's own reader cannot open Kotlin's module.** `symbolic` notes function types per
+  recursion group and functions name them per type index; a Wasm GC module puts its types in
+  recursion groups, so it refuses the file ("function references unknown type"). It needs nothing
+  from the code, though, so the debug file is a module of custom sections only — the `build_id`
+  and the DWARF — whose addresses are offsets into the served module, which is what V8 prints.
+
+`tools/wasm-symbols.mjs` does the last two: it writes that debug file from the optimised map,
+stamps the same `build_id` into the shipped module, and puts it in `index.html` for the reporter to
+name in `debug_meta`. It matches the dist's module to the map by its bytes, and reads its own DWARF
+back row by row before anything is uploaded; Sentry's `symbolic` and `sentry-cli debug-files check`
+both accept the result ("wasm debug companion … Usable: yes") and resolve real V8 offsets to
+`CrashHandler.wasmJs.kt:32`. Library frames resolve too, to package paths
+(`kotlinx/coroutines/JobSupport.kt:734`), because the compiler is asked to keep their mappings.
 
 **A source map is the source, so it is uploaded and then removed.** It used to be published
 along with everything else in the dist, which handed every Kotlin file the web client was built

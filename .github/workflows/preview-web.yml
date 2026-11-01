@@ -109,6 +109,23 @@ jobs:
           sed -i "s|src=\"composeApp.js\"|src=\"composeApp.$hash.js\"|" index.html
           grep -q "composeApp.$hash.js" index.html || { echo "::error::the script tag was not rewritten"; exit 1; }
 
+      # As deploy-web.yml does, and for the same reason: a preview reports its crashes to the same
+      # Sentry project (environment `development`), and a wasm frame reads as a line only once the
+      # module carries its build id and the debug file under it has been uploaded.
+      - name: Give the wasm its build id and debug file
+        run: node tools/wasm-symbols.mjs "$DIST"
+
+      - name: Upload the web build's symbols to Sentry
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "::error::No SENTRY_AUTH_TOKEN on the 'room' environment, so this preview's crashes could not be read."
+            exit 1
+          fi
+          npm install -g @sentry/cli@3
+          node tools/upload-web-sourcemaps.mjs "$DIST"
+
       # `preview_urls` in wrangler.jsonc only reaches the Worker on the next `wrangler
       # deploy`, and a pull request's preview cannot wait for a production deploy to carry
       # a setting. This call turns previews on directly — and keeps `enabled: false`, so

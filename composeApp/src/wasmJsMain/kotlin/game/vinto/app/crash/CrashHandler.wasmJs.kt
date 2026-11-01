@@ -9,7 +9,34 @@ import org.w3c.dom.events.Event
  * the bundle has no room for one (`add-live-analytics/design.md` §A9).
  */
 internal actual val crashPipe: CrashPipe =
-    CrashPipe.ByHand(catchUncaught = ::catchUncaught, awaitSent = ::awaitSent)
+    CrashPipe.ByHand(catchUncaught = ::catchUncaught, awaitSent = ::awaitSent, images = ::stampedModule)
+
+/**
+ * The app's module, as `tools/wasm-symbols.mjs` named it in `index.html` at deploy time: its file
+ * and the `build_id` it stamped into it, which is the key its uploaded debug file is filed under.
+ * Absent on a development server, which has no debug file to point at.
+ *
+ * Read when the first report is made rather than at start-up: the page is long since parsed by then,
+ * and a page that has nothing to report never reads it.
+ */
+private val stamped: List<WasmImage> by lazy {
+    listOfNotNull(wasmImageFrom(buildIdTag()) { file -> resolveAgainstPage(file) })
+}
+
+private fun stampedModule(): List<WasmImage> = stamped
+
+private fun buildIdTag(): String = js(
+    """{ try {
+         var tag = document.querySelector('meta[name="vinto-wasm-build-id"]');
+         return tag && tag.content ? String(tag.content) : '';
+       } catch (x) { return ''; } }""",
+)
+
+// detekt reads Kotlin, not the JavaScript below, so it cannot see that `file` is used.
+@Suppress("UnusedParameter")
+private fun resolveAgainstPage(file: String): String = js(
+    "{ try { return new URL(file, document.baseURI).href; } catch (x) { return file; } }",
+)
 
 /**
  * The browser has no uncaught-exception handler a Kotlin coroutine would reach, so the app

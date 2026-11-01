@@ -34,6 +34,8 @@ class CrashReporter(
      * a caller that has no game — the tests, a menu-only harness — needs to say nothing.
      */
     private val place: () -> CrashPlace = { CrashPlace() },
+    /** The modules a frame can be looked up in ([WasmImage]); none outside a deployed web build. */
+    private val images: () -> List<WasmImage> = { emptyList() },
     private val post: suspend (url: String, auth: String, body: String) -> Unit,
 ) {
     private val target = parseDsn(dsn)
@@ -75,6 +77,7 @@ class CrashReporter(
                 message = account.message,
                 frames = sections.first().frames.take(MAX_FRAMES),
                 chained = chained.map { it.copy(frames = it.frames.take(MAX_FRAMES)) },
+                images = runCatching(images).getOrDefault(emptyList()),
                 place = place(),
             ),
         )

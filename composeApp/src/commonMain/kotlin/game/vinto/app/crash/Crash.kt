@@ -169,8 +169,44 @@ data class CrashReport(
      * chain in, with the failure this report is about after them.
      */
     val chained: List<ChainedException> = emptyList(),
+    /** The modules whose frames Sentry can look up in an uploaded debug file — see [WasmImage]. */
+    val images: List<WasmImage> = emptyList(),
     val place: CrashPlace = CrashPlace(),
 )
+
+/**
+ * The web build's WebAssembly, as Sentry files its debug file: by the module's `build_id`.
+ *
+ * Without it a wasm frame is a function name and nothing else. With it — in the event's
+ * `debug_meta`, and a frame marked as an offset into it — Sentry reads the debug file
+ * `tools/wasm-symbols.mjs` wrote and uploaded, and the frame names its Kotlin file and line.
+ *
+ * The debug id is the `build_id`'s 16 bytes as a UUID with a zero age, which is how Sentry's own
+ * reader (`symbolic`) derives it and what `@sentry/wasm` sends.
+ */
+data class WasmImage(val codeFile: String, val buildId: String) {
+    val debugId: String get() = buildId.padEnd(BUILD_ID_HEX, '0').take(BUILD_ID_HEX) + "0"
+
+    /** The module's file name, which is what a frame's URL is matched on — never its host. */
+    internal val fileName: String get() = codeFile.substringAfterLast('/')
+}
+
+/**
+ * Reads the tag the deploy writes into `index.html`: `<file>.wasm <32 hex digits>`.
+ *
+ * Null for anything else, so a hand-edited page or a development server reports as it always did
+ * rather than pointing Sentry at a debug file that does not exist.
+ */
+internal fun wasmImageFrom(tag: String, resolve: (file: String) -> String): WasmImage? {
+    val parts = tag.trim().split(' ')
+    if (parts.size != 2) return null
+    val (file, buildId) = parts
+    if (!file.endsWith(".wasm") || !buildIdShape.matches(buildId)) return null
+    return WasmImage(codeFile = resolve(file), buildId = buildId)
+}
+
+private const val BUILD_ID_HEX = 32
+private val buildIdShape = Regex("[0-9a-f]{$BUILD_ID_HEX}")
 
 fun crashEnvelope(report: CrashReport): String = with(report) {
     val body = buildString {
@@ -196,12 +232,21 @@ fun crashEnvelope(report: CrashReport): String = with(report) {
             append('}')
         }
         append(""","exception":{"values":[""")
-        chained.forEach { appendException(it.type, it.message, it.frames).append(',') }
-        appendException(type, message, frames)
+        chained.forEach { appendException(it.type, it.message, it.frames, images).append(',') }
+        appendException(type, message, frames, images)
         append("""]}""")
-        // No `debug_meta`. Only an R8 build has a mapping to name, and Android reports through the
-        // SDK, which names its own. When this envelope named it, it put `debug_meta` after the
-        // brace closing the event, where Sentry dropped it without a word (`CrashFramesTest`).
+        // Inside the event's own braces. It was once written after the one closing the event, as
+        // an R8 mapping's id, and Sentry dropped it without a word (`CrashFramesTest`).
+        if (images.isNotEmpty()) {
+            append(""","debug_meta":{"images":[""")
+            images.forEachIndexed { index, image ->
+                if (index > 0) append(',')
+                append("""{"type":"wasm","code_file":""").append(json(image.codeFile))
+                append(""","code_id":""").append(json(image.buildId))
+                append(""","debug_id":""").append(json(image.debugId)).append('}')
+            }
+            append("""]}""")
+        }
         append('}')
     }
 
@@ -214,6 +259,7 @@ private fun StringBuilder.appendException(
     type: String,
     message: String,
     frames: List<String>,
+    images: List<WasmImage>,
 ): StringBuilder {
     append("""{"type":""").append(json(type))
     append(""","value":""").append(json(message))
@@ -222,7 +268,7 @@ private fun StringBuilder.appendException(
         // Sentry wants the newest frame last; a Kotlin stack trace is newest first.
         frames.asReversed().forEachIndexed { index, frame ->
             if (index > 0) append(',')
-            appendFrame(parseFrame(frame))
+            appendFrame(parseFrame(frame), images)
         }
         append("""]}""")
     }
@@ -238,12 +284,14 @@ private fun StringBuilder.appendException(
  * real report was titled after `kotlin.Throwable#<init>`, which is where every crash begins and
  * therefore tells nobody anything.
  *
- * A native frame carries `instruction_addr` and `package`, which is the pair a dSYM lookup needs;
- * without them an uploaded dSYM has nothing to match against. A JVM frame carries the file and
- * line, which is all Sentry needs when the build is not minified — and, once R8 is on, what a
- * mapping file is applied to.
+ * A native frame carries `instruction_addr` and `package`. That is half of what a dSYM lookup
+ * needs: the other half is the image the address falls in, named in `debug_meta` with its UUID and
+ * load address, and this envelope does not send one for iOS — moving iOS onto `sentry-cocoa`
+ * (`report-through-the-sentry-sdk` §3) is what brings it. A JVM frame carries the file and line,
+ * which is all Sentry needs when the build is not minified — and, once R8 is on, what a mapping
+ * file is applied to.
  */
-private fun StringBuilder.appendFrame(frame: CrashFrame) {
+private fun StringBuilder.appendFrame(frame: CrashFrame, images: List<WasmImage>) {
     append('{')
     when (frame) {
         // **Split at the last dot**, because that is how Sentry keys a mapping: `module` is the
@@ -264,14 +312,17 @@ private fun StringBuilder.appendFrame(frame: CrashFrame) {
             append(""","instruction_addr":""").append(json(frame.address))
         }
 
-        // The name is the whole value here: with the wasm name section kept, this frame reads
-        // `game.vinto.app.main`, and without it there is nothing to name an issue after. The
-        // address is carried for completeness rather than for lookup — no wasm debug files are
-        // uploaded, because the names travel in the module itself.
+        // The name comes from the module's own name section, so the frame reads
+        // `game.vinto.app.main` whatever else happens. The address is what makes it a line: a
+        // frame in a module named in `debug_meta` is marked native, at that offset into it, and
+        // Sentry looks it up in the debug file (`WasmImage`). Skia's module has none, and its
+        // frames stay names.
         is CrashFrame.Wasm -> {
             append(FUNCTION_KEY).append(json(frame.function))
             append(""","package":""").append(json(frame.module))
             append(""","instruction_addr":""").append(json(frame.address))
+            val image = images.indexOfFirst { it.fileName == frame.module }
+            if (image >= 0) append(""","platform":"native","addr_mode":"rel:""").append(image).append('"')
         }
 
         // Line AND column, because that is the pair a JavaScript source map is keyed on.
