@@ -199,8 +199,10 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
   rejected promise is different: `await()` turns it into a plain `Exception`.) Worse, when the
   thrown value has no `stack` — Chromium's own `DOMException` has none — its
   `stackTraceToString()` throws `NullPointerException`. That is how the crash reporter used to
-  throw from inside a `CoroutineExceptionHandler` (Sentry 7817278407). Catch where the browser is
-  called — `ForgivingVault` is the pattern — and never assume a failure can be printed.
+  throw from inside a `CoroutineExceptionHandler` (Sentry 7817278407). In the client, catch with
+  `recovering` (beside `answering`), which takes anything but a cancellation or an `Error`; at a
+  browser API, catch where it is called — `ForgivingVault` is the pattern. And never assume a
+  failure can be printed.
 - **`rememberCoroutineScope` is not supervised, and a failure in it stops the Recomposer.** Its
   job is a plain `Job` under the Recomposer's effect job, so one coroutine that fails cancels the
   effect job and the screen never draws again — with no crash on any platform if a handler
