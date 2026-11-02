@@ -1,4 +1,4 @@
-// A COPY of the portfolio's capture check, `tools/android-archive.mjs` in gulnya, as of gulnya commit 21330e2 (2026-10-20).
+// A COPY of the portfolio's capture check, `tools/android-archive.mjs` in gulnya, as of gulnya commit 19b8ce25 (2026-11-02).
 // Vinto must build without ../gulnya checked out, so its build calls this copy and reads no gulnya file. Change it
 // there, then copy it again: gulnya's test fails when this file, after this header, differs from the original.
 // Everything below is the original, byte for byte, from the blank line after this header.
@@ -10,7 +10,6 @@
 // zipEntries inflates every file entry of a zip (an .apk or .aab is one). apkPackage and aabPackage read the
 // <manifest package> an .apk's binary XML or an .aab's protobuf XML (aapt2's two formats) carries, which is the
 // applicationId the build was made with. Used by capture-check.mjs.
-
 import zlib from 'node:zlib';
 
 /** Every file entry of a zip held in memory, inflated: [{ name, data }]. */

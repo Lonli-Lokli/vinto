@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// A COPY of the portfolio's capture check, `tools/capture-check.mjs` in gulnya, as of gulnya commit 21330e2 (2026-10-20).
+// A COPY of the portfolio's capture check, `tools/capture-check.mjs` in gulnya, as of gulnya commit 19b8ce25 (2026-11-02).
 // Vinto must build without ../gulnya checked out, so its build calls this copy and reads no gulnya file. Change it
 // there, then copy it again: gulnya's test fails when this file, after this header, differs from the original.
 // Everything below is the original, byte for byte, from the blank line after this header.
@@ -31,11 +31,11 @@
 // Exit 0: the verdict holds. 1: it does not. 2: the file cannot be read. A caller fails on anything but 0, so a
 // build that cannot run this never passes without it. Reading the iOS id asks plutil, so .app, .xcarchive and .ipa
 // need macOS; .aab and .apk need only Node.
-
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { aabPackage, apkPackage, zipEntries } from './android-archive.mjs';
 
 export const SHARED_ID = 'kupalinka-capture-a47d267ea8c1795fbb7df224';
@@ -198,6 +198,7 @@ export function main(argv) {
 }
 
 // Run, unless imported (by the test). realpath on both sides, or a symlinked path would skip the check and exit 0.
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(new URL(import.meta.url).pathname)) {
+// fileURLToPath, never the URL's pathname: that is "/D:/..." on Windows and "%20" for a space, and realpath fails on it.
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
   process.exitCode = main(process.argv.slice(2));
 }
