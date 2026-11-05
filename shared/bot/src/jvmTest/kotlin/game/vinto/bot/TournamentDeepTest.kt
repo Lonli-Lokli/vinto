@@ -31,14 +31,15 @@ import kotlin.test.assertTrue
  * **This is a manually-run gate, and that is a decision rather than an oversight.** Thirty-six
  * whole games of MCTS take minutes — measured, and recorded in `docs/kotlin/GATES.md` §6k —
  * which is worth paying when a heuristic changes and is not worth paying on every push. It is
- * excluded from `jvmTest` unless `-Ptournament` is passed:
+ * a deep test (`*DeepTest`, gradle/tests.gradle.kts): the everyday suite leaves it out, and it
+ * runs with `-Pgames.suite=deep`; `-Ptournament` prints its table:
  *
  * ```sh
- * ./gradlew :shared:bot:jvmTest --tests '*TournamentTest*' -Ptournament        # compare
- * ./gradlew :shared:bot:jvmTest --tests '*TournamentTest*' -Ptournament=write  # regenerate
+ * ./gradlew :shared:bot:jvmTest -Pgames.suite=deep --tests '*TournamentDeepTest*' -Ptournament        # compare
+ * ./gradlew :shared:bot:jvmTest -Pgames.suite=deep --tests '*TournamentDeepTest*' -Ptournament=write  # regenerate
  * ```
  */
-class TournamentTest {
+class TournamentDeepTest {
 
     /**
      * Twelve seeds at each of three difficulties.

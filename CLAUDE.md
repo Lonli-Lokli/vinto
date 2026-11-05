@@ -80,7 +80,7 @@
   ./gradlew :composeApp:jvmTest           # Compose UI suites, headless
   ./gradlew :composeApp:run               # the desktop window — fastest look at a UI change
   ./gradlew :worker:jsProductionExecutableCompileSync   # the Worker bundle
-  ./gradlew :shared:bot:jvmTest --tests '*TournamentTest*' -Ptournament   # bot strength
+  ./gradlew :shared:bot:jvmTest -Pgames.suite=deep --tests '*TournamentDeepTest*' -Ptournament   # bot strength
   ./gradlew detekt -PdetektFix            # let ktlint FIX the formatting it would report
   ```
 

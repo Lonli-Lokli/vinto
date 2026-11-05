@@ -24,4 +24,4 @@
   puts every proposed action through ActionValidator. Strength is measured separately,
   against a committed self-play baseline (docs/kotlin/GATES.md §6k):
 
-      ./gradlew :shared:bot:jvmTest --tests '*TournamentTest*' -Ptournament
+      ./gradlew :shared:bot:jvmTest -Pgames.suite=deep --tests '*TournamentDeepTest*' -Ptournament

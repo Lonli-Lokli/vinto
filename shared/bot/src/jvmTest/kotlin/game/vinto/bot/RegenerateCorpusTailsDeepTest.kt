@@ -29,8 +29,8 @@ import kotlin.test.assertTrue
  * file whose every recorded action is still legal.
  *
  * ```sh
- * ./gradlew :shared:bot:jvmTest --tests '*RegenerateCorpusTailsTest*' -Pcorpus        # report
- * ./gradlew :shared:bot:jvmTest --tests '*RegenerateCorpusTailsTest*' -Pcorpus=write  # rewrite
+ * ./gradlew :shared:bot:jvmTest -Pgames.suite=deep --tests '*RegenerateCorpusTailsDeepTest*' -Pcorpus        # report
+ * ./gradlew :shared:bot:jvmTest -Pgames.suite=deep --tests '*RegenerateCorpusTailsDeepTest*' -Pcorpus=write  # rewrite
  * ```
  *
  * **What it guarantees about the kept prefix.** Every action before the refused one is kept
@@ -39,7 +39,7 @@ import kotlin.test.assertTrue
  * touch is unmoved — which is the claim the README has to make afterwards, and the one worth
  * checking by machine rather than by eye.
  */
-class RegenerateCorpusTailsTest {
+class RegenerateCorpusTailsDeepTest {
 
     private val dir = File(System.getProperty("vinto.fixtures") ?: "../../fixtures", "recordings")
     private val writing = System.getProperty("vinto.corpus.write") == "true"

@@ -25,7 +25,7 @@
     <ID>CyclomaticComplexMethod:CoalitionPlanner.kt:fun buildCoalitionPlanInput: CoalitionPlanInput?</ID>
     <ID>LoopWithTooManyJumpStatements:BotRunner.kt:BotRunner$for</ID>
     <ID>MatchingDeclarationName:BotObservations.kt:TableObservation</ID>
-    <ID>StringShouldBeRawString:TournamentTest.kt:TournamentTest$"\nself-play tournament, seeds 1..${measured.seeds}\n$header\n$rows\n" + "(ms/decision is this machine's, and is deliberately not in the baseline)\n"</ID>
+    <ID>StringShouldBeRawString:TournamentDeepTest.kt:TournamentDeepTest$"\nself-play tournament, seeds 1..${measured.seeds}\n$header\n$rows\n" + "(ms/decision is this machine's, and is deliberately not in the baseline)\n"</ID>
     <ID>UnnecessaryParentheses:BotRunner.kt:BotRunner$(owner?.cards?.indices ?: IntRange.EMPTY)</ID>
     <ID>UnnecessaryParentheses:CoalitionHumanMemberTest.kt:CoalitionHumanMemberTest$(GameEngineFacade.reduce(state, action))</ID>
     <ID>UnnecessaryParentheses:OpponentKnowledgeFlowTest.kt:OpponentKnowledgeFlowTest$(humanId to 2)</ID>

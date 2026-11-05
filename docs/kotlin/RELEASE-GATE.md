@@ -34,7 +34,7 @@ does not cover this" and "nobody remembered this" is the whole point of writing 
 ### The self-play tournament — a manually-run gate (GATES.md §6k)
 
 ```sh
-./gradlew :shared:bot:jvmTest --tests '*TournamentTest*' -Ptournament
+./gradlew :shared:bot:jvmTest -Pgames.suite=deep --tests '*TournamentDeepTest*' -Ptournament
 ```
 
 6m 39s of MCTS against 1m 26s for the whole of the rest of `:shared:bot:jvmTest`. Folding it in

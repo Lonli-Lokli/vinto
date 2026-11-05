@@ -93,7 +93,7 @@ transition is fine, it is being fed the wrong state.
 **Why nobody noticed.** `SwapTargetSelectionTest` asserts that the two targets come from different
 players and that the bot is one of them — true of every candidate the generator emits. No test
 asserts that the *best* candidate wins. `SelfPlayGateTest` asks whether moves are legal, and they
-are. `TournamentTest` pins the numbers but does not say whether they are good.
+are. `TournamentDeepTest` pins the numbers but does not say whether they are good.
 
 ### 3.2 Draw and take-discard are indistinguishable
 
@@ -284,7 +284,7 @@ constants were standing in for, and each is gated by a test that would have caug
 
 **0. Gate first.** Turn the three probe positions in §3.1 into tests that assert the right answer
 in ≥ 38 of 40 seeds (`aJackTakesAKnownJokerOverAKnownNine`, `anUnplayedJackIsTakenWhenAJokerIsOnOffer`,
-`aKingDeclaresItsOwnPair`). They fail today. Add a mixed-difficulty table to `TournamentTest` so the
+`aKingDeclaresItsOwnPair`). They fail today. Add a mixed-difficulty table to `TournamentDeepTest` so the
 difficulties can be ranked at all (`docs/kotlin/GATES.md` §6k notes a homogeneous table cannot).
 
 **1. Make the tree search a determinized world.** This is the standard information-set MCTS shape
