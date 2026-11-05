@@ -19,10 +19,15 @@ import kotlin.time.Duration.Companion.minutes
  */
 class OnlineScoreTest {
 
+    /** Four games every day; `OnlineScoreDeepTest` plays twelve. */
     @Test
     fun theDerivedPayMatchesTheEngines() = runTest(timeout = LONG) {
+        theDerivedPayMatchesTheEnginesOver(1L..EVERYDAY_SEEDS)
+    }
+
+    internal suspend fun theDerivedPayMatchesTheEnginesOver(seeds: LongRange) {
         var called = 0
-        for (seed in 1L..SEEDS) {
+        for (seed in seeds) {
             val session = LocalGameSession(seed = seed, difficulty = Difficulty.EASY)
             assertTrue(session.playItselfOut(seed), "seed $seed never finished")
 
@@ -39,8 +44,8 @@ class OnlineScoreTest {
         assertTrue(called > 0, "no seed produced a Vinto call — the interesting arms went untested")
     }
 
-    private companion object {
-        const val SEEDS = 12L
+    internal companion object {
+        const val EVERYDAY_SEEDS = 4L
         val LONG = 5.minutes
     }
 }

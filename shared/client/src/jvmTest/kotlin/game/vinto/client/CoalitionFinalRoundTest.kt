@@ -44,7 +44,7 @@ class CoalitionFinalRoundTest {
      * past all forty and the test would pass having asserted nothing — which is exactly what a
      * probe found it doing at zero when the harness was first written wrong.
      */
-    private val enoughSeeds = 10
+    internal val enoughSeeds = 10
 
     /**
      * How many of those rounds must leave the caller a board with something on it.
@@ -55,7 +55,7 @@ class CoalitionFinalRoundTest {
      * the forty seeds carry a proposal; the floor is measured, with room for the search to
      * drift, for the same reason [enoughSeeds] is one. It was **zero** before the fix.
      */
-    private val enoughPlans = 12
+    internal val enoughPlans = 12
 
     /** A session where the human has called Vinto and the three bots owe one turn each. */
     private suspend fun humanCallsVinto(seed: Long): LocalGameSession? {
@@ -76,29 +76,44 @@ class CoalitionFinalRoundTest {
         return session.takeIf { called == true && it.state.vintoCallerId == me }
     }
 
+    /**
+     * The everyday suite plays the first [EVERYDAY_ROUNDS] seeds that reach a human call, and
+     * the floor is those rounds; `CoalitionFinalRoundDeepTest` plays every seed of the forty
+     * against [enoughSeeds]. The same goes for the three tests below.
+     */
     @Test
     fun theCoalitionPlaysItsLastTurnsAndTheRoundEnds() = runTest(timeout = WHOLE_GAME) {
+        theCoalitionPlaysItsLastTurnsAndTheRoundEndsOver(1L..SWEEP, enough = EVERYDAY_ROUNDS, stopAt = EVERYDAY_ROUNDS)
+    }
+
+    internal suspend fun theCoalitionPlaysItsLastTurnsAndTheRoundEndsOver(seeds: LongRange, enough: Int, stopAt: Int) {
         val stalled = mutableListOf<Long>()
         var played = 0
 
-        for (seed in 1L..40L) {
+        for (seed in seeds.asSequence().takeWhile { played < stopAt }) {
             val session = humanCallsVinto(seed) ?: continue
             played++
             if (!session.playItselfOut(seed)) stalled += seed
         }
 
-        assertTrue(played >= enoughSeeds, "only $played of 40 seeds produced a human Vinto call")
+        assertTrue(played >= enough, "only $played of ${seeds.count()} seeds produced a human Vinto call")
         assertTrue(stalled.isEmpty(), "the final round never finished for seeds $stalled")
     }
 
     @Test
     fun theCallerIsNeverTargetedByTheCoalitionInTheFinalRound() = runTest(timeout = WHOLE_GAME) {
+        theCallerIsNeverTargetedByTheCoalitionInTheFinalRoundOver(1L..TARGETED_SWEEP, stopAt = EVERYDAY_ROUNDS)
+    }
+
+    internal suspend fun theCallerIsNeverTargetedByTheCoalitionInTheFinalRoundOver(seeds: LongRange, stopAt: Int) {
         // The rule the validator enforces, checked here where it actually bites: three bots
         // taking real turns against a real caller, rather than in a constructed position.
         // `ValidatorImpersonationTest` proves nothing illegal is accepted; this proves the
         // bots do not spend the round proposing moves that get refused.
-        for (seed in 1L..20L) {
+        var played = 0
+        for (seed in seeds.asSequence().takeWhile { played < stopAt }) {
             val session = humanCallsVinto(seed) ?: continue
+            played++
             val caller = session.state.vintoCallerId
 
             assertTrue(session.playItselfOut(seed), "seed $seed did not finish")
@@ -109,12 +124,16 @@ class CoalitionFinalRoundTest {
 
     @Test
     fun theRoundIsScoredOnTheCoalitionsBestHandNotItsLast() = runTest(timeout = WHOLE_GAME) {
+        theRoundIsScoredOnTheCoalitionsBestHandNotItsLastOver(1L..SCORED_SWEEP, stopAt = EVERYDAY_ROUNDS)
+    }
+
+    internal suspend fun theRoundIsScoredOnTheCoalitionsBestHandNotItsLastOver(seeds: LongRange, stopAt: Int) {
         // The one rule of the final round that is easy to get wrong and invisible until
         // somebody loses a round they should have won: the coalition is one team, and only
         // its lowest hand is compared to the caller's.
         var checked = 0
 
-        for (seed in 1L..30L) {
+        for (seed in seeds.asSequence().takeWhile { checked < stopAt }) {
             val session = humanCallsVinto(seed) ?: continue
             if (!session.playItselfOut(seed)) continue
 
@@ -157,19 +176,43 @@ class CoalitionFinalRoundTest {
      */
     @Test
     fun theCallerIsGivenThePlanToRead() = runTest(timeout = WHOLE_GAME) {
+        theCallerIsGivenThePlanToReadOver(
+            1L..SWEEP,
+            enoughCalls = EVERYDAY_ROUNDS,
+            enoughRead = EVERYDAY_ROUNDS,
+            stopAt = EVERYDAY_ROUNDS,
+        )
+    }
+
+    internal suspend fun theCallerIsGivenThePlanToReadOver(
+        seeds: LongRange,
+        enoughCalls: Int,
+        enoughRead: Int,
+        stopAt: Int,
+    ) {
         var called = 0
         var read = 0
 
-        for (seed in 1L..40L) {
+        for (seed in seeds.asSequence().takeWhile { read < stopAt }) {
             val session = humanCallsVinto(seed) ?: continue
             called++
             if (session.plan.value?.isEmpty == false) read++
         }
 
-        assertTrue(called >= enoughSeeds, "only $called of 40 seeds produced a human Vinto call")
+        assertTrue(called >= enoughCalls, "only $called of ${seeds.count()} seeds produced a human Vinto call")
         assertTrue(
-            read >= enoughPlans,
+            read >= enoughRead,
             "the caller was left with nothing to read in ${called - read} of $called rounds",
         )
+    }
+
+    internal companion object {
+        /** The seeds the call and plan tests sweep; the deep suite plays all of them. */
+        const val SWEEP = 40L
+        const val TARGETED_SWEEP = 20L
+        const val SCORED_SWEEP = 30L
+
+        /** Rounds the everyday suite plays to each assertion before it stops. */
+        const val EVERYDAY_ROUNDS = 2
     }
 }
