@@ -42,7 +42,7 @@ import kotlin.test.assertTrue
  * because that is the one move that turns a card face up on purpose — and the reveal then has to
  * follow it through every trade and every hand that closes up behind a throw.
  */
-class RemoteRevealsFollowTheCardTest {
+class RemoteRevealsFollowTheCardDeepTest {
 
     @Test
     fun aRevealFollowsItsCardThroughWholeGamesOverTheWire() = runTest(timeout = WHOLE_GAME) {
