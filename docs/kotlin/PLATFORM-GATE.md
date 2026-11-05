@@ -261,7 +261,7 @@ It produced the first genuine cross-language check, and it passes:
 | TypeScript (`legacy-web/packages/shapes`) | 2583707619                                       | 29, 3, 44, 51, 5 |
 | Kotlin/JS (`shared/shapes`) | 2583707619                                       | 29, 3, 44, 51, 5 |
 
-`shared/shapes/src/jvmTest/.../PrngVectorsTest.kt` reads **the same committed
+`shared/shapes/src/jvmTest/.../PrngVectorsEveryTargetTest.kt` reads **the same committed
 `fixtures/prng/vectors.json`** the TypeScript test reads, rather than a Kotlin copy of the
 numbers, so the two implementations cannot drift without failing.
 

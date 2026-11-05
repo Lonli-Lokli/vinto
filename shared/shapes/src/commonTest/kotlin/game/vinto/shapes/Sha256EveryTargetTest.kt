@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
  * FIPS 180-4 vectors plus the boundary cases a hand-written implementation gets wrong:
  * the 55/56/64-byte inputs around the padding block split.
  */
-class Sha256Test {
+class Sha256EveryTargetTest {
 
     @Test
     fun matchesPublishedVectors() {

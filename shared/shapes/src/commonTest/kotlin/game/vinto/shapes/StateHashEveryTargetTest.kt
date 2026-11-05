@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
  * recording breaks the first time somebody edits a log line. Both halves are checked here on
  * a typed `GameState` rather than on hand-written JSON, so the serialiser is under test too.
  */
-class StateHashTest {
+class StateHashEveryTargetTest {
 
     private fun card(id: String, rank: Rank) = Card(
         id = id,

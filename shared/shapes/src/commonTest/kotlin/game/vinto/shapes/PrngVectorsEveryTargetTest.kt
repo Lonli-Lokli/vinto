@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
  * Test names are camelCase, not backticked prose: Kotlin only permits spaces in identifiers
  * on the JVM, and this must compile for JS and Native too.
  */
-class PrngVectorsTest {
+class PrngVectorsEveryTargetTest {
 
     @Serializable
     private data class Vectors(

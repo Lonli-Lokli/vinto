@@ -81,7 +81,7 @@ is the same list for somebody reading on a phone.
 
 - The iOS targets of `shared:shapes` **compile for the first time** (`iosArm64`,
   `iosSimulatorArm64`); `Prng` needed no changes, so the toolchain is sound
-- `PrngVectorsTest` moved to `commonTest` and now runs on **JVM, JS/Node and the iOS
+- `PrngVectorsEveryTargetTest` moved to `commonTest` and now runs on **JVM, JS/Node and the iOS
   simulator** — 6 tests on each — against the one shared vector file (§5 step 2 records how
   and why)
 - `gradle.properties` added: the Compose/Wasm production compile ran out of memory on
@@ -426,7 +426,7 @@ toolchain is sound and nothing in the shared code was Windows-shaped.
 
 ### Step 2 — parity on iOS ✅ done
 
-`PrngVectorsTest` now lives in `commonTest` and runs on JVM, JS/Node and the iOS simulator —
+`PrngVectorsEveryTargetTest` now lives in `commonTest` and runs on JVM, JS/Node and the iOS simulator —
 6 tests on each, all green. Verify with `./gradlew :shared:shapes:allTests`.
 
 Getting the fixture onto a target with no filesystem needed a decision. The options were to

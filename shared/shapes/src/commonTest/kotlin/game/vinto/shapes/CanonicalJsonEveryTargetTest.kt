@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
  * a change to any of them fails here with a readable diff rather than as an opaque hash
  * mismatch, or worse, not at all.
  */
-class CanonicalJsonTest {
+class CanonicalJsonEveryTargetTest {
 
     private fun canonical(raw: String) = CanonicalJson.of(Json.parseToJsonElement(raw))
 
