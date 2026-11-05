@@ -268,7 +268,7 @@ compose.resources {
  * runner's rendering and a maintainer's would disagree by more than the tolerance allows, and
  * a runner that deleted the goldens first would simply write its own and report success.
  *
- * Every other Compose suite — the composition tests, `FullGameUiTest`, the contrast and
+ * Every other Compose suite — the composition tests, `FullGameUiDeepTest`, the contrast and
  * font-coverage checks — runs on CI, because those assert behaviour rather than pixels.
  *
  * Run them locally with `-Pscreenshots`, or on any machine where `CI` is unset.
@@ -580,3 +580,6 @@ tasks.withType<org.jetbrains.kotlin.gradle.targets.wasm.binaryen.BinaryenExec>()
             cleaned.writeText(groovy.json.JsonOutput.toJson(json))
         }
     }
+
+// The portfolio's test convention: the everyday, deep and all suites and the slow-test guard (its header).
+apply(from = rootProject.file("gradle/tests.gradle.kts"))

@@ -50,3 +50,6 @@ kotlin {
         }
     }
 }
+
+// The portfolio's test convention: the everyday, deep and all suites and the slow-test guard (its header).
+apply(from = rootProject.file("gradle/tests.gradle.kts"))
