@@ -35,15 +35,10 @@ import kotlin.test.assertTrue
  */
 class RevealsFollowTheCardTest {
 
-    /** One whole game everyday; `RevealsFollowTheCardDeepTest` plays all three seeds. */
-    @Test
-    fun theStandingRevealsAreExactlyTheRevealedCardsStillInAHand() = runTest(timeout = WHOLE_GAME) {
-        theStandingRevealsAreExactlyTheRevealedCardsStillInAHandOver(EVERYDAY_SEEDS)
-    }
-
-    internal suspend fun theStandingRevealsAreExactlyTheRevealedCardsStillInAHandOver(seeds: List<Long>) {
+    // Deep (RevealsFollowTheCardDeepTest): 17 s on Kotlin/JS, 15 s on Wasm and 12 s on the JVM.
+    internal fun theStandingRevealsAreExactlyTheRevealedCardsStillInAHandRun() = runTest(timeout = WHOLE_GAME) {
         var stood = 0
-        for (seed in seeds) {
+        for (seed in SEEDS) {
             val game = Drive(seed)
             game.setUp()
             var moves = 0
@@ -204,9 +199,8 @@ class RevealsFollowTheCardTest {
         actionText = null,
     )
 
-    internal companion object {
+    private companion object {
         val SEEDS = listOf(11L, 12L, 13L)
-        val EVERYDAY_SEEDS = SEEDS.take(1)
         const val MOVE_LIMIT = 600
     }
 }
