@@ -28,9 +28,11 @@ import kotlin.time.Duration.Companion.minutes
  * all offered the Vinto caller's cards, which the engine refuses to the coalition.
  *
  * JVM only: a dozen whole games with three searching bots is most of a minute here and a good
- * deal more on Kotlin/JS, and the property is about the table model, not about a target.
+ * deal more on Kotlin/JS, and the property is about the table model, not about a target. One
+ * whole game is already over ten seconds, so it runs in the deep suite (`-Pgames.suite=deep`,
+ * gradle/tests.gradle.kts), and `NothingOnOfferIsRefusedTest` keeps the found state everyday.
  */
-class AWholeGameOffersNothingRefusedTest {
+class AWholeGameOffersNothingRefusedDeepTest {
 
     @Test
     fun everythingATableOffersInAWholeGameIsAMoveTheEngineTakes() = runTest(timeout = 5.minutes) {

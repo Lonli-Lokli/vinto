@@ -43,11 +43,16 @@ class FinalRoundTest {
         return session
     }
 
+    /** Three deals every day; `FinalRoundDeepTest` sweeps all sixty. */
     @Test
     fun callingVintoInTheTossInWindowPlaysTheRoundOut() = runTest(timeout = WHOLE_GAME) {
+        callingVintoInTheTossInWindowPlaysTheRoundOutOver(1L..EVERYDAY_DEALS)
+    }
+
+    internal suspend fun callingVintoInTheTossInWindowPlaysTheRoundOutOver(seeds: LongRange) {
         val stalled = mutableListOf<String>()
 
-        for (seed in 1L..60L) {
+        for (seed in seeds) {
             val session = callVintoAt(seed)
             if (session.isOver) continue
 
@@ -96,5 +101,9 @@ class FinalRoundTest {
 
         // And before anything has ended, there is no reason to give.
         assertNull(roundEndReason(LocalGameSession(seed = 1L, difficulty = Difficulty.EASY).view.value))
+    }
+
+    private companion object {
+        const val EVERYDAY_DEALS = 3L
     }
 }

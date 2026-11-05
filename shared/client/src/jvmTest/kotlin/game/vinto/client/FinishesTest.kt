@@ -62,11 +62,20 @@ class FinishesTest {
         return moves
     }
 
+    /**
+     * Two seeds in the everyday suite, each a whole game; `FinishesDeepTest` plays the same
+     * check over all [FinishesDeepTest.SEEDS], minutes of games, before a release or a change
+     * to the rules or the bot.
+     */
     @Test
     fun aWholeGamePlaysItselfOutFromAnySeed() = runTest(timeout = LONG) {
+        aWholeGamePlaysItselfOutOver(1L..EVERYDAY_SEEDS)
+    }
+
+    internal suspend fun aWholeGamePlaysItselfOutOver(seeds: LongRange) {
         val stalled = mutableListOf<String>()
 
-        for (seed in 1L..SEEDS) {
+        for (seed in seeds) {
             val session = LocalGameSession(seed = seed, difficulty = Difficulty.EASY)
             val moves = playOut(session, BotRunner(Difficulty.EASY, Random(seed)))
             if (session.isOver) continue
@@ -86,8 +95,8 @@ class FinishesTest {
         assertTrue(stalled.isEmpty(), "games that never finished:\n${stalled.joinToString("\n")}")
     }
 
-    private companion object {
-        const val SEEDS = 120L
+    internal companion object {
+        const val EVERYDAY_SEEDS = 2L
         const val MOVE_LIMIT = 600
         val LONG = 10.minutes
     }
