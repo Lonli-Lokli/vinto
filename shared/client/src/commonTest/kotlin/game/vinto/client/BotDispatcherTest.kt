@@ -84,13 +84,23 @@ class BotDispatcherTest {
         return session
     }
 
+    /**
+     * The everyday suite plays the first [EVERYDAY_MOVES] of the person's moves, each a run of
+     * bot turns, and checks every dispatcher assertion on them; `BotDispatcherDeepTest` plays
+     * the whole game and checks it finished as well. The same goes for the test below.
+     */
     @Test
     fun theBotsThinkOnTheDispatcherTheyWereGiven() = runTest(timeout = WHOLE_GAME) {
+        theBotsThinkOnTheDispatcherTheyWereGivenOver(EVERYDAY_MOVES)
+    }
+
+    /** [moveLimit] null plays the whole game and asserts it finished. */
+    internal suspend fun theBotsThinkOnTheDispatcherTheyWereGivenOver(moveLimit: Int?) {
         val dispatcher = Marking()
         val watcher = Watcher(dispatcher)
 
         val session = startedGame(dispatcher, watcher)
-        assertTrue(session.playItselfOut(seed = SEED), "the game never finished")
+        playOut(session, moveLimit)
 
         assertTrue(watcher.calls > 0, "the bots never ran at all")
         assertTrue(dispatcher.dispatches > 0, "the injected dispatcher was never used")
@@ -109,11 +119,15 @@ class BotDispatcherTest {
 
     @Test
     fun withoutOneTheBotsThinkWhereTheyAreCalled() = runTest(timeout = WHOLE_GAME) {
+        withoutOneTheBotsThinkWhereTheyAreCalledOver(EVERYDAY_MOVES)
+    }
+
+    internal suspend fun withoutOneTheBotsThinkWhereTheyAreCalledOver(moveLimit: Int?) {
         val unused = Marking()
         val watcher = Watcher(unused)
 
         val session = startedGame(dispatcher = null, director = watcher)
-        assertTrue(session.playItselfOut(seed = SEED), "the game never finished")
+        playOut(session, moveLimit)
 
         // The default. Tests want it, because a hop is a scheduling point and a scheduling
         // point is a place two runs can differ.
@@ -126,7 +140,18 @@ class BotDispatcherTest {
         )
     }
 
+    private suspend fun playOut(session: LocalGameSession, moveLimit: Int?) {
+        if (moveLimit == null) {
+            assertTrue(session.playItselfOut(seed = SEED), "the game never finished")
+        } else {
+            session.playItselfOut(seed = SEED, moveLimit = moveLimit)
+        }
+    }
+
     private companion object {
         const val SEED = 1234L
+
+        /** The person's moves the everyday suite plays, each followed by the bots' turns. */
+        const val EVERYDAY_MOVES = 8
     }
 }
