@@ -59,11 +59,11 @@ class LocalGameSessionTest {
      * `dispatch`. A robot holding the phone: it makes the session's own refusals meaningful,
      * because the session is not in on the arrangement.
      */
-    private suspend fun playOut(session: LocalGameSession, seed: Long = 1L): Int {
+    private suspend fun playOut(session: LocalGameSession, seed: Long = 1L, moveLimit: Int = MOVE_LIMIT): Int {
         val person = BotRunner(THINKING_TIME, Random(seed))
         var moves = 0
 
-        while (!session.isOver && moves < MOVE_LIMIT) {
+        while (!session.isOver && moves < moveLimit) {
             // The final round opens with a window for the coalition to confer, and the bots'
             // turns hold while it is open. A driver standing in for the person in that seat
             // has to do what they do: say when it has finished talking.
@@ -154,16 +154,25 @@ class LocalGameSessionTest {
         )
     }
 
-    /** Same seed, same moves, same game — the property the whole engine is built on. */
+    /**
+     * Same seed, same moves, same game — the property the whole engine is built on.
+     *
+     * The everyday suite plays the first [EVERYDAY_MOVES] of the person's moves of both games;
+     * `LocalGameSessionDeepTest` plays both games whole.
+     */
     @Test
     fun theSameSeedPlaysTheSameGame() = runTest(timeout = A_WHOLE_ROUND) {
+        theSameSeedPlaysTheSameGameOver(EVERYDAY_MOVES)
+    }
+
+    internal suspend fun TestScope.theSameSeedPlaysTheSameGameOver(moveLimit: Int = MOVE_LIMIT) {
         val first = LocalGameSession(seed = 4242L, difficulty = THINKING_TIME)
         val second = LocalGameSession(seed = 4242L, difficulty = THINKING_TIME)
         val firstEvents = eventsOf(first)
         val secondEvents = eventsOf(second)
 
-        playOut(first)
-        playOut(second)
+        playOut(first, moveLimit = moveLimit)
+        playOut(second, moveLimit = moveLimit)
         runCurrent()
 
         assertEquals(first.view.value, second.view.value)
@@ -209,7 +218,7 @@ class LocalGameSessionTest {
         assertNotNull(reason, "acting for a bot is refused: $reason")
     }
 
-    private companion object {
+    internal companion object {
         const val FOUR_SEATS = 4
 
         /**
@@ -225,6 +234,9 @@ class LocalGameSessionTest {
 
         /** Far past any real round; a loop this long has stopped being a game. */
         const val MOVE_LIMIT = 400
+
+        /** The person's moves of each game the everyday suite compares. */
+        const val EVERYDAY_MOVES = 12
 
         /**
          * `runTest` gives a test one minute. A round is a hundred-odd MCTS searches and the

@@ -48,12 +48,19 @@ class RecordingRoundTripTest {
      * quality, and this suite runs on Wasm where a `hard` game's MCTS would cost minutes to
      * prove something `moderate` proves for free in [game.vinto.bot.SelfPlayGateTest].
      */
-    private suspend fun wholeGame(seed: Long): LocalGameSession {
+    private suspend fun wholeGame(seed: Long): LocalGameSession = game(seed, moveLimit = null)
+
+    /** The game from its deal; [moveLimit] null plays it to scoring and asserts it got there. */
+    private suspend fun game(seed: Long, moveLimit: Int?): LocalGameSession {
         val session = LocalGameSession(seed = seed, difficulty = Difficulty.EASY)
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 0)))
         session.dispatch(GameAction.PeekSetupCard(PositionPayload(session.playerId, 1)))
         session.dispatch(GameAction.FinishSetup(PlayerIdPayload(session.playerId)))
-        assertTrue(session.playItselfOut(seed = seed), "seed $seed never reached scoring")
+        if (moveLimit == null) {
+            assertTrue(session.playItselfOut(seed = seed), "seed $seed never reached scoring")
+        } else {
+            session.playItselfOut(seed = seed, moveLimit = moveLimit)
+        }
         return session
     }
 
@@ -124,11 +131,19 @@ class RecordingRoundTripTest {
      *
      * The timestamp is the one field that is not, which is why it is supplied by the caller
      * rather than read from a clock — see `Recorder.export`.
+     *
+     * The everyday suite writes the documents of the first [EVERYDAY_MOVES] of the person's
+     * moves; `RecordingRoundTripDeepTest` writes two whole games.
      */
     @Test
     fun oneSeedProducesOneDocument() = runTest(timeout = WHOLE_GAME) {
-        val first = wholeGame(SEED).report(at = FIXED_TIME, label = "round trip").toJson()
-        val second = wholeGame(SEED).report(at = FIXED_TIME, label = "round trip").toJson()
+        oneSeedProducesOneDocumentOver(EVERYDAY_MOVES)
+    }
+
+    /** [moveLimit] null writes whole games. */
+    internal suspend fun oneSeedProducesOneDocumentOver(moveLimit: Int?) {
+        val first = game(SEED, moveLimit).report(at = FIXED_TIME, label = "round trip").toJson()
+        val second = game(SEED, moveLimit).report(at = FIXED_TIME, label = "round trip").toJson()
 
         assertEquals(first, second, "the same seed wrote two different documents")
     }
@@ -146,6 +161,9 @@ class RecordingRoundTripTest {
         const val SUBSTANTIAL = 100
 
         const val FIXED_TIME = "2026-08-30T00:00:00Z"
+
+        /** The person's moves of each game the everyday suite writes down. */
+        const val EVERYDAY_MOVES = 12
 
         /** Well-formed and wrong, so the failure is a mismatch rather than a parse error. */
         const val WRONG_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
