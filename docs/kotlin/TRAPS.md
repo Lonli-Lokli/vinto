@@ -297,10 +297,10 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
   `UncompletedCoroutinesError` — the one case that plays *two* whole MCTS games to prove a seed
   is a seed. Pass an explicit `timeout` for anything that plays a game out, and say in the
   comment that the number is a CI budget on the slowest target rather than a claim about the
-  code. `SelfPlayTest`, `FinishesTest` and `OnlineScoreTest` already did; a `commonTest` that
+  code. `SelfPlayTest`, `FinishesDeepTest` and `OnlineScoreDeepTest` already did; a `commonTest` that
   reaches Apple needs it more, not less.
   **This rule was written here and then not applied to the next test written in the same
-  session** — `BotDispatcherTest` went over the line on the Kotlin 2.4 bump, in the same way,
+  session** — `BotDispatcherDeepTest` went over the line on the Kotlin 2.4 bump, in the same way,
   on the same job. So the budget now has a home rather than a habit: `WHOLE_GAME` in
   `shared/client/src/commonTest/.../TestBudget.kt`, used by every suite that plays a game out.
   A rule with nowhere to live gets re-learned.

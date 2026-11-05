@@ -168,7 +168,7 @@ two engines agreeing about memory never said either was right:
 
 | | |
 | --- | --- |
-| `SelfPlayGateDeepTest` | fails if any seat, in twelve whole games, holds a belief that is not true (`SelfPlayGateTest` asks it of one game everyday) |
+| `SelfPlayGateDeepTest` | fails if any seat, in twelve whole games, holds a belief that is not true |
 | `SwapKnowledgeTest` | the rule itself: what the table watched move, the table's memory follows |
 | `KingActionTest` | a removal renumbers what the *other* seats have seen, not only the owner |
 | `ReportedGamesTest` | the reported deal, replayed, with every belief checked against the table |

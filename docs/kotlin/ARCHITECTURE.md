@@ -59,7 +59,7 @@ named here so that the claim can be checked rather than believed.
 | A seat can only act for itself | `ValidatorImpersonationTest` — 18,099 re-attributed actions, none accepted |
 | A client is never sent another seat's hidden cards | `projectView`, `PeekPrivacyTest`, and the per-socket envelopes in `shared/room` |
 | A solo game touches no network | `NoNetworkGuardTest`, which installs a `SecurityManager` and proves it bites first |
-| A bot follows the rules, and games end | `SelfPlayGateDeepTest` (one game everyday in `SelfPlayGateTest`) — every proposed action through `ActionValidator`, every game to `scoring` |
+| A bot follows the rules, and games end | `SelfPlayGateDeepTest` — every proposed action through `ActionValidator`, every game to `scoring` |
 | No seat is ever told something untrue about another seat's hand — what the table watched move, its memory follows | `SelfPlayGateDeepTest` (twelve whole games, every belief against the table), `SwapKnowledgeTest`, `KingActionTest`, `ReportedGamesTest` |
 | Nothing identifying is ever counted or reported | `AnalyticsPrivacyTest` (types), `AnalyticsPrivacyUiTest` (the app), `gate-analytics.mjs` (the wire), `CrashReportTest` (crashes) |
 | Every screen's text clears WCAG AA, in both themes | `ContrastTest` (every declared pair of colours), `ScreenContrastTest` (every screen, measured from its own pixels) |
@@ -87,7 +87,7 @@ GameEngine.reduce(state, action)          →  a new state, or the same one
 
 There is no second path. A bot does not "apply its move directly"; it proposes an action that
 is validated exactly as a stranger's would be. This is the property that made
-`SelfPlayGateTest` able to find five real defects that no unit test would have, and it is what
+`SelfPlayGateDeepTest` able to find five real defects that no unit test would have, and it is what
 makes the room's anti-cheat boundary one line rather than an audit.
 
 **The handlers mutate, on purpose.** `MutableGameState` is a working copy that each handler

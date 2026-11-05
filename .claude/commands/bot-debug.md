@@ -20,7 +20,7 @@
   - Coalition mode logic (CoalitionPlanner.kt)
   - Edge cases from docs/game-engine/SCENARIOS.md
 
-  The bot is verified by rule-following rather than decision parity — SelfPlayGateTest
+  The bot is verified by rule-following rather than decision parity — SelfPlayGateDeepTest
   puts every proposed action through ActionValidator. Strength is measured separately,
   against a committed self-play baseline (docs/kotlin/GATES.md §6k):
 

@@ -92,7 +92,7 @@ transition is fine, it is being fed the wrong state.
 
 **Why nobody noticed.** `SwapTargetSelectionTest` asserts that the two targets come from different
 players and that the bot is one of them — true of every candidate the generator emits. No test
-asserts that the *best* candidate wins. `SelfPlayGateTest` asks whether moves are legal, and they
+asserts that the *best* candidate wins. `SelfPlayGateDeepTest` asks whether moves are legal, and they
 are. `TournamentDeepTest` pins the numbers but does not say whether they are good.
 
 ### 3.2 Draw and take-discard are indistinguishable
@@ -331,7 +331,7 @@ for replayability, and the coalition planner as it is.
 ### Cost and risk
 
 Steps 1–3 are inside `shared/bot` and touch no rule: `ActionValidator` still checks every proposed
-action and `SelfPlayGateTest` still proves games end. The corpus is untouched (the bot is verified by
+action and `SelfPlayGateDeepTest` still proves games end. The corpus is untouched (the bot is verified by
 rule-following, not decision parity — `docs/kotlin/GATES.md` §6e). The baseline in
 `fixtures/bot/self-play-baseline.json` will move, deliberately, and the commit that moves it should
 say which way. Per-decision cost will rise with step 2's chance node; the deck distribution has at
@@ -424,8 +424,8 @@ One of the review's own probes was wrong, and the search said so: with three kno
 declared swap-out and the toss-in it opens shed all three, which beats trading one for the
 Joker. The test now holds a hand with no pair.
 
-`SelfPlayGateTest`, `CoalitionFinalRoundTest`, `CoalitionHardScenariosTest` and the client's
-`FinishesTest` and `RecordingRoundTripTest` are green unchanged. Two toss-in integration windows
+`SelfPlayGateDeepTest`, `CoalitionFinalRoundTest`, `CoalitionHardScenariosTest` and the client's
+`FinishesDeepTest` and `RecordingRoundTripTest` are green unchanged. Two toss-in integration windows
 moved into the opening, because a bot on twelve points against an unread hand now calls Vinto
 in them, and that is the right call.
 

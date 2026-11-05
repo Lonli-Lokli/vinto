@@ -205,7 +205,7 @@ flowchart TD
 The second and third bullets settle the first: "≤" includes a tie, and a tie is the case where
 the Coalition takes nothing rather than losing a point — but it is **not** a win, and does not pay
 like one. A caller who merely matches the best hand takes **2**, not the 3 a caller who beats it
-takes. Held by `RoundScoringTest.aTieGoesToTheCaller`, and by `OnlineScoreTest`, which exists
+takes. Held by `RoundScoringTest.aTieGoesToTheCaller`, and by `OnlineScoreDeepTest`, which exists
 because the client derives the same numbers for its scoreboard and had drifted from the engine.
 
 **Every player starts a session on 4 points.** Not zero: −1 from nothing reads as having lost the
