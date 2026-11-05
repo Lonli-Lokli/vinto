@@ -83,8 +83,8 @@ class LocalGameSessionTest {
     private fun GameState.asIfEveryoneWereABot(): GameState =
         copy(players = players.map { it.copy(isHuman = false, isBot = true) })
 
-    @Test
-    fun aSoloGameRunsFromTheDealToScoring() = runTest(timeout = A_WHOLE_ROUND) {
+    // Deep (LocalGameSessionDeepTest): 10.0 s and 10.4 s in everyday jvm on a loaded Mac, twice over the guard.
+    internal fun aSoloGameRunsFromTheDealToScoringRun() = runTest(timeout = A_WHOLE_ROUND) {
         val session = LocalGameSession(seed = 20260819L, difficulty = THINKING_TIME)
         val events = eventsOf(session)
 
