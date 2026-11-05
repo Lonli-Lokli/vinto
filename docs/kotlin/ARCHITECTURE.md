@@ -59,8 +59,8 @@ named here so that the claim can be checked rather than believed.
 | A seat can only act for itself | `ValidatorImpersonationTest` — 18,099 re-attributed actions, none accepted |
 | A client is never sent another seat's hidden cards | `projectView`, `PeekPrivacyTest`, and the per-socket envelopes in `shared/room` |
 | A solo game touches no network | `NoNetworkGuardTest`, which installs a `SecurityManager` and proves it bites first |
-| A bot follows the rules, and games end | `SelfPlayGateTest` — every proposed action through `ActionValidator`, every game to `scoring` |
-| No seat is ever told something untrue about another seat's hand — what the table watched move, its memory follows | `SelfPlayGateTest` (twelve whole games, every belief against the table), `SwapKnowledgeTest`, `KingActionTest`, `ReportedGamesTest` |
+| A bot follows the rules, and games end | `SelfPlayGateDeepTest` (one game everyday in `SelfPlayGateTest`) — every proposed action through `ActionValidator`, every game to `scoring` |
+| No seat is ever told something untrue about another seat's hand — what the table watched move, its memory follows | `SelfPlayGateDeepTest` (twelve whole games, every belief against the table), `SwapKnowledgeTest`, `KingActionTest`, `ReportedGamesTest` |
 | Nothing identifying is ever counted or reported | `AnalyticsPrivacyTest` (types), `AnalyticsPrivacyUiTest` (the app), `gate-analytics.mjs` (the wire), `CrashReportTest` (crashes) |
 | Every screen's text clears WCAG AA, in both themes | `ContrastTest` (every declared pair of colours), `ScreenContrastTest` (every screen, measured from its own pixels) |
 | The public list cannot outlive its rooms | `gate-delisting.mjs` (the real Room's forget meeting the real Registry handler), `RegistryLeaseTest` (silence hides, then sweeps, a row whose forget was lost) |

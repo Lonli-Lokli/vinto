@@ -34,17 +34,23 @@ import kotlin.test.assertTrue
  *   question anyway — two engines agreeing about memory never said either was right.
  *
  * The loop itself lives in [playSelfPlayGame], shared with the tournament in
- * [TournamentTest]: legality and strength are two questions about one table, and they should
+ * [TournamentDeepTest]: legality and strength are two questions about one table, and they should
  * not be asked of two subtly different games.
+ *
+ * Twelve `moderate` games are four minutes, so the gate itself is `SelfPlayGateDeepTest`, in the
+ * deep suite (`-Pgames.suite=deep`, gradle/tests.gradle.kts). The everyday suite asks every
+ * question of one `easy` game, and replays seed 7 at `easy`.
  */
 class SelfPlayGateTest {
 
-    /** Enough games to cross the paths that only show up occasionally — Kings, coalitions. */
-    private val gameCount = 12
-
     @Test
     fun botsPlayCompleteGamesAndEveryActionTheyProposeIsLegal() {
-        val played = (1L..gameCount).map { seed -> playSelfPlayGame(seed, Difficulty.MODERATE) }
+        botsPlayCompleteGamesAndEveryActionTheyProposeIsLegalOver(EVERYDAY_SEEDS, Difficulty.EASY)
+    }
+
+    internal fun botsPlayCompleteGamesAndEveryActionTheyProposeIsLegalOver(seeds: LongRange, difficulty: Difficulty) {
+        val gameCount = seeds.count()
+        val played = seeds.map { seed -> playSelfPlayGame(seed, difficulty) }
 
         val bad = played.filter { !it.finished }
         assertTrue(
@@ -82,8 +88,12 @@ class SelfPlayGateTest {
 
     @Test
     fun aSeedReplaysToTheSameGame() {
-        val first = playSelfPlayGame(seed = 7L, difficulty = Difficulty.MODERATE)
-        val second = playSelfPlayGame(seed = 7L, difficulty = Difficulty.MODERATE)
+        aSeedReplaysToTheSameGameAt(Difficulty.EASY)
+    }
+
+    internal fun aSeedReplaysToTheSameGameAt(difficulty: Difficulty) {
+        val first = playSelfPlayGame(seed = 7L, difficulty = difficulty)
+        val second = playSelfPlayGame(seed = 7L, difficulty = difficulty)
 
         // The bots inject their own Random; two runs from one seed must not diverge, or a
         // recorded game cannot be replayed and a desync cannot be reproduced. The hands are
@@ -95,5 +105,13 @@ class SelfPlayGateTest {
                 first.handTotals == second.handTotals,
             "seed 7 played differently twice: $first vs $second",
         )
+    }
+
+    internal companion object {
+        /** Enough games to cross the paths that only show up occasionally — Kings, coalitions. */
+        val GATE_SEEDS = 1L..12L
+
+        /** The one game the everyday suite plays the gate's questions on. */
+        val EVERYDAY_SEEDS = 1L..1L
     }
 }

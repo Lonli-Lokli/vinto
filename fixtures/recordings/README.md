@@ -72,13 +72,14 @@ The other 46 files are untouched.
 **This one left a tool behind**, which the first two did not:
 
 ```sh
-./gradlew :shared:bot:jvmTest --tests '*RegenerateCorpusTailsTest*' -Pcorpus        # report
-./gradlew :shared:bot:jvmTest --tests '*RegenerateCorpusTailsTest*' -Pcorpus=write  # rewrite
+./gradlew :shared:bot:jvmTest -Pgames.suite=deep --tests '*RegenerateCorpusTailsDeepTest*' -Pcorpus        # report
+./gradlew :shared:bot:jvmTest -Pgames.suite=deep --tests '*RegenerateCorpusTailsDeepTest*' -Pcorpus=write  # rewrite
 ```
 
 It only ever *shortens* a recording to the last action the rules still accept and plays on from
 there with this engine's bots, and it refuses a file whose every recorded action is still legal.
-It is not a way to extend the corpus, and it is excluded from `jvmTest` unless asked for.
+It is not a way to extend the corpus, and it is a deep test: the everyday
+`jvmTest` leaves it out, and it writes nothing without `-Pcorpus=write`.
 
 The rule the four tails now follow is held by a test that says which rule it is:
 `TheCallWaitsForTheCallersOwnThrowTest`.
@@ -167,7 +168,7 @@ two engines agreeing about memory never said either was right:
 
 | | |
 | --- | --- |
-| `SelfPlayGateTest` | fails if any seat, in twelve whole games, holds a belief that is not true |
+| `SelfPlayGateDeepTest` | fails if any seat, in twelve whole games, holds a belief that is not true (`SelfPlayGateTest` asks it of one game everyday) |
 | `SwapKnowledgeTest` | the rule itself: what the table watched move, the table's memory follows |
 | `KingActionTest` | a removal renumbers what the *other* seats have seen, not only the owner |
 | `ReportedGamesTest` | the reported deal, replayed, with every belief checked against the table |

@@ -261,9 +261,16 @@ class ReportedGamesTest {
      * (`DIFFICULTY_CONFIGS`), so on two of these five seeds Ember never wrote the Joker down
      * at all and no search could have fetched it. That is the memory model, and it is a
      * separate question from this one. Hard is where "known" means known.
+     *
+     * Five `hard` searches are 15 s, so the everyday suite searches the first seed and
+     * `ReportedGamesDeepTest` all five.
      */
     @Test
     fun aJackLeftOnThePileIsTakenForAKnownJoker() {
+        aJackLeftOnThePileIsTakenForAKnownJokerOver(EVERYDAY_SEEDS)
+    }
+
+    internal fun aJackLeftOnThePileIsTakenForAKnownJokerOver(seeds: IntRange) {
         val report = recording("jack-on-the-pile-left-for-a-known-joker")
         val botsTurn = report.actions.indexOfFirst { entry ->
             val action = entry.action
@@ -271,7 +278,7 @@ class ReportedGamesTest {
         }
 
         val drewInstead = mutableListOf<String>()
-        for (seed in 1..5) {
+        for (seed in seeds) {
             val runner = BotRunner(Difficulty.HARD, Random(seed))
             val state = replayed(report, upTo = botsTurn, runner = runner)
 
@@ -354,9 +361,13 @@ class ReportedGamesTest {
         assertTrue(EMBERS_THREE in throwing.payload.positions, "Ember threw something other than the named three")
     }
 
-    private companion object {
+    internal companion object {
         /** Three peeks is six actions; the bound is only there so a defect cannot hang the suite. */
         const val STEP_LIMIT = 40
+
+        /** The seeds the Jack is searched on: every one of them, and the everyday suite's one. */
+        val JACK_SEEDS = 1..5
+        val EVERYDAY_SEEDS = 1..1
 
         /** Where the report's Dune named Ember's three. */
         const val EMBERS_THREE = 4
