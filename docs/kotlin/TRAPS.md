@@ -143,7 +143,7 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
   and CI's `kmp-web` was the one job that noticed. The fix is one `implementation` line; the
   lesson is that "it compiles on the JVM" says nothing about a classpath on another target.
 - **An `UncompletedCoroutinesError` from a Compose test is usually arithmetic, not a deadlock.**
-  `SwapAnimationTest` failed on the Compose Multiplatform 1.12 upgrade with no assertion
+  `SwapAnimationDeepTest` failed on the Compose Multiplatform 1.12 upgrade with no assertion
   message at all, which reads exactly like a hang — and two plausible deadlock fixes (handing
   the clock back before `waitForIdle`, pausing it only around the animation) did nothing,
   because there was no deadlock. Instrumenting the body settled it in one run: it reached the
@@ -246,7 +246,7 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
   9.1.0 or higher"* — and AGP 9 requires Gradle 9. The chain is **Compose MP -> AGP 9.1 ->
   Gradle 9 -> compileSdk 37**, and it is one change rather than four. 1.12.0 also moves the
   rendering (9,374 pixels on the home screen against a 304-pixel tolerance) and fails
-  `SwapAnimationTest`, both of which are consequences worth budgeting for rather than
+  `SwapAnimationDeepTest`, both of which are consequences worth budgeting for rather than
   surprises.
   **detekt is fine**: 1.23.8 analysed 129 files under Kotlin 2.4.10 with zero findings,
   because this build runs it without type resolution (`source.setFrom(files("src"))`, no
@@ -311,8 +311,9 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
   the app is running fine, the framebuffer just is not. Boot with `-gpu swiftshader_indirect`
   when you need `adb exec-out screencap` to show anything.
 - **Backticked test names with spaces are JVM-only.** Kotlin rejects them for JS and Native,
-  so anything in `commonTest` must use camelCase names. This is why `PrngVectorsTest` reads
-  `reproducesEveryPublishedShuffle` and not `` `reproduces every published shuffle` ``.
+  so anything in `commonTest` must use camelCase names. This is why
+  `PrngVectorsEveryTargetTest` reads `reproducesEveryPublishedShuffle` and not
+  `` `reproduces every published shuffle` ``.
 - **`runComposeUiTest`'s window is 1024×768, and a taller screen is quietly given 768.** A
   `Box` sized to an 860-point phone inside it is measured at 768 with no warning, so a test
   "on an iPhone 17 Pro Max" is testing a shorter phone than it says — it failed on the big

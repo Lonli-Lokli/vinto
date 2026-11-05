@@ -13,8 +13,11 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
 
 Three layers, weakest to strongest:
 
-1. `Sha256Test`, `CanonicalJsonTest`, `PrngVectorsTest` — unit tests in `commonTest`, so they
-   run on **all five targets** (jvm, android, js, wasmJs, iOS simulator). They pin the rules
+1. `Sha256EveryTargetTest`, `CanonicalJsonEveryTargetTest`, `PrngVectorsEveryTargetTest` — unit
+   tests in `commonTest`, so they run on **all five targets** (jvm, android, js, wasmJs, iOS
+   simulator); the `EveryTarget` in their names keeps them in the everyday iOS suite too, since
+   hashing, shuffling and number formatting are what Kotlin/Native could get wrong
+   (`gradle/tests.gradle.kts`, R3). They pin the rules
    that the corpus cannot reach: the `botMemory` exclusion is never present in a real
    recording, so it is asserted directly.
 2. `RecordingParityTest` (JVM only, it reads the 4.5 MB corpus from disk) — decodes each of
@@ -110,7 +113,9 @@ So the requirement was set differently: *the bot need not follow the TypeScript 
 it must follow the rules.* That is checkable. `SelfPlayGateTest` plays whole games with four
 Kotlin bots through the real `GameEngine`, and every action a bot proposes goes through
 `ActionValidator` before it is reduced — the same boundary a Durable Object runs, so anything
-rejected here would be rejected in a live room.
+rejected here would be rejected in a live room. Its twelve `moderate` games take four minutes,
+so they are `SelfPlayGateDeepTest`, in the deep suite (`-Pgames.suite=deep`); the everyday
+suite asks every question of one `easy` game.
 
 Three things it asserts, each for a different failure:
 
@@ -191,15 +196,15 @@ way the bot got better. The value is not that 13.20 is a good mean hand — it i
 can change it by accident.
 
 ```sh
-./gradlew :shared:bot:jvmTest --tests '*TournamentTest*' -Ptournament        # compare
-./gradlew :shared:bot:jvmTest --tests '*TournamentTest*' -Ptournament=write  # regenerate
+./gradlew :shared:bot:jvmTest -Pgames.suite=deep --tests '*TournamentDeepTest*' -Ptournament        # compare
+./gradlew :shared:bot:jvmTest -Pgames.suite=deep --tests '*TournamentDeepTest*' -Ptournament=write  # regenerate
 ```
 
 **It is a manually-run gate, and that is a decision rather than an oversight.** Thirty-six
 whole MCTS games take **6m 39s** on this machine, against 1m 26s for the whole of the rest of
 `:shared:bot:jvmTest`. That is worth paying when a heuristic changes and is not worth paying on
-every push, so it is excluded from `jvmTest` unless `-Ptournament` is passed — the same shape
-as `-Pscreenshots`. The legality gate keeps running every time, because that is the one a
+every push, so it is a deep test: the everyday `jvmTest` leaves it out, and `-Pgames.suite=deep`
+runs it (the test convention, `gradle/tests.gradle.kts`). The legality gate keeps running every time, because that is the one a
 release depends on.
 
 Two rules about what goes in the file, both of them about a baseline being worth having:

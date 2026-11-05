@@ -320,7 +320,7 @@ screen actually rendered; then check whether `canContinue` came back true (Home 
 `Pace.CALM` reaching `LocalReducedMotion` / the card-fan `animateTo` at `HomeScreen.kt:174`
 leaves the tree unsettled.
 
-**4. `FullGameUiTest.aWholeRoundIsPlayedOutOnTheScreen` (`:46`, the wait at `:76`)** — the one
+**4. `FullGameUiDeepTest.aWholeRoundIsPlayedOutOnTheScreen` (`:46`, the wait at `:76`)** — the one
 that may be the runner rather than the code.
 
 ```
@@ -383,7 +383,7 @@ own copies under `composeResources/drawable`.
 
 One thing, and it is worth being precise rather than reassuring about it. `fixtures/` is
 committed at the repository root — 51 files, the 50 recordings and the PRNG vectors — and it
-is read by `RecordingParityTest`, `PrngVectorsTest` and the generated constant in
+is read by `RecordingParityTest`, `PrngVectorsEveryTargetTest` and the generated constant in
 `shared/shapes/build.gradle.kts`. So the Kotlin side keeps replaying the corpus after the
 deletion, and `kmp-jvm` is unaffected.
 
