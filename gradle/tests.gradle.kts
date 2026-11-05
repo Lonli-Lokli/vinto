@@ -5,9 +5,14 @@
  * after `kotlin { }`, so its targets exist: build-logic's vinto.kmp.library (shapes, engine, bot, client, protocol),
  * shared/room and composeApp, each as
  *   apply(from = rootProject.file("gradle/tests.gradle.kts"))
- * It differs from games-core's in two places, both marked VINTO: Vinto keeps configuration cache on, so every test
- * task is marked not compatible with it (R7), and R6 does nothing on a host with no iosSimulatorArm64 target (Linux CI).
- * Take a newer games-core version by copying it again and keeping those two.
+ * It differs from games-core's in three places, all marked VINTO: Vinto keeps configuration cache on, so every test
+ * task is marked not compatible with it (R7), R6 does nothing on a host with no iosSimulatorArm64 target (Linux CI),
+ * and R2 names its classes by a second pattern, `*DeepTest.*`, for Kotlin/JS (`jsNodeTest`). Its Mocha runner
+ * (kotlin-web-helpers' kotlin-test-nodejs-runner) turns a wildcard pattern into `^...$` and tests it against the
+ * whole test name, package.Class.method, so `*DeepTest` alone matched no test there: everyday ran the deep classes
+ * and deep ran none (S-18). The JVM, Wasm and Native runs split right on `*DeepTest`, and the second pattern names
+ * the same deep tests there.
+ * Take a newer games-core version by copying it again and keeping those three.
  *
  * R1  `-Pgames.suite=everyday` (the default), `deep` or `all` picks the suite; the task name still picks the platform
  *     (`desktopTest`, `testAndroidHostTest`, `iosSimulatorArm64Test`, `wasmJsNodeTest`, ...).
@@ -75,12 +80,14 @@ fun AbstractTestTask.pickSuite() {
                 filter.includeTestsMatching("*$everyTargetSuffix")
             }
             filter.excludeTestsMatching("*$deepSuffix")
+            filter.excludeTestsMatching("*$deepSuffix.*") // VINTO: Kotlin/JS matches package.Class.method
         }
         "deep" -> if (simulator) {
             nativeTestClasses.filterNot { it.endsWith(deepSuffix) }.forEach { filter.excludeTestsMatching(it) }
             filter.excludeTestsMatching("*$everyTargetSuffix")
         } else {
             filter.includeTestsMatching("*$deepSuffix")
+            filter.includeTestsMatching("*$deepSuffix.*") // VINTO: Kotlin/JS matches package.Class.method
         }
     }
 }
