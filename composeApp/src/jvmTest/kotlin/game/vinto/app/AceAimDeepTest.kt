@@ -42,7 +42,7 @@ import kotlin.test.assertTrue
  * run, not two.
  */
 @OptIn(ExperimentalTestApi::class)
-class AceAimTest {
+class AceAimDeepTest {
 
     @Test
     fun theVictimIsMarkedFromTheNamingUntilTheCardLands() = runComposeUiTest {

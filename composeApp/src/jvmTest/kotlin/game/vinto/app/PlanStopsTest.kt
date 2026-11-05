@@ -47,8 +47,8 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalTestApi::class)
 class PlanStopsTest {
 
-    @Test
-    fun theStopBeingReadIsAlwaysInView() {
+    // Deep (PlanStopsDeepTest): 14 s on the JVM under load.
+    internal fun theStopBeingReadIsAlwaysInViewRun() {
         PHONES.forEach { (phone, size) ->
             (1..PAGES).forEach { page ->
                 runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
