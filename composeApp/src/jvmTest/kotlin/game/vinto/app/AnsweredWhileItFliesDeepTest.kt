@@ -41,7 +41,7 @@ import kotlin.test.assertTrue
  * the seed is pinned rather than fresh.
  */
 @OptIn(ExperimentalTestApi::class)
-class AnsweredWhileItFliesTest {
+class AnsweredWhileItFliesDeepTest {
 
     @Test
     fun tappingACardWhileTheLastOneFliesShowsItWithoutWaitingForTheFlight() = runComposeUiTest {

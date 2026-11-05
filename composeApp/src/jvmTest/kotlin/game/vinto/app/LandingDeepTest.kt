@@ -47,7 +47,7 @@ import kotlin.test.assertTrue
  * fail against that geometry.
  */
 @OptIn(ExperimentalTestApi::class)
-class LandingTest {
+class LandingDeepTest {
 
     @Test
     fun aFlightsLastFrameIsTheCardItBecomesAtRest() = runComposeUiTest {

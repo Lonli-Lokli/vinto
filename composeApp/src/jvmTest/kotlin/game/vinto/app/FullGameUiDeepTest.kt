@@ -43,7 +43,7 @@ import kotlin.test.assertTrue
  * whole game flows through the frames the stage is animating, at a pace no player would.
  */
 @OptIn(ExperimentalTestApi::class)
-class FullGameUiTest {
+class FullGameUiDeepTest {
 
     @Test
     fun aWholeRoundIsPlayedOutOnTheScreen() = runComposeUiTest {

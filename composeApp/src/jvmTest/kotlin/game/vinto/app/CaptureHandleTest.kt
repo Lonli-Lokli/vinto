@@ -176,10 +176,10 @@ class CaptureHandleTest {
      * cost ten seconds on a developer's machine and over a minute on a CI runner — where it failed,
      * and nowhere else. It failed as `UncompletedCoroutinesError` too, saying only that the body
      * had not finished, because its own wait was as long as the whole budget `runComposeUiTest`
-     * allows. `FullGameUiTest` recorded the same lesson: a long wait is a bet on the runner.
+     * allows. `FullGameUiDeepTest` recorded the same lesson: a long wait is a bet on the runner.
      *
      * Nothing about "the round moves" is carried by the pixels, so it is claimed where it is cheap
-     * and total — and a round that reaches its ending *on screen* is already `FullGameUiTest`'s.
+     * and total — and a round that reaches its ending *on screen* is already `FullGameUiDeepTest`'s.
      *
      * `settle = false` because this screen never goes idle by design: it is playing. The beat is
      * left at the one the app ships, which is what makes this cheap: the loop sleeps between moves,

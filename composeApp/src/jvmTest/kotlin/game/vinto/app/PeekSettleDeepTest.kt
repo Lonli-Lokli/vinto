@@ -40,7 +40,7 @@ import kotlin.test.assertTrue
  * same frame — the card went out and the gap closed together.
  */
 @OptIn(ExperimentalTestApi::class)
-class PeekSettleTest {
+class PeekSettleDeepTest {
 
     @Test
     fun aPeekedCardIsPutBackRatherThanTakenAway() = runComposeUiTest {

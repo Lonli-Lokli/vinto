@@ -53,7 +53,7 @@ import kotlin.test.assertTrue
  * places. The first assertion is the one that fails against the scene-scoped lift.
  */
 @OptIn(ExperimentalTestApi::class)
-class QueenAimTest {
+class QueenAimDeepTest {
 
     @Test
     fun bothAimedCardsStayUpTogetherAndComeHomeWhenTheSwapIsDeclined() = runComposeUiTest {

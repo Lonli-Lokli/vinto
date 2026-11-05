@@ -167,7 +167,7 @@ size, same angle as the resting drawing, read from the same berth — never reco
 align *centres*, not corners, because everything else about the drawing — the scale, the
 quarter-turn for a side seat, the resting card centred in its padded box — is symmetric about
 the centre; aligning top-left corners of boxes of different sizes is how a landing card used
-to jump by half the size difference. `LandingTest` measures a flight's final frame against
+to jump by half the size difference. `LandingDeepTest` measures a flight's final frame against
 the card it becomes at rest, allowing the couple of pixels the last animation frame falls
 short by — where the old geometry missed by forty.
 
@@ -195,7 +195,7 @@ born, its transform can be resolved against a pivot the size has not reached yet
 measured on that frame sits somewhere it was never drawn. Every overlay therefore pins its
 origin to the top-left and folds the pivot into the translation (`cardTransform` in
 `CardStage.kt`): the matrix is the same affine map on the layer's first frame as on its
-hundredth, and `QueenAimTest` samples a swap's very first frames to hold it there.
+hundredth, and `QueenAimDeepTest` samples a swap's very first frames to hold it there.
 
 ## Reading each action
 
@@ -245,12 +245,12 @@ they can watch arrive.
 | Claim | Test |
 | --- | --- |
 | Every action's script, from two seats, including what stays held up | `client/.../TransformationMatrixTest.kt` |
-| Both of a Queen's (and a Jack's) cards stay lifted together until the action resolves, and come home when it is declined | `composeApp/.../QueenAimTest.kt` |
+| Both of a Queen's (and a Jack's) cards stay lifted together until the action resolves, and come home when it is declined | `composeApp/.../QueenAimDeepTest.kt` |
 | What the view holds up, per action and per seat | `client/.../HeldUpTest.kt` |
-| A flight's final frame is geometrically the card it becomes at rest | `composeApp/.../LandingTest.kt` |
-| A lift begins exactly over the resting card | `composeApp/.../LandingTest.kt` |
+| A flight's final frame is geometrically the card it becomes at rest | `composeApp/.../LandingDeepTest.kt` |
+| A lift begins exactly over the resting card | `composeApp/.../LandingDeepTest.kt` |
 | A hand's slots do not move while a card is in the air | `composeApp/.../HandGapTest.kt` |
-| A peeked card is put back, not taken away | `composeApp/.../PeekSettleTest.kt` |
+| A peeked card is put back, not taken away | `composeApp/.../PeekSettleDeepTest.kt` |
 | Nothing on the table teleports | `client/.../EveryMoveIsSeenTest.kt` |
 | The pauses between moves | `client/.../PacingTest.kt` |
 

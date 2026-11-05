@@ -45,7 +45,7 @@ import kotlin.time.Duration.Companion.minutes
  * the app changing its mind.
  */
 @OptIn(ExperimentalTestApi::class)
-class ControlBlinkTest {
+class ControlBlinkDeepTest {
 
     @Test
     fun aControlIsNeverOfferedAndThenWithdrawnWhileTheBotsPlay() = runComposeUiTest(testTimeout = BUDGET) {
@@ -124,7 +124,7 @@ class ControlBlinkTest {
 
         /**
          * A CI budget, not a claim about the code — the same one, and for the same reason, as
-         * `SwapAnimationTest`'s.
+         * `SwapAnimationDeepTest`'s.
          *
          * `runComposeUiTest` inherits `runTest`'s sixty-second wall clock, and this test spends it
          * on real work by design: 120 paused-clock ticks, each rendered and settled, around three

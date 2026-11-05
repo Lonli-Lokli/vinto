@@ -25,7 +25,7 @@ import kotlin.time.Duration.Companion.minutes
  * and comes back. No gap, no animation.
  */
 @OptIn(ExperimentalTestApi::class)
-class SwapAnimationTest {
+class SwapAnimationDeepTest {
 
     @Test
     fun swappingLiftsTheCardOutOfTheSeatAndPutsAnotherBack() = runComposeUiTest(testTimeout = BUDGET) {

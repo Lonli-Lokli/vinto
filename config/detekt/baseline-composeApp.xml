@@ -9,8 +9,8 @@
     <ID>BracesOnWhenStatements:Standings.kt:when</ID>
     <ID>CascadingCallWrapping:FontCoverageTest.kt:FontCoverageTest$replace("&amp;apos;", "'")</ID>
     <ID>CascadingCallWrapping:FontCoverageTest.kt:FontCoverageTest$replace("&amp;lt;", "&lt;")</ID>
-    <ID>CascadingCallWrapping:LandingTest.kt:LandingTest$single()</ID>
-    <ID>CascadingCallWrapping:QueenAimTest.kt:QueenAimTest$boundsInRoot</ID>
+    <ID>CascadingCallWrapping:LandingDeepTest.kt:LandingDeepTest$single()</ID>
+    <ID>CascadingCallWrapping:QueenAimDeepTest.kt:QueenAimDeepTest$boundsInRoot</ID>
     <ID>CascadingCallWrapping:WebShellTest.kt:WebShellTest$value</ID>
     <ID>ClassOrdering:CardStage.kt:Stage$/** * A card being shown off where it lies, or null. Read by the pile as well as drawn: while * a card is being flourished it has not landed anywhere, so nothing else may draw it. */ var flourish: Pair&lt;CardView, Anchor&gt;? by mutableStateOf(null)</ID>
     <ID>ClassOrdering:CardStage.kt:Stage$/** * Cards the stepped view already shows face-up whose reveal has not been *played* yet. * * The table steps to the position a move produced before its scenes play, and at * scoring that position has every hand face-up — so without this the whole table * flashed over in one frame and the seat-by-seat reveal turned cards that were already * showing. A concealed card draws its back until its reveal scene starts, and the flip * is then `CardFace`'s own animation, in place, one seat at a time. */ internal val concealing = mutableStateListOf&lt;Anchor&gt;()</ID>
@@ -47,10 +47,10 @@
     <ID>StringShouldBeRawString:WebShellTest.kt:WebShellTest$"\"purpose\": \"maskable\""</ID>
     <ID>UnderscoresInNumericLiterals:AnalyticsPrivacyUiTest.kt:AnalyticsPrivacyUiTest.Companion$20260819L</ID>
     <ID>UnderscoresInNumericLiterals:Felt.kt:20260821</ID>
-    <ID>UnderscoresInNumericLiterals:FullGameUiTest.kt:FullGameUiTest.Companion$20260819L</ID>
+    <ID>UnderscoresInNumericLiterals:FullGameUiDeepTest.kt:FullGameUiDeepTest.Companion$20260819L</ID>
     <ID>UnderscoresInNumericLiterals:HeaderControlsTest.kt:HeaderControlsTest.Companion$20260819L</ID>
     <ID>UnderscoresInNumericLiterals:MenuUiTest.kt:MenuUiTest.Companion$20260819L</ID>
-    <ID>UnderscoresInNumericLiterals:SwapAnimationTest.kt:SwapAnimationTest.Companion$20260819L</ID>
+    <ID>UnderscoresInNumericLiterals:SwapAnimationDeepTest.kt:SwapAnimationDeepTest.Companion$20260819L</ID>
     <ID>UnderscoresInNumericLiterals:TableUiTest.kt:TableUiTest.Companion$20260819L</ID>
     <ID>UnnecessaryParentheses:CardStage.kt:(if (flight.shown) SHOWN_SWELL else SWELL)</ID>
     <ID>UnnecessaryParentheses:CrashReporter.kt:(high.takeLast(HEX_DIGITS / 2) + low.takeLast(HEX_DIGITS / 2))</ID>

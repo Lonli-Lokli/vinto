@@ -114,8 +114,8 @@ class TheTableGlidesTest {
     }
 
     /** "Our names slowly moving into new position": the cards are home while the plates still travel. */
-    @Test
-    fun theNamesArriveAfterTheirCards() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
+    // Deep (TheTableGlidesDeepTest): over 10 s under load, the longest of the glides.
+    internal fun theNamesArriveAfterTheirCardsRun() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
         var screen by mutableStateOf(CLOSED)
         show({ screen }, reduced = false)
 

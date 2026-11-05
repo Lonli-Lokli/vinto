@@ -151,8 +151,8 @@ which is the fix for her first card lowering itself between taps, made executabl
 | A peek is private to whoever peeked, at the byte level | `engine/.../PeekPrivacyTest.kt` |
 | Nothing on the table teleports — every change of place carries a flight | `client/.../EveryMoveIsSeenTest.kt` |
 | What the view holds up, per action and per seat — and that it all comes down when the action is answered | `client/.../HeldUpTest.kt` |
-| Both of a Queen's cards hover together until the swap is made or declined, on a real screen | `composeApp/.../QueenAimTest.kt` |
-| A card in the air is the card it becomes at rest, to the pixel | `composeApp/.../LandingTest.kt` |
+| Both of a Queen's cards hover together until the swap is made or declined, on a real screen | `composeApp/.../QueenAimDeepTest.kt` |
+| A card in the air is the card it becomes at rest, to the pixel | `composeApp/.../LandingDeepTest.kt` |
 | A wrong King's reveal reaches the table and expires | `client/.../KingRevealTest.kt` |
 | A wrong throw's reveal reaches the table — through a player's dispatch and through the bot loop | `client/.../TossInRevealTest.kt` |
 | The animation map, generated from a live session | `client/.../AnimationMapTest.kt` → `docs/kotlin/ANIMATIONS.md` |

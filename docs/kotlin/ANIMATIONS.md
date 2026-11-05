@@ -124,4 +124,4 @@ and no use at all until it is your turn again.
    converges on it exactly, so the frame the overlay hands the card back to the table moves
    nothing a pixel can show. The old geometry scaled to the tap-target box and aligned box
    corners, which landed a side seat's card seventeen pixels high and a third too large,
-   then snapped. `LandingTest` measures both ends.
+   then snapped. `LandingDeepTest` measures both ends.

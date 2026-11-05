@@ -167,7 +167,7 @@ with credentials and hardware can do, in this order:
 ```sh
 ./gradlew :shared:shapes:jvmTest :shared:engine:jvmTest :shared:bot:jvmTest \
           :shared:client:jvmTest :shared:protocol:jvmTest :shared:room:jvmTest
-./gradlew :composeApp:jvmTest       # the compose suites, FullGameUiTest included
+./gradlew :composeApp:jvmTest       # the compose suites, FullGameUiDeepTest included
 ./gradlew :composeApp:jvmTest --tests game.vinto.app.ScreenshotTest          # writes goldens
 ./gradlew :composeApp:jvmTest --tests game.vinto.app.ScreenshotTest --rerun  # proves them stable
 ```
