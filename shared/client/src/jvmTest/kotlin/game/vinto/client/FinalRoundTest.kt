@@ -21,7 +21,7 @@ import kotlin.test.assertTrue
  * that was never tested: the earlier tests called Vinto at the start of a turn, which the
  * engine treats differently (you still owe the turn you just declared the end of).
  *
- * JVM only, for the same reason as `FinishesTest`: a sweep over sixty deals is fast here and
+ * JVM only, for the same reason as `FinishesDeepTest`: a sweep over sixty deals is fast here and
  * slow on a simulator, and what it proves is about the rules rather than about the platform.
  */
 class FinalRoundTest {
@@ -43,16 +43,11 @@ class FinalRoundTest {
         return session
     }
 
-    /** Three deals every day; `FinalRoundDeepTest` sweeps all sixty. */
-    @Test
-    fun callingVintoInTheTossInWindowPlaysTheRoundOut() = runTest(timeout = WHOLE_GAME) {
-        callingVintoInTheTossInWindowPlaysTheRoundOutOver(1L..EVERYDAY_DEALS)
-    }
-
-    internal suspend fun callingVintoInTheTossInWindowPlaysTheRoundOutOver(seeds: LongRange) {
+    // Deep (FinalRoundDeepTest): 80 s on the JVM.
+    internal fun callingVintoInTheTossInWindowPlaysTheRoundOutRun() = runTest(timeout = WHOLE_GAME) {
         val stalled = mutableListOf<String>()
 
-        for (seed in seeds) {
+        for (seed in 1L..60L) {
             val session = callVintoAt(seed)
             if (session.isOver) continue
 
@@ -101,9 +96,5 @@ class FinalRoundTest {
 
         // And before anything has ended, there is no reason to give.
         assertNull(roundEndReason(LocalGameSession(seed = 1L, difficulty = Difficulty.EASY).view.value))
-    }
-
-    private companion object {
-        const val EVERYDAY_DEALS = 3L
     }
 }

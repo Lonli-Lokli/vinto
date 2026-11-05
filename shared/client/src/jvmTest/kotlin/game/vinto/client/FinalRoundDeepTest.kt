@@ -1,22 +1,15 @@
 package game.vinto.client
 
-import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 
 /**
- * `FinalRoundTest`'s call in the toss-in window, swept over sixty deals.
- *
- * Most of two minutes on the JVM, so it runs in the deep suite (`-Pgames.suite=deep`,
- * gradle/tests.gradle.kts); the everyday suite makes the same call on three deals.
+ * `FinalRoundTest`'s slowest test, 80 s on the JVM, so it runs in the deep suite (`-Pgames.suite=deep`,
+ * gradle/tests.gradle.kts). Its body stays in `FinalRoundTest`, unchanged, under the same name with `Run`
+ * added.
  */
 class FinalRoundDeepTest {
 
     @Test
-    fun callingVintoInTheTossInWindowPlaysTheRoundOut() = runTest(timeout = WHOLE_GAME) {
-        FinalRoundTest().callingVintoInTheTossInWindowPlaysTheRoundOutOver(1L..DEALS)
-    }
-
-    private companion object {
-        const val DEALS = 60L
-    }
+    fun callingVintoInTheTossInWindowPlaysTheRoundOut() =
+        FinalRoundTest().callingVintoInTheTossInWindowPlaysTheRoundOutRun()
 }

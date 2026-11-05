@@ -11,7 +11,7 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * The public drive does what the internal one does.
  *
- * `FinishesTest` proves games terminate when driven over the internal state; this proves the
+ * `FinishesDeepTest` proves games terminate when driven over the internal state; this proves the
  * helper the UI test leans on — the one built from public surface — reaches the same end,
  * and emits the frames the screen will be walking while it does.
  */
