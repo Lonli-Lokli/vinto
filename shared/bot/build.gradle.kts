@@ -26,8 +26,7 @@ kotlin {
  * paying when a heuristic changes and is not worth paying on every push, so, like every
  * `*DeepTest`, the everyday suite leaves it out and `-Pgames.suite=deep` runs it (the test
  * convention, gradle/tests.gradle.kts). The *legality* gate, the one that matters for a
- * release, is `SelfPlayGateDeepTest`'s twelve `moderate` games in the deep suite, and
- * `SelfPlayGateTest` asks the same questions of one `easy` game every time.
+ * release, is `SelfPlayGateDeepTest`'s twelve `moderate` games, in the deep suite too.
  *
  * ```sh
  * ./gradlew :shared:bot:jvmTest -Pgames.suite=deep --tests '*TournamentDeepTest*' -Ptournament        # compare

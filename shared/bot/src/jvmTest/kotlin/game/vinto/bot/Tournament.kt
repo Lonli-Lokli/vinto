@@ -18,7 +18,7 @@ import kotlin.random.Random
 /**
  * A whole self-played game, and what it is worth.
  *
- * The gate ([SelfPlayGateTest]) and the tournament ([TournamentDeepTest]) ask the same table two
+ * The gate ([SelfPlayGateDeepTest]) and the tournament ([TournamentDeepTest]) ask the same table two
  * different questions — *is it legal* and *is it any good* — so they play the same game. One
  * loop, one set of diagnostics, and no chance of the two drifting into playing subtly
  * different games and comparing the answers.
