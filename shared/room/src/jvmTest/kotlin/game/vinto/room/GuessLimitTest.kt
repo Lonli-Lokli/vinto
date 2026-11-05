@@ -134,9 +134,12 @@ class GuessLimitTest {
      *
      * A guesser rotating addresses could otherwise fill the registry's storage with counters —
      * turning the defence into the attack.
+     *
+     * Proving a bound of 2,000 takes more than 2,000 guesses, each re-encoding a growing table:
+     * 14 s. So `GuessLimitDeepTest` runs it, in the deep suite (`-Pgames.suite=deep`,
+     * gradle/tests.gradle.kts), and the everyday suite keeps the other limits here.
      */
-    @Test
-    fun theCounterTableCannotBeGrownWithoutLimit() {
+    internal fun theCounterTableCannotBeGrownWithoutLimitRun() {
         var json = registryWithARoom().first
         repeat(2_500) { i ->
             val answer = resolve(json, "ZZZZZ${i % 10}", "source-$i", i.toDouble())

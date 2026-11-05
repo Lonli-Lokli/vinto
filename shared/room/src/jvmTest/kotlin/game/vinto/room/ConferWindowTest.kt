@@ -137,8 +137,11 @@ class ConferWindowTest {
         assertNotNull(back.conferredRound, "and the round was left able to open one again")
     }
 
-    @Test
-    fun aBotsVintoCallStillOpensTheWindowBeforeAnyCoalitionTurn() {
+    /**
+     * A whole round of searching bots, 12 s, so `ConferWindowDeepTest` runs it in the deep
+     * suite (`-Pgames.suite=deep`, gradle/tests.gradle.kts).
+     */
+    internal fun aBotsVintoCallStillOpensTheWindowBeforeAnyCoalitionTurnRun() {
         // The commonest case there is, and the one a check outside the bot loop missed: a bot
         // calls Vinto from inside that loop, so a check taken before it ran was reading a state
         // where the final round had not started — and the bots then played the whole coalition

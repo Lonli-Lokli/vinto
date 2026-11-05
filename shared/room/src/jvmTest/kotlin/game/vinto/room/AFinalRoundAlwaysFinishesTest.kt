@@ -30,9 +30,14 @@ import kotlin.test.assertTrue
  */
 class AFinalRoundAlwaysFinishesTest {
 
+    /** Two seeds everyday; `AFinalRoundAlwaysFinishesDeepTest` plays all six (11 s). */
     @Test
     fun aRoundAPersonCallsVintoInReachesScoring() {
-        val stuck = SEEDS.mapNotNull { seed -> whereItStops(seed, silent = null) }
+        aRoundAPersonCallsVintoInReachesScoringOver(EVERYDAY_SEEDS)
+    }
+
+    internal fun aRoundAPersonCallsVintoInReachesScoringOver(seeds: List<Long>) {
+        val stuck = seeds.mapNotNull { seed -> whereItStops(seed, silent = null) }
 
         assertTrue(
             stuck.isEmpty(),
@@ -202,8 +207,9 @@ class AFinalRoundAlwaysFinishesTest {
             }}"
     }
 
-    private companion object {
+    internal companion object {
         val SEEDS = listOf(42L, 7L, 11L, 3L, 99L, 2024L)
+        val EVERYDAY_SEEDS = SEEDS.take(2)
         const val MOVE_LIMIT = 400
         const val MS_BETWEEN_MOVES = 2_000.0
         const val SETUP_PEEKS = 2
