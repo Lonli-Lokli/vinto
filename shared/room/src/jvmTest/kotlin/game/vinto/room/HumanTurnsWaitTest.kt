@@ -141,18 +141,10 @@ class HumanTurnsWaitTest {
      * Measured over a whole round and then a second one, because a deal remaps every seat's
      * player id and a stale mapping would make the room's own guard — which finds a seat by the
      * action's actor — quietly find nobody, and a guard that finds nobody lets everything past.
-     *
-     * The room's clock is the test's own, so the cost is the bots' thinking: three seeds of two
-     * rounds are 47 s. The everyday suite plays both rounds of the first seed, and
-     * `HumanTurnsWaitDeepTest` all three.
      */
-    @Test
-    fun theRoomOnlyEverFinishesAPersonsTossIn() {
-        theRoomOnlyEverFinishesAPersonsTossInOver(EVERYDAY_SEEDS)
-    }
-
-    internal fun theRoomOnlyEverFinishesAPersonsTossInOver(seeds: List<Long>) {
-        for (seed in seeds) {
+    // Deep (HumanTurnsWaitDeepTest): 47 s on the JVM.
+    internal fun theRoomOnlyEverFinishesAPersonsTossInRun() {
+        for (seed in SEEDS) {
             var state = dealtRoom(seed = seed.toDouble())
             state = playRoundOut(state, seed, START)
             blamed(state, seed, round = 1)
@@ -187,10 +179,9 @@ class HumanTurnsWaitTest {
         )
     }
 
-    internal companion object {
+    private companion object {
         const val SEED = 42L
         val SEEDS = listOf(42L, 7L, 11L)
-        val EVERYDAY_SEEDS = SEEDS.take(1)
         const val MOVE_LIMIT = 600
         const val MS_BETWEEN_MOVES = 2_000.0
 

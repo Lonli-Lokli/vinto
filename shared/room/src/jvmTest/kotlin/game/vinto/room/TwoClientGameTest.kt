@@ -81,7 +81,7 @@ class TwoClientGameTest {
         )
         testScheduler.runCurrent()
 
-        // The round, driven FinishesTest-style: the humans' seats decided by the bots' own
+        // The round, driven FinishesDeepTest-style: the humans' seats decided by the bots' own
         // brain, every move dispatched through the owning client's session — the whole wire
         // in the loop, both directions, every move.
         val person = BotRunner(Difficulty.EASY, Random(SEED))

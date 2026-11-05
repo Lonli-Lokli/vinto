@@ -3,15 +3,13 @@ package game.vinto.room
 import kotlin.test.Test
 
 /**
- * `AFinalRoundAlwaysFinishesTest`'s person-called final round over all six seeds.
- *
- * Six rounds are 11 s, so they run in the deep suite (`-Pgames.suite=deep`,
- * gradle/tests.gradle.kts). The everyday suite plays the first two.
+ * `AFinalRoundAlwaysFinishesTest`'s slowest test, 11 s on the JVM, so it runs in the deep suite
+ * (`-Pgames.suite=deep`, gradle/tests.gradle.kts). Its body stays in `AFinalRoundAlwaysFinishesTest`,
+ * unchanged, under the same name with `Run` added.
  */
 class AFinalRoundAlwaysFinishesDeepTest {
 
     @Test
-    fun aRoundAPersonCallsVintoInReachesScoring() {
-        AFinalRoundAlwaysFinishesTest().aRoundAPersonCallsVintoInReachesScoringOver(AFinalRoundAlwaysFinishesTest.SEEDS)
-    }
+    fun aRoundAPersonCallsVintoInReachesScoring() =
+        AFinalRoundAlwaysFinishesTest().aRoundAPersonCallsVintoInReachesScoringRun()
 }

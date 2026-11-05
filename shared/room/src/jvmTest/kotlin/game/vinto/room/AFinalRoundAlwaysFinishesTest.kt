@@ -23,21 +23,16 @@ import kotlin.test.assertTrue
  * permanent retry. The thing being retried is what this test is about — whether the room's own
  * driver has a move to make at all when a coalition it is playing includes a person.
  *
- * The shape matters and is why the existing suites missed it. `SelfPlayGateTest` plays four
+ * The shape matters and is why the existing suites missed it. `SelfPlayGateDeepTest` plays four
  * bots, so every coalition member is one; `playRoundOut` lets the brain decide who calls Vinto.
  * Here a **human** calls it, which leaves a coalition of one person and two bots — the ordinary
  * online case, and the one nothing was driving to its end.
  */
 class AFinalRoundAlwaysFinishesTest {
 
-    /** Two seeds everyday; `AFinalRoundAlwaysFinishesDeepTest` plays all six (11 s). */
-    @Test
-    fun aRoundAPersonCallsVintoInReachesScoring() {
-        aRoundAPersonCallsVintoInReachesScoringOver(EVERYDAY_SEEDS)
-    }
-
-    internal fun aRoundAPersonCallsVintoInReachesScoringOver(seeds: List<Long>) {
-        val stuck = seeds.mapNotNull { seed -> whereItStops(seed, silent = null) }
+    // Deep (AFinalRoundAlwaysFinishesDeepTest): 11 s on the JVM.
+    internal fun aRoundAPersonCallsVintoInReachesScoringRun() {
+        val stuck = SEEDS.mapNotNull { seed -> whereItStops(seed, silent = null) }
 
         assertTrue(
             stuck.isEmpty(),
@@ -207,9 +202,8 @@ class AFinalRoundAlwaysFinishesTest {
             }}"
     }
 
-    internal companion object {
+    private companion object {
         val SEEDS = listOf(42L, 7L, 11L, 3L, 99L, 2024L)
-        val EVERYDAY_SEEDS = SEEDS.take(2)
         const val MOVE_LIMIT = 400
         const val MS_BETWEEN_MOVES = 2_000.0
         const val SETUP_PEEKS = 2
