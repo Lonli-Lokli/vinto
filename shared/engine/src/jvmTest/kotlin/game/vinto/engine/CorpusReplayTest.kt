@@ -40,8 +40,8 @@ class CorpusReplayTest {
         assertTrue(recordings.all { it.second.formatVersion == 1 })
     }
 
-    @Test
-    fun everyRecordingReplaysWithMatchingHashes() {
+    // Deep (CorpusReplayDeepTest): 11 s on the JVM.
+    internal fun everyRecordingReplaysWithMatchingHashesRun() {
         val results = recordings.map { (name, recording) ->
             name to replayRecording(recording, verifyFinalState = true)
         }

@@ -83,8 +83,8 @@ class MctsDiscriminationTest {
         assertTrue(agreed >= bar, "$what in only $agreed of ${seeds.count()} seeds")
     }
 
-    @Test
-    fun aJackGivesATenForAKnownJokerRatherThanForAKnownNine() {
+    // Deep (MctsDiscriminationDeepTest): 12 s on the JVM.
+    internal fun aJackGivesATenForAKnownJokerRatherThanForAKnownNineRun() {
         val joker = testCard(Rank.JOKER, "h-joker")
         val nine = testCard(Rank.NINE, "h-nine")
         agree("the Jack took the Joker, and swapped") { seed ->
