@@ -211,6 +211,12 @@ jobs:
       - name: Every locale against the English source
         run: node tools/check-translations.mjs
 
+      # The page's navigator.languages shim against the tags a browser can report: Compose
+      # hands each to `new Intl.Locale` unguarded, and one it cannot parse stopped the web
+      # app before its first screen (Sentry VINTO-37). Node, no build, a tenth of a second.
+      - name: Every browser language reads as a locale
+        run: node tools/check-browser-languages.mjs
+
       - uses: actions/setup-java@v6
         with:
           distribution: temurin

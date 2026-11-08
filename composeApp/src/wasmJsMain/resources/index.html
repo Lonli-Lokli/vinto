@@ -35,9 +35,15 @@
       
       `navigator.languages` is read-only to a page, and it is what Compose's resource lookup
       reads underneath. So the property is shadowed with one that checks a variable first —
-      `AppLocale.wasmJs.kt` sets it, and everything else falls through to the browser's own
+      `LocalAppLocale.wasmJs.kt` sets it, and everything else falls through to the browser's own
       answer. Before the app script on purpose: it has to be in place the first time anything
       asks.
+
+      The browser's answer is mended on the way through. Compose hands every entry to
+      `new Intl.Locale`, unguarded, so one tag Intl cannot parse (`en_US`, `*`, `en-us@posix`)
+      threw "Incorrect locale information provided" before the first screen drew (Sentry
+      VINTO-37). An underscore becomes a hyphen, a tag that still does not parse is left out,
+      and a list left empty reads as English. `tools/check-browser-languages.mjs` holds it.
 
       Absent, the game is in the browser's language and the picker does nothing. That is a
       working app rather than a broken one, which is why this is a small script and not a
@@ -47,9 +53,22 @@
       (function () {
         var real = Object.getOwnPropertyDescriptor(Navigator.prototype, 'languages');
         if (!real || !real.get) return;
+        var parses = typeof Intl === 'object' && typeof Intl.Locale === 'function';
+        function readable(tag) {
+          var mended = String(tag).replace(/_/g, '-');
+          try { new Intl.Locale(mended); return mended; } catch (x) { return null; }
+        }
         Object.defineProperty(Navigator.prototype, 'languages', Object.assign({}, real, {
           get: function () {
-            return window.__vintoLocale ? [window.__vintoLocale] : real.get.apply(this);
+            if (window.__vintoLocale) return [window.__vintoLocale];
+            var reported = real.get.apply(this);
+            if (!parses) return reported;
+            var kept = [];
+            for (var i = 0; reported && i < reported.length; i++) {
+              var tag = readable(reported[i]);
+              if (tag) kept.push(tag);
+            }
+            return kept.length ? kept : ['en'];
           },
         }));
       })();
