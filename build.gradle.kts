@@ -218,8 +218,16 @@ allprojects {
          * — so running several at once is not the arrangement the fork was protecting against.
          * Half the cores rather than all of them: each fork renders Skia in software and wants
          * a core to itself, and the Gradle daemon and the Kotlin compile daemon want the rest.
+         *
+         * The line below said all of them until 2026-11-15, and the slow-test guard
+         * (gradle/tests.gradle.kts) is what paid for it: it times each test by the wall clock,
+         * so four forks fighting over four cores read as slow tests. Measured on a four-core
+         * machine, the slowest tests ran 30 to 50% faster at half
+         * (`HeaderControlsTest.theQuestionMarkOpensTheRules` 10.7 s to 6.7 s,
+         * `SelfPlayDeepTest` 11.6 s to 7.9 s), and the Compose suite took 323 s instead of
+         * 259 s; the shared modules' suites took 80 s either way.
          */
-        maxParallelForks = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
+        maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
 
         systemProperty("vinto.fixtures", rootProject.layout.projectDirectory.dir("fixtures").asFile.absolutePath)
         systemProperty("java.awt.headless", "true")
