@@ -39,7 +39,6 @@
     <ID>UnderscoresInNumericLiterals:FinalRoundIsWatchedTest.kt:FinalRoundIsWatchedTest$20260819L</ID>
     <ID>UnderscoresInNumericLiterals:LocalGameSessionTest.kt:LocalGameSessionTest$20260819L</ID>
     <ID>UnderscoresInNumericLiterals:NoNetworkGuardTest.kt:NoNetworkGuardTest$20260819L</ID>
-    <ID>UnderscoresInNumericLiterals:SelfPlayTest.kt:SelfPlayTest.Companion$20260826L</ID>
     <ID>UnnecessaryParentheses:EveryMoveIsSeenTest.kt:EveryMoveIsSeenTest$(before.pendingAction == null)</ID>
     <ID>UnnecessaryParentheses:IdentityTest.kt:IdentityTest$(draws * 7919L)</ID>
     <ID>UnnecessaryParentheses:TeachScript.kt:((view.pendingAction?.card as? CardView.Visible)?.card?.rank)</ID>

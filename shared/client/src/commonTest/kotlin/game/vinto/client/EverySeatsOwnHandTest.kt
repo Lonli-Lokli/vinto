@@ -41,8 +41,8 @@ class EverySeatsOwnHandTest {
         return game
     }
 
-    @Test
-    fun aCoalitionMemberIsShownItsOwnTotalAndNotTheCoalitionsBest() = runTest(timeout = WHOLE_GAME) {
+    // Deep (EverySeatsOwnHandDeepTest): 10.5 to 11.1 s on the JVM on CI.
+    internal fun aCoalitionMemberIsShownItsOwnTotalAndNotTheCoalitionsBestRun() = runTest(timeout = WHOLE_GAME) {
         val game = playedOut()
         val result = assertNotNull(game.result, "the game did not finish")
         val caller = assertNotNull(result.callerId, "the round ended with nobody calling")

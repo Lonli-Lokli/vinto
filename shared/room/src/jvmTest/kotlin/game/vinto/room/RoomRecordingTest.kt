@@ -29,8 +29,8 @@ import kotlin.test.assertTrue
  */
 class RoomRecordingTest {
 
-    @Test
-    fun aRoomsRoundReplaysFromItsOwnRecording() {
+    // Deep (RoomRecordingDeepTest): 9.1 to 10.6 s on the JVM on CI.
+    internal fun aRoomsRoundReplaysFromItsOwnRecordingRun() {
         var state = dealtRoom()
         val person = BotRunner(Difficulty.EASY, Random(42))
         var now = START
