@@ -14,8 +14,11 @@ import kotlin.time.Duration.Companion.minutes
  * `FinishesDeepTest` proves games terminate when driven over the internal state; this proves the
  * helper the UI test leans on — the one built from public surface — reaches the same end,
  * and emits the frames the screen will be walking while it does.
+ *
+ * A whole game, 7.4 to 13.1 s on the JVM on CI, so the class runs in the deep suite
+ * (`-Pgames.suite=deep`, gradle/tests.gradle.kts).
  */
-class SelfPlayTest {
+class SelfPlayDeepTest {
 
     @Test
     fun aSessionPlaysItselfToScoring() = runTest(timeout = LONG) {
@@ -38,7 +41,7 @@ class SelfPlayTest {
     }
 
     private companion object {
-        const val SEED = 20260826L
+        const val SEED = 20_260_826L
         val LONG = 2.minutes
     }
 }

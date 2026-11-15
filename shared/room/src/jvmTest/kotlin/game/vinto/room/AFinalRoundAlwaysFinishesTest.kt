@@ -7,7 +7,6 @@ import game.vinto.shapes.GamePhase
 import game.vinto.shapes.GameState
 import game.vinto.shapes.PlayerIdPayload
 import game.vinto.shapes.PositionPayload
-import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
@@ -53,8 +52,8 @@ class AFinalRoundAlwaysFinishesTest {
      * somebody putting their phone down — not dropping, so no seat grace, nothing else to
      * rescue it.
      */
-    @Test
-    fun aPersonWhoStopsAnsweringDoesNotStopTheTable() {
+    // Deep (AFinalRoundAlwaysFinishesDeepTest): 10.1 to 12.7 s on the JVM on CI.
+    internal fun aPersonWhoStopsAnsweringDoesNotStopTheTableRun() {
         val stuck = SEEDS.mapNotNull { seed -> whereItStops(seed, silent = 1) }
 
         assertTrue(

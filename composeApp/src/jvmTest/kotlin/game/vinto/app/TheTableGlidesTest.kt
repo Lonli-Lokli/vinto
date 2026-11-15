@@ -55,8 +55,8 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalTestApi::class)
 class TheTableGlidesTest {
 
-    @Test
-    fun openingTheFoldGlidesTheTableToItsNewShape() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
+    // Deep (TheTableGlidesDeepTest): 16.0 to 23.8 s on CI.
+    internal fun openingTheFoldGlidesTheTableToItsNewShapeRun() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
         var screen by mutableStateOf(CLOSED)
         show({ screen }, reduced = false)
         val before = face(LEFT)
@@ -136,8 +136,8 @@ class TheTableGlidesTest {
         )
     }
 
-    @Test
-    fun underReducedMotionTheTableIsSimplyThere() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
+    // Deep (TheTableGlidesDeepTest): 10.0 to 17.2 s on CI.
+    internal fun underReducedMotionTheTableIsSimplyThereRun() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
         var screen by mutableStateOf(CLOSED)
         show({ screen }, reduced = true)
 
@@ -159,8 +159,8 @@ class TheTableGlidesTest {
      * apple presentation for duo". Half open, the spread follows the angle from where the table changed
      * shape to flat, and holds still while the hinge does; flat, it finishes.
      */
-    @Test
-    fun theHingeCarriesTheTableOpen() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
+    // Deep (TheTableGlidesDeepTest): 13.6 to 20.7 s on CI.
+    internal fun theHingeCarriesTheTableOpenRun() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
         var screen by mutableStateOf(CLOSED)
         val hinge = mutableStateOf<Hinge?>(null)
         show({ screen }, reduced = false, hinge = hinge)
@@ -197,8 +197,8 @@ class TheTableGlidesTest {
         )
     }
 
-    @Test
-    fun aWindowResizedByAFewPointsIsTheSameTable() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
+    // Deep (TheTableGlidesDeepTest): 12.8 to 18.9 s on CI.
+    internal fun aWindowResizedByAFewPointsIsTheSameTableRun() = runDesktopComposeUiTest(WINDOW_W, WINDOW_H) {
         var screen by mutableStateOf(OPEN)
         show({ screen }, reduced = false)
 
