@@ -574,8 +574,11 @@ tasks.withType<org.jetbrains.kotlin.gradle.targets.wasm.binaryen.BinaryenExec>()
             }
             val map = File("${inputFiles.singleFile.path}.map")
             check(map.isFile) { "$map is missing, so the web build's crashes could not be read back to a line" }
+            // Read as text, never `parse(File)`: past 2 MB that overload hands the file to Groovy's streaming
+            // parser, which throws ArrayIndexOutOfBoundsException when a string straddles its 10,000-char
+            // buffer. The map crossed 2 MB with Compose 1.12.2, and deploy-web failed here from that commit on.
             @Suppress("UNCHECKED_CAST")
-            val json = groovy.json.JsonSlurper().parse(map) as MutableMap<String, Any?>
+            val json = groovy.json.JsonSlurper().parseText(map.readText()) as MutableMap<String, Any?>
             listOf("sourcesContent", "ignoreList", "x_google_ignoreList").forEach(json::remove)
             cleaned.writeText(groovy.json.JsonOutput.toJson(json))
         }
