@@ -32,6 +32,12 @@ Public rooms in a web build froze the first time `fetch` threw where it was call
 - the Recomposer shuts down when its effect job completes [research https://github.com/JetBrains/compose-multiplatform-core/blob/v1.12.0/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/Recomposer.kt]
 - the browser failure that froze Public rooms is now an answer, which closes one way in and not the shape [commit 79559db]
 
+- the table's moves launch on a bare one too, which the bug did not list: `rememberActor` [file composeApp/src/commonMain/kotlin/game/vinto/app/game/GameHolder.kt]
+- OneFailedJobLeavesTheScreenRunningTest (composeApp jvmTest): before the fix both red, publicRoomsStillDrawsAfterTheListThrows on Public rooms' list throwing out of its bare scope, and noScreenLaunchesOnABareComposeScope naming DiscoverScreen, OnlineScreen, SettingsScreen, CodeToShare and GameHolder; after it 2 of 2 green, with OneFailedJobLeavesTheAppRunningTest, CrashInstallTest and SteadyControlsTest green and detekt clean in its own run and in the commit hook [commit a881c465]
+
+## Fix written
+- `rememberScreenScope()` beside `rememberAppScope()` in AppScope.kt, both one supervised, reporting scope (a `SupervisorJob` under the composition's job, with `Crashes.handler()`); the five screens launch on it; Open a room clears its busy flag in a `finally`, so a create that throws leaves the button usable; TRAPS.md and the handler's comment name the screen scope; OneFailedJobLeavesTheScreenRunningTest holds the behaviour and refuses a bare `rememberCoroutineScope()` in composeApp outside AppScope.kt, seen red first [commit a881c465a66fbe17c231fa19774f4c9e28911ef3]
+
 ## Questions
 1. Give each of the four a supervised scope that reports, the shape of `rememberAppScope` (a `SupervisorJob` under the composition's job, with `Crashes.handler()`), rather than a `try` in each launch?
    Proposed: yes. A `try` guards only the launch it is written around; the scope guards every launch on it, including the next one somebody adds.
