@@ -25,6 +25,10 @@ room service unreachable.
 - the reason for every failure that is not the service's own is `UNREACHABLE_SERVICE`, "could not reach the room service" [file shared/client/src/commonMain/kotlin/game/vinto/client/RoomTrouble.kt]
 - the online screen's `Trouble` shows the bare reason under the same headline, so its offline case repeats the idea too, in other words [file composeApp/src/commonMain/kotlin/game/vinto/app/OnlineScreen.kt]
 - seen on the screen in a local web build after the browser-failure fix, where the offline answer now arrives [commit 79559db]
+- OfflineSaysItOnceTest (composeApp jvmTest), with the real offline answer `answering` makes from a thrown failure: before the fix the room service was named on two lines on Public rooms and on Open a room (expected 1, was 2, both red); after it 1, and a reason the service gave itself still shows under the headline on both screens; 4 of 4 green, `:shared:client:jvmTest` green, detekt clean in the commit hook [commit 96979722]
+
+## Fix written
+- `RoomAnswer.Failed.detail` in shared/client, null for the generic offline reason and the service's own words otherwise, read by Public rooms and Open a room's `Trouble`; no string changes; RELIABILITY.md says so; OfflineSaysItOnceTest seen red first [commit 96979722ebb5bd72f786dde82d0c4b437469305e]
 
 ## Questions
 1. Drop the detail line when the failure is the generic offline one (`RoomTrouble.OFFLINE` with `UNREACHABLE_SERVICE`), and keep it for a reason the service itself gave?
