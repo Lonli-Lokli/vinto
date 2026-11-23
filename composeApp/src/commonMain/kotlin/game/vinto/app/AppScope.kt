@@ -24,7 +24,24 @@ import kotlinx.coroutines.SupervisorJob
  * still cancelled when the app leaves the composition — and stops a failure going further up.
  */
 @Composable
-internal fun rememberAppScope(): CoroutineScope {
+internal fun rememberAppScope(): CoroutineScope = rememberSupervisedScope()
+
+/**
+ * The scope a screen launches its own work on: loading Public rooms, opening a room, the share
+ * card, the support button, a move on the table.
+ *
+ * The same shape as [rememberAppScope], for the same reason. These used to launch on a bare
+ * `rememberCoroutineScope()`, so one call that threw where nobody caught it cancelled the
+ * Recomposer and the app stopped drawing, with no report (`OneFailedJobLeavesTheScreenRunningTest`,
+ * which also refuses a bare one anywhere in `composeApp`). Leaving the screen still cancels what
+ * it started, and a cancellation is not a failure, so it reports nothing.
+ */
+@Composable
+internal fun rememberScreenScope(): CoroutineScope = rememberSupervisedScope()
+
+/** Compose's scope, with a handler that reports and a `SupervisorJob` under its job. */
+@Composable
+private fun rememberSupervisedScope(): CoroutineScope {
     val composition = rememberCoroutineScope { Crashes.handler() }
     return remember(composition) {
         CoroutineScope(composition.coroutineContext + SupervisorJob(composition.coroutineContext[Job]))

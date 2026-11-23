@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -298,7 +297,7 @@ fun OpenRoomScreen(
     var listed by remember { mutableStateOf(true) }
     var failure by remember { mutableStateOf<RoomAnswer.Failed?>(null) }
     var busy by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+    val scope = rememberScreenScope()
 
     Scaffold(title = stringResource(Res.string.online_open_screen), onBack = onBack) {
         Text(
@@ -341,12 +340,17 @@ fun OpenRoomScreen(
                 scope.launch {
                     // Two branches, and the compiler counts them. This was a `try` around a
                     // call that can fail four different ways on four platforms, with nothing
-                    // checking the `catch` was there at all.
-                    when (val answer = connector.createRoom(listed, nickname)) {
-                        is RoomAnswer.Ok -> onEnterRoom(answer.value.code, nickname)
-                        is RoomAnswer.Failed -> failure = answer
+                    // checking the `catch` was there at all. The `finally` catches nothing: a
+                    // call that throws anyway is the screen scope's to report, and the button
+                    // must not stay on "creating" for a room nobody is opening.
+                    try {
+                        when (val answer = connector.createRoom(listed, nickname)) {
+                            is RoomAnswer.Ok -> onEnterRoom(answer.value.code, nickname)
+                            is RoomAnswer.Failed -> failure = answer
+                        }
+                    } finally {
+                        busy = false
                     }
-                    busy = false
                 }
             },
             modifier = Modifier.fillMaxWidth(),

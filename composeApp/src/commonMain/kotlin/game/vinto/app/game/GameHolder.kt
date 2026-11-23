@@ -8,9 +8,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import game.vinto.app.crash.Where
+import game.vinto.app.rememberScreenScope
 import game.vinto.app.theme.LocalFeedback
 import game.vinto.client.Frame
 import game.vinto.client.GameSession
@@ -450,7 +450,7 @@ fun rememberActor(
      */
     rehearseFor: Question = Question.None,
 ): (Move) -> Unit {
-    val scope = rememberCoroutineScope()
+    val scope = rememberScreenScope()
     val feedback = LocalFeedback.current
 
     LaunchedEffect(rehearseFor) {

@@ -2,10 +2,10 @@ package game.vinto.app.share
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import game.vinto.app.rememberScreenScope
 import game.vinto.app.sharePicture
 import game.vinto.app.shareText
 import kotlinx.coroutines.launch
@@ -44,7 +44,7 @@ fun CodeToShare(
 ) {
     val layer = rememberShareLayer()
     val logo = VintoQr.ringedMark()
-    val scope = rememberCoroutineScope()
+    val scope = rememberScreenScope()
 
     Box(modifier) {
         button {

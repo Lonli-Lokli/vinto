@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -761,7 +760,7 @@ private fun About() {
  */
 @Composable
 private fun GiveThanks(price: String, thanked: Boolean, given: Int, onGiven: (Int) -> Unit) {
-    val scope = rememberCoroutineScope()
+    val scope = rememberScreenScope()
 
     Column(verticalArrangement = Arrangement.spacedBy(Tight)) {
         // A store that names no figure gets the figure-less label rather than "Say thanks — " with
