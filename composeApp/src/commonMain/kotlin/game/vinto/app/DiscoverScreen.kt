@@ -57,6 +57,7 @@ import game.vinto.client.DiscoveryRow
 import game.vinto.client.DiscoveryState
 import game.vinto.client.RoomAnswer
 import game.vinto.client.RoomConnector
+import game.vinto.client.detail
 import game.vinto.client.discoveryRows
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -206,6 +207,8 @@ private fun ColumnScope.DiscoverBody(
         ) {
             // What to do about it, then what the service said. The other way round is how a
             // player came to be shown "server-side action validation is not implemented yet".
+            // Offline the service said nothing, and the line went "Could not reach the room
+            // service: could not reach the room service" under a headline saying it too.
             Text(
                 text = troubled(refused.trouble),
                 style = MaterialTheme.typography.bodyMedium,
@@ -213,11 +216,13 @@ private fun ColumnScope.DiscoverBody(
                 // light scheme's deep red measured 1.04:1. See `errorOnFelt`.
                 color = MaterialTheme.colorScheme.errorOnFelt(),
             )
-            Text(
-                text = stringResource(Res.string.discover_failed, refused.reason),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
-            )
+            refused.detail?.let { said ->
+                Text(
+                    text = stringResource(Res.string.discover_failed, said),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
+                )
+            }
             GameButton(
                 label = stringResource(Res.string.discover_retry),
                 tone = ButtonTone.PLAY,

@@ -161,6 +161,18 @@ sealed interface RoomAnswer<out T> {
 }
 
 /**
+ * The line worth showing under a failure's headline, or null when there is none.
+ *
+ * The service's own words — a full room, a refusal, a code it never issued — are a detail a
+ * player or a bug report can use. The generic reason [answering] gives every failure that is
+ * not the service's is not: under "No connection to the room service" it only says the same
+ * thing again, and Public rooms said it a third time by wrapping it in "Could not reach the
+ * room service: …". One rule, here, so every screen that shows a failure drops the same line.
+ */
+val RoomAnswer.Failed.detail: String?
+    get() = reason.takeUnless { trouble == RoomTrouble.OFFLINE && reason == UNREACHABLE_SERVICE }
+
+/**
  * Runs [call], turning whatever the platform throws into a [RoomAnswer].
  *
  * The one place in the client that is allowed to catch broadly, and it exists so that nowhere

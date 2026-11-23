@@ -329,6 +329,12 @@ implemented yet (see ActionValidator, task 4.4)" — which is true, is addressed
 works on this, and tells a player nothing. `troubled()` is a `when` with no `else`, so a seventh
 `RoomTrouble` is a compile error rather than a screen that says nothing.
 
+When the service said nothing — the network was not there, and `answering` gave the generic
+"could not reach the room service" — there is no small line at all: `RoomAnswer.Failed.detail` is
+null for that one reason, and both Public rooms and Open a room read it. Under "No connection to
+the room service" the line only said it again, and Public rooms wrapped it to say it a third
+time (`OfflineSaysItOnceTest`).
+
 ### A catch that swallowed on purpose, and the dataset that was empty because of it
 
 The room's counting was never lost, exactly: it was refused, once per event, for the life of

@@ -67,6 +67,7 @@ import game.vinto.client.RoomAnswer
 import game.vinto.client.RoomConnector
 import game.vinto.client.Vault
 import game.vinto.client.currentRoom
+import game.vinto.client.detail
 import game.vinto.client.identity
 import game.vinto.client.onlineDoor
 import game.vinto.client.rememberAvatar
@@ -396,7 +397,8 @@ fun JoinCodeScreen(
  *
  * Showing only the service's line is what put "server-side action validation is not
  * implemented yet" in front of a player. Showing only ours loses the detail that makes a bug
- * report useful, so both, at two sizes.
+ * report useful, so both, at two sizes — unless the service said nothing of its own, when the
+ * second line would only repeat the first (`detail`).
  */
 @Composable
 private fun Trouble(failure: RoomAnswer.Failed?) {
@@ -408,11 +410,13 @@ private fun Trouble(failure: RoomAnswer.Failed?) {
         // against green cloth. See `errorOnFelt`.
         color = MaterialTheme.colorScheme.errorOnFelt(),
     )
-    Text(
-        text = failure.reason,
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
-    )
+    failure.detail?.let { said ->
+        Text(
+            text = said,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onFelt().copy(alpha = Quiet),
+        )
+    }
     UpdateTheApp(failure.trouble, onUpdate = { openUrl(storeListingUrl()) })
 }
 
