@@ -126,6 +126,14 @@ jobs:
           npm install -g @sentry/cli@3
           node tools/upload-web-sourcemaps.mjs "$DIST"
 
+      # And then the map does not ship, exactly as deploy-web.yml has it: a source map is the
+      # source, and a preview version answers on a public workers.dev address. Sentry has the map
+      # by now. Unconditional for the deploy's reason — the failure mode of skipping it is
+      # publishing the source — and the script fails the job if a `.map` or a `sourceMappingURL`
+      # is left. `WebSourceMapsStayUnpublishedTest` holds it before the version upload.
+      - name: Keep the source maps out of what gets published
+        run: node tools/strip-web-sourcemaps.mjs "$DIST"
+
       # `preview_urls` in wrangler.jsonc only reaches the Worker on the next `wrangler
       # deploy`, and a pull request's preview cannot wait for a production deploy to carry
       # a setting. This call turns previews on directly — and keeps `enabled: false`, so

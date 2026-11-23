@@ -151,7 +151,11 @@ and `strip-web-sourcemaps.mjs` then deletes the `.map` and the `sourceMappingURL
 that names it. That step is **unconditional** — never gated on the token or on a dry run —
 because the upload is allowed to be skipped when there are no credentials and this is not: losing
 symbolication is a bad day, and publishing what you meant to keep is not undoable. It checks its
-own work and fails the deploy if anything is left.
+own work and fails the deploy if anything is left. **Every workflow that publishes the web build
+runs it**, the pull request's preview as much as the deploy: `preview-web.yml` builds the same dist
+and once uploaded its preview version with the map still in it, so every preview served the
+client's Kotlin sources. `WebSourceMapsStayUnpublishedTest` reads the workflows and fails one that
+hands wrangler the dist before the strip, or strips only on a condition.
 
 What the browser still receives is the wasm **name section**: fully-qualified Kotlin function
 names, though no file, line, or source text. That is the price of a readable web crash, and it is
