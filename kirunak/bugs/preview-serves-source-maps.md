@@ -26,6 +26,10 @@ workflow has no strip step; the dist holds the map until a strip removes it, as 
 - the rule, in RELIABILITY.md's "A source map is the source, so it is uploaded and then removed" [file docs/kotlin/RELIABILITY.md]
 - the last production deploy's log: "removed …/composeApp.38cf5e2d285bef88.js.map", so the map is in the dist the preview publishes as is [research https://github.com/Lonli-Lokli/vinto/actions/runs/39785028826]
 - the preview uploads its symbols to Sentry since the web symbolication work, so stripping loses nothing [commit 0db0d3f]
+- WebSourceMapsStayUnpublishedTest (composeApp jvmTest) reads every workflow that builds the web client and publishes it through wrangler (deploy-web.yml, preview-web.yml): before the fix red, "preview-web.yml publishes the web build and never strips its source maps"; after it 2 of 2 green, and detekt clean in its own run and in the commit hook [commit db0f3c3b]
+
+## Fix written
+- `node tools/strip-web-sourcemaps.mjs "$DIST"` in preview-web.yml after the Sentry upload and before the version upload, unconditional, as the deploy has it; RELIABILITY.md says every web publisher strips; WebSourceMapsStayUnpublishedTest holds the order and that the step has no condition, seen red first [commit db0f3c3bba8df775ef22e9c2ebc7fb0f2967c7cd]
 
 ## Questions
 1. Add `node tools/strip-web-sourcemaps.mjs "$DIST"` to `preview-web.yml` after the symbol upload and before the version upload, unconditionally, as the deploy does?
