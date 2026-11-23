@@ -168,10 +168,11 @@ object Crashes {
     /**
      * A handler for a scope whose failures would otherwise be silent.
      *
-     * Attached to the app scope, so a background coroutine that throws is reported rather than
-     * printed to a console nobody is reading. It does **not** rethrow: the scope's job is
+     * Attached to the app scope and every screen's, so a coroutine that throws is reported rather
+     * than printed to a console nobody is reading. It does **not** rethrow: the scope's job is
      * supervised and the app is still usable, which is exactly the case the fatal handler
-     * cannot see. Supervised by [game.vinto.app.rememberAppScope], not by Compose: the scope
+     * cannot see. Supervised by [game.vinto.app.rememberAppScope] and
+     * [game.vinto.app.rememberScreenScope], not by Compose: the scope
      * `rememberCoroutineScope` makes cancels the Recomposer when one of its jobs fails.
      */
     fun handler(): CoroutineContext = CoroutineExceptionHandler { _, error -> report(error) }

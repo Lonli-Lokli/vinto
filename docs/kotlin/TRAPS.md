@@ -207,7 +207,10 @@ older reference of the form `docs/kotlin/README.md §6c` still names the paragra
   job is a plain `Job` under the Recomposer's effect job, so one coroutine that fails cancels the
   effect job and the screen never draws again — with no crash on any platform if a handler
   caught the failure, because the handler did its job. A long-lived scope needs a `SupervisorJob`
-  under it; `rememberAppScope` is one, held by `OneFailedJobLeavesTheAppRunningTest`.
+  under it; `rememberAppScope` is one, held by `OneFailedJobLeavesTheAppRunningTest`. A screen's
+  own scope needs one too — a list that threw froze Public rooms the same way — so a screen takes
+  `rememberScreenScope()`, and `OneFailedJobLeavesTheScreenRunningTest` refuses a bare
+  `rememberCoroutineScope()` anywhere in `composeApp` outside `AppScope.kt`.
 - **The wasm source map in the build describes a module nobody runs.** The compiler maps the module
   before `wasm-opt`, and the plugin copied that map past the optimiser unchanged, so it was
   byte-identical in `kotlin/` and `optimized/` and every offset in it was wrong for what ships.
